@@ -33,13 +33,13 @@ Some Ideas Behind the Language [WIP]
 
 
 What Hello World will likely look like:
+```
+"IO" $import
 
-> "IO" $import
->
-> main :: IO
->
-> main :: c:~Console. ("Hello World!". c) println c
+main :: IO
 
+main :: c:~Console. ("Hello World!". c) println c
+```
 Explanation:
 First we import the IO library.
 Then we define main as type IO.
@@ -47,12 +47,13 @@ Then we define main's behavior all on one line ({} braces are required for multi
 
 
 Hypotenuse Function:
+```
+hypot :: (Num.Num) ;; Num
 
-> hypot :: (Num.Num) ;; Num
-> 
-> (a.b) hypot q :: (a.b)^2..+ \2 q
->
-> hypot :: ^2..+ \2
+(a.b) hypot q :: (a.b)^2..+ \2 q
+
+hypot :: ^2..+ \2
+```
 
 Explanation:
 Okay, this is a bit complicated. In fact, I've written two implementations of it here. They do the same thing, but the bottom one just omits stuff the compiler could figure out anyway. First, we define the hypot function to take in inputs of type (Num.Num), and produce outputs of type Num.
