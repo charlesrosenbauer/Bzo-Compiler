@@ -1,8 +1,7 @@
 module BzoParser where
-import Control.Monad
-import System.Environment
 import Text.ParserCombinators.Parsec hiding (spaces)
-import System.IO hiding (try)
+import Text.Parsec hiding (try, spaces)
+import Data.Functor.Identity
 import BzoTypes
 
 
@@ -81,7 +80,19 @@ specialGroup = string "()"
 
 
 spaces :: Parser ()
-spaces = skipMany1 space
+spaces = skipMany1 (space <|> (char '\t'))
+
+
+
+
+
+
+
+
+
+
+skippableNewlines :: Parser ()
+skippableNewlines = skipMany1 (char '\n')
 
 
 
@@ -93,11 +104,54 @@ spaces = skipMany1 space
 
 
 parseString :: Parser Token
-parseString = do char '"'
+parseString = do pos <- getPosition
+                 char '"'
                  x <- many (noneOf "\"")
                  char '"'
-                 many spaces
-                 return $ TkStr x
+                 many removeable
+                 return $ TkStr pos x
+
+
+
+
+
+
+
+
+
+
+comment :: Parser ()
+comment = do char '\''
+             x <- many (noneOf "\'")
+             char '\''
+             spaces
+
+
+
+
+
+
+
+
+
+
+removeable :: Parser ()
+removeable = skipMany1 (spaces <|> comment)
+
+
+
+
+
+
+
+
+
+
+parseNewline :: Parser Token
+parseNewline = do pos <- getPosition
+                  many1 (char '\n')
+                  many (removeable <|> skippableNewlines)
+                  return $ TkNewline pos
 
 
 
@@ -109,10 +163,11 @@ parseString = do char '"'
 
 
 parseBuiltin :: Parser Token
-parseBuiltin = do char '$'
+parseBuiltin = do pos <- getPosition
+                  char '$'
                   x <- many (letter <|> digit <|> symbol)
-                  many spaces
-                  return $ TkBuiltin x
+                  many removeable
+                  return $ TkBuiltin pos x
 
 
 
@@ -124,10 +179,11 @@ parseBuiltin = do char '$'
 
 
 parseTypeAtom :: Parser Token
-parseTypeAtom = do first <- uppercase
+parseTypeAtom = do pos <- getPosition
+                   first <- uppercase
                    rest  <- many (letter <|> digit <|> symbol)
-                   many spaces
-                   return $ TkTypeId ([first] ++ rest)
+                   many removeable
+                   return $ TkTypeId pos ([first] ++ rest)
 
 
 
@@ -139,10 +195,11 @@ parseTypeAtom = do first <- uppercase
 
 
 parseAtom :: Parser Token
-parseAtom = do first <- lowercase <|> symbol
+parseAtom = do pos <- getPosition
+               first <- lowercase <|> symbol
                rest  <- many (letter <|> digit <|> symbol)
-               many spaces
-               return $ TkId ([first] ++ rest)
+               many removeable
+               return $ TkId pos ([first] ++ rest)
 
 
 
@@ -154,9 +211,10 @@ parseAtom = do first <- lowercase <|> symbol
 
 
 parseInteger :: Parser Token
-parseInteger = do num <- many1 digit
-                  many spaces
-                  return $ (TkInt . read) num
+parseInteger = do pos <- getPosition
+                  num <- many1 digit
+                  many removeable
+                  return $ (TkInt pos . read) num
 
 
 
@@ -168,11 +226,12 @@ parseInteger = do num <- many1 digit
 
 
 parseFloat :: Parser Token
-parseFloat = do beg <- many1 digit
+parseFloat = do pos <- getPosition
+                beg <- many1 digit
                 char '.'
                 end <- many1 digit
-                many spaces
-                return $ (TkFlt . read) (beg ++ "." ++ end)
+                many removeable
+                return $ (TkFlt pos . read) (beg ++ "." ++ end)
 
 
 
@@ -184,15 +243,16 @@ parseFloat = do beg <- many1 digit
 
 
 parseSpecialGroup :: Parser Token
-parseSpecialGroup = do x <- specialGroup
-                       many spaces
+parseSpecialGroup = do pos <- getPosition
+                       x <- specialGroup
+                       many removeable
                        return $ case x of
-                           "()" -> TkTupEmpt
-                           "[]" -> TkArrGnrl
-                           "{}" -> TkExpGnrl
-                           ".." -> TkArrMod
-                           "::" -> TkDefine
-                           ";;" -> TkFnSym
+                           "()" -> TkTupEmpt pos
+                           "[]" -> TkArrGnrl pos
+                           "{}" -> TkExpGnrl pos
+                           ".." -> TkArrMod pos
+                           "::" -> TkDefine pos
+                           ";;" -> TkFnSym pos
                            
 
 
@@ -205,23 +265,23 @@ parseSpecialGroup = do x <- specialGroup
 
 
 parseSpecial :: Parser Token
-parseSpecial = do x <- special
-                  many spaces
+parseSpecial = do pos <- getPosition
+                  x <- special
+                  many removeable
                   return $ case x of
-                    '(' -> TkStartTup
-                    ')' -> TkEndTup
-                    '[' -> TkStartDat
-                    ']' -> TkEndDat
-                    '{' -> TkStartDo
-                    '}' -> TkEndDo
-                    '.' -> TkSepExpr
-                    ',' -> TkSepPoly
-                    ':' -> TkFilterSym
-                    ';' -> TkLambdaSym
-                    '~' -> TkMutable
-                    '@' -> TkReference
-                    '_' -> TkWildcard
-                    '\n'-> TkNewline
+                    '(' -> TkStartTup pos
+                    ')' -> TkEndTup pos
+                    '[' -> TkStartDat pos
+                    ']' -> TkEndDat pos
+                    '{' -> TkStartDo pos
+                    '}' -> TkEndDo pos
+                    '.' -> TkSepExpr pos
+                    ',' -> TkSepPoly pos
+                    ':' -> TkFilterSym pos
+                    ';' -> TkLambdaSym pos
+                    '~' -> TkMutable pos
+                    '@' -> TkReference pos
+                    '_' -> TkWildcard pos
 
 
 
@@ -235,12 +295,13 @@ parseSpecial = do x <- special
 parseUnit :: Parser Token
 parseUnit = parseTypeAtom
         <|> parseAtom
+        <|> parseNewline
         <|> parseString
         <|> parseBuiltin
-        <|> parseFloat
+        <|> (try parseFloat)
         <|> parseInteger
         <|> (try parseSpecialGroup)
-        <|> (try parseSpecial)
+        <|> parseSpecial
 
 
 
@@ -263,36 +324,47 @@ parseExpr = many parseUnit
 
 
 
+
+
+
+
+
+
+
+
+
+
+
 showTk :: Token -> String
-showTk TkStartTup      = "("
-showTk TkEndTup        = ")"
-showTk TkStartDat      = "["
-showTk TkEndDat        = "]"
-showTk TkSepExpr       = "."
-showTk TkSepPoly       = ","
-showTk TkFilterSym     = ":"
-showTk TkLambdaSym     = ";"
-showTk TkMutable       = "~"
-showTk TkReference     = "@"
-showTk TkWildcard      = "_"
-showTk TkDefine        = "::"
-showTk TkFnSym         = ";;"
-showTk TkTupEmpt       = ")"
-showTk TkArrGnrl       = "[]"
-showTk TkExpGnrl       = "{}"
-showTk TkArrMod        = ".."
-showTk (TkInt x)       = "I:" ++ show x
-showTk (TkFlt x)       = "F:" ++ show x
-showTk (TkStr st)      = "S:" ++ st
-showTk (TkId st)       = "ID:" ++ st
-showTk (TkTypeId st)   = "TID:" ++ st
-showTk (TkVariable st) = "VR:" ++ st
-showTk (TkFunction st) = "FN:" ++ st
-showTk (TkTypeVar st)  = "TV:" ++ st
-showTk TkLambda        = "LMDA"
-showTk TkExpr          = "EXPR"
-showTk TkNewline       = "NEWL"
-showTk (TkBuiltin st)  = "BI:" ++ st
+showTk (TkStartTup      _) = "("
+showTk (TkEndTup        _) = ")"
+showTk (TkStartDat      _) = "["
+showTk (TkEndDat        _) = "]"
+showTk (TkSepExpr       _) = "."
+showTk (TkSepPoly       _) = ","
+showTk (TkFilterSym     _) = ":"
+showTk (TkLambdaSym     _) = ";"
+showTk (TkMutable       _) = "~"
+showTk (TkReference     _) = "@"
+showTk (TkWildcard      _) = "_"
+showTk (TkDefine        _) = "::"
+showTk (TkFnSym         _) = ";;"
+showTk (TkTupEmpt       _) = ")"
+showTk (TkArrGnrl       _) = "[]"
+showTk (TkExpGnrl       _) = "{}"
+showTk (TkArrMod        _) = ".."
+showTk (TkInt        _  x) = "I:"   ++ show x
+showTk (TkFlt        _  x) = "F:"   ++ show x
+showTk (TkStr        _ st) = "S:"   ++ show st
+showTk (TkId         _ st) = "ID:"  ++ show st
+showTk (TkTypeId     _ st) = "TID:" ++ show st
+showTk (TkVariable _ st _) = "VR:"  ++ show st
+showTk (TkFunction _ st _) = "FN:"  ++ show st
+showTk (TkTypeVar  _ st  ) = "TV:"  ++ show st
+showTk (TkLambda        _) = "LMDA"
+showTk (TkExpr          _) = "EXPR"
+showTk (TkNewline       _) = "NEWL"
+showTk (TkBuiltin    _ st) = "BI:"  ++ show st
 instance Show Token where show = showTk
 
 
