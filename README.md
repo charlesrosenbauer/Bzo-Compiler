@@ -32,6 +32,69 @@ Some Ideas Behind the Language [WIP]
 * Other features: pattern matching, references with Rust-like ownership and borrowing, and the ability to use what would normally be considered special characters in identifiers (so long as they aren't used in the normal syntax).
 
 
+All symbols and their (current) intended meanings:
+```
+(  )
+Tuples
+
+[  ]
+Array Access
+
+{  }
+Do Block
+
+:
+Type Filter (i.e., x:I32 forces x to be of type I32.)
+
+;
+Denote Lambda Expression
+
+::
+Define
+
+;;
+Denote Function Type (i.e., (I32.I32);;I32 is the type of a function that takes (I32.I32) as
+an input, and produces I32 as an output.)
+
+.
+Expression Separator. This works a bit like a semicolon in other languages.
+
+,
+Option Separator. This is like an Expression Separator, but used specifically in Polymorphic
+Types, similar to | in Haskell type definitions.
+
+..
+Convert to Array Function
+
+"..."
+Strings
+
+'...'
+Comment
+
+()
+Nil Type / Empty Tuple
+
+[]
+General Array modifier. Used to denote an array type without specifying size
+
+{}
+General Expression. Used when passing non-function expressions as parameters.
+
+@
+Reference Modifier
+
+~
+Mutability Modifier
+
+_
+Wildcard. Used for pattern matching, as it is in many other languages.
+
+$...
+Denote Builtin; this character is only available for use in identifiers for types and functions
+built in to the language. Most types and functions that use builtins will be given an alias. 
+
+```
 What Hello World will likely look like:
 ```
 "IO" $import

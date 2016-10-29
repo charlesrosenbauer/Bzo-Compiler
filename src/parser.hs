@@ -104,12 +104,13 @@ skippableNewlines = skipMany1 (char '\n')
 
 
 parseString :: Parser Token
-parseString = do pos <- getPosition
-                 char '"'
-                 x <- many (noneOf "\"")
-                 char '"'
-                 many removeable
-                 return $ TkStr pos x
+parseString = do
+    pos <- getPosition
+    char '"'
+    x <- many (noneOf "\"")
+    char '"'
+    many removeable
+    return $ TkStr pos x
 
 
 
@@ -121,10 +122,11 @@ parseString = do pos <- getPosition
 
 
 comment :: Parser ()
-comment = do char '\''
-             x <- many (noneOf "\'")
-             char '\''
-             spaces
+comment = do
+    char '\''
+    x <- many (noneOf "\'")
+    char '\''
+    spaces
 
 
 
@@ -148,10 +150,11 @@ removeable = skipMany1 (spaces <|> comment)
 
 
 parseNewline :: Parser Token
-parseNewline = do pos <- getPosition
-                  many1 (char '\n')
-                  many (removeable <|> skippableNewlines)
-                  return $ TkNewline pos
+parseNewline = do
+    pos <- getPosition
+    many1 (char '\n')
+    many (removeable <|> skippableNewlines)
+    return $ TkNewline pos
 
 
 
@@ -163,11 +166,12 @@ parseNewline = do pos <- getPosition
 
 
 parseBuiltin :: Parser Token
-parseBuiltin = do pos <- getPosition
-                  char '$'
-                  x <- many (letter <|> digit <|> symbol)
-                  many removeable
-                  return $ TkBuiltin pos x
+parseBuiltin = do
+    pos <- getPosition
+    char '$'
+    x <- many (letter <|> digit <|> symbol)
+    many removeable
+    return $ TkBuiltin pos x
 
 
 
@@ -179,11 +183,12 @@ parseBuiltin = do pos <- getPosition
 
 
 parseTypeAtom :: Parser Token
-parseTypeAtom = do pos <- getPosition
-                   first <- uppercase
-                   rest  <- many (letter <|> digit <|> symbol)
-                   many removeable
-                   return $ TkTypeId pos ([first] ++ rest)
+parseTypeAtom = do
+    pos <- getPosition
+    first <- uppercase
+    rest  <- many (letter <|> digit <|> symbol)
+    many removeable
+    return $ TkTypeId pos ([first] ++ rest)
 
 
 
@@ -211,10 +216,11 @@ parseAtom = do pos <- getPosition
 
 
 parseInteger :: Parser Token
-parseInteger = do pos <- getPosition
-                  num <- many1 digit
-                  many removeable
-                  return $ (TkInt pos . read) num
+parseInteger = do
+    pos <- getPosition
+    num <- many1 digit
+    many removeable
+    return $ (TkInt pos . read) num
 
 
 
@@ -226,12 +232,13 @@ parseInteger = do pos <- getPosition
 
 
 parseFloat :: Parser Token
-parseFloat = do pos <- getPosition
-                beg <- many1 digit
-                char '.'
-                end <- many1 digit
-                many removeable
-                return $ (TkFlt pos . read) (beg ++ "." ++ end)
+parseFloat = do
+    pos <- getPosition
+    beg <- many1 digit
+    char '.'
+    end <- many1 digit
+    many removeable
+    return $ (TkFlt pos . read) (beg ++ "." ++ end)
 
 
 
@@ -243,16 +250,17 @@ parseFloat = do pos <- getPosition
 
 
 parseSpecialGroup :: Parser Token
-parseSpecialGroup = do pos <- getPosition
-                       x <- specialGroup
-                       many removeable
-                       return $ case x of
-                           "()" -> TkTupEmpt pos
-                           "[]" -> TkArrGnrl pos
-                           "{}" -> TkExpGnrl pos
-                           ".." -> TkArrMod pos
-                           "::" -> TkDefine pos
-                           ";;" -> TkFnSym pos
+parseSpecialGroup = do
+    pos <- getPosition
+    x <- specialGroup
+    many removeable
+    return $ case x of
+        "()" -> TkTupEmpt pos
+        "[]" -> TkArrGnrl pos
+        "{}" -> TkExpGnrl pos
+        ".." -> TkArrMod pos
+        "::" -> TkDefine pos
+        ";;" -> TkFnSym pos
                            
 
 
@@ -265,23 +273,24 @@ parseSpecialGroup = do pos <- getPosition
 
 
 parseSpecial :: Parser Token
-parseSpecial = do pos <- getPosition
-                  x <- special
-                  many removeable
-                  return $ case x of
-                    '(' -> TkStartTup pos
-                    ')' -> TkEndTup pos
-                    '[' -> TkStartDat pos
-                    ']' -> TkEndDat pos
-                    '{' -> TkStartDo pos
-                    '}' -> TkEndDo pos
-                    '.' -> TkSepExpr pos
-                    ',' -> TkSepPoly pos
-                    ':' -> TkFilterSym pos
-                    ';' -> TkLambdaSym pos
-                    '~' -> TkMutable pos
-                    '@' -> TkReference pos
-                    '_' -> TkWildcard pos
+parseSpecial = do
+    pos <- getPosition
+    x <- special
+    many removeable
+    return $ case x of
+        '(' -> TkStartTup pos
+        ')' -> TkEndTup pos
+        '[' -> TkStartDat pos
+        ']' -> TkEndDat pos
+        '{' -> TkStartDo pos
+        '}' -> TkEndDo pos
+        '.' -> TkSepExpr pos
+        ',' -> TkSepPoly pos
+        ':' -> TkFilterSym pos
+        ';' -> TkLambdaSym pos
+        '~' -> TkMutable pos
+        '@' -> TkReference pos
+        '_' -> TkWildcard pos
 
 
 
