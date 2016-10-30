@@ -17,7 +17,11 @@ import BzoTypes
 
 main :: IO()
 main = do
-    mainLoop_ (== "quit") (readPrompt "Input: ") (\s -> (putStrLn $ parseInput s))
+    args <- getArgs
+    case length args of
+        0 -> mainLoop_ (== "quit") (readPrompt "Bzo>>> ") (\s -> (putStrLn $ parseInput s))
+        otherwise -> do
+            (loadMany args) >>= (printMany . parseMany)
 
 
 
@@ -80,6 +84,36 @@ parseInput input = case parse parseExpr "Bzo" input of
 
 
 
+
+
+loadMany :: [FilePath] -> IO [String]
+loadMany files = sequence $ map readFile files
+
+
+
+
+
+
+
+
+
+parseMany :: [String] -> [String]
+parseMany s = map parseInput s
+
+
+
+
+
+
+
+
+
+
+printMany :: [String] -> IO ()
+printMany (x:xs) = do
+    putStrLn x
+    printMany xs
+printMany ([]) = return ()
 
 
 

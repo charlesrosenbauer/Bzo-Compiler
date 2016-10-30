@@ -333,17 +333,6 @@ parseExpr = many parseUnit
 
 
 
-
-
-
-
-
-
-
-
-
-
-
 showTk :: Token -> String
 showTk (TkStartTup      _) = "("
 showTk (TkEndTup        _) = ")"
@@ -372,7 +361,7 @@ showTk (TkFunction _ st _) = "FN:"  ++ show st
 showTk (TkTypeVar  _ st  ) = "TV:"  ++ show st
 showTk (TkLambda        _) = "LMDA"
 showTk (TkExpr          _) = "EXPR"
-showTk (TkNewline       _) = "NEWL"
+showTk (TkNewline       _) = "NEWL\n"
 showTk (TkBuiltin    _ st) = "BI:"  ++ show st
 instance Show Token where show = showTk
 
