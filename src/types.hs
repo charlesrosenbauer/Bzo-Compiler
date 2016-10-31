@@ -80,3 +80,21 @@ data FnType = Func DtType DtType
 
 
 
+
+
+
+
+
+
+
+data BzoErr = Other
+            | StringErr String
+            | LexErr ParseError
+            
+
+
+
+
+
+
+

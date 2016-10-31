@@ -5,6 +5,8 @@ import Text.ParserCombinators.Parsec hiding (spaces)
 import System.IO hiding (try)
 import BzoParser
 import BzoTypes
+import Compiler
+import BzoError
 
 
 
@@ -19,7 +21,7 @@ main :: IO()
 main = do
     args <- getArgs
     case length args of
-        0 -> mainLoop_ (== "quit") (readPrompt "Bzo>>> ") (\s -> (putStrLn $ parseInput s))
+        0 -> mainLoop_ (== "$quit") (readPrompt "Bzo>>> ") (\s -> (putStrLn $ parseInput s))
         otherwise -> do
             (loadMany args) >>= (printMany . parseMany)
 
@@ -73,9 +75,11 @@ flushStr str = putStr str >> hFlush stdout
 
 
 parseInput :: String -> String
-parseInput input = case parse parseExpr "Bzo" input of
-    Left  err -> "Error: " ++ show err
-    Right val -> showTokens val
+parseInput input = do
+    let out = compileFile input    
+    case out of
+        Left  errs -> concatMap ((++ " ") . show) errs
+        Right vals -> concatMap ((++ " ") . show) vals
 
 
 
@@ -111,9 +115,12 @@ parseMany s = map parseInput s
 
 printMany :: [String] -> IO ()
 printMany (x:xs) = do
-    putStrLn x
+    putStrLn (x ++ "\n")
     printMany xs
 printMany ([]) = return ()
+
+
+
 
 
 

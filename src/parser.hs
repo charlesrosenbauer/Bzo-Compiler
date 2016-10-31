@@ -321,8 +321,10 @@ parseUnit = parseTypeAtom
 
 
 
-parseExpr :: Parser [Token]
-parseExpr = many parseUnit
+fileLexer :: String -> [Either ParseError [Token]]
+fileLexer s = do
+    let ls = map (++ ['\n']) $ lines s
+    map (\l -> parse (many parseUnit) "Bzo" l) ls
 
 
 
@@ -376,6 +378,10 @@ instance Show Token where show = showTk
 
 showTokens :: [Token] -> String
 showTokens tk = unwords $ map showTk tk
+
+
+
+
 
 
 
