@@ -151,10 +151,10 @@ removeable = skipMany1 (spaces <|> comment)
 
 parseNewline :: Parser Token
 parseNewline = do
-    pos <- getPosition
+    --pos <- getPosition
     many1 (char '\n')
     many (removeable <|> skippableNewlines)
-    return $ TkNewline pos
+    return $ TkNewline
 
 
 
@@ -321,10 +321,25 @@ parseUnit = parseTypeAtom
 
 
 
+appendNewline :: Either ParseError [Token] -> Either ParseError [Token]
+appendNewline x = case x of
+    Left  err -> Left err
+    Right tks -> Right $ tks ++ [TkNewline]
+
+
+
+
+
+
+
+
+
+
 fileLexer :: String -> [Either ParseError [Token]]
 fileLexer s = do
-    let ls = map (++ ['\n']) $ lines s
-    map (\l -> parse (many parseUnit) "Bzo" l) ls
+    let ls  = lines s
+    map (\l -> (appendNewline $ parse (many parseUnit) "Bzo" l)) ls
+                          
 
 
 
@@ -340,6 +355,8 @@ showTk (TkStartTup      _) = "("
 showTk (TkEndTup        _) = ")"
 showTk (TkStartDat      _) = "["
 showTk (TkEndDat        _) = "]"
+showTk (TkStartDo       _) = "{"
+showTk (TkEndDo         _) = "}"
 showTk (TkSepExpr       _) = "."
 showTk (TkSepPoly       _) = ","
 showTk (TkFilterSym     _) = ":"
@@ -363,8 +380,9 @@ showTk (TkFunction _ st _) = "FN:"  ++ show st
 showTk (TkTypeVar  _ st  ) = "TV:"  ++ show st
 showTk (TkLambda        _) = "LMDA"
 showTk (TkExpr          _) = "EXPR"
-showTk (TkNewline       _) = "NEWL\n"
+showTk (TkNewline        ) = "NEWL\n"
 showTk (TkBuiltin    _ st) = "BI:"  ++ show st
+showTk _                   = "Unknown Token?"
 instance Show Token where show = showTk
 
 

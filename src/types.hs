@@ -40,7 +40,7 @@ data Token = TkStartTup SourcePos
            | TkTypeVar SourcePos String
            | TkLambda SourcePos
            | TkExpr SourcePos
-           | TkNewline SourcePos
+           | TkNewline --SourcePos
            | TkBuiltin SourcePos String
            | TkDefFn SourcePos [Token]
            | TkDefTy SourcePos [Token]
