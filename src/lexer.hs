@@ -1,4 +1,4 @@
-module BzoParser where
+module BzoLexer where
 import Text.ParserCombinators.Parsec hiding (spaces)
 import Text.Parsec hiding (try, spaces)
 import Data.Functor.Identity
@@ -103,7 +103,7 @@ skippableNewlines = skipMany1 (char '\n')
 
 
 
-parseString :: Parser Token
+parseString :: Parser BzoToken
 parseString = do
     pos <- getPosition
     char '"'
@@ -149,7 +149,7 @@ removeable = skipMany1 (spaces <|> comment)
 
 
 
-parseNewline :: Parser Token
+parseNewline :: Parser BzoToken
 parseNewline = do
     --pos <- getPosition
     many1 (char '\n')
@@ -165,7 +165,7 @@ parseNewline = do
 
 
 
-parseBuiltin :: Parser Token
+parseBuiltin :: Parser BzoToken
 parseBuiltin = do
     pos <- getPosition
     char '$'
@@ -182,7 +182,7 @@ parseBuiltin = do
 
 
 
-parseTypeAtom :: Parser Token
+parseTypeAtom :: Parser BzoToken
 parseTypeAtom = do
     pos <- getPosition
     first <- uppercase
@@ -199,7 +199,7 @@ parseTypeAtom = do
 
 
 
-parseAtom :: Parser Token
+parseAtom :: Parser BzoToken
 parseAtom = do pos <- getPosition
                first <- lowercase <|> symbol
                rest  <- many (letter <|> digit <|> symbol)
@@ -215,7 +215,7 @@ parseAtom = do pos <- getPosition
 
 
 
-parseInteger :: Parser Token
+parseInteger :: Parser BzoToken
 parseInteger = do
     pos <- getPosition
     num <- many1 digit
@@ -231,7 +231,7 @@ parseInteger = do
 
 
 
-parseFloat :: Parser Token
+parseFloat :: Parser BzoToken
 parseFloat = do
     pos <- getPosition
     beg <- many1 digit
@@ -249,7 +249,7 @@ parseFloat = do
 
 
 
-parseSpecialGroup :: Parser Token
+parseSpecialGroup :: Parser BzoToken
 parseSpecialGroup = do
     pos <- getPosition
     x <- specialGroup
@@ -272,7 +272,7 @@ parseSpecialGroup = do
 
 
 
-parseSpecial :: Parser Token
+parseSpecial :: Parser BzoToken
 parseSpecial = do
     pos <- getPosition
     x <- special
@@ -301,7 +301,7 @@ parseSpecial = do
 
 
 
-parseUnit :: Parser Token
+parseUnit :: Parser BzoToken
 parseUnit = parseTypeAtom
         <|> parseAtom
         <|> parseNewline
@@ -321,7 +321,7 @@ parseUnit = parseTypeAtom
 
 
 
-appendNewline :: Either ParseError [Token] -> Either ParseError [Token]
+appendNewline :: Either ParseError [BzoToken] -> Either ParseError [BzoToken]
 appendNewline x = case x of
     Left  err -> Left err
     Right tks -> Right $ tks ++ [TkNewline]
@@ -335,7 +335,7 @@ appendNewline x = case x of
 
 
 
-fileLexer :: String -> [Either ParseError [Token]]
+fileLexer :: String -> [Either ParseError [BzoToken]]
 fileLexer s = do
     let ls  = lines s
     map (\l -> (appendNewline $ parse (many parseUnit) "Bzo" l)) ls
@@ -350,52 +350,7 @@ fileLexer s = do
 
 
 
-showTk :: Token -> String
-showTk (TkStartTup      _) = "("
-showTk (TkEndTup        _) = ")"
-showTk (TkStartDat      _) = "["
-showTk (TkEndDat        _) = "]"
-showTk (TkStartDo       _) = "{"
-showTk (TkEndDo         _) = "}"
-showTk (TkSepExpr       _) = "."
-showTk (TkSepPoly       _) = ","
-showTk (TkFilterSym     _) = ":"
-showTk (TkLambdaSym     _) = ";"
-showTk (TkMutable       _) = "~"
-showTk (TkReference     _) = "@"
-showTk (TkWildcard      _) = "_"
-showTk (TkDefine        _) = "::"
-showTk (TkFnSym         _) = ";;"
-showTk (TkTupEmpt       _) = ")"
-showTk (TkArrGnrl       _) = "[]"
-showTk (TkExpGnrl       _) = "{}"
-showTk (TkArrMod        _) = ".."
-showTk (TkInt        _  x) = "I:"   ++ show x
-showTk (TkFlt        _  x) = "F:"   ++ show x
-showTk (TkStr        _ st) = "S:"   ++ show st
-showTk (TkId         _ st) = "ID:"  ++ show st
-showTk (TkTypeId     _ st) = "TID:" ++ show st
-showTk (TkVariable _ st _) = "VR:"  ++ show st
-showTk (TkFunction _ st _) = "FN:"  ++ show st
-showTk (TkTypeVar  _ st  ) = "TV:"  ++ show st
-showTk (TkLambda        _) = "LMDA"
-showTk (TkExpr          _) = "EXPR"
-showTk (TkNewline        ) = "NEWL\n"
-showTk (TkBuiltin    _ st) = "BI:"  ++ show st
-showTk _                   = "Unknown Token?"
-instance Show Token where show = showTk
 
-
-
-
-
-
-
-
-
-
-showTokens :: [Token] -> String
-showTokens tk = unwords $ map showTk tk
 
 
 

@@ -4,7 +4,7 @@ import Text.Parsec hiding (try, spaces)
 import Data.Functor.Identity
 import Data.Either
 import BzoTypes
-import BzoParser
+import BzoLexer
 
 
 
@@ -16,7 +16,7 @@ import BzoParser
 
 
 --This function will eventually become the compiler pipeline
-compileFile :: String -> Either [BzoErr] [Token]
+compileFile :: String -> Either [BzoErr] [BzoToken]
 compileFile f = do
     let outs = fileLexer f
     let (ls, rs) = partitionEithers outs

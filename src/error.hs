@@ -1,5 +1,5 @@
 module BzoError where
-import BzoParser
+--import BzoParser
 import BzoTypes
 
 

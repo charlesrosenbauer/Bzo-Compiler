@@ -3,8 +3,10 @@ import Control.Monad
 import System.Environment
 import Text.ParserCombinators.Parsec hiding (spaces)
 import System.IO hiding (try)
-import BzoParser
+import BzoLexer
+--import BzoParser
 import BzoTypes
+import BzoTokens
 import Compiler
 import BzoError
 

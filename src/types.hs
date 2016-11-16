@@ -11,7 +11,7 @@ import Text.ParserCombinators.Parsec
 
 
 
-data Token = TkStartTup SourcePos
+data BzoToken = TkStartTup SourcePos
            | TkEndTup SourcePos
            | TkStartDat SourcePos
            | TkEndDat SourcePos
@@ -42,11 +42,12 @@ data Token = TkStartTup SourcePos
            | TkExpr SourcePos
            | TkNewline --SourcePos
            | TkBuiltin SourcePos String
-           | TkDefFn SourcePos [Token]
-           | TkDefTy SourcePos [Token]
-           | TkDefFnTy SourcePos [Token]
-           | TkDefTyCt SourcePos [Token]
-           | TkDefVr SourcePos [Token]
+           | TkDefFn SourcePos [BzoToken]
+           | TkDefTy SourcePos [BzoToken]
+           | TkDefFnTy SourcePos [BzoToken]
+           | TkDefTyCt SourcePos [BzoToken]
+           | TkDefVr SourcePos [BzoToken]
+           deriving Eq
 
 
 
@@ -64,6 +65,7 @@ data DtType = NilType
             | DtFunc FnType
             | DtPolymorph [DtType]
             | DtUnspecified
+            deriving Eq
 
 
 
@@ -77,6 +79,7 @@ data DtType = NilType
 data FnType = Func DtType DtType
             | FnPolymorph [FnType]
             | FnUnspecified
+            deriving Eq
 
 
 
