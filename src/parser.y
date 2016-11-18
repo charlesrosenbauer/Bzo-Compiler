@@ -2,11 +2,6 @@
 {
     module BzoParser where
     import BzoTypes
-    
-    data Gr_Tuple
-        = ..
-        | ..
-        | ..
 }
 
 
@@ -20,8 +15,6 @@
 
 %name bzoParser
 %tokentype { BzoToken }
-%monad { BzoToken } { (>>=) } { return }
-%error { parseBzoError }
 
 
 
@@ -52,6 +45,7 @@
     '[]'          { TkArrGnrl   }
     '{}'          { TkExpGnrl   }
     '..'          { TkArrMod    }
+    TyId          { TkTypeId    }
 
 
 
@@ -62,12 +56,30 @@
 
 
 %%
-Gr_Tuple : '(' Gr_Tuple ')'	{ TkTypeId }
+TyDef    : TyId '::' Type           {  }
 
+FnType   : Type ';;' Type           {  }
 
+TypeTupl : '(' TyId ')'             {  }
+         | '(' TyExpr ')'           {  }
+         | '(' TypeTupl ')'         {  }
 
+TyExpr   : TyId '.'                 {  }
+         | TypeTupl '.'             {  }
+         | TyExpr TyExpr            {  }
+         | TyExpr TypeTupl          {  }
 
+PolyTupl : '(' PlExpr ')'           {  }
+         | '(' PlExpr TyId ')'      {  }
+         | '(' PlExpr TypeTupl ')'  {  }
 
+PlExpr   : TyId ','                 {  }
+         | TypeTupl ','             {  }
+         | PlExpr PlExpr            {  }
+
+Type     : TypeTupl                 {  }
+         | PolyTupl                 {  }
+         | TyId                     {  }
 
 
 

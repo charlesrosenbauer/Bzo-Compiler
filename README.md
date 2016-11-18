@@ -5,7 +5,7 @@ Compiler for a custom programming language I'm developing called Bzo
 
 Building the Compiler
 
-If you're interested in trying out what's currently there (not much), there is a Makefile located in the /src file. The resulting program can be run in a command line. If parameters are provided, it will attempt to interpret each parameter as a file name, then print the results of the lexer to the command line. If none are provided, the program will simply enter the REPL, allowing Bzo expressions to be entered, providing the user with the results from the lexer. Enter $quit to exit.
+If you're interested in trying out what's currently there (not much), you may build the program using the provided makefile. The output executable file may show up in the /src directory. The resulting program can be run in a command line. If parameters are provided, it will attempt to interpret each parameter as a file name, then print the results of the lexer to the command line. If none are provided, the program will simply enter the REPL, allowing Bzo expressions to be entered, providing the user with the results from the lexer. Enter $quit to exit.
 
 
 The basic idea behind the language is that it is a functional / imperative hybrid; it allows you to write both purely functional and imperative code, all on top of a [mostly] functional core. Despite how difficult this sounds, the language is designed to be as simple as possible. The syntax is somewhere between Haskell and Lisp (mostly leaning toward Haskell), but with only 13 special characters, and no keywords besides some built-in functions and types prefixed with "$".
