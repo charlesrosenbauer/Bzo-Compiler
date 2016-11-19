@@ -45,7 +45,11 @@
     '[]'          { TkArrGnrl   }
     '{}'          { TkExpGnrl   }
     '..'          { TkArrMod    }
+    '\n'          { TkNewline   }
     TyId          { TkTypeId    }
+    INT           { TkInt       }
+    FLT           { TkFlt       }
+    STR           { TkStr       }
 
 
 
@@ -56,6 +60,9 @@
 
 
 %%
+
+--Type Parsing
+
 TyDef    : TyId '::' Type           {  }
 
 FnType   : Type ';;' Type           {  }
@@ -80,6 +87,31 @@ PlExpr   : TyId ','                 {  }
 Type     : TypeTupl                 {  }
          | PolyTupl                 {  }
          | TyId                     {  }
+         | '()'                     {  }
+
+--Expression Parsing
+
+Expr     : '(' AtomTrm  Atom ')'    {  }
+         | '(' AtomTrms Atom ')'    {  }
+
+AtomTrms : AtomTrm  AtomTrm         {  }
+         | AtomTrms AtomTrm         {  }
+
+AtomTrm  : Atom '.'                 {  }
+         | Atom '\n'                {  }
+
+--This should probably be the last one
+Atom     : '(' Atom ')'             {  }
+         | INT                      {  }
+         | FLT                      {  }
+         | STR                      {  }
+
+
+
+
+
+
+
 
 
 
