@@ -36,14 +36,9 @@ showTk (TkFlt        _  x) = "F:"   ++ show x
 showTk (TkStr        _ st) = "S:"   ++ show st
 showTk (TkId         _ st) = "ID:"  ++ show st
 showTk (TkTypeId     _ st) = "TID:" ++ show st
-showTk (TkVariable _ st _) = "VR:"  ++ show st
-showTk (TkFunction _ st _) = "FN:"  ++ show st
-showTk (TkTypeVar  _ st  ) = "TV:"  ++ show st
-showTk (TkLambda        _) = "LMDA"
-showTk (TkExpr          _) = "EXPR"
 showTk (TkNewline        ) = "NEWL\n"
 showTk (TkBuiltin    _ st) = "BI:"  ++ show st
-showTk _                   = "Unknown Token?"
+--showTk _                   = "Unknown Token?"
 instance Show BzoToken where show = showTk
 
 
@@ -57,3 +52,17 @@ instance Show BzoToken where show = showTk
 
 showTokens :: [BzoToken] -> String
 showTokens tk = unwords $ map showTk tk
+
+
+
+
+
+
+
+
+
+
+
+
+
+

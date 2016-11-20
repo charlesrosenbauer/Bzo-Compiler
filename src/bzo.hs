@@ -4,7 +4,7 @@ import System.Environment
 import Text.ParserCombinators.Parsec hiding (spaces)
 import System.IO hiding (try)
 import BzoLexer
---import BzoParser
+import BzoParser
 import BzoTypes
 import BzoTokens
 import Compiler

@@ -1,7 +1,9 @@
 
 {
-    module BzoParser where
-    import BzoTypes
+module BzoParser where
+import BzoTypes
+import BzoSyntax
+import BzoTokens
 }
 
 
@@ -15,6 +17,7 @@
 
 %name bzoParser
 %tokentype { BzoToken }
+%error { parseError }
 
 
 
@@ -26,30 +29,31 @@
 
 
 %token
-    '('           { TkStartTup  }
-    ')'           { TkEndTup    }
-    '['           { TkStartDat  }
-    ']'           { TkEndDat    }
-    '{'           { TkStartDo   }
-    '}'           { TkEndDo     }
-    '.'           { TkSepExpr   }
-    ','           { TkSepPoly   }
-    ':'           { TkFilterSym }
-    ';'           { TkLambdaSym }
-    '~'           { TkMutable   }
-    '@'           { TkReference }
-    '_'           { TkWildcard  }
-    '::'          { TkDefine    }
-    ';;'          { TkFnSym     }
-    '()'          { TkTupEmpt   }
-    '[]'          { TkArrGnrl   }
-    '{}'          { TkExpGnrl   }
-    '..'          { TkArrMod    }
-    '\n'          { TkNewline   }
-    TyId          { TkTypeId    }
-    INT           { TkInt       }
-    FLT           { TkFlt       }
-    STR           { TkStr       }
+    '('           { TkStartTup  _ }
+    ')'           { TkEndTup    _ }
+    '['           { TkStartDat  _ }
+    ']'           { TkEndDat    _ }
+    '{'           { TkStartDo   _ }
+    '}'           { TkEndDo     _ }
+    '.'           { TkSepExpr   _ }
+    ','           { TkSepPoly   _ }
+    ':'           { TkFilterSym _ }
+    ';'           { TkLambdaSym _ }
+    '~'           { TkMutable   _ }
+    '@'           { TkReference _ }
+    '_'           { TkWildcard  _ }
+    '::'          { TkDefine    _ }
+    ';;'          { TkFnSym     _ }
+    '()'          { TkTupEmpt   _ }
+    '[]'          { TkArrGnrl   _ }
+    '{}'          { TkExpGnrl   _ }
+    '..'          { TkArrMod    _ }
+    '\n'          { TkNewline     }
+    TyId          { TkTypeId    _ $$ }
+    Id            { TkId        _ $$ }
+    INT           { TkInt       _ $$ }
+    FLT           { TkFlt       _ $$ }
+    STR           { TkStr       _ $$ }
 
 
 
@@ -61,50 +65,17 @@
 
 %%
 
---Type Parsing
 
-TyDef    : TyId '::' Type           {  }
+atoms    : atoms  atoms             { Atoms ((vals $1) ++ (vals $2)) }
+         | atom '.'                 { $1 }
+         | atom '\n'                { $1 }
 
-FnType   : Type ';;' Type           {  }
 
-TypeTupl : '(' TyId ')'             {  }
-         | '(' TyExpr ')'           {  }
-         | '(' TypeTupl ')'         {  }
-
-TyExpr   : TyId '.'                 {  }
-         | TypeTupl '.'             {  }
-         | TyExpr TyExpr            {  }
-         | TyExpr TypeTupl          {  }
-
-PolyTupl : '(' PlExpr ')'           {  }
-         | '(' PlExpr TyId ')'      {  }
-         | '(' PlExpr TypeTupl ')'  {  }
-
-PlExpr   : TyId ','                 {  }
-         | TypeTupl ','             {  }
-         | PlExpr PlExpr            {  }
-
-Type     : TypeTupl                 {  }
-         | PolyTupl                 {  }
-         | TyId                     {  }
-         | '()'                     {  }
-
---Expression Parsing
-
-Expr     : '(' AtomTrm  Atom ')'    {  }
-         | '(' AtomTrms Atom ')'    {  }
-
-AtomTrms : AtomTrm  AtomTrm         {  }
-         | AtomTrms AtomTrm         {  }
-
-AtomTrm  : Atom '.'                 {  }
-         | Atom '\n'                {  }
-
---This should probably be the last one
-Atom     : '(' Atom ')'             {  }
-         | INT                      {  }
-         | FLT                      {  }
-         | STR                      {  }
+atom     : '(' atom ')'             { $2 }
+         | INT                      { Atoms [(AtmInt $1)] }
+         | FLT                      { Atoms [(AtmFlt $1)] }
+         | STR                      { Atoms [(AtmStr $1)] }
+         | Id                       { Atoms [(AtmId  $1)] }
 
 
 
@@ -114,4 +85,8 @@ Atom     : '(' Atom ')'             {  }
 
 
 
+{
 
+parseError tokens = error $ show tokens
+
+}

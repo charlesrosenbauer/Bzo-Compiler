@@ -35,18 +35,8 @@ data BzoToken = TkStartTup SourcePos
            | TkStr SourcePos String
            | TkId SourcePos String
            | TkTypeId SourcePos String
-           | TkVariable SourcePos String DtType
-           | TkFunction SourcePos String FnType
-           | TkTypeVar SourcePos String
-           | TkLambda SourcePos
-           | TkExpr SourcePos
            | TkNewline --SourcePos
            | TkBuiltin SourcePos String
-           | TkDefFn SourcePos [BzoToken]
-           | TkDefTy SourcePos [BzoToken]
-           | TkDefFnTy SourcePos [BzoToken]
-           | TkDefTyCt SourcePos [BzoToken]
-           | TkDefVr SourcePos [BzoToken]
            deriving Eq
 
 
@@ -65,7 +55,7 @@ data DtType = NilType
             | DtFunc FnType
             | DtPolymorph [DtType]
             | DtUnspecified
-            deriving Eq
+            deriving (Eq, Show)
 
 
 
@@ -79,7 +69,7 @@ data DtType = NilType
 data FnType = Func DtType DtType
             | FnPolymorph [FnType]
             | FnUnspecified
-            deriving Eq
+            deriving (Eq, Show)
 
 
 
