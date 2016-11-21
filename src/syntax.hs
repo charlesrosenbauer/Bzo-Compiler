@@ -9,10 +9,12 @@ module BzoSyntax where
 
 
 
-data BzoProgram
+data BzoSyntax
     = FunDef
     | TypDef
     | Atoms {vals :: [Atom] }
+    | Tuple [BzoSyntax]
+    | Poly  [BzoSyntax]
     deriving (Eq, Show)
 
 
@@ -29,6 +31,3 @@ data Atom
     | AtmStr String
     | AtmId  String
     deriving (Eq, Show)
-
-
-

@@ -35,7 +35,7 @@ compileFile f = do
 
 
 
-compileFile' :: String -> Either [BzoErr] [BzoProgram]
+compileFile' :: String -> Either [BzoErr] [BzoSyntax]
 compileFile' f = do
     let lex = fileLexer f
     let (lls, lrs) = partitionEithers lex
@@ -46,4 +46,3 @@ compileFile' f = do
             --if length pls > 0
             --    then Left  pls
             --    else Right prs
-    

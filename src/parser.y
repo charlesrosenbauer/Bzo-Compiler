@@ -65,17 +65,37 @@ import BzoTokens
 
 %%
 
+--doBlk     : '{' stmnts '}'           {  }
+--          | '{' stmnt  '}'           {  }
 
-atoms    : atoms  atoms             { Atoms ((vals $1) ++ (vals $2)) }
-         | atom '.'                 { $1 }
-         | atom '\n'                { $1 }
+--func      : fndef stmnt             {  }
+--          | fndef doBlk             {  }
 
+--fndef     : expr atom expr '::'      {  }
+--          | expr atom '::'           {  }
+--          | atom expr '::'           {  }
+--          | atom '::'                {  }
 
-atom     : '(' atom ')'             { $2 }
-         | INT                      { Atoms [(AtmInt $1)] }
-         | FLT                      { Atoms [(AtmFlt $1)] }
-         | STR                      { Atoms [(AtmStr $1)] }
-         | Id                       { Atoms [(AtmId  $1)] }
+stmnts    : stmnt  stmnt             {  }
+          | stmnts stmnt             {  }
+
+stmnt     : expr '.'                 {  }
+          | expr newlines            {  }
+
+expr      : expr expr                {  }
+          | atom                     {  }
+
+newlines  : '\n'                     {  }
+          | newlines '\n'            {  }
+          | newlines newlines        {  }
+
+atoms     : atoms  atoms             { Atoms ((vals $1) ++ (vals $2)) }
+          | atom atom                { Atoms ([$1] ++ [$2]) }
+
+atom      : INT                      { Atoms [(AtmInt $1)] }
+          | FLT                      { Atoms [(AtmFlt $1)] }
+          | STR                      { Atoms [(AtmStr $1)] }
+          | Id                       { Atoms [(AtmId  $1)] }
 
 
 
