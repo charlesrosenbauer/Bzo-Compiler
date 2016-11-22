@@ -65,37 +65,40 @@ import BzoTokens
 
 %%
 
---doBlk     : '{' stmnts '}'           {  }
---          | '{' stmnt  '}'           {  }
+fn        : funDef stmnt              {  }
+          | funDef '{' stmnt '}'      {  }
+          | funDef '{' lines '}'      {  }
+          | funDef '{' stmnt expr '}' {  }
 
---func      : fndef stmnt             {  }
---          | fndef doBlk             {  }
+funDef    : expr Id expr '::'         {  }
+          | Id expr '::'              {  }
+          | expr Id '::'              {  }
+          | Id '::'                   {  }
 
---fndef     : expr atom expr '::'      {  }
---          | expr atom '::'           {  }
---          | atom expr '::'           {  }
---          | atom '::'                {  }
+lines     : stmnt newlines            {  }
+          | stmnt expr newlines       {  }
 
-stmnts    : stmnt  stmnt             {  }
-          | stmnts stmnt             {  }
+do        : stmnt stmnt               {  }
+          | do stmnt                  {  }
 
-stmnt     : expr '.'                 {  }
-          | expr newlines            {  }
+stmnt     : expr '.'                  {  }
+          | stmnt stmnt               {  }
 
-expr      : expr expr                {  }
-          | atom                     {  }
+expr      : atom                      {  }
+          | expr atom                 {  }
+          | expr expr                 {  }
+          | '(' expr ')'              {  }
+          | '(' do ')'                {  }
+          | '(' do expr ')'           {  }
 
-newlines  : '\n'                     {  }
-          | newlines '\n'            {  }
-          | newlines newlines        {  }
+newlines  : '\n'                      {  }
+          | newlines '\n'             {  }
+          | newlines newlines         {  }
 
-atoms     : atoms  atoms             { Atoms ((vals $1) ++ (vals $2)) }
-          | atom atom                { Atoms ([$1] ++ [$2]) }
-
-atom      : INT                      { Atoms [(AtmInt $1)] }
-          | FLT                      { Atoms [(AtmFlt $1)] }
-          | STR                      { Atoms [(AtmStr $1)] }
-          | Id                       { Atoms [(AtmId  $1)] }
+atom      : INT                       { Atoms [(AtmInt $1)] }
+          | FLT                       { Atoms [(AtmFlt $1)] }
+          | STR                       { Atoms [(AtmStr $1)] }
+          | Id                        { Atoms [(AtmId  $1)] }
 
 
 

@@ -15,6 +15,7 @@ data BzoSyntax
     | Atoms {vals :: [Atom] }
     | Tuple [BzoSyntax]
     | Poly  [BzoSyntax]
+    | Statements [[BzoSyntax]]
     deriving (Eq, Show)
 
 
