@@ -65,32 +65,33 @@ import BzoTokens
 
 %%
 
-fn        : funDef stmnt              {  }
-          | funDef '{' stmnt '}'      {  }
-          | funDef '{' lines '}'      {  }
-          | funDef '{' stmnt expr '}' {  }
+fn        : funDef stmnt              { FunDef (inpars $1) (fnid $1) (outpars $1) $2}
+          | funDef '{' stmnt '}'      { FunDef (inpars $1) (fnid $1) (outpars $1) $3 }
+          | funDef '{' lines '}'      { FunDef (inpars $1) (fnid $1) (outpars $1) $3 }
+          | funDef '{' stmnt expr '}' { FunDef (inpars $1) (fnid $1) (outpars $1) (Statements ((exprs $3) ++ [$4])) }
 
-funDef    : expr Id expr '::'         {  }
-          | Id expr '::'              {  }
-          | expr Id '::'              {  }
-          | Id '::'                   {  }
+funDef    : expr Id expr '::'         { FunDef $1 (AtmStr $2) $3 Undefined }
+          | Id expr '::'              { FunDef Undefined (AtmStr $1) $2 Undefined }
+          | expr Id '::'              { FunDef $1 (AtmStr $2) Undefined Undefined }
+          | Id '::'                   { FunDef Undefined (AtmStr $1) Undefined Undefined}
 
-lines     : stmnt newlines            {  }
-          | stmnt expr newlines       {  }
+lines     : line line                 { Statements ((exprs $1) ++ (exprs $2)) }
+          | lines line                { Statements ((exprs $1) ++ (exprs $2)) }
 
-do        : stmnt stmnt               {  }
-          | do stmnt                  {  }
+line      : stmnt newlines            { $1 }
+          | stmnt expr newlines       { Statements ((exprs $1) ++ [$2]) }
 
-stmnt     : expr '.'                  {  }
-          | stmnt stmnt               {  }
+stmnt     : expr '.'                  { Statements [$1] }
+          | stmnt stmnt               { Statements ((exprs $1) ++ (exprs $2)) }
 
-expr      : atom                      {  }
-          | expr atom                 {  }
-          | expr expr                 {  }
-          | '(' expr ')'              {  }
-          | '(' do ')'                {  }
-          | '(' do expr ')'           {  }
+expr      : atom                      { Expr [$1] }
+          | expr atom                 { Expr ((exprs $1) ++ [$2]) }
+          | expr expr                 { Expr ((exprs $1) ++ (exprs $2)) }
+          | '(' expr ')'              { Expr [$2] }
+          | '(' stmnt ')'             { Expr [$2] }
+          | '(' stmnt expr ')'        { Expr ((exprs $2) ++ (exprs $3)) }
 
+--Newlines need no functions. They exist to be tracked and then discarded.
 newlines  : '\n'                      {  }
           | newlines '\n'             {  }
           | newlines newlines         {  }
