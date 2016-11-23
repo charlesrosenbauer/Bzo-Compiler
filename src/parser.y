@@ -79,6 +79,8 @@ funDef    : expr Id expr '::'         { FunDef $1 (AtmStr $2) $3 Undefined }
           | expr Id '::'              { FunDef $1 (AtmStr $2) Undefined Undefined }
           | Id '::'                   { FunDef Undefined (AtmStr $1) Undefined Undefined}
 
+lambda    : ';' expr '::'             { Lambda $2 Undefined }
+
 lines     : line line                 { Statements ((exprs $1) ++ (exprs $2)) }
           | lines line                { Statements ((exprs $1) ++ (exprs $2)) }
 
@@ -94,6 +96,12 @@ expr      : atom                      { Expr [$1] }
           | '(' expr ')'              { Expr [$2] }
           | '(' stmnt ')'             { Expr [$2] }
           | '(' stmnt expr ')'        { Expr ((exprs $2) ++ [$3]) }
+          | lambda '{' stmnt '}'      { Lambda (pars $1) $3 }
+          | lambda '{' lines '}'      { Lambda (pars $1) $3 }
+          | lambda '{' stmnt expr '}' { Lambda (pars $1) (Statements ((exprs $3) ++ [$4])) }
+          | lambda '{' expr '}'       { Lambda (pars $1) (Statements [$3]) }
+          | lambda expr               { Lambda (pars $1) (Statements [$2]) }
+          | lambda stmnt              { Lambda (pars $1) $2 }
 
 --Newlines need no functions. They exist to be tracked and then discarded.
 newlines  : '\n'                      {  }

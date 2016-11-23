@@ -11,16 +11,19 @@ module BzoSyntax where
 
 data BzoSyntax
     = FunDef {
-        inpars :: BzoSyntax,
-        fnid :: Atom,
+        inpars  :: BzoSyntax,
+        fnid    :: Atom,
         outpars :: BzoSyntax,
-        def :: BzoSyntax }
+        def     :: BzoSyntax }
     | TypDef
+    | Lambda {
+        pars :: BzoSyntax,
+        def  :: BzoSyntax }
     | Atoms {vals :: [Atom] }
     | Tuple [BzoSyntax]
     | Poly  [BzoSyntax]
-    | Statements {exprs :: [BzoSyntax]}
-    | Expr {exprs :: [BzoSyntax]}
+    | Statements {exprs :: [BzoSyntax] }
+    | Expr {exprs :: [BzoSyntax] }
     | Undefined
     deriving (Eq, Show)
 
