@@ -65,10 +65,14 @@ import BzoTokens
 
 %%
 
+call      : fn newlines               { $1 }
+
 fn        : funDef stmnt              { FunDef (inpars $1) (fnid $1) (outpars $1) $2}
           | funDef '{' stmnt '}'      { FunDef (inpars $1) (fnid $1) (outpars $1) $3 }
           | funDef '{' lines '}'      { FunDef (inpars $1) (fnid $1) (outpars $1) $3 }
           | funDef '{' stmnt expr '}' { FunDef (inpars $1) (fnid $1) (outpars $1) (Statements ((exprs $3) ++ [$4])) }
+          | funDef expr               { FunDef (inpars $1) (fnid $1) (outpars $1) (Statements [$2]) }
+          | funDef '{' expr '}'       { FunDef (inpars $1) (fnid $1) (outpars $1) (Statements [$3]) }
 
 funDef    : expr Id expr '::'         { FunDef $1 (AtmStr $2) $3 Undefined }
           | Id expr '::'              { FunDef Undefined (AtmStr $1) $2 Undefined }
@@ -89,7 +93,7 @@ expr      : atom                      { Expr [$1] }
           | expr expr                 { Expr ((exprs $1) ++ (exprs $2)) }
           | '(' expr ')'              { Expr [$2] }
           | '(' stmnt ')'             { Expr [$2] }
-          | '(' stmnt expr ')'        { Expr ((exprs $2) ++ (exprs $3)) }
+          | '(' stmnt expr ')'        { Expr ((exprs $2) ++ [$3]) }
 
 --Newlines need no functions. They exist to be tracked and then discarded.
 newlines  : '\n'                      {  }

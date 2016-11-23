@@ -78,7 +78,7 @@ flushStr str = putStr str >> hFlush stdout
 
 parseInput :: String -> String
 parseInput input = do
-    let out = compileFile input    
+    let out = compileFile input   --change compileFile to compileFile' to switch to parsing mode    
     case out of
         Left  errs -> concatMap ((++ " ") . show) errs
         Right vals -> concatMap ((++ " ") . show) vals
@@ -120,15 +120,3 @@ printMany (x:xs) = do
     putStrLn (x ++ "\n")
     printMany xs
 printMany ([]) = return ()
-
-
-
-
-
-
-
-
-
-
-
-
