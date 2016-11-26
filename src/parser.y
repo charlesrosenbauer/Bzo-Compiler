@@ -73,6 +73,12 @@ fn        : funDef stmnt              { FunDef (inpars $1) (fnid $1) (outpars $1
           | funDef '{' stmnt expr '}' { FunDef (inpars $1) (fnid $1) (outpars $1) (Statements ((exprs $3) ++ [$4])) }
           | funDef expr               { FunDef (inpars $1) (fnid $1) (outpars $1) (Statements [$2]) }
           | funDef '{' expr '}'       { FunDef (inpars $1) (fnid $1) (outpars $1) (Statements [$3]) }
+          | funDef tyExpr             {}
+
+ty        : tyDef tyExpr              {}
+
+tyDef     : expr TyId '::'            {}
+          | TyId '::'                 {}
 
 funDef    : expr Id expr '::'         { FunDef $1 (AtmStr $2) $3 Undefined }
           | Id expr '::'              { FunDef Undefined (AtmStr $1) $2 Undefined }
@@ -103,10 +109,36 @@ expr      : atom                      { Expr [$1] }
           | lambda expr               { Lambda (pars $1) (Statements [$2]) }
           | lambda stmnt              { Lambda (pars $1) $2 }
 
+tyExpr    : tyAtom                    {  }
+          | '(' tyExpr ')'            {  }
+          | '(' plExpr ')'            {  }
+          | '(' tyExpr tyAtom ')'     {  }
+          | '(' plExpr tyAtom ')'     {  }
+          | tyExpr ';;' tyExpr        {  }
+          | modTy tyExpr              {  }
+
+plStmnt   : tyId ','                  {  }
+          | tyId ',' newlines         {  }
+          | plStmnt plStmnt           {  }
+
+tyStmnt   : tyId '.'                  {  }
+          | tyId '.' newlines         {  }
+          | tyStmnt tyStmnt           {  }
+
+modTy     : '~'                       {  }
+          | '@'                       {  }
+          | '[]'                      {  }
+          | '[' INT ']'               {  }
+          | modTy modTy               {  }
+
 --Newlines need no functions. They exist to be tracked and then discarded.
 newlines  : '\n'                      {  }
           | newlines '\n'             {  }
           | newlines newlines         {  }
+
+tyAtom    : TyId                      {  }
+          | '()'                      {  }
+          | '{}'                      {  }
 
 atom      : INT                       { Atoms [(AtmInt $1)] }
           | FLT                       { Atoms [(AtmFlt $1)] }
