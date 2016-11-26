@@ -10,22 +10,26 @@ If you're interested in trying out what's currently there (not much), you may bu
 
 The Language
 
-The basic idea behind the language is that it is a functional / imperative hybrid; it allows you to write both purely functional and imperative code, all on top of a [mostly] functional core. Despite how difficult this sounds, the language is designed to be as simple as possible. The syntax is somewhere between Haskell and Lisp (mostly leaning toward Haskell), but with only 13 special characters, and no keywords besides some built-in functions and types prefixed with "$".
+The basic idea behind the language is that it is a functional / imperative hybrid; it allows you to write both purely functional and imperative code, all on top of a [mostly] functional core. Mutability is handled not unlike Uniqueness Types in languages like Clean, Mercury, and Idris. The language is designed to be as simple as possible. The syntax is somewhere between Haskell and Lisp (mostly leaning toward Haskell), but with only 13 special characters, and no keywords besides some built-in functions and types prefixed with "$".
 
-My long-term goal is have the language focus heavily on parallelism, and compile to multiple platforms. x86, ARM, RISC-V, and Adapteva's Epiphany are the main goals. That is of course supposing I get that far. I'm writing this all in Haskell, a language I'm still learning (despite the language's syntax resembling it). This compiler is a learning exercise for now.
+My long-term goal is have the language focus heavily on parallelism, and compile to multiple platforms. x86, ARM, RISC-V, and Adapteva's Epiphany architecture are the main goals. That is of course supposing I get that far. I'm writing this all in Haskell, a language I'm still learning (despite the language's syntax resembling it). This compiler is a learning exercise for now.
 
-Below is a basic rundown of some of what I have planned for the syntax. It is subject to change of course, and very little of it is currently implemented in the "compiler."
+Below is a basic explanation of some of what I have planned for the syntax. It is subject to change of course, and very little of it is currently implemented in the "compiler."
 
 
 Some Ideas Behind the Language [WIP]
 
 * Bzo manages side effects and mutable variables in the same way, by running functions referring to them more or less in the order written (it's actually a bit more complex than that), and running the rest of the code in parallel if possible.
 
-* Particular side effects are managed by passing mutable "key" variables around. They may store information, but yet due to their status as mutable, the compiler enforces a strict order on their execution, preventing race conditions.
+* Mutable variables are (as mentioned above) handled similarly to Uniqueness types.
+
+* References are handled somewhat similarly to Rust's pointer borrowing, though somewhat simplified. References can be treated like Uniqueness types, when passed as a normal value, but when passed into another reference (let's call it B, and the original A), A is set to null, and ownership of their data is passed to B. If B had ownership of any data, it is destroyed. Effects of mutability still apply however, so passing references may or may not apply. A references always point to mutable data, though the reference itself may or may not be mutable.
+
+* Particular side effects are managed by passing mutable "key" variables around. They may or may not store information, but yet due to their status as mutable, the compiler enforces a strict order on their execution, preventing race conditions.
 
 * The language, due to its focus on parallelism, uses arrays rather than lists.
 
-* Functions work as monadic expressions. I.E : "f(g(x))" in a language like C is written as "x g f" in Bzo.
+* Functions work as monadic expressions (like APL). I.E : "f(g(x))" in a language like C is written as "x g f" in Bzo.
 
 * Unlike Haskell, there is no currying. Tuples are used for passing variables in and out of functions.
 
@@ -37,7 +41,7 @@ Some Ideas Behind the Language [WIP]
 
 * Lambda expressions are of course supported. They are denoted with a single semicolon.
 
-* Other features: pattern matching, references with Rust-like ownership and borrowing, and the ability to use what would normally be considered special characters in identifiers (so long as they aren't used in the normal syntax).
+* Other features: pattern matching, references with Rust-inspired ownership and borrowing, and the ability to use what would normally be considered special characters in identifiers (so long as they aren't used in the normal syntax).
 
 
 All symbols and their (current) intended meanings:
@@ -86,9 +90,6 @@ Nil Type / Empty Tuple
 []
 General Array modifier. Used to denote an array type without specifying size
 
-{}
-General Expression. Used when passing non-function expressions as parameters.
-
 @
 Reference Modifier
 
@@ -100,7 +101,7 @@ Wildcard. Used for pattern matching, as it is in many other languages.
 
 $...
 Denote Builtin; this character is only available for use in identifiers for types and functions
-built in to the language. Most types and functions that use builtins will be given an alias. 
+built in to the language. Most types and functions that use builtins will be given an alias.
 
 ```
 What Hello World will likely look like:
