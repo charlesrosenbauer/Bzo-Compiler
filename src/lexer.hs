@@ -65,7 +65,6 @@ lowercase = oneOf "qwertyuiopasdfghjklzxcvbnm"
 specialGroup :: Parser String
 specialGroup = string "()"
            <|> string "[]"
-           <|> string "{}"
            <|> string "::"
            <|> string ";;"
            <|> string ".."
@@ -257,11 +256,10 @@ parseSpecialGroup = do
     return $ case x of
         "()" -> TkTupEmpt pos
         "[]" -> TkArrGnrl pos
-        "{}" -> TkExpGnrl pos
         ".." -> TkArrMod pos
         "::" -> TkDefine pos
         ";;" -> TkFnSym pos
-                           
+
 
 
 
@@ -339,37 +337,3 @@ fileLexer :: String -> [Either ParseError [BzoToken]]
 fileLexer s = do
     let ls  = lines s
     map (\l -> (appendNewline $ parse (many parseUnit) "Bzo" l)) ls
-                          
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

@@ -46,7 +46,6 @@ import BzoTokens
     ';;'          { TkFnSym     _ }
     '()'          { TkTupEmpt   _ }
     '[]'          { TkArrGnrl   _ }
-    '{}'          { TkExpGnrl   _ }
     '..'          { TkArrMod    _ }
     '\n'          { TkNewline     }
     TyId          { TkTypeId    _ $$ }
@@ -66,6 +65,7 @@ import BzoTokens
 %%
 
 call      : fn newlines               { $1 }
+          | expr newlines             { $1 }
 
 fn        : funDef stmnt              { FunDef (inpars $1) (fnid $1) (outpars $1) $2}
           | funDef '{' stmnt '}'      { FunDef (inpars $1) (fnid $1) (outpars $1) $3 }
@@ -73,12 +73,12 @@ fn        : funDef stmnt              { FunDef (inpars $1) (fnid $1) (outpars $1
           | funDef '{' stmnt expr '}' { FunDef (inpars $1) (fnid $1) (outpars $1) (Statements ((exprs $3) ++ [$4])) }
           | funDef expr               { FunDef (inpars $1) (fnid $1) (outpars $1) (Statements [$2]) }
           | funDef '{' expr '}'       { FunDef (inpars $1) (fnid $1) (outpars $1) (Statements [$3]) }
-          | funDef tyExpr             {}
+          | funDef tyExpr             { Undefined }
 
-ty        : tyDef tyExpr              {}
+ty        : tyDef tyExpr              { Undefined }
 
-tyDef     : expr TyId '::'            {}
-          | TyId '::'                 {}
+tyDef     : expr TyId '::'            { Undefined }
+          | TyId '::'                 { Undefined }
 
 funDef    : expr Id expr '::'         { FunDef $1 (AtmStr $2) $3 Undefined }
           | Id expr '::'              { FunDef Undefined (AtmStr $1) $2 Undefined }
@@ -109,41 +109,40 @@ expr      : atom                      { Expr [$1] }
           | lambda expr               { Lambda (pars $1) (Statements [$2]) }
           | lambda stmnt              { Lambda (pars $1) $2 }
 
-tyExpr    : tyAtom                    {  }
-          | '(' tyExpr ')'            {  }
-          | '(' plExpr ')'            {  }
-          | '(' tyExpr tyAtom ')'     {  }
-          | '(' plExpr tyAtom ')'     {  }
-          | tyExpr ';;' tyExpr        {  }
-          | modTy tyExpr              {  }
+tyExpr    : tyAtom                    { Undefined }
+          | '(' tyStmnt ')'           { Undefined }
+          | '(' plStmnt ')'           { Undefined }
+          | '(' tyStmnt tyAtom ')'    { Undefined }
+          | '(' plStmnt tyAtom ')'    { Undefined }
+          | tyExpr ';;' tyExpr        { Undefined }
+          | modTy tyExpr              { Undefined }
 
-plStmnt   : tyId ','                  {  }
-          | tyId ',' newlines         {  }
-          | plStmnt plStmnt           {  }
+plStmnt   : tyAtom ','                { Undefined }
+          | tyAtom ',' newlines       { Undefined }
+          | plStmnt plStmnt           { Undefined }
 
-tyStmnt   : tyId '.'                  {  }
-          | tyId '.' newlines         {  }
-          | tyStmnt tyStmnt           {  }
+tyStmnt   : tyAtom '.'                { Undefined }
+          | tyAtom '.' newlines       { Undefined }
+          | tyStmnt tyStmnt           { Undefined }
 
-modTy     : '~'                       {  }
-          | '@'                       {  }
-          | '[]'                      {  }
-          | '[' INT ']'               {  }
-          | modTy modTy               {  }
+modTy     : '~'                       { Undefined }
+          | '@'                       { Undefined }
+          | '[]'                      { Undefined }
+          | '[' INT ']'               { Undefined }
+          | modTy modTy               { Undefined }
 
 --Newlines need no functions. They exist to be tracked and then discarded.
-newlines  : '\n'                      {  }
-          | newlines '\n'             {  }
-          | newlines newlines         {  }
+newlines  : '\n'                      { Undefined }
+          | newlines '\n'             { Undefined }
+          | newlines newlines         { Undefined }
 
-tyAtom    : TyId                      {  }
-          | '()'                      {  }
-          | '{}'                      {  }
+tyAtom    : TyId                      { Undefined }
+          | '()'                      { Undefined }
 
-atom      : INT                       { Atoms [(AtmInt $1)] }
-          | FLT                       { Atoms [(AtmFlt $1)] }
-          | STR                       { Atoms [(AtmStr $1)] }
-          | Id                        { Atoms [(AtmId  $1)] }
+atom      : INT                       { Atoms (AtmInt $1) }
+          | FLT                       { Atoms (AtmFlt $1) }
+          | STR                       { Atoms (AtmStr $1) }
+          | Id                        { Atoms (AtmId  $1) }
 
 
 

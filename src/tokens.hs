@@ -29,7 +29,6 @@ showTk (TkDefine        _) = "::"
 showTk (TkFnSym         _) = ";;"
 showTk (TkTupEmpt       _) = "()"
 showTk (TkArrGnrl       _) = "[]"
-showTk (TkExpGnrl       _) = "{}"
 showTk (TkArrMod        _) = ".."
 showTk (TkInt        _  x) = "I:"   ++ show x
 showTk (TkFlt        _  x) = "F:"   ++ show x
@@ -52,17 +51,3 @@ instance Show BzoToken where show = showTk
 
 showTokens :: [BzoToken] -> String
 showTokens tk = unwords $ map showTk tk
-
-
-
-
-
-
-
-
-
-
-
-
-
-

@@ -28,7 +28,6 @@ data BzoToken = TkStartTup SourcePos
            | TkFnSym SourcePos
            | TkTupEmpt SourcePos
            | TkArrGnrl SourcePos
-           | TkExpGnrl SourcePos
            | TkArrMod SourcePos
            | TkInt SourcePos Integer
            | TkFlt SourcePos Float
@@ -48,46 +47,6 @@ data BzoToken = TkStartTup SourcePos
 
 
 
-data DtType = NilType
-            | Tuple [DtType]
-            | CoreType String
-            | TypeVar String
-            | DtFunc FnType
-            | DtPolymorph [DtType]
-            | DtUnspecified
-            deriving (Eq, Show)
-
-
-
-
-
-
-
-
-
-
-data FnType = Func DtType DtType
-            | FnPolymorph [FnType]
-            | FnUnspecified
-            deriving (Eq, Show)
-
-
-
-
-
-
-
-
-
-
 data BzoErr = Other
             | StringErr String
             | LexErr ParseError
-            
-
-
-
-
-
-
-
