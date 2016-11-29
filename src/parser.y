@@ -64,87 +64,134 @@ import BzoTokens
 
 %%
 
-call      : fn newlines               { $1 }
-          | expr newlines             { $1 }
+--call      : fn newlines               { $1 }
+--          | expr newlines             { $1 }
 
-fn        : funDef stmnt              { FunDef (inpars $1) (fnid $1) (outpars $1) $2}
-          | funDef '{' stmnt '}'      { FunDef (inpars $1) (fnid $1) (outpars $1) $3 }
-          | funDef '{' lines '}'      { FunDef (inpars $1) (fnid $1) (outpars $1) $3 }
-          | funDef '{' stmnt expr '}' { FunDef (inpars $1) (fnid $1) (outpars $1) (Statements ((exprs $3) ++ [$4])) }
-          | funDef expr               { FunDef (inpars $1) (fnid $1) (outpars $1) (Statements [$2]) }
-          | funDef '{' expr '}'       { FunDef (inpars $1) (fnid $1) (outpars $1) (Statements [$3]) }
-          | funDef tyExpr             { Undefined }
+--fn        : funDef stmnt              { FunDef (inpars $1) (fnid $1) (outpars $1) $2}
+--          | funDef '{' stmnt '}'      { FunDef (inpars $1) (fnid $1) (outpars $1) $3 }
+--          | funDef '{' lines '}'      { FunDef (inpars $1) (fnid $1) (outpars $1) $3 }
+--          | funDef '{' stmnt expr '}' { FunDef (inpars $1) (fnid $1) (outpars $1) (Statements ((exprs $3) ++ [$4])) }
+--          | funDef expr               { FunDef (inpars $1) (fnid $1) (outpars $1) (Statements [$2]) }
+--          | funDef '{' expr '}'       { FunDef (inpars $1) (fnid $1) (outpars $1) (Statements [$3]) }
+--          | funDef tyExpr             { Undefined }
 
-ty        : tyDef tyExpr              { Undefined }
+--ty        : tyDef tyExpr              { Undefined }
 
-tyDef     : expr TyId '::'            { Undefined }
-          | TyId '::'                 { Undefined }
+--tyDef     : expr TyId '::'            { Undefined }
+--          | TyId '::'                 { Undefined }
 
-funDef    : expr Id expr '::'         { FunDef $1 (AtmStr $2) $3 Undefined }
-          | Id expr '::'              { FunDef Undefined (AtmStr $1) $2 Undefined }
-          | expr Id '::'              { FunDef $1 (AtmStr $2) Undefined Undefined }
-          | Id '::'                   { FunDef Undefined (AtmStr $1) Undefined Undefined}
+--funDef    : expr Id expr '::'         { FunDef $1 (AtmStr $2) $3 Undefined }
+--          | Id expr '::'              { FunDef Undefined (AtmStr $1) $2 Undefined }
+--          | expr Id '::'              { FunDef $1 (AtmStr $2) Undefined Undefined }
+--          | Id '::'                   { FunDef Undefined (AtmStr $1) Undefined Undefined}
 
-lambda    : ';' expr '::'             { Lambda $2 Undefined }
+--lambda    : ';' expr '::'             { Lambda $2 Undefined }
 
-lines     : line line                 { Statements ((exprs $1) ++ (exprs $2)) }
-          | lines line                { Statements ((exprs $1) ++ (exprs $2)) }
+--lines     : line line                 { Statements ((exprs $1) ++ (exprs $2)) }
+--          | lines line                { Statements ((exprs $1) ++ (exprs $2)) }
 
-line      : stmnt newlines            { $1 }
-          | stmnt expr newlines       { Statements ((exprs $1) ++ [$2]) }
+--line      : stmnt newlines            { $1 }
+--          | stmnt expr newlines       { Statements ((exprs $1) ++ [$2]) }
 
-stmnt     : expr '.'                  { Statements [$1] }
-          | stmnt stmnt               { Statements ((exprs $1) ++ (exprs $2)) }
+--stmnt     : expr '.'                  { Statements [$1] }
+--          | stmnt stmnt               { Statements ((exprs $1) ++ (exprs $2)) }
 
-expr      : atom                      { Expr [$1] }
-          | expr atom                 { Expr ((exprs $1) ++ [$2]) }
-          | expr expr                 { Expr ((exprs $1) ++ (exprs $2)) }
-          | '(' expr ')'              { Expr [$2] }
-          | '(' stmnt ')'             { Expr [$2] }
-          | '(' stmnt expr ')'        { Expr ((exprs $2) ++ [$3]) }
-          | lambda '{' stmnt '}'      { Lambda (pars $1) $3 }
-          | lambda '{' lines '}'      { Lambda (pars $1) $3 }
-          | lambda '{' stmnt expr '}' { Lambda (pars $1) (Statements ((exprs $3) ++ [$4])) }
-          | lambda '{' expr '}'       { Lambda (pars $1) (Statements [$3]) }
-          | lambda expr               { Lambda (pars $1) (Statements [$2]) }
-          | lambda stmnt              { Lambda (pars $1) $2 }
+--expr      : atom                      { Expr [$1] }
+--          | expr atom                 { Expr ((exprs $1) ++ [$2]) }
+--          | expr expr                 { Expr ((exprs $1) ++ (exprs $2)) }
+--          | '(' expr ')'              { Expr [$2] }
+--          | '(' stmnt ')'             { Expr [$2] }
+--          | '(' stmnt expr ')'        { Expr ((exprs $2) ++ [$3]) }
+--          | lambda '{' stmnt '}'      { Lambda (pars $1) $3 }
+--          | lambda '{' lines '}'      { Lambda (pars $1) $3 }
+--          | lambda '{' stmnt expr '}' { Lambda (pars $1) (Statements ((exprs $3) ++ [$4])) }
+--          | lambda '{' expr '}'       { Lambda (pars $1) (Statements [$3]) }
+--          | lambda expr               { Lambda (pars $1) (Statements [$2]) }
+--          | lambda stmnt              { Lambda (pars $1) $2 }
 
-tyExpr    : tyAtom                    { Undefined }
-          | '(' tyStmnt ')'           { Undefined }
-          | '(' plStmnt ')'           { Undefined }
-          | '(' tyStmnt tyAtom ')'    { Undefined }
-          | '(' plStmnt tyAtom ')'    { Undefined }
-          | tyExpr ';;' tyExpr        { Undefined }
-          | modTy tyExpr              { Undefined }
+--tyExpr    : tyAtom                    { Undefined }
+--          | '(' tyStmnt ')'           { Undefined }
+--          | '(' plStmnt ')'           { Undefined }
+--          | '(' tyStmnt tyAtom ')'    { Undefined }
+--          | '(' plStmnt tyAtom ')'    { Undefined }
+--          | tyExpr ';;' tyExpr        { Undefined }
+--          | modTy tyExpr              { Undefined }
 
-plStmnt   : tyAtom ','                { Undefined }
-          | tyAtom ',' newlines       { Undefined }
-          | plStmnt plStmnt           { Undefined }
+--plStmnt   : tyAtom ','                { Undefined }
+--          | tyAtom ',' newlines       { Undefined }
+--          | plStmnt plStmnt           { Undefined }
 
-tyStmnt   : tyAtom '.'                { Undefined }
-          | tyAtom '.' newlines       { Undefined }
-          | tyStmnt tyStmnt           { Undefined }
+--tyStmnt   : tyAtom '.'                { Undefined }
+--          | tyAtom '.' newlines       { Undefined }
+--          | tyStmnt tyStmnt           { Undefined }
 
-modTy     : '~'                       { Undefined }
-          | '@'                       { Undefined }
-          | '[]'                      { Undefined }
-          | '[' INT ']'               { Undefined }
-          | modTy modTy               { Undefined }
+--modTy     : '~'                       { Undefined }
+--          | '@'                       { Undefined }
+--          | '[]'                      { Undefined }
+--          | '[' INT ']'               { Undefined }
+--          | modTy modTy               { Undefined }
 
 --Newlines need no functions. They exist to be tracked and then discarded.
-newlines  : '\n'                      { Undefined }
-          | newlines '\n'             { Undefined }
-          | newlines newlines         { Undefined }
+--newlines  : '\n'                      { Undefined }
+--          | newlines '\n'             { Undefined }
+--          | newlines newlines         { Undefined }
 
-tyAtom    : TyId                      { Undefined }
-          | '()'                      { Undefined }
+--tyAtom    : TyId                      { Undefined }
+--          | '()'                      { Undefined }
 
-atom      : INT                       { Atoms (AtmInt $1) }
-          | FLT                       { Atoms (AtmFlt $1) }
-          | STR                       { Atoms (AtmStr $1) }
-          | Id                        { Atoms (AtmId  $1) }
+--atom      : INT                       { Atoms (AtmInt $1) }
+--          | FLT                       { Atoms (AtmFlt $1) }
+--          | STR                       { Atoms (AtmStr $1) }
+--          | Id                        { Atoms (AtmId  $1) }
 
 
+fn          : fndef expr  nl                  { FunDef (inpars $1) (fnid $1) (outpars $1) (Statements [$2]) }
+            | fndef stmnt nl                  { FunDef (inpars $1) (fnid $1) (outpars $1) $2 }
+            | fndef stmnt expr nl             { FunDef (inpars $1) (fnid $1) (outpars $1) (Statements (exprs $2) ++ [$3]) }
+            | fndef '{' expr  '}'             { FunDef (inpars $1) (fnid $1) (outpars $1) (Statements [$3]) }
+            | fndef '{' nl expr    '}'        { FunDef (inpars $1) (fnid $1) (outpars $1) (Statements [$4]) }
+            | fndef '{' expr nl    '}'        { FunDef (inpars $1) (fnid $1) (outpars $1) (Statements [$3]) }
+            | fndef '{' nl expr nl '}'        { FunDef (inpars $1) (fnid $1) (outpars $1) (Statements [$4]) }
+            | fndef '{' stmnt '}'             { FunDef (inpars $1) (fnid $1) (outpars $1) $3 }
+            | fndef '{' nl stmnt    '}'       { FunDef (inpars $1) (fnid $1) (outpars $1) $4 }
+            | fndef '{' nl stmnt expr    '}'  { FunDef (inpars $1) (fnid $1) (outpars $1) $4 }
+            | fndef '{' stmnt nl         '}'  { FunDef (inpars $1) (fnid $1) (outpars $1) $3 }
+            | fndef '{' stmnt expr nl    '}'  { FunDef (inpars $1) (fnid $1) (outpars $1) (Statements (exprs $3) ++ [$4]) }
+            | fndef '{' nl stmnt nl      '}'  { FunDef (inpars $1) (fnid $1) (outpars $1) $4 }
+            | fndef '{' nl stmnt expr nl '}'  { FunDef (inpars $1) (fnid $1) (outpars $1) (Statements (exprs $4) ++ [$5]) }
+            | fndef '{' lines '}'             { FunDef (inpars $1) (fnid $1) (outpars $1) $3 }
+            | fndef '{' nl lines '}'          { FunDef (inpars $1) (fnid $1) (outpars $1) $4 }
+
+fndef       : expr id expr '::'          { FunDef $1 $2 $3 Undefined }
+            | expr id '::'               { FunDef $1 $2 Undefined Undefined }
+            | id expr '::'               { FunDef Undefined $1 $2 Undefined }
+            | id '::'                    { FunDef Undefined $1 Undefined Undefined }
+
+lambda      : ';' expr '::'              { Lambda $2 Undefined }
+
+stmnt       : expr '.'                   { Statements [$1] }
+            | stmnt stmnt                { Statements ((exprs $1) ++ (exprs $2)) }
+            | lambda stmnt               { Statements Lambda (pars $1) $2 }
+            | lambda '{' stmnt '}'       { Statements Lambda (pars $1) $3 }
+            | lambda '{' lines '}'       { Statements Lambda (pars $1) $3 }
+
+expr        : atom                       { Expr $1 }
+            | expr expr                  { Expr ((exprs $1) ++ (exprs $2)) }
+            | '(' expr ')'               { Expr $2 }
+            | '(' stmnt expr ')'         { Expr ([$2] ++ [$3]) }
+
+lines       : stmnt nl                   { $1 }
+            | expr  nl                   { Statements $1 }
+            | stmnt expr nl              { Statements ((exprs $1) ++ [$2]) }
+            | lines lines                { Statements ((exprs $1) ++ (exprs $2)) }
+
+nl          : '\n'                       { Undefined }
+            | nl nl                      { Undefined }
+
+atom        : INT                        { Atoms (AtmInt $1) }
+            | FLT                        { Atoms (AtmFlt $1) }
+            | STR                        { Atoms (AtmStr $1) }
+            | Id                         { Atoms (AtmId  $1) }
 
 
 
