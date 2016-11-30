@@ -11,31 +11,31 @@ import Text.ParserCombinators.Parsec
 
 
 
-data BzoToken = TkStartTup SourcePos
-           | TkEndTup SourcePos
-           | TkStartDat SourcePos
-           | TkEndDat SourcePos
-           | TkStartDo SourcePos
-           | TkEndDo SourcePos
-           | TkSepExpr SourcePos
-           | TkSepPoly SourcePos
-           | TkFilterSym SourcePos
-           | TkLambdaSym SourcePos
-           | TkMutable SourcePos
-           | TkReference SourcePos
-           | TkWildcard SourcePos
-           | TkDefine SourcePos
-           | TkFnSym SourcePos
-           | TkTupEmpt SourcePos
-           | TkArrGnrl SourcePos
-           | TkArrMod SourcePos
-           | TkInt SourcePos Integer
-           | TkFlt SourcePos Float
-           | TkStr SourcePos String
-           | TkId SourcePos String
-           | TkTypeId SourcePos String
+data BzoToken = TkStartTup  { pos :: SourcePos }
+           | TkEndTup       { pos :: SourcePos }
+           | TkStartDat     { pos :: SourcePos }
+           | TkEndDat       { pos :: SourcePos }
+           | TkStartDo      { pos :: SourcePos }
+           | TkEndDo        { pos :: SourcePos }
+           | TkSepExpr      { pos :: SourcePos }
+           | TkSepPoly      { pos :: SourcePos }
+           | TkFilterSym    { pos :: SourcePos }
+           | TkLambdaSym    { pos :: SourcePos }
+           | TkMutable      { pos :: SourcePos }
+           | TkReference    { pos :: SourcePos }
+           | TkWildcard     { pos :: SourcePos }
+           | TkDefine       { pos :: SourcePos }
+           | TkFnSym        { pos :: SourcePos }
+           | TkTupEmpt      { pos :: SourcePos }
+           | TkArrGnrl      { pos :: SourcePos }
+           | TkArrMod       { pos :: SourcePos }
+           | TkInt          { pos :: SourcePos, valInt :: Integer }
+           | TkFlt          { pos :: SourcePos, valFlt :: Float   }
+           | TkStr          { pos :: SourcePos, valStr :: String  }
+           | TkId           { pos :: SourcePos, valId  :: String  }
+           | TkTypeId       { pos :: SourcePos, valId  :: String  }
            | TkNewline --SourcePos
-           | TkBuiltin SourcePos String
+           | TkBuiltin      { pos :: SourcePos, valId  :: String  }
            deriving Eq
 
 
