@@ -1,83 +1,41 @@
 
 'A bunch of potential Bzo expressions for use in testing expression parsing'
+'Many of these may show up in the standard library'
 
-{} Once :: (fn :: {}. done :: Bl)
-
-do :: ({} Once) ;; {}
-
-a do :: (a done. a fn)?
-
-
-
-foldl :: ([]A. B. ((A. B) ;; (C. B))) ;; B
-foldl :: ([]A. B. ((A. B) ;; (C. B)). Int) ;; B
-(arr. in. fn) foldl :: (arr. in. fn. 0) foldl
-(arr. in. fn. i) foldl :: i arr fn x. ((i. arr max)>=. {(arr. x. fn. i +1) foldl}. x)?
-
-foldr :: ([]A. B. ((A. B) ;; (C. B))) ;; B
-foldr :: ([]A. B. ((A. B) ;; (C. B)). Int) ;; B
-(arr. in. fn) foldr :: (arr. in. fn. arr max) foldr
-(arr. in. fn. i) foldr :: i arr fn x. (arr. x. fn. i -1) foldr
-(arr. in. fn. 0) foldr :: 0 arr fn
-
-? :: (Bool. {} ;; A. {} ;; A) ;; A
-? :: (Bool. {}) ;; {}
-
-mid :: (Num. Num) ;; Num
-(a. b) mid :: ((a.b)- /2. a)+
-
-pfork :: ([]A. (A. A) ;; A) ;; A
-pfork :: ([]A. (A. A) ;; A. Int. Int) ;; A
-(arr. fn) pfork :: (arr. fn. 0. arr max) pfork
-(arr. fn. b. e) pfork :: ((b.e)>=. {b arr fn}. {((arr. fn. b. (b.e)mid)pfork. (arr. fn. (b.e)mid. e)pfork) fn})?
-
-+ :: Num.. ;; Num
-a:Num.. +::(a.+)pfold
+n +1  :: (n.  1)+
+n +2  :: (n.  2)+
+n -1  :: (n.  1)-
+n -2  :: (n.  2)-
+n *2  :: (n.  2)*
+n /2  :: (n.  2)/
+n %2  :: (n.  2)%
+n %4  :: (n.  4)%
+n %8  :: (n.  8)%
+n %16 :: (n. 16)%
 
 
+? :: (Bool. A. A) ;; A
+(True . l. _) ? :: l
+(False. _. r) ? :: r
 
--> :: ((~A. (~A ;; ~A)). {}) ;; (~A. (~A. ~A))
-(t. f. e) -> :: e. (t. t f)
+map :: ([]A. (A ;; B)) ;; []B
+(arr. f) map :: arr f..
 
+reduce :: ([]A. B. ((A. B) ;; B)) ;; B
+reduce :: ([]A. B. ((A. B) ;; B). Int) ;; B
+(arr. x. f)    reduce :: ((0 arr. x) f. 1) reduce
+(arr. x. f. i) reduce :: ((arr top. i)>.
+  ((i arr. x) f. i +1) reduce
+  x)?
 
+mkReduce :: (B. ((A. B) ;; B)) ;; ([]A ;; B)
+(x. f) mkReduce :: ;arr :: (arr. x. f) reduce
 
-c:~Console
-stage:~
-((c. ;(c)::(c."Pass")print c). {
-    'do stage 0'
-})-> stage
+mk :: (A. ((A. B) ;; C)) ;; (B ;; C)
+(x. f) mk :: ;y :: (x. y) f
 
-(stage. {
-    'do stage 1'
-})-> stage
+mk :: (A. ((A. B. C) ;; D)) ;; ((B. C) ;; D)
+(x. f) mk :: ;(y. z) :: (x. y. z) f
 
-(stage. {
-    'do stage 2'
-})-> stage
-
-(stage. {
-    'do stage 3'
-})-> stage
-
-
-
-
-
-
-seq :: ({}..) ;; {}
-seq :: fn. ((). fn) seqmap
-
-
-3 a. 4 b. ~c. ~d. ~e
-({a ^2 c}. {b ^2 d}. {(a. b) ^2 e}. {e \2}) seq
-(a.b)(^2..)+ \2
-
-
-
-++ :: ([]A. []A) ;; []A
-(a:[]T.b:[]T) ++ ~q :: q:[(a len. b len)+]T. (a. 0) cpy q. (b. a len) cpy q
-
-
-([2 5 3 1]. [0 1 1 6]) ++ arr
-arr $= [2 5 3 1 0 1 1 6]
-
+mk :: (A. ((A. B. C. D) ;; E)) ;; ((B. C. D) ;; E)
+(w. f) mk :: ;(x. y. z) :: (w. x. y. z) f
