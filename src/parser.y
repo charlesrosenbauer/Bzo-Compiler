@@ -47,7 +47,7 @@ import BzoTokens
     '()'          { TkTupEmpt   _ }
     '[]'          { TkArrGnrl   _ }
     '..'          { TkArrMod    _ }
-    '\n'          { TkNewline     }
+    '\n'          { TkNewline   }
     TyId          { TkTypeId    _ $$ }
     Id            { TkId        _ $$ }
     INT           { TkInt       _ $$ }
@@ -145,62 +145,90 @@ import BzoTokens
 --          | Id                        { Atoms (AtmId  $1) }
 
 
-fn          : fndef expr  nl                  { FunDef (inpars $1) (fnid $1) (outpars $1) (Statements [$2]) }
-            | fndef stmnt nl                  { FunDef (inpars $1) (fnid $1) (outpars $1) $2 }
-            | fndef stmnt expr nl             { FunDef (inpars $1) (fnid $1) (outpars $1) (Statements (exprs $2) ++ [$3]) }
-            | fndef '{' expr  '}'             { FunDef (inpars $1) (fnid $1) (outpars $1) (Statements [$3]) }
-            | fndef '{' nl expr    '}'        { FunDef (inpars $1) (fnid $1) (outpars $1) (Statements [$4]) }
-            | fndef '{' expr nl    '}'        { FunDef (inpars $1) (fnid $1) (outpars $1) (Statements [$3]) }
-            | fndef '{' nl expr nl '}'        { FunDef (inpars $1) (fnid $1) (outpars $1) (Statements [$4]) }
-            | fndef '{' stmnt '}'             { FunDef (inpars $1) (fnid $1) (outpars $1) $3 }
-            | fndef '{' nl stmnt    '}'       { FunDef (inpars $1) (fnid $1) (outpars $1) $4 }
-            | fndef '{' nl stmnt expr    '}'  { FunDef (inpars $1) (fnid $1) (outpars $1) $4 }
-            | fndef '{' stmnt nl         '}'  { FunDef (inpars $1) (fnid $1) (outpars $1) $3 }
-            | fndef '{' stmnt expr nl    '}'  { FunDef (inpars $1) (fnid $1) (outpars $1) (Statements (exprs $3) ++ [$4]) }
-            | fndef '{' nl stmnt nl      '}'  { FunDef (inpars $1) (fnid $1) (outpars $1) $4 }
-            | fndef '{' nl stmnt expr nl '}'  { FunDef (inpars $1) (fnid $1) (outpars $1) (Statements (exprs $4) ++ [$5]) }
-            | fndef '{' lines '}'             { FunDef (inpars $1) (fnid $1) (outpars $1) $3 }
-            | fndef '{' nl lines '}'          { FunDef (inpars $1) (fnid $1) (outpars $1) $4 }
-
-fndef       : expr id expr '::'          { FunDef $1 $2 $3 Undefined }
-            | expr id '::'               { FunDef $1 $2 Undefined Undefined }
-            | id expr '::'               { FunDef Undefined $1 $2 Undefined }
-            | id '::'                    { FunDef Undefined $1 Undefined Undefined }
-
-lambda      : ';' expr '::'              { Lambda $2 Undefined }
-
-stmnt       : expr '.'                   { Statements [$1] }
-            | stmnt stmnt                { Statements ((exprs $1) ++ (exprs $2)) }
-            | lambda stmnt               { Statements Lambda (pars $1) $2 }
-            | lambda '{' stmnt '}'       { Statements Lambda (pars $1) $3 }
-            | lambda '{' lines '}'       { Statements Lambda (pars $1) $3 }
-
-expr        : atom                       { Expr $1 }
-            | expr expr                  { Expr ((exprs $1) ++ (exprs $2)) }
-            | '(' expr ')'               { Expr $2 }
-            | '(' stmnt expr ')'         { Expr ([$2] ++ [$3]) }
-
-lines       : stmnt nl                   { $1 }
-            | expr  nl                   { Statements $1 }
-            | stmnt expr nl              { Statements ((exprs $1) ++ [$2]) }
-            | lines lines                { Statements ((exprs $1) ++ (exprs $2)) }
-
-nl          : '\n'                       { Undefined }
-            | nl nl                      { Undefined }
-
-atom        : INT                        { Atoms (AtmInt $1) }
-            | FLT                        { Atoms (AtmFlt $1) }
-            | STR                        { Atoms (AtmStr $1) }
-            | Id                         { Atoms (AtmId  $1) }
 
 
+calls       : fn                        { Calls [$1] }
+            | lines                     { Calls [$1] }
+            | nl                        { Calls [] }
+            | calls calls               { Calls ((calls $1) ++ (calls $2)) }
 
+lines       : expr nl                   { Statements [$1] }
+            | stmnt nl                  { $1 }
+            | lines lines               { Statements ((exprs $1) ++ (exprs $2)) }
 
+fn          : fnDef expr                { FunDef (inpars $1) (fnid $1) (expars $1) $2 }
+            | fnDef stmnt               { FunDef (inpars $1) (fnid $1) (expars $1) $2 }
+            | fnDef stexpr              { FunDef (inpars $1) (fnid $1) (expars $1) $2 }
+            | fnDef expr nl             { FunDef (inpars $1) (fnid $1) (expars $1) $2 }
+            | fnDef stmnt nl            { FunDef (inpars $1) (fnid $1) (expars $1) $2 }
+            | fnDef stexpr nl           { FunDef (inpars $1) (fnid $1) (expars $1) $2 }
+            | fnDef sdo expr edo        { FunDef (inpars $1) (fnid $1) (expars $1) $3 }
+            | fnDef sdo stmnt edo       { FunDef (inpars $1) (fnid $1) (expars $1) $3 }
+            | fnDef sdo stexpr edo      { FunDef (inpars $1) (fnid $1) (expars $1) $3 }
+            | fnDef sdo lines edo       { FunDef (inpars $1) (fnid $1) (expars $1) $3 }
 
+fnDef       : expr Id expr '::'         { FunDef $1 (AtmId $2) $3 Undefined }
+            | expr Id '::'              { FunDef $1 (AtmId $2) Undefined Undefined }
+            | Id expr '::'              { FunDef Undefined (AtmId $1) $2 Undefined }
+            | Id '::'                   { FunDef Undefined (AtmId $1) Undefined Undefined }
+
+lambda      : ';' expr '::'             { Lambda $2 Undefined }
+
+expr        : atom                      { Expr [$1] }
+            | expr expr                 { Expr ((exprs $1) ++ (exprs $2)) }
+            | stup expr etup            { Expr [$2] }
+            | stup stmnt etup           { Expr (exprs $2) }
+            | stup stexpr etup          { Expr [$2] }
+            | lambda expr               { Lambda (pars $1) $2 }
+            | lambda stmnt              { Lambda (pars $1) $2 }
+            | lambda stexpr             { Lambda (pars $1) $2 }
+            | lambda sdo expr edo       { Lambda (pars $1) $3 }
+            | lambda sdo stmnt edo      { Lambda (pars $1) $3 }
+            | lambda sdo stexpr edo     { Lambda (pars $1) $3 }
+            | lambda sdo lines edo      { Lambda (pars $1) $3 }
+
+stmnt       : expr '.'                  { Statements [$1] }
+            | stmnt stmnt               { Statements ((exprs $1) ++ (exprs $2)) }
+
+stexpr      : stmnt expr                { Statements ((exprs $1) ++ [$2]) }
+
+modTy       : '~'                       { Modifiers [Mutb] }
+            | '@'                       { Modifiers [Refr] }
+            | '[]'                      { Modifiers [Arry] }
+            | '[' INT ']'               { Modifiers [ArSz $2]}
+            | modTy modTy               { Modifiers ((mods $1) ++ (mods $2)) }
+
+--Newlines need no functions. They exist to be tracked and then discarded.
+nl          : '\n'                      { Undefined }
+            | nl nl                     { Undefined }
+
+tyAtom      : TyId                      { Undefined }
+            | '()'                      { Undefined }
+
+atom        : INT                       { Atoms (AtmInt $1) }
+            | FLT                       { Atoms (AtmFlt $1) }
+            | STR                       { Atoms (AtmStr $1) }
+            | Id                        { Atoms (AtmId  $1) }
+            | Id '..'                   { ArrAtoms (AtmId $1) }
+            | '_'                       { Wildcard }
+
+stup        : '('                       { Undefined }
+            | '(' nl                    { Undefined }
+
+etup        : ')'                       { Undefined }
+            | nl ')'                    { Undefined }
+
+sdo         : '{'                       { Undefined }
+            | '{' nl                    { Undefined }
+
+edo         : '}'                       { Undefined }
+            | nl '}'                    { Undefined }
+            | '}' nl                    { Undefined }
+            | nl '{' nl                 { Undefined }
 
 
 {
 
-parseError tokens = error $ show tokens
+parseError tokens = error ("\n\n\n\n" ++ (show tokens))
 
 }

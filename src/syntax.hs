@@ -1,4 +1,5 @@
 module BzoSyntax where
+import BzoTypes
 
 
 
@@ -11,20 +12,40 @@ module BzoSyntax where
 
 data BzoSyntax
     = FunDef {
-        inpars  :: BzoSyntax,
-        fnid    :: Atom,
-        outpars :: BzoSyntax,
-        def     :: BzoSyntax }
+        --pos     :: BzoPos,
+        inpars :: BzoSyntax,
+        fnid   :: Atom,
+        expars :: BzoSyntax,
+        def    :: BzoSyntax }
     | TypDef {
+        --pos  :: BzoPos,
         pars :: BzoSyntax,
         typ  :: DtType }
     | Lambda {
+        --pos  :: BzoPos,
         pars :: BzoSyntax,
         def  :: BzoSyntax }
-    | Atoms Atom
-    | Type DtType
-    | Statements {exprs :: [BzoSyntax] }
-    | Expr {exprs :: [BzoSyntax] }
+    | Atoms {
+        --pos  :: BzoPos,
+        atom  :: Atom }
+    | ArrAtoms {
+        --pos  :: BzoPos,
+        atom  :: Atom }
+    | Type {
+        --pos :: BzoPos,
+        typ :: DtType }
+    | Statements {
+        --pos   :: BzoPos,
+        exprs :: [BzoSyntax] }
+    | Expr {
+        --pos   :: BzoPos,
+        exprs :: [BzoSyntax] }
+    | Modifiers {
+        --pos  :: BzoPos,
+        mods :: [Modifier] }
+    | Calls {
+        calls :: [BzoSyntax] }
+    | Wildcard
     | Undefined
     deriving (Eq, Show)
 
@@ -75,4 +96,21 @@ data FnType
     = Func DtType DtType
     | FnPolymorph [FnType]
     | FnUnspecified
+    deriving (Eq, Show)
+
+
+
+
+
+
+
+
+
+
+data Modifier
+    = Mutb
+    | Refr
+    | Arry
+    | ArSz Integer
+    | Mods [Modifier]
     deriving (Eq, Show)
