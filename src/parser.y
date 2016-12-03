@@ -156,9 +156,9 @@ lines       : expr nl                   { Statements [$1] }
             | stmnt nl                  { $1 }
             | lines lines               { Statements ((exprs $1) ++ (exprs $2)) }
 
-fn          : fnDef expr                { FunDef (inpars $1) (fnid $1) (expars $1) $2 }
+fn          : fnDef stexpr              { FunDef (inpars $1) (fnid $1) (expars $1) $2 }
+            | fnDef expr                { FunDef (inpars $1) (fnid $1) (expars $1) $2 }
             | fnDef stmnt               { FunDef (inpars $1) (fnid $1) (expars $1) $2 }
-            | fnDef stexpr              { FunDef (inpars $1) (fnid $1) (expars $1) $2 }
             | fnDef expr nl             { FunDef (inpars $1) (fnid $1) (expars $1) $2 }
             | fnDef stmnt nl            { FunDef (inpars $1) (fnid $1) (expars $1) $2 }
             | fnDef stexpr nl           { FunDef (inpars $1) (fnid $1) (expars $1) $2 }
@@ -175,9 +175,9 @@ fnDef       : expr Id expr '::'         { FunDef $1 (AtmId $2) $3 Undefined }
 lambda      : ';' expr '::'             { Lambda $2 Undefined }
 
 expr        : atom                      { Expr [$1] }
-            | expr expr                 { Expr ((exprs $1) ++ (exprs $2)) }
+            | expr expr                 { Expr ([$1] ++ [$2]) }
             | stup expr etup            { Expr [$2] }
-            | stup stmnt etup           { Expr (exprs $2) }
+            | stup stmnt etup           { Expr [$2] }
             | stup stexpr etup          { Expr [$2] }
             | lambda expr               { Lambda (pars $1) $2 }
             | lambda stmnt              { Lambda (pars $1) $2 }
@@ -188,9 +188,9 @@ expr        : atom                      { Expr [$1] }
             | lambda sdo lines edo      { Lambda (pars $1) $3 }
 
 stmnt       : expr '.'                  { Statements [$1] }
-            | stmnt stmnt               { Statements ((exprs $1) ++ (exprs $2)) }
+            | stmnt stmnt               { Statements ([$1] ++ [$2]) }
 
-stexpr      : stmnt expr                { Statements ((exprs $1) ++ [$2]) }
+stexpr      : stmnt expr                { Statements ([$1] ++ [Statements [$2]]) }
 
 modTy       : '~'                       { Modifiers [Mutb] }
             | '@'                       { Modifiers [Refr] }
