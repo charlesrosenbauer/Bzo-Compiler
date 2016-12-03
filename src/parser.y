@@ -209,7 +209,7 @@ atom        : INT                       { Atoms (AtmInt $1) }
             | FLT                       { Atoms (AtmFlt $1) }
             | STR                       { Atoms (AtmStr $1) }
             | Id                        { Atoms (AtmId  $1) }
-            | Id '..'                   { ArrAtoms (AtmId $1) }
+            | Id '..'                   { ArrAtom (AtmId $1) }
             | '_'                       { Wildcard }
 
 stup        : '('                       { Undefined }
@@ -229,6 +229,6 @@ edo         : '}'                       { Undefined }
 
 {
 
-parseError tokens = error ("\n\n\n\n" ++ (show tokens))
+parseError tokens = error ("ERROR. DUMPING REST OF LINE: " ++ (show tokens) ++ "\n\n")
 
 }
