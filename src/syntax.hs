@@ -47,6 +47,14 @@ data BzoSyntax
         mods :: [Modifier] }
     | Calls {
         calls :: [BzoSyntax] }
+    | TupleExpr {
+        --pos :: BzoPos,
+        exprs :: [BzoSyntax] }
+    | StatementBlock {
+        --pos :: BzoPos,
+        inpar :: BzoSyntax,
+        expar :: BzoSyntax,
+        exprs :: [BzoSyntax] }
     | Wildcard
     | Undefined
     deriving Eq
@@ -166,11 +174,13 @@ showAST (Lambda par def)             = " {LAMBDA: " ++ (show par) ++ " :: " ++ (
 showAST (Atoms atm)                  = " ATOM: " ++ (show atm) ++ " "
 showAST (ArrAtom atm)                = " ARRAY ATOM: " ++ (show atm) ++ " "
 showAST (Type _ _)                   = " TYPE "
-showAST (Statements ex)              = " {ST: " ++ (concatMap showAST ex) ++  " }. "
-showAST (Expr ex)                    = " (EX: " ++ concatMap showAST ex ++ " ) "
+showAST (Statements ex)              = " {ST: " ++ (concatMap showAST ex) ++ " }. "
+showAST (Expr ex)                    = " (EX: " ++ (concatMap showAST ex) ++ " ) "
+showAST (TupleExpr ex)               = " (TU: " ++ (concatMap showAST ex) ++ " ) "
 showAST (Modifiers m)                = concatMap show m
 showAST (Calls c)                    = concatMap (\s -> "CALL:: " ++ (show s) ++ "\n") c
 showAST (Wildcard)                   = " _WILDCARD_ "
 showAST (Undefined)                  = " UNDEFINED "
-showAST _                            = " \n!!UNKNOWN!!\n "
+showAST (StatementBlock i x def)     = "{BLOCK from " ++ (show i) ++ " to " ++ (show x) ++ ": " ++ (concatMap show def) ++ " }"
+showAST _                            = "\n!!UNKNOWN!!\n"
 instance Show BzoSyntax where show = showAST

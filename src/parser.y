@@ -42,7 +42,7 @@ import BzoTokens
     '~'           { TkMutable   _ }
     '@'           { TkReference _ }
     '_'           { TkWildcard  _ }
-    '::'          { TkDefine    _ }
+    DEF           { TkDefine    _ }
     ';;'          { TkFnSym     _ }
     '()'          { TkTupEmpt   _ }
     '[]'          { TkArrGnrl   _ }
@@ -64,139 +64,73 @@ import BzoTokens
 
 %%
 
---call      : fn newlines               { $1 }
---          | expr newlines             { $1 }
+calls       : fnCall                                    { Calls [$1] }
+            | line                                      { Calls [$1] }
+            | lines                                     { Calls [$1] }
+            | nl                                        { Calls [] }
+            | calls calls                               { Calls ((calls $1) ++ (calls $2)) }
 
---fn        : funDef stmnt              { FunDef (inpars $1) (fnid $1) (outpars $1) $2}
---          | funDef '{' stmnt '}'      { FunDef (inpars $1) (fnid $1) (outpars $1) $3 }
---          | funDef '{' lines '}'      { FunDef (inpars $1) (fnid $1) (outpars $1) $3 }
---          | funDef '{' stmnt expr '}' { FunDef (inpars $1) (fnid $1) (outpars $1) (Statements ((exprs $3) ++ [$4])) }
---          | funDef expr               { FunDef (inpars $1) (fnid $1) (outpars $1) (Statements [$2]) }
---          | funDef '{' expr '}'       { FunDef (inpars $1) (fnid $1) (outpars $1) (Statements [$3]) }
---          | funDef tyExpr             { Undefined }
+line        : statements nl                             { $1 }
+            | statement  nl                             { $1 }
+            | statement  expr nl                        { Statements ((exprs $1) ++ [$2]) }
+            | statements expr nl                        { Statements ((exprs $1) ++ [$2]) }
+            | expr       nl                             { Statements [$1] }
 
---ty        : tyDef tyExpr              { Undefined }
+lines       : line  line                                { Statements ((exprs $1) ++ (exprs $2)) }
+            | lines line                                { Statements ((exprs $1) ++ (exprs $2)) }
 
---tyDef     : expr TyId '::'            { Undefined }
---          | TyId '::'                 { Undefined }
+statements  : statement  statement                      { Statements ((exprs $1) ++ (exprs $2)) }
+            | statements statement                      { Statements ((exprs $1) ++ (exprs $2)) }
 
---funDef    : expr Id expr '::'         { FunDef $1 (AtmStr $2) $3 Undefined }
---          | Id expr '::'              { FunDef Undefined (AtmStr $1) $2 Undefined }
---          | expr Id '::'              { FunDef $1 (AtmStr $2) Undefined Undefined }
---          | Id '::'                   { FunDef Undefined (AtmStr $1) Undefined Undefined}
+statement   : expr '.'                                  { Statements [$1] }
 
---lambda    : ';' expr '::'             { Lambda $2 Undefined }
+expr        : expr expr                                 { Expr ((exprs $1) ++ (exprs $2)) }
+            | tuple block tuple                         { Expr [StatementBlock $1 $3 (exprs $2)] }
+            | tuple                                     { Expr [$1] }
+            | INT                                       { Expr [Atoms (AtmInt $1)] }
+            | FLT                                       { Expr [Atoms (AtmFlt $1)] }
+            | STR                                       { Expr [Atoms (AtmStr $1)] }
+            | Id                                        { Expr [Atoms (AtmId  $1)] }
+            | Id '..'                                   { Expr [ArrAtom (AtmId $1)] }
+            | '_'                                       { Expr [Wildcard] }
+            | lambda block                              { Expr [Lambda (pars $1) $2] }
 
---lines     : line line                 { Statements ((exprs $1) ++ (exprs $2)) }
---          | lines line                { Statements ((exprs $1) ++ (exprs $2)) }
+tuple       : stup expr etup                            { TupleExpr [$2] }
+            | stup statement  etup                      { TupleExpr [$2] }
+            | stup statements etup                      { TupleExpr [$2] }
+            | stup statement  expr etup                 { TupleExpr ((exprs $2) ++ [$3]) }
+            | stup statements expr etup                 { TupleExpr ((exprs $2) ++ [$3]) }
+            | stup line  etup                           { TupleExpr (exprs $1) }
+            | stup lines etup                           { TupleExpr (exprs $1) }
 
---line      : stmnt newlines            { $1 }
---          | stmnt expr newlines       { Statements ((exprs $1) ++ [$2]) }
+fnCall      : fnDef block                               { FunDef (inpars $1) (fnid $1) (expars $1) $2 }
+            | fnDef expr nl                             { FunDef (inpars $1) (fnid $1) (expars $1) $ Statements [$2] }
 
---stmnt     : expr '.'                  { Statements [$1] }
---          | stmnt stmnt               { Statements ((exprs $1) ++ (exprs $2)) }
+fnDef       : tuple Id tuple DEF                        { FunDef $1 (AtmId $2) $3 Undefined }
+            | tuple Id DEF                              { FunDef $1 (AtmId $2) Undefined Undefined }
+            | Id tuple DEF                              { FunDef Undefined (AtmId $1) $2 Undefined }
+            | Id DEF                                    { FunDef Undefined (AtmId $1) Undefined Undefined }
 
---expr      : atom                      { Expr [$1] }
---          | expr atom                 { Expr ((exprs $1) ++ [$2]) }
---          | expr expr                 { Expr ((exprs $1) ++ (exprs $2)) }
---          | '(' expr ')'              { Expr [$2] }
---          | '(' stmnt ')'             { Expr [$2] }
---          | '(' stmnt expr ')'        { Expr ((exprs $2) ++ [$3]) }
---          | lambda '{' stmnt '}'      { Lambda (pars $1) $3 }
---          | lambda '{' lines '}'      { Lambda (pars $1) $3 }
---          | lambda '{' stmnt expr '}' { Lambda (pars $1) (Statements ((exprs $3) ++ [$4])) }
---          | lambda '{' expr '}'       { Lambda (pars $1) (Statements [$3]) }
---          | lambda expr               { Lambda (pars $1) (Statements [$2]) }
---          | lambda stmnt              { Lambda (pars $1) $2 }
+lambda      : ';' expr DEF                              { Lambda $2 Undefined }
 
---tyExpr    : tyAtom                    { Undefined }
---          | '(' tyStmnt ')'           { Undefined }
---          | '(' plStmnt ')'           { Undefined }
---          | '(' tyStmnt tyAtom ')'    { Undefined }
---          | '(' plStmnt tyAtom ')'    { Undefined }
---          | tyExpr ';;' tyExpr        { Undefined }
---          | modTy tyExpr              { Undefined }
-
---plStmnt   : tyAtom ','                { Undefined }
---          | tyAtom ',' newlines       { Undefined }
---          | plStmnt plStmnt           { Undefined }
-
---tyStmnt   : tyAtom '.'                { Undefined }
---          | tyAtom '.' newlines       { Undefined }
---          | tyStmnt tyStmnt           { Undefined }
-
---modTy     : '~'                       { Undefined }
---          | '@'                       { Undefined }
---          | '[]'                      { Undefined }
---          | '[' INT ']'               { Undefined }
---          | modTy modTy               { Undefined }
-
---Newlines need no functions. They exist to be tracked and then discarded.
---newlines  : '\n'                      { Undefined }
---          | newlines '\n'             { Undefined }
---          | newlines newlines         { Undefined }
-
---tyAtom    : TyId                      { Undefined }
---          | '()'                      { Undefined }
-
---atom      : INT                       { Atoms (AtmInt $1) }
---          | FLT                       { Atoms (AtmFlt $1) }
---          | STR                       { Atoms (AtmStr $1) }
---          | Id                        { Atoms (AtmId  $1) }
+block       : line                                      { $1 }
+            | sdo expr edo                              { Statements [$2] }
+            | sdo statement  edo                        { $2 }
+            | sdo statements edo                        { $2 }
+            | sdo statement  expr edo                   { Statements ((exprs $2) ++ [$3]) }
+            | sdo statements expr edo                   { Statements ((exprs $2) ++ [$3]) }
+            | sdo lines edo                             { $2 }
+            | sdo line  edo                             { $2 }
 
 
 
+-- Parser Primitives Below
 
-calls       : fn                        { Calls [$1] }
-            | lines                     { Calls [$1] }
-            | nl                        { Calls [] }
-            | calls calls               { Calls ((calls $1) ++ (calls $2)) }
-
-lines       : expr nl                   { Statements [$1] }
-            | stmnt nl                  { $1 }
-            | lines lines               { Statements ((exprs $1) ++ (exprs $2)) }
-
-fn          : fnDef stexpr              { FunDef (inpars $1) (fnid $1) (expars $1) $2 }
-            | fnDef expr                { FunDef (inpars $1) (fnid $1) (expars $1) $2 }
-            | fnDef stmnt               { FunDef (inpars $1) (fnid $1) (expars $1) $2 }
-            | fnDef expr nl             { FunDef (inpars $1) (fnid $1) (expars $1) $2 }
-            | fnDef stmnt nl            { FunDef (inpars $1) (fnid $1) (expars $1) $2 }
-            | fnDef stexpr nl           { FunDef (inpars $1) (fnid $1) (expars $1) $2 }
-            | fnDef sdo expr edo        { FunDef (inpars $1) (fnid $1) (expars $1) $3 }
-            | fnDef sdo stmnt edo       { FunDef (inpars $1) (fnid $1) (expars $1) $3 }
-            | fnDef sdo stexpr edo      { FunDef (inpars $1) (fnid $1) (expars $1) $3 }
-            | fnDef sdo lines edo       { FunDef (inpars $1) (fnid $1) (expars $1) $3 }
-
-fnDef       : expr Id expr '::'         { FunDef $1 (AtmId $2) $3 Undefined }
-            | expr Id '::'              { FunDef $1 (AtmId $2) Undefined Undefined }
-            | Id expr '::'              { FunDef Undefined (AtmId $1) $2 Undefined }
-            | Id '::'                   { FunDef Undefined (AtmId $1) Undefined Undefined }
-
-lambda      : ';' expr '::'             { Lambda $2 Undefined }
-
-expr        : atom                      { Expr [$1] }
-            | expr expr                 { Expr ([$1] ++ [$2]) }
-            | stup expr etup            { Expr [$2] }
-            | stup stmnt etup           { Expr [$2] }
-            | stup stexpr etup          { Expr [$2] }
-            | lambda expr               { Lambda (pars $1) $2 }
-            | lambda stmnt              { Lambda (pars $1) $2 }
-            | lambda stexpr             { Lambda (pars $1) $2 }
-            | lambda sdo expr edo       { Lambda (pars $1) $3 }
-            | lambda sdo stmnt edo      { Lambda (pars $1) $3 }
-            | lambda sdo stexpr edo     { Lambda (pars $1) $3 }
-            | lambda sdo lines edo      { Lambda (pars $1) $3 }
-
-stmnt       : expr '.'                  { Statements [$1] }
-            | stmnt stmnt               { Statements ([$1] ++ [$2]) }
-
-stexpr      : stmnt expr                { Statements ([$1] ++ [Statements [$2]]) }
-
-modTy       : '~'                       { Modifiers [Mutb] }
-            | '@'                       { Modifiers [Refr] }
-            | '[]'                      { Modifiers [Arry] }
-            | '[' INT ']'               { Modifiers [ArSz $2]}
-            | modTy modTy               { Modifiers ((mods $1) ++ (mods $2)) }
+--modTy       : '~'                       { Modifiers [Mutb] }
+--            | '@'                       { Modifiers [Refr] }
+--            | '[]'                      { Modifiers [Arry] }
+--            | '[' INT ']'               { Modifiers [ArSz $2]}
+--            | modTy modTy               { Modifiers ((mods $1) ++ (mods $2)) }
 
 --Newlines need no functions. They exist to be tracked and then discarded.
 nl          : '\n'                      { Undefined }
@@ -204,13 +138,6 @@ nl          : '\n'                      { Undefined }
 
 tyAtom      : TyId                      { Undefined }
             | '()'                      { Undefined }
-
-atom        : INT                       { Atoms (AtmInt $1) }
-            | FLT                       { Atoms (AtmFlt $1) }
-            | STR                       { Atoms (AtmStr $1) }
-            | Id                        { Atoms (AtmId  $1) }
-            | Id '..'                   { ArrAtom (AtmId $1) }
-            | '_'                       { Wildcard }
 
 stup        : '('                       { Undefined }
             | '(' nl                    { Undefined }
@@ -229,6 +156,10 @@ edo         : '}'                       { Undefined }
 
 {
 
-parseError tokens = error ("ERROR. DUMPING REST OF LINE: " ++ (show tokens) ++ "\n\n")
+parseError tokens = do
+  let pos = if (length tokens >= 0)
+              then error $ show tokens --(getTkPos $ tokens !! 0)
+              else (BzoPos 0 0 "Unknown File")
+  error ("Parse Error while parsing " ++ (show $ fileName pos) ++ ", at " ++ (show $ line pos) ++ ":" ++ (show $ column pos) ++ ".")
 
 }
