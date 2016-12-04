@@ -336,4 +336,4 @@ appendNewline x = case x of
 fileLexer :: String -> [Either ParseError [BzoToken]]
 fileLexer s = do
     let ls  = lines s
-    map (\l -> (appendNewline $ parse (many parseUnit) "Bzo" l)) ls
+    map (\l -> (appendNewline $ parse (many parseUnit) "Bzo REPL" l)) ls

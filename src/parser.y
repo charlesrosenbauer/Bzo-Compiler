@@ -85,6 +85,7 @@ statements  : statement  statement                      { Statements ((exprs $1)
 statement   : expr '.'                                  { Statements [$1] }
 
 expr        : expr expr                                 { Expr ((exprs $1) ++ (exprs $2)) }
+            | tuple expr                                { Expr ([$1] ++ (exprs $2))}
             | tuple block tuple                         { Expr [StatementBlock $1 $3 (exprs $2)] }
             | tuple                                     { Expr [$1] }
             | INT                                       { Expr [Atoms (AtmInt $1)] }
@@ -94,6 +95,7 @@ expr        : expr expr                                 { Expr ((exprs $1) ++ (e
             | Id '..'                                   { Expr [ArrAtom (AtmId $1)] }
             | '_'                                       { Expr [Wildcard] }
             | lambda block                              { Expr [Lambda (pars $1) $2] }
+            | lambda line                               { Expr [Lambda (pars $1) $2] }
 
 tuple       : stup expr etup                            { TupleExpr [$2] }
             | stup statement  etup                      { TupleExpr [$2] }
@@ -104,7 +106,7 @@ tuple       : stup expr etup                            { TupleExpr [$2] }
             | stup lines etup                           { TupleExpr (exprs $1) }
 
 fnCall      : fnDef block                               { FunDef (inpars $1) (fnid $1) (expars $1) $2 }
-            | fnDef expr nl                             { FunDef (inpars $1) (fnid $1) (expars $1) $ Statements [$2] }
+            | fnDef line                                { FunDef (inpars $1) (fnid $1) (expars $1) $2 }
 
 fnDef       : tuple Id tuple DEF                        { FunDef $1 (AtmId $2) $3 Undefined }
             | tuple Id DEF                              { FunDef $1 (AtmId $2) Undefined Undefined }
@@ -113,8 +115,7 @@ fnDef       : tuple Id tuple DEF                        { FunDef $1 (AtmId $2) $
 
 lambda      : ';' expr DEF                              { Lambda $2 Undefined }
 
-block       : line                                      { $1 }
-            | sdo expr edo                              { Statements [$2] }
+block       : sdo expr edo                              { Statements [$2] }
             | sdo statement  edo                        { $2 }
             | sdo statements edo                        { $2 }
             | sdo statement  expr edo                   { Statements ((exprs $2) ++ [$3]) }
@@ -158,7 +159,7 @@ edo         : '}'                       { Undefined }
 
 parseError tokens = do
   let pos = if (length tokens >= 0)
-              then error $ show tokens --(getTkPos $ tokens !! 0)
+              then (getTkPos $ tokens !! 0)
               else (BzoPos 0 0 "Unknown File")
   error ("Parse Error while parsing " ++ (show $ fileName pos) ++ ", at " ++ (show $ line pos) ++ ":" ++ (show $ column pos) ++ ".")
 
