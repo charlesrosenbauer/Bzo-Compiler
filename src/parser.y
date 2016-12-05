@@ -47,7 +47,7 @@ import BzoTokens
     '()'          { TkTupEmpt   _ }
     '[]'          { TkArrGnrl   _ }
     '..'          { TkArrMod    _ }
-    '\n'          { TkNewline   }
+    '\n'          { TkNewline   _ }
     TyId          { TkTypeId    _ $$ }
     Id            { TkId        _ $$ }
     INT           { TkInt       _ $$ }
@@ -85,7 +85,7 @@ statements  : statement  statement                      { Statements ((exprs $1)
 statement   : expr '.'                                  { Statements [$1] }
 
 expr        : expr expr                                 { Expr ((exprs $1) ++ (exprs $2)) }
-            | tuple expr                                { Expr ([$1] ++ (exprs $2))}
+            | TyId                                      { Expr [Constructor $1 $ DtUnspecified ModUnspecified] }
             | tuple block tuple                         { Expr [StatementBlock $1 $3 (exprs $2)] }
             | tuple                                     { Expr [$1] }
             | INT                                       { Expr [Atoms (AtmInt $1)] }
@@ -97,13 +97,13 @@ expr        : expr expr                                 { Expr ((exprs $1) ++ (e
             | lambda block                              { Expr [Lambda (pars $1) $2] }
             | lambda line                               { Expr [Lambda (pars $1) $2] }
 
-tuple       : stup expr etup                            { TupleExpr [$2] }
+tuple       : stup line  etup                           { TupleExpr (exprs $1) }
+            | stup lines etup                           { TupleExpr (exprs $1) }
+            | stup expr etup                            { TupleExpr [$2] }
             | stup statement  etup                      { TupleExpr [$2] }
             | stup statements etup                      { TupleExpr [$2] }
             | stup statement  expr etup                 { TupleExpr ((exprs $2) ++ [$3]) }
             | stup statements expr etup                 { TupleExpr ((exprs $2) ++ [$3]) }
-            | stup line  etup                           { TupleExpr (exprs $1) }
-            | stup lines etup                           { TupleExpr (exprs $1) }
 
 fnCall      : fnDef block                               { FunDef (inpars $1) (fnid $1) (expars $1) $2 }
             | fnDef line                                { FunDef (inpars $1) (fnid $1) (expars $1) $2 }
@@ -127,18 +127,21 @@ block       : sdo expr edo                              { Statements [$2] }
 
 -- Parser Primitives Below
 
---modTy       : '~'                       { Modifiers [Mutb] }
---            | '@'                       { Modifiers [Refr] }
---            | '[]'                      { Modifiers [Arry] }
---            | '[' INT ']'               { Modifiers [ArSz $2]}
---            | modTy modTy               { Modifiers ((mods $1) ++ (mods $2)) }
+literal     : TyId                      { DataType $ CoreType ModUnspecified $1}
+            | '()'                      { DataType $ NilType ModUnspecified }
+            | INT                       { Atoms (AtmInt $1) }
+            | FLT                       { Atoms (AtmFlt $1) }
+            | STR                       { Atoms (AtmStr $1) }
+
+modTy       : '~'                       { Modifiers [Mutb] }
+            | '@'                       { Modifiers [Refr] }
+            | '[]'                      { Modifiers [Arry] }
+            | '[' INT ']'               { Modifiers [ArSz $2]}
+            | modTy modTy               { Modifiers ((mods $1) ++ (mods $2)) }
 
 --Newlines need no functions. They exist to be tracked and then discarded.
 nl          : '\n'                      { Undefined }
             | nl nl                     { Undefined }
-
-tyAtom      : TyId                      { Undefined }
-            | '()'                      { Undefined }
 
 stup        : '('                       { Undefined }
             | '(' nl                    { Undefined }
@@ -159,8 +162,9 @@ edo         : '}'                       { Undefined }
 
 parseError tokens = do
   let pos = if (length tokens >= 0)
-              then (getTkPos $ tokens !! 0)
+              then (spos $ tokens !! 0)
               else (BzoPos 0 0 "Unknown File")
-  error ("Parse Error while parsing " ++ (show $ fileName pos) ++ ", at " ++ (show $ line pos) ++ ":" ++ (show $ column pos) ++ ".")
+  error ("Parse Error while parsing " ++ (show $ fileName pos) ++ ", at " ++
+    (show $ line pos) ++ ":" ++ (show $ column pos) ++ ". Tokens from rest of line:\n" ++ (show tokens))
 
 }

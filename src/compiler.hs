@@ -41,7 +41,7 @@ compileFile' f = do
     let (lls, lrs) = partitionEithers lex
     if length lls > 0
         then Left  $ map LexErr lls
-        else Right $ map bzoParser lrs
+        else Right [bzoParser $ concat lrs]
             --let (pls, prs) = partitionEithers parse
             --if length pls > 0
             --    then Left  pls

@@ -109,7 +109,7 @@ parseString = do
     x <- many (noneOf "\"")
     char '"'
     many removeable
-    return $ TkStr pos x
+    return $ TkStr (getPos pos) x
 
 
 
@@ -150,10 +150,10 @@ removeable = skipMany1 (spaces <|> comment)
 
 parseNewline :: Parser BzoToken
 parseNewline = do
-    --pos <- getPosition
-    many1 (char '\n')
+    pos <- getPosition
+    char '\n'
     many (removeable <|> skippableNewlines)
-    return $ TkNewline
+    return $ TkNewline (getPos pos)
 
 
 
@@ -169,8 +169,8 @@ parseBuiltin = do
     pos <- getPosition
     char '$'
     x <- many (letter <|> digit <|> symbol)
-    many removeable
-    return $ TkBuiltin pos x
+    --many removeable
+    return $ TkBuiltin (getPos pos) x
 
 
 
@@ -186,8 +186,8 @@ parseTypeAtom = do
     pos <- getPosition
     first <- uppercase
     rest  <- many (letter <|> digit <|> symbol)
-    many removeable
-    return $ TkTypeId pos ([first] ++ rest)
+    --many removeable
+    return $ TkTypeId (getPos pos) ([first] ++ rest)
 
 
 
@@ -199,11 +199,12 @@ parseTypeAtom = do
 
 
 parseAtom :: Parser BzoToken
-parseAtom = do pos <- getPosition
-               first <- lowercase <|> symbol
-               rest  <- many (letter <|> digit <|> symbol)
-               many removeable
-               return $ TkId pos ([first] ++ rest)
+parseAtom = do
+    pos <- getPosition
+    first <- lowercase <|> symbol
+    rest  <- many (letter <|> digit <|> symbol)
+    --many removeable
+    return $ TkId (getPos pos) ([first] ++ rest)
 
 
 
@@ -218,8 +219,8 @@ parseInteger :: Parser BzoToken
 parseInteger = do
     pos <- getPosition
     num <- many1 digit
-    many removeable
-    return $ (TkInt pos . read) num
+    --many removeable
+    return $ (TkInt (getPos pos) . read) num
 
 
 
@@ -236,8 +237,8 @@ parseFloat = do
     beg <- many1 digit
     char '.'
     end <- many1 digit
-    many removeable
-    return $ (TkFlt pos . read) (beg ++ "." ++ end)
+    --many removeable
+    return $ (TkFlt (getPos pos) . read) (beg ++ "." ++ end)
 
 
 
@@ -252,13 +253,13 @@ parseSpecialGroup :: Parser BzoToken
 parseSpecialGroup = do
     pos <- getPosition
     x <- specialGroup
-    many removeable
+    --many removeable
     return $ case x of
-        "()" -> TkTupEmpt pos
-        "[]" -> TkArrGnrl pos
-        ".." -> TkArrMod pos
-        "::" -> TkDefine pos
-        ";;" -> TkFnSym pos
+        "()" -> TkTupEmpt (getPos pos)
+        "[]" -> TkArrGnrl (getPos pos)
+        ".." -> TkArrMod (getPos pos)
+        "::" -> TkDefine (getPos pos)
+        ";;" -> TkFnSym (getPos pos)
 
 
 
@@ -274,21 +275,34 @@ parseSpecial :: Parser BzoToken
 parseSpecial = do
     pos <- getPosition
     x <- special
-    many removeable
+    --many removeable
     return $ case x of
-        '(' -> TkStartTup pos
-        ')' -> TkEndTup pos
-        '[' -> TkStartDat pos
-        ']' -> TkEndDat pos
-        '{' -> TkStartDo pos
-        '}' -> TkEndDo pos
-        '.' -> TkSepExpr pos
-        ',' -> TkSepPoly pos
-        ':' -> TkFilterSym pos
-        ';' -> TkLambdaSym pos
-        '~' -> TkMutable pos
-        '@' -> TkReference pos
-        '_' -> TkWildcard pos
+        '(' -> TkStartTup  (getPos pos)
+        ')' -> TkEndTup    (getPos pos)
+        '[' -> TkStartDat  (getPos pos)
+        ']' -> TkEndDat    (getPos pos)
+        '{' -> TkStartDo   (getPos pos)
+        '}' -> TkEndDo     (getPos pos)
+        '.' -> TkSepExpr   (getPos pos)
+        ',' -> TkSepPoly   (getPos pos)
+        ':' -> TkFilterSym (getPos pos)
+        ';' -> TkLambdaSym (getPos pos)
+        '~' -> TkMutable   (getPos pos)
+        '@' -> TkReference (getPos pos)
+        '_' -> TkWildcard  (getPos pos)
+
+
+
+
+
+
+
+
+
+
+parseNothing :: Parser ()
+parseNothing = do
+  skipMany removeable
 
 
 
@@ -300,15 +314,19 @@ parseSpecial = do
 
 
 parseUnit :: Parser BzoToken
-parseUnit = parseTypeAtom
-        <|> parseAtom
-        <|> parseNewline
-        <|> parseString
-        <|> parseBuiltin
-        <|> (try parseFloat)
-        <|> parseInteger
-        <|> (try parseSpecialGroup)
-        <|> parseSpecial
+parseUnit = do
+  parseNothing
+  x <- parseTypeAtom
+    <|> parseAtom
+    <|> parseNewline
+    <|> parseString
+    <|> parseBuiltin
+    <|> (try parseFloat)
+    <|> parseInteger
+    <|> (try parseSpecialGroup)
+    <|> parseSpecial
+  parseNothing
+  return x
 
 
 
@@ -322,7 +340,7 @@ parseUnit = parseTypeAtom
 appendNewline :: Either ParseError [BzoToken] -> Either ParseError [BzoToken]
 appendNewline x = case x of
     Left  err -> Left err
-    Right tks -> Right $ tks ++ [TkNewline]
+    Right tks -> Right $ tks ++ [TkNewline (BzoPos 0 0 "")]   --Position probably won't be needed from newlines
 
 
 

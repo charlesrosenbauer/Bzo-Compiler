@@ -55,6 +55,13 @@ data BzoSyntax
         inpar :: BzoSyntax,
         expar :: BzoSyntax,
         exprs :: [BzoSyntax] }
+    | Constructor {
+        --pos :: BzoPos,
+        tid :: String,
+        typ :: DtType }
+    | DataType {
+        --pos :: BzoPos,
+        typ :: DtType }
     | Wildcard
     | Undefined
     deriving Eq
@@ -84,13 +91,13 @@ data Atom
 
 
 data DtType
-    = NilType
-    | Tuple [DtType]
-    | CoreType String
-    | TypeVar String
-    | DtFunc FnType
-    | DtPolymorph [DtType]
-    | DtUnspecified
+    = NilType Modifier
+    | Tuple Modifier [DtType]
+    | CoreType Modifier String
+    | TypeVar Modifier String
+    | DtFunc Modifier FnType
+    | DtPolymorph Modifier [DtType]
+    | DtUnspecified Modifier
     deriving (Eq, Show)
 
 
@@ -123,6 +130,7 @@ data Modifier
     | Arry
     | ArSz Integer
     | Mods [Modifier]
+    | ModUnspecified
     deriving Eq
 
 
@@ -182,5 +190,6 @@ showAST (Calls c)                    = concatMap (\s -> "CALL:: " ++ (show s) ++
 showAST (Wildcard)                   = " _WILDCARD_ "
 showAST (Undefined)                  = " UNDEFINED "
 showAST (StatementBlock i x def)     = "{BLOCK from " ++ (show i) ++ " to " ++ (show x) ++ ": " ++ (concatMap show def) ++ " }"
+showAST (Constructor i _)            = "(CONS: " ++ (show i) ++ ")"
 showAST _                            = "\n!!UNKNOWN!!\n"
 instance Show BzoSyntax where show = showAST
