@@ -18,13 +18,10 @@ import BzoSyntax
 
 
 --This function will eventually become the compiler pipeline
-compileFile :: String -> Either [BzoErr] [BzoToken]
+compileFile :: String -> BzoSyntax
 compileFile f = do
-    let outs = fileLexer f
-    --let (ls, rs) = partitionEithers outs
-    --if length ls > 0
-    --    then Left  $ map LexErr ls
-    --    else Right $ concat rs
+  let lex = fileLexer (f ++ "\n")   -- adding a newline to the end corrects a bug in the REPL parser
+  bzoParser lex
 
 
 
@@ -35,14 +32,5 @@ compileFile f = do
 
 
 
-compileFile' :: String -> Either [BzoErr] [BzoSyntax]
-compileFile' f = do
-    let lex = fileLexer f
-    let (lls, lrs) = partitionEithers lex
-    if length lls > 0
-        then Left  $ map LexErr lls
-        else Right [bzoParser $ concat lrs]
-            --let (pls, prs) = partitionEithers parse
-            --if length pls > 0
-            --    then Left  pls
-            --    else Right prs
+compileFile' :: String -> [BzoToken]
+compileFile' f = fileLexer f

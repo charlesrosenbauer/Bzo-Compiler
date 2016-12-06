@@ -161,7 +161,7 @@ edo         : '}'                       { Undefined }
 {
 
 parseError tokens = do
-  let pos = if (length tokens >= 0)
+  let pos = if (length tokens > 0)
               then (spos $ tokens !! 0)
               else (BzoPos 0 0 "Unknown File")
   error ("Parse Error while parsing " ++ (show $ fileName pos) ++ ", at " ++
