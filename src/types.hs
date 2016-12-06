@@ -12,31 +12,31 @@ import Text.ParserCombinators.Parsec
 
 
 data BzoToken = TkStartTup  { spos :: BzoPos }
-           | TkEndTup       { spos :: BzoPos }
-           | TkStartDat     { spos :: BzoPos }
-           | TkEndDat       { spos :: BzoPos }
-           | TkStartDo      { spos :: BzoPos }
-           | TkEndDo        { spos :: BzoPos }
-           | TkSepExpr      { spos :: BzoPos }
-           | TkSepPoly      { spos :: BzoPos }
-           | TkFilterSym    { spos :: BzoPos }
-           | TkLambdaSym    { spos :: BzoPos }
-           | TkMutable      { spos :: BzoPos }
-           | TkReference    { spos :: BzoPos }
-           | TkWildcard     { spos :: BzoPos }
-           | TkDefine       { spos :: BzoPos }
-           | TkFnSym        { spos :: BzoPos }
-           | TkTupEmpt      { spos :: BzoPos }
-           | TkArrGnrl      { spos :: BzoPos }
-           | TkArrMod       { spos :: BzoPos }
-           | TkInt          { spos :: BzoPos, valInt :: Integer }
-           | TkFlt          { spos :: BzoPos, valFlt :: Float   }
-           | TkStr          { spos :: BzoPos, valStr :: String  }
-           | TkId           { spos :: BzoPos, valId  :: String  }
-           | TkTypeId       { spos :: BzoPos, valId  :: String  }
-           | TkNewline      { spos :: BzoPos }
-           | TkBuiltin      { spos :: BzoPos, valId  :: String  }
-           deriving Eq
+  | TkEndTup       { spos :: BzoPos }
+  | TkStartDat     { spos :: BzoPos }
+  | TkEndDat       { spos :: BzoPos }
+  | TkStartDo      { spos :: BzoPos }
+  | TkEndDo        { spos :: BzoPos }
+  | TkSepExpr      { spos :: BzoPos }
+  | TkSepPoly      { spos :: BzoPos }
+  | TkFilterSym    { spos :: BzoPos }
+  | TkLambdaSym    { spos :: BzoPos }
+  | TkMutable      { spos :: BzoPos }
+  | TkReference    { spos :: BzoPos }
+  | TkWildcard     { spos :: BzoPos }
+  | TkDefine       { spos :: BzoPos }
+  | TkFnSym        { spos :: BzoPos }
+  | TkTupEmpt      { spos :: BzoPos }
+  | TkArrGnrl      { spos :: BzoPos }
+  | TkArrMod       { spos :: BzoPos }
+  | TkInt          { spos :: BzoPos, valInt :: Integer }
+  | TkFlt          { spos :: BzoPos, valFlt :: Float   }
+  | TkStr          { spos :: BzoPos, valStr :: String  }
+  | TkId           { spos :: BzoPos, valId  :: String  }
+  | TkTypeId       { spos :: BzoPos, valId  :: String  }
+  | TkNewline      { spos :: BzoPos }
+  | TkBuiltin      { spos :: BzoPos, valId  :: String  }
+  deriving Eq
 
 
 
@@ -48,8 +48,8 @@ data BzoToken = TkStartTup  { spos :: BzoPos }
 
 
 data BzoErr = Other
-            | StringErr String
-            | LexErr ParseError
+  | StringErr String
+  | LexErr ParseError
 
 
 
@@ -63,10 +63,10 @@ data BzoErr = Other
 -- Creating a custom position type so that Parsec types don't have to be moved around everywhere.
 -- This also makes it easy to add extra information here later to pass around
 data BzoPos = BzoPos {
-    line     :: Int,
-    column   :: Int,
-    fileName :: String }
-    deriving (Eq, Show)
+  line     :: Int,
+  column   :: Int,
+  fileName :: String }
+  deriving (Eq, Show)
 
 
 

@@ -21,10 +21,10 @@ import BzoSyntax
 compileFile :: String -> Either [BzoErr] [BzoToken]
 compileFile f = do
     let outs = fileLexer f
-    let (ls, rs) = partitionEithers outs
-    if length ls > 0
-        then Left  $ map LexErr ls
-        else Right $ concat rs
+    --let (ls, rs) = partitionEithers outs
+    --if length ls > 0
+    --    then Left  $ map LexErr ls
+    --    else Right $ concat rs
 
 
 
