@@ -1,8 +1,4 @@
 module Compiler where
-import Text.ParserCombinators.Parsec hiding (spaces)
-import Text.Parsec hiding (try, spaces)
-import Data.Functor.Identity
-import Data.Either
 import BzoParser
 import BzoTypes
 import BzoLexer

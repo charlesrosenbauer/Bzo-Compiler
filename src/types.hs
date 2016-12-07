@@ -1,6 +1,4 @@
 module BzoTypes where
-import Text.Parsec
-import Text.ParserCombinators.Parsec
 
 
 
@@ -49,7 +47,7 @@ data BzoToken = TkStartTup  { spos :: BzoPos }
 
 data BzoErr = Other
   | StringErr String
-  | LexErr ParseError
+  | LexErr String
 
 
 
@@ -67,18 +65,6 @@ data BzoPos = BzoPos {
   column   :: Int,
   fileName :: String }
   deriving (Eq, Show)
-
-
-
-
-
-
-
-
-
-
-getPos :: SourcePos -> BzoPos
-getPos s = BzoPos (sourceLine s) (sourceColumn s) (sourceName s)
 
 
 

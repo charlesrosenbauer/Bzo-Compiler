@@ -1,7 +1,6 @@
 module Main where
 import Control.Monad
 import System.Environment
-import Text.ParserCombinators.Parsec hiding (spaces)
 import System.IO hiding (try)
 import BzoLexer
 import BzoParser
