@@ -34,7 +34,7 @@ $ls_ds       = [a-zA-Z0-9]
 $nl          = [\n]
 $special     = [\: \; \. \, \' \( \) \[ \] \{ \} \$ \@ \~ \_ $white \n \"]    --"
 $symbol      = [\! \@ \# \% \^ \& \* \+ \- \= \\ \| \/ \? \< \> \`]
-$commentable = $printable # \'
+$commentable = [$printable $nl] # \'
 $charable    = $printable # [$special $white]
 $lilcharable = $printable # [$special $white $bigalpha]
 $stringable  = $printable # \"
