@@ -33,7 +33,7 @@ $bigalpha    = [A-Z]
 $ls_ds       = [a-zA-Z0-9]
 $nl          = [\n]
 $special     = [\: \; \. \, \' \( \) \[ \] \{ \} \$ \@ \~ \_ $white \n \"]    --"
-$symbol      = [\! \@ \# \% \^ \& \* \+ \- \= \\ \| \/ \? \< \> \`]
+-- $symbol      = [\! \@ \# \% \^ \& \* \+ \- \= \\ \| \/ \? \< \> \`]
 $commentable = [$printable $nl] # \'
 $charable    = $printable # [$special $white]
 $lilcharable = $printable # [$special $white $bigalpha]
@@ -57,8 +57,9 @@ tokens :-
   $digit+ [\.] $digit+                                      { \s -> TkFlt       ( BzoPos 0 0 "") (read s) }
   $digit+                                                   { \s -> TkInt       ( BzoPos 0 0 "") (read s) }
   $lilcharable+ $charable*                                  { \s -> TkId        ( BzoPos 0 0 "") s }
-  $bigalpha+ [$lilalpha $symbol $digit \_]*                 { \s -> TkTypeId    ( BzoPos 0 0 "") s }
+  $bigalpha+ [$charable]*                                   { \s -> TkTypeId    ( BzoPos 0 0 "") s }
   \$ [$charable]+                                           { \s -> TkBuiltin   ( BzoPos 0 0 "") s }
+  \$ $bigalpha+ [$charable]+                                { \s -> TkBIType    ( BzoPos 0 0 "") s }
   ":"                                                       { \s -> TkFilterSym $ BzoPos 0 0 ""}
   ";"                                                       { \s -> TkLambdaSym $ BzoPos 0 0 ""}
   "::"                                                      { \s -> TkDefine    $ BzoPos 0 0 ""}

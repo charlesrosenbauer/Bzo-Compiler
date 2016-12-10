@@ -34,6 +34,7 @@ data BzoToken = TkStartTup  { spos :: BzoPos }
   | TkTypeId       { spos :: BzoPos, valId  :: String  }
   | TkNewline      { spos :: BzoPos }
   | TkBuiltin      { spos :: BzoPos, valId  :: String  }
+  | TkBIType       { spos :: BzoPos, valId  :: String  }
   deriving Eq
 
 
@@ -128,3 +129,4 @@ tkChangePos (TkId        p i) n = TkId          ( BzoPos n (column p) (fileName 
 tkChangePos (TkTypeId    p i) n = TkTypeId      ( BzoPos n (column p) (fileName p)) i
 tkChangePos (TkNewline     p) n = TkNewline     ( BzoPos n (column p) (fileName p))
 tkChangePos (TkBuiltin   p i) n = TkBuiltin     ( BzoPos n (column p) (fileName p)) i
+tkChangePos (TkBIType    p i) n = TkBIType      ( BzoPos n (column p) (fileName p)) i

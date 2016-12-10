@@ -37,6 +37,7 @@ showTk (TkId         _ st) = "ID:"  ++ show st
 showTk (TkTypeId     _ st) = "TID:" ++ show st
 showTk (TkNewline       _) = "NEWL\n"
 showTk (TkBuiltin    _ st) = "BI:"  ++ show st
+showTk (TkBIType     _ st) = "BIT:" ++ show st
 --showTk _                   = "Unknown Token?"
 instance Show BzoToken where show = showTk
 

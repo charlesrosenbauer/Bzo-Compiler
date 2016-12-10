@@ -53,6 +53,8 @@ import BzoTokens
     INT           { TkInt       _ $$ }
     FLT           { TkFlt       _ $$ }
     STR           { TkStr       _ $$ }
+    BI            { TkBuiltin   _ $$ }
+    BIT           { TkBIType    _ $$ }
 
 
 
@@ -99,6 +101,8 @@ expr        : expr expr                                 { Expr ((exprs $1) ++ (e
             | lambda block                              { Expr [Lambda (pars $1) $2] }
             | lambda line                               { Expr [Lambda (pars $1) $2] }
             | expr ':' type                             {  }
+            | BIT                                       {  }
+            | BI                                        {  }
 
 tuple       : stup line  etup                           { TupleExpr (exprs $1) }
             | stup lines etup                           { TupleExpr (exprs $1) }
@@ -136,6 +140,7 @@ type        : TyId                                      {  }
             | sdo memberDef  edo                        {  }
             | sdo memberDefs edo                        {  }
             | fnType                                    {  }
+            | BIT                                       {  }
 
 cptypes     : type sepc                                 {  }
             | cptypes sepc type                         {  }
