@@ -1,0 +1,57 @@
+Some thoughts on how parallelism may work in Bzo
+
+The goal of Bzo is to have a language that reliably does implicit parallelism without significant overhead.
+
+
+
+Core Types in Bzo:
+
+$I8     $U8     $F16    $BL
+$I16    $U16    $F32    $CHR
+$I32    $U32    $F64    $UTF
+$I64    $U64    $F80
+
+of course with mutable/immutable, array, and reference variations.
+
+Core Functions in Bzo:
+
+$copy           -
+$map            - Map function. Parallel by default. ".." is syntactic sugar for this.
+$sfold          - Sequential version of the fold/reduce function.
+$pfold          - Parallel fold. Differs from sequential fold when F is not associative.
+$sscan          - Sequential version of the scan function.
+$pscan          - Parallel scan. Differs from sequential scan when F is not associative.
+$iter           - Iterate function (A -> A) on a piece of data a given number of times.
+$let            - Sets the value of a variable
+$add            - Addition
+$sub            - Subtraction
+$mul            - Multiplication
+$div            - Division
+$mod            - Modulo
+$cmp            - Compare
+$land           - Bitwise And
+$lnot           - Bitwise Not
+$lor            - Bitwise Or
+$lxor           - Bitwise Xor
+$lsr            - Bitwise Shift Right
+$lsl            - Bitwise Shift Left
+$lrr            - Bitwise Rotate Right
+$lrl            - Bitwise Rotate Left
+$asr            - Arithmetic Shift Right
+$pop            - Bitwise Popcount
+$and            - Logical And
+$not            - Logical Not
+$or             - Logical Or
+$xor            - Logical Xor
+$jmp            - Unconditional Jump
+$abs
+$sin
+$cos
+$tan
+$asn
+$acs
+$atn
+$lg2
+$ln
+$exp
+$
