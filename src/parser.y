@@ -43,7 +43,7 @@ import BzoTokens
     '@'           { TkReference _ }
     '_'           { TkWildcard  _ }
     DEF           { TkDefine    _ }
-    ';;'          { TkFnSym     _ }
+    FDEF          { TkFnSym     _ }
     '()'          { TkTupEmpt   _ }
     '[]'          { TkArrGnrl   _ }
     '..'          { TkArrMod    _ }
@@ -65,6 +65,8 @@ import BzoTokens
 %%
 
 calls       : fnCall                                    { Calls [$1] }
+            | typeDef                                   { Calls [$1] }
+            | fnTypeDef                                 { Calls [$1] }
             | line                                      { Calls [$1] }
             | lines                                     { Calls [$1] }
             | nl                                        { Calls [] }
@@ -96,6 +98,7 @@ expr        : expr expr                                 { Expr ((exprs $1) ++ (e
             | '_'                                       { Expr [Wildcard] }
             | lambda block                              { Expr [Lambda (pars $1) $2] }
             | lambda line                               { Expr [Lambda (pars $1) $2] }
+            | expr ':' type                             {  }
 
 tuple       : stup line  etup                           { TupleExpr (exprs $1) }
             | stup lines etup                           { TupleExpr (exprs $1) }
@@ -123,7 +126,33 @@ block       : sdo expr edo                              { Statements [$2] }
             | sdo lines edo                             { $2 }
             | sdo line  edo                             { $2 }
 
+typeDef     : TyId DEF type                             { TypDef Undefined $1 $3 }
+            | expr TyId DEF type                        { TypDef $1 $2 $4 }
 
+type        : TyId                                      {  }
+            | stup type  etup                           {  }
+            | stup types etup                           {  }
+            | modTy type                                {  }
+            | sdo memberDef  edo                        {  }
+            | sdo memberDefs edo                        {  }
+            | fnType                                    {  }
+
+cptypes     : type sepc                                 {  }
+            | cptypes sepc type                         {  }
+            | cptypes sepc type                         {  }
+
+pmtypes     : type sepp                                 {  }
+            | pmtypes sepp type                         {  }
+            | pmtypes sepp type                         {  }
+
+memberDef   : Id DEF type                               {  }
+
+memberDefs  : memberDef  sepc memberDef                 {  }
+            | memberDefs sepc memberDef                 {  }
+
+fnType      : type FDEF type                            {  }
+
+fnTypeDef   : Id FDEF fnType                            {  }
 
 -- Parser Primitives Below
 
@@ -157,6 +186,15 @@ edo         : '}'                       { Undefined }
             | '}' nl                    { Undefined }
             | nl '{' nl                 { Undefined }
 
+sepc        : '.'                       { Undefined }
+            | '.' nl                    { Undefined }
+            | nl '.'                    { Undefined }
+            | nl '.' nl                 { Undefined }
+
+sepp        : ','                       { Undefined }
+            | ',' nl                    { Undefined }
+            | nl ','                    { Undefined }
+            | nl ',' nl                 { Undefined }
 
 {
 
