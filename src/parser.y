@@ -89,7 +89,8 @@ statements  : statement  statement                      { Statements ((exprs $1)
 statement   : expr '.'                                  { Statements [$1] }
 
 expr        : expr expr                                 { Expr ((exprs $1) ++ (exprs $2)) }
-            | TyId                                      { Expr [Constructor $1 $ DtUnspecified ModUnspecified] }
+            | TyId                                      { Expr [Constructor $1 ModUnspecified] }
+            | modTy TyId                                { Expr [Constructor $2 $1] }
             | tuple block tuple                         { Expr [StatementBlock $1 $3 (exprs $2)] }
             | tuple                                     { Expr [$1] }
             | INT                                       { Expr [Atoms (AtmInt $1)] }
@@ -100,9 +101,9 @@ expr        : expr expr                                 { Expr ((exprs $1) ++ (e
             | '_'                                       { Expr [Wildcard] }
             | lambda block                              { Expr [Lambda (pars $1) $2] }
             | lambda line                               { Expr [Lambda (pars $1) $2] }
-            | expr ':' type                             {  }
-            | BIT                                       {  }
-            | BI                                        {  }
+            | expr ':' type                             { Expr  }   -- Need to add some stuff for this
+            | BIT                                       { Expr  }   --
+            | BI                                        { Expr  }   --
 
 tuple       : stup line  etup                           { TupleExpr (exprs $1) }
             | stup lines etup                           { TupleExpr (exprs $1) }
@@ -133,36 +134,37 @@ block       : sdo expr edo                              { Statements [$2] }
 typeDef     : TyId DEF type                             { TypDef Undefined $1 $3 }
             | expr TyId DEF type                        { TypDef $1 $2 $4 }
 
-type        : TyId                                      {  }
-            | stup type  etup                           {  }
-            | stup types etup                           {  }
-            | modTy type                                {  }
-            | sdo memberDef  edo                        {  }
-            | sdo memberDefs edo                        {  }
-            | fnType                                    {  }
-            | BIT                                       {  }
+typ         : TyId                                      { DataType $ DtCoreType $1 }
+            | stup typ     etup                         { DataType $ DtTuple (typ $2) }
+            | stup cptypes etup                         { $2 }
+            | stup pmtypes etup                         { $2 }
+            | modTy typ                                 { DataType $ DtModded $1 (typ $2) }
+            | fnType                                    { $1 }
+            | BIT                                       { DataType $ DtBIType $1 }
+            | '()'                                      { DataType $ DtNilType }
 
-cptypes     : type sepc                                 {  }
-            | cptypes sepc type                         {  }
-            | cptypes sepc type                         {  }
+record      : sdo memberDef  edo                        { $2 }
+            | sdo memberDefs edo                        { $2 }
 
-pmtypes     : type sepp                                 {  }
-            | pmtypes sepp type                         {  }
-            | pmtypes sepp type                         {  }
+cptypes     : typ sepc                                  { DataType $ DtTuple $ typ $1 }
+            | cptypes sepc typ                          { DataType $ DtTuple ((typs $ typ $1) ++ (typs $ typ $2)) }
 
-memberDef   : Id DEF type                               {  }
+pmtypes     : typ sepp                                  { DataType $ DtPolymorph $ typ $1 }
+            | pmtypes sepp typ                          { DataType $ DtPolymorph ((typs $ typ $1) ++ (typs $ typ $2)) }
 
-memberDefs  : memberDef  sepc memberDef                 {  }
-            | memberDefs sepc memberDef                 {  }
+memberDef   : Id DEF typ                                { DataType $ DtRecord [RecUnit $1 $3] }
 
-fnType      : type FDEF type                            {  }
+memberDefs  : memberDef  sepc memberDef                 { DataType $ DtRecord ((recs $ typ $1) ++ (recs $ typ $3)) }
+            | memberDefs sepc memberDef                 { DataType $ DtRecord ((recs $ typ $1) ++ (recs $ typ $3)) }
 
-fnTypeDef   : Id FDEF fnType                            {  }
+fnType      : typ FDEF typ                              { DataType $ DtFunc (typ $1) (typ $3) }
+
+fnTypeDef   : Id FDEF fnType                            { FnTypeDef $1 (tyIn $3) (tyEx $3) }
 
 -- Parser Primitives Below
 
-literal     : TyId                      { DataType $ CoreType ModUnspecified $1}
-            | '()'                      { DataType $ NilType ModUnspecified }
+literal     : TyId                      { DataType $ DtCoreType $1}
+            | '()'                      { DataType $ DtNilType }
             | INT                       { Atoms (AtmInt $1) }
             | FLT                       { Atoms (AtmFlt $1) }
             | STR                       { Atoms (AtmStr $1) }
@@ -171,6 +173,7 @@ modTy       : '~'                       { Modifiers [Mutb] }
             | '@'                       { Modifiers [Refr] }
             | '[]'                      { Modifiers [Arry] }
             | '[' INT ']'               { Modifiers [ArSz $2]}
+            | '[' Id  ']'               { Modifiers [ArVr $2]}
             | modTy modTy               { Modifiers ((mods $1) ++ (mods $2)) }
 
 --Newlines need no functions. They exist to be tracked and then discarded.

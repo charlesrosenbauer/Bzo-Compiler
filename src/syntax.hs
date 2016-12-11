@@ -22,6 +22,11 @@ data BzoSyntax
         pars :: BzoSyntax,
         tyid :: Atom,
         typ  :: DtType }
+    | FnTypeDef {
+        --pos  :: BzoPos,
+        fnid   :: Atom,
+        tyIn   :: DtType,
+        tyEx   :: DtType }
     | Lambda {
         --pos  :: BzoPos,
         pars :: BzoSyntax,
@@ -55,13 +60,13 @@ data BzoSyntax
         inpar :: BzoSyntax,
         expar :: BzoSyntax,
         exprs :: [BzoSyntax] }
-    | Constructor {
-        --pos :: BzoPos,
-        tid :: String,
-        typ :: DtType }
     | DataType {
         --pos :: BzoPos,
         typ :: DtType }
+    | Construct {
+        --pos :: BzoPos,
+        tyId  :: String
+        mod   :: Modifier }
     | Wildcard
     | Undefined
     deriving Eq
@@ -90,29 +95,28 @@ data Atom
 
 
 
+type RecUnit = { id :: String, typ :: DtType }
+
+
+
+
+
+
+
+
+
+
 data DtType
-    = NilType Modifier
-    | Tuple Modifier [DtType]
-    | CoreType Modifier String
-    | TypeVar Modifier String
-    | DtFunc Modifier FnType
-    | DtPolymorph Modifier [DtType]
-    | DtUnspecified Modifier
-    deriving (Eq, Show)
-
-
-
-
-
-
-
-
-
-
-data FnType
-    = Func DtType DtType
-    | FnPolymorph [FnType]
-    | FnUnspecified
+    = DtNilType
+    | DtTuple       { typs :: [DtType] }
+    | DtCoreType    { id   :: String }
+    | DtTypeVar     { id   :: String }
+    | DtBIType      { id   :: String }
+    | DtFunc        { tyIn :: DtType, tyEx :: DtType }
+    | DtPolymorph   { typs :: [DtType] }
+    | DtModded      { mod  :: Modifier, typ :: DtType }
+    | DtRecord      { recs :: [RecUnit] }
+    | DtUnspecified
     deriving (Eq, Show)
 
 
@@ -129,6 +133,7 @@ data Modifier
     | Refr
     | Arry
     | ArSz Integer
+    | ArVr String
     | Mods [Modifier]
     | ModUnspecified
     deriving Eq
