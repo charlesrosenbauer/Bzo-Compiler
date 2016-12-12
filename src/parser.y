@@ -89,8 +89,8 @@ statements  : statement  statement                      { Statements ((exprs $1)
 statement   : expr '.'                                  { Statements [$1] }
 
 expr        : expr expr                                 { Expr ((exprs $1) ++ (exprs $2)) }
-            | TyId                                      { Expr [Constructor $1 ModUnspecified] }
-            | modTy TyId                                { Expr [Constructor $2 $1] }
+            | TyId                                      { Expr [Construct $1 ModUnspecified] }
+            | modTy TyId                                { Expr [Construct $2 (makeMods $1)] }
             | tuple block tuple                         { Expr [StatementBlock $1 $3 (exprs $2)] }
             | tuple                                     { Expr [$1] }
             | INT                                       { Expr [Atoms (AtmInt $1)] }
@@ -101,9 +101,9 @@ expr        : expr expr                                 { Expr ((exprs $1) ++ (e
             | '_'                                       { Expr [Wildcard] }
             | lambda block                              { Expr [Lambda (pars $1) $2] }
             | lambda line                               { Expr [Lambda (pars $1) $2] }
-            | expr ':' type                             { Expr  }   -- Need to add some stuff for this
-            | BIT                                       { Expr  }   --
-            | BI                                        { Expr  }   --
+            | expr ':' typ                              { Expr ((exprs $1) ++ [DataType $3]) }
+            | BIT                                       { Expr [Construct $1 ModUnspecified]}
+            | BI                                        { Expr [Atoms (AtmBI $1)] }
 
 tuple       : stup line  etup                           { TupleExpr (exprs $1) }
             | stup lines etup                           { TupleExpr (exprs $1) }
@@ -116,10 +116,10 @@ tuple       : stup line  etup                           { TupleExpr (exprs $1) }
 fnCall      : fnDef block                               { FunDef (inpars $1) (fnid $1) (expars $1) $2 }
             | fnDef line                                { FunDef (inpars $1) (fnid $1) (expars $1) $2 }
 
-fnDef       : tuple Id tuple DEF                        { FunDef $1 (AtmId $2) $3 Undefined }
-            | tuple Id DEF                              { FunDef $1 (AtmId $2) Undefined Undefined }
-            | Id tuple DEF                              { FunDef Undefined (AtmId $1) $2 Undefined }
-            | Id DEF                                    { FunDef Undefined (AtmId $1) Undefined Undefined }
+fnDef       : tuple Id tuple DEF                        { FunDef $1 $2 $3 Undefined }
+            | tuple Id DEF                              { FunDef $1 $2 Undefined Undefined }
+            | Id tuple DEF                              { FunDef Undefined $1 $2 Undefined }
+            | Id DEF                                    { FunDef Undefined $1 Undefined Undefined }
 
 lambda      : ';' expr DEF                              { Lambda $2 Undefined }
 
@@ -131,26 +131,26 @@ block       : sdo expr edo                              { Statements [$2] }
             | sdo lines edo                             { $2 }
             | sdo line  edo                             { $2 }
 
-typeDef     : TyId DEF type                             { TypDef Undefined $1 $3 }
-            | expr TyId DEF type                        { TypDef $1 $2 $4 }
+typeDef     : TyId DEF typ                              { TypDef Undefined $1 $3 }
+            | expr TyId DEF typ                         { TypDef $1 $2 $4 }
 
 typ         : TyId                                      { DataType $ DtCoreType $1 }
-            | stup typ     etup                         { DataType $ DtTuple (typ $2) }
+            | stup typ     etup                         { DataType $ DtTuple [typ $2] }
             | stup cptypes etup                         { $2 }
             | stup pmtypes etup                         { $2 }
-            | modTy typ                                 { DataType $ DtModded $1 (typ $2) }
+            | modTy typ                                 { DataType $ DtModded (makeMods $1) (typ $2) }
             | fnType                                    { $1 }
             | BIT                                       { DataType $ DtBIType $1 }
-            | '()'                                      { DataType $ DtNilType }
+            | '()'                                      { DataType DtNilType }
 
 record      : sdo memberDef  edo                        { $2 }
             | sdo memberDefs edo                        { $2 }
 
-cptypes     : typ sepc                                  { DataType $ DtTuple $ typ $1 }
-            | cptypes sepc typ                          { DataType $ DtTuple ((typs $ typ $1) ++ (typs $ typ $2)) }
+cptypes     : typ sepc                                  { DataType $ DtTuple [typ $1] }
+            | cptypes sepc typ                          { DataType $ DtTuple ((dtyps $ typ $1) ++ [typ $2]) }
 
-pmtypes     : typ sepp                                  { DataType $ DtPolymorph $ typ $1 }
-            | pmtypes sepp typ                          { DataType $ DtPolymorph ((typs $ typ $1) ++ (typs $ typ $2)) }
+pmtypes     : typ sepp                                  { DataType $ DtPolymorph [typ $1] }
+            | pmtypes sepp typ                          { DataType $ DtPolymorph ((typs $ typ $1) ++ [typ $2]) }
 
 memberDef   : Id DEF typ                                { DataType $ DtRecord [RecUnit $1 $3] }
 
@@ -159,7 +159,7 @@ memberDefs  : memberDef  sepc memberDef                 { DataType $ DtRecord ((
 
 fnType      : typ FDEF typ                              { DataType $ DtFunc (typ $1) (typ $3) }
 
-fnTypeDef   : Id FDEF fnType                            { FnTypeDef $1 (tyIn $3) (tyEx $3) }
+fnTypeDef   : Id FDEF fnType                            { FnTypeDef $1 (dtyIn $3) (dtyEx $3) }
 
 -- Parser Primitives Below
 
@@ -172,8 +172,8 @@ literal     : TyId                      { DataType $ DtCoreType $1}
 modTy       : '~'                       { Modifiers [Mutb] }
             | '@'                       { Modifiers [Refr] }
             | '[]'                      { Modifiers [Arry] }
-            | '[' INT ']'               { Modifiers [ArSz $2]}
-            | '[' Id  ']'               { Modifiers [ArVr $2]}
+            | '[' INT ']'               { Modifiers [ArSz $2] }
+            | '[' Id  ']'               { Modifiers [ArVr $2] }
             | modTy modTy               { Modifiers ((mods $1) ++ (mods $2)) }
 
 --Newlines need no functions. They exist to be tracked and then discarded.

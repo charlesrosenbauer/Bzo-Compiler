@@ -14,17 +14,17 @@ data BzoSyntax
     = FunDef {
         --pos     :: BzoPos,
         inpars :: BzoSyntax,
-        fnid   :: Atom,
+        fnid   :: String,
         expars :: BzoSyntax,
         def    :: BzoSyntax }
     | TypDef {
         --pos  :: BzoPos,
         pars :: BzoSyntax,
-        tyid :: Atom,
+        tyid :: String,
         typ  :: DtType }
     | FnTypeDef {
         --pos  :: BzoPos,
-        fnid   :: Atom,
+        fnid   :: String,
         tyIn   :: DtType,
         tyEx   :: DtType }
     | Lambda {
@@ -65,8 +65,8 @@ data BzoSyntax
         typ :: DtType }
     | Construct {
         --pos :: BzoPos,
-        tyId  :: String
-        mod   :: Modifier }
+        tyId  :: String,
+        modf  :: Modifier }
     | Wildcard
     | Undefined
     deriving Eq
@@ -84,6 +84,7 @@ data Atom
     | AtmFlt Float
     | AtmStr String
     | AtmId  String
+    | AtmBI  String
     deriving Eq
 
 
@@ -95,7 +96,8 @@ data Atom
 
 
 
-type RecUnit = { id :: String, typ :: DtType }
+data RecUnit = RecUnit{ rid :: String, rtyp :: DtType }
+  deriving (Eq, Show)
 
 
 
@@ -108,14 +110,14 @@ type RecUnit = { id :: String, typ :: DtType }
 
 data DtType
     = DtNilType
-    | DtTuple       { typs :: [DtType] }
-    | DtCoreType    { id   :: String }
-    | DtTypeVar     { id   :: String }
-    | DtBIType      { id   :: String }
-    | DtFunc        { tyIn :: DtType, tyEx :: DtType }
-    | DtPolymorph   { typs :: [DtType] }
-    | DtModded      { mod  :: Modifier, typ :: DtType }
-    | DtRecord      { recs :: [RecUnit] }
+    | DtTuple       { dtyps :: [DtType] }
+    | DtCoreType    { id    :: String }
+    | DtTypeVar     { id    :: String }
+    | DtBIType      { id    :: String }
+    | DtFunc        { dtyIn :: DtType, dtyEx :: DtType }
+    | DtPolymorph   { typs  :: [DtType] }
+    | DtModded      { dmod  :: Modifier, dtyp :: DtType }
+    | DtRecord      { recs  :: [RecUnit] }
     | DtUnspecified
     deriving (Eq, Show)
 
@@ -137,6 +139,19 @@ data Modifier
     | Mods [Modifier]
     | ModUnspecified
     deriving Eq
+
+
+
+
+
+
+
+
+
+
+makeMods :: BzoSyntax -> Modifier
+makeMods (Modifiers x) = Mods $ x
+makeMods _ = Mods []
 
 
 
@@ -190,11 +205,11 @@ showAST (Type _ _)                   = " TYPE "
 showAST (Statements ex)              = " {ST: " ++ (concatMap showAST ex) ++ " }. "
 showAST (Expr ex)                    = " (EX: " ++ (concatMap showAST ex) ++ " ) "
 showAST (TupleExpr ex)               = " (TU: " ++ (concatMap showAST ex) ++ " ) "
-showAST (Modifiers m)                = concatMap show m
+showAST (Modifiers m)                = show m
 showAST (Calls c)                    = concatMap (\s -> "CALL:: " ++ (show s) ++ "\n") c
 showAST (Wildcard)                   = " _WILDCARD_ "
 showAST (Undefined)                  = " UNDEFINED "
 showAST (StatementBlock i x def)     = "{BLOCK from " ++ (show i) ++ " to " ++ (show x) ++ ": " ++ (concatMap show def) ++ " }"
-showAST (Constructor i _)            = "(CONS: " ++ (show i) ++ ")"
+showAST (Construct   i _)            = "(CONS: " ++ (show i) ++ ")"
 showAST _                            = "\n!!UNKNOWN!!\n"
 instance Show BzoSyntax where show = showAST
