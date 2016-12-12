@@ -101,7 +101,7 @@ expr        : expr expr                                 { Expr ((exprs $1) ++ (e
             | '_'                                       { Expr [Wildcard] }
             | lambda block                              { Expr [Lambda (pars $1) $2] }
             | lambda line                               { Expr [Lambda (pars $1) $2] }
-            | expr ':' typ                              { Expr ((exprs $1) ++ [DataType $3]) }
+            | expr ':' typ                              { Expr ((exprs $1) ++ [$3]) }
             | BIT                                       { Expr [Construct $1 ModUnspecified]}
             | BI                                        { Expr [Atoms (AtmBI $1)] }
 
@@ -131,8 +131,8 @@ block       : sdo expr edo                              { Statements [$2] }
             | sdo lines edo                             { $2 }
             | sdo line  edo                             { $2 }
 
-typeDef     : TyId DEF typ                              { TypDef Undefined $1 $3 }
-            | expr TyId DEF typ                         { TypDef $1 $2 $4 }
+typeDef     : TyId DEF typ                              { TypDef Undefined $1 (typ $3) }
+            | expr TyId DEF typ                         { TypDef $1 $2 (typ $4) }
 
 typ         : TyId                                      { DataType $ DtCoreType $1 }
             | stup typ     etup                         { DataType $ DtTuple [typ $2] }
@@ -146,28 +146,25 @@ typ         : TyId                                      { DataType $ DtCoreType 
 record      : sdo memberDef  edo                        { $2 }
             | sdo memberDefs edo                        { $2 }
 
-cptypes     : typ sepc                                  { DataType $ DtTuple [typ $1] }
-            | cptypes sepc typ                          { DataType $ DtTuple ((dtyps $ typ $1) ++ [typ $2]) }
+cptypes     : cptypes cptypes                           { DataType $ DtTuple ((dtyps $ typ $1) ++ (dtyps $ typ $2)) }
+            | cptypes typ                               { DataType $ DtTuple ((dtyps $ typ $1) ++ [typ $2]) }
+            | typ sepc                                  { DataType $ DtTuple [typ $1] }
 
-pmtypes     : typ sepp                                  { DataType $ DtPolymorph [typ $1] }
-            | pmtypes sepp typ                          { DataType $ DtPolymorph ((typs $ typ $1) ++ [typ $2]) }
+pmtypes     : pmtypes pmtypes                           { DataType $ DtPolymorph ((dtyps $ typ $1) ++ (dtyps $ typ $2)) }
+            | pmtypes typ                               { DataType $ DtPolymorph ((dtyps $ typ $1) ++ [typ $2]) }
+            | typ sepp                                  { DataType $ DtPolymorph [typ $1] }
 
 memberDef   : Id DEF typ                                { DataType $ DtRecord [RecUnit $1 $3] }
 
-memberDefs  : memberDef  sepc memberDef                 { DataType $ DtRecord ((recs $ typ $1) ++ (recs $ typ $3)) }
-            | memberDefs sepc memberDef                 { DataType $ DtRecord ((recs $ typ $1) ++ (recs $ typ $3)) }
+memberDefs  : memberDefs memberDefs                     { DataType $ DtRecord ((recs $ typ $1) ++ (recs $ typ $2)) }
+            | memberDefs memberDef                      { DataType $ DtRecord ((recs $ typ $1) ++ (recs $ typ $2)) }
+            | memberDef  sepc                           { DataType $ DtRecord ( recs $ typ $1) }
 
 fnType      : typ FDEF typ                              { DataType $ DtFunc (typ $1) (typ $3) }
 
-fnTypeDef   : Id FDEF fnType                            { FnTypeDef $1 (dtyIn $3) (dtyEx $3) }
+fnTypeDef   : Id FDEF fnType                            { FnTypeDef $1 (tyIn $3) (tyEx $3) }
 
 -- Parser Primitives Below
-
-literal     : TyId                      { DataType $ DtCoreType $1}
-            | '()'                      { DataType $ DtNilType }
-            | INT                       { Atoms (AtmInt $1) }
-            | FLT                       { Atoms (AtmFlt $1) }
-            | STR                       { Atoms (AtmStr $1) }
 
 modTy       : '~'                       { Modifiers [Mutb] }
             | '@'                       { Modifiers [Refr] }
