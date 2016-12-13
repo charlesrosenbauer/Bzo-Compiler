@@ -167,6 +167,7 @@ showMod (Mutb)   = " ~ "
 showMod (Refr)   = " @ "
 showMod (Arry)   = " [] "
 showMod (ArSz i) = " [ " ++ (show i) ++ " ] "
+showMod (ArVr v) = " [ " ++ v ++ " ] "
 showMod (Mods m) = concatMap showMod m
 instance Show Modifier where show = showMod
 
@@ -184,6 +185,7 @@ showAtom (AtmInt i) = show i
 showAtom (AtmFlt f) = show f
 showAtom (AtmStr s) = show s
 showAtom (AtmId  i) = show i
+showAtom (AtmBI  s) = show s
 instance Show Atom where show = showAtom
 
 
@@ -198,6 +200,7 @@ instance Show Atom where show = showAtom
 showAST :: BzoSyntax -> String
 showAST (FunDef inpar fid expar def) = "{FNDEF: " ++ (show inpar) ++ " -> " ++ (show fid) ++ " -> " ++ (show expar) ++ " :: " ++ (show def) ++ "}\n\n"
 showAST (TypDef par tid def)         = "{TYDEF: " ++ (show tid) ++ " [ " ++ (show par) ++ " ] :: " ++ (show def) ++ "}\n\n"
+showAST (FnTypeDef fid inpar expar)  = "{FTDEF: " ++ (show fid) ++ " [ " ++ (show inpar) ++ " ] ;; [ " ++ (show expar) ++ " ]}\n\n"
 showAST (Lambda par def)             = " {LAMBDA: " ++ (show par) ++ " :: " ++ (show def) ++ "} "
 showAST (Atoms atm)                  = " ATOM: " ++ (show atm) ++ " "
 showAST (ArrAtom atm)                = " ARRAY ATOM: " ++ (show atm) ++ " "
@@ -211,5 +214,6 @@ showAST (Wildcard)                   = " _WILDCARD_ "
 showAST (Undefined)                  = " UNDEFINED "
 showAST (StatementBlock i x def)     = "{BLOCK from " ++ (show i) ++ " to " ++ (show x) ++ ": " ++ (concatMap show def) ++ " }"
 showAST (Construct   i _)            = "(CONS: " ++ (show i) ++ ")"
+showAST (DataType d)                 = " TYPE: " ++ (show d) ++ " "
 showAST _                            = "\n!!UNKNOWN!!\n"
 instance Show BzoSyntax where show = showAST

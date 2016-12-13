@@ -66,9 +66,9 @@ import BzoTokens
 
 %%
 
-calls       : fnCall                                    { Calls [$1] }
+calls       : fnTypeDef                                 { Calls [$1] }
             | typeDef                                   { Calls [$1] }
-            | fnTypeDef                                 { Calls [$1] }
+            | fnCall                                    { Calls [$1] }
             | line                                      { Calls [$1] }
             | lines                                     { Calls [$1] }
             | nl                                        { Calls [] }
@@ -162,7 +162,7 @@ memberDefs  : memberDefs memberDefs                     { DataType $ DtRecord ((
 
 fnType      : typ FDEF typ                              { DataType $ DtFunc (typ $1) (typ $3) }
 
-fnTypeDef   : Id FDEF fnType                            { FnTypeDef $1 (tyIn $3) (tyEx $3) }
+fnTypeDef   : Id DEF fnType                             { FnTypeDef $1 (dtyIn $ typ $3) (dtyEx $ typ $3) }
 
 -- Parser Primitives Below
 
