@@ -142,6 +142,7 @@ typ         : TyId                                      { DataType $ DtCoreType 
             | fnType                                    { $1 }
             | BIT                                       { DataType $ DtBIType $1 }
             | '()'                                      { DataType DtNilType }
+            | record                                    { $1 }
 
 record      : sdo memberDef  edo                        { $2 }
             | sdo memberDefs edo                        { $2 }
@@ -154,7 +155,7 @@ pmtypes     : pmtypes pmtypes                           { DataType $ DtPolymorph
             | pmtypes typ                               { DataType $ DtPolymorph ((dtyps $ typ $1) ++ [typ $2]) }
             | typ sepp                                  { DataType $ DtPolymorph [typ $1] }
 
-memberDef   : Id DEF typ                                { DataType $ DtRecord [RecUnit $1 $3] }
+memberDef   : Id DEF typ                                { DataType $ DtRecord [RecUnit $1 (typ $3)] }
 
 memberDefs  : memberDefs memberDefs                     { DataType $ DtRecord ((recs $ typ $1) ++ (recs $ typ $2)) }
             | memberDefs memberDef                      { DataType $ DtRecord ((recs $ typ $1) ++ (recs $ typ $2)) }

@@ -215,5 +215,4 @@ showAST (Undefined)                  = " UNDEFINED "
 showAST (StatementBlock i x def)     = "{BLOCK from " ++ (show i) ++ " to " ++ (show x) ++ ": " ++ (concatMap show def) ++ " }"
 showAST (Construct   i _)            = "(CONS: " ++ (show i) ++ ")"
 showAST (DataType d)                 = " TYPE: " ++ (show d) ++ " "
-showAST _                            = "\n!!UNKNOWN!!\n"
 instance Show BzoSyntax where show = showAST
