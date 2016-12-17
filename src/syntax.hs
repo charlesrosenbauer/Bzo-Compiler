@@ -115,9 +115,10 @@ data DtType
     | DtTypeVar     { id    :: String }
     | DtBIType      { id    :: String }
     | DtFunc        { dtyIn :: DtType, dtyEx :: DtType }
-    | DtPolymorph   { dtyps  :: [DtType] }
+    | DtPolymorph   { dtyps :: [DtType] }
     | DtModded      { dmod  :: Modifier, dtyp :: DtType }
     | DtRecord      { recs  :: [RecUnit] }
+    | DtFilter      { dtyp  :: DtType, dfilter :: DtType }
     | DtUnspecified
     deriving (Eq, Show)
 

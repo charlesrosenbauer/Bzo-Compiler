@@ -143,6 +143,7 @@ typ         : TyId                                      { DataType $ DtCoreType 
             | BIT                                       { DataType $ DtBIType $1 }
             | '()'                                      { DataType DtNilType }
             | record                                    { $1 }
+            | typ ':' typ                               { DataType $ DtFilter (typ $1) (typ $3) }
 
 record      : sdo memberDef  edo                        { $2 }
             | sdo memberDefs edo                        { $2 }
