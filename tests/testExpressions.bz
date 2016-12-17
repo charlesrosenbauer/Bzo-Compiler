@@ -14,28 +14,17 @@
 (n) %16 :: (n. 16)%
 
 
-'? :: (Bool. A. A) ;; A'
+? :: (Bool. A. A) ;; A
 (True . l. _) ? :: l
 (False. _. r) ? :: r
 
-'map :: ([]A. (A ;; B)) ;; []B'
+map :: ([]A. (A ;; B)) ;; []B
 (arr. f) map :: arr f..
 
-'reduce :: ([]A. B. ((A. B) ;; B)) ;; B'
-'reduce :: ([]A. B. ((A. B) ;; B). Int) ;; B'
+reduce :: ([]A. B. ((A. B) ;; B)) ;; B
+reduce :: ([]A. B. ((A. B) ;; B). Int) ;; B
 (arr. x. f)    reduce :: ((0 arr. x) f. 1) reduce
-(arr. x. f. i) reduce :: ((arr top. i)>.
-  ((i arr. x) f. i +1) reduce
-  x)?
+(arr. x. f. i) reduce :: ((arr top. i)>. ((i arr. x) f. i +1) reduce. x)?
 
-'mkReduce :: (B. ((A. B) ;; B)) ;; ([]A ;; B)'
-(x. f) mkReduce :: ;arr :: (arr. x. f) reduce
-
-'mk :: (A. ((A. B) ;; C)) ;; (B ;; C)'
-(x. f) mk :: ;y :: (x. y) f
-
-'mk :: (A. ((A. B. C) ;; D)) ;; ((B. C) ;; D)'
-(x. f) mk :: ;(y. z) :: (x. y. z) f
-
-'mk :: (A. ((A. B. C. D) ;; E)) ;; ((B. C. D) ;; E)'
-(w. f) mk :: ;(x. y. z) :: (w. x. y. z) f
+mkReduce :: (B. ((A. B) ;; B)) ;; ([]A ;; B)
+(x. f) mkReduce :: { ;arr :: { (arr. x. f) reduce } }

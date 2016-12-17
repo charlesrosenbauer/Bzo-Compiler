@@ -1,5 +1,32 @@
 'Mostly just a second file for testing purposes'
 
-? :: {
-  c
-}
+? :: (Bool. A. A) ;; A
+
+(True . x. _ ) ? :: x
+(False. _. x ) ? :: x
+
+
+
+Bool :: ( True, False )
+
+
+Vec2 :: {x :: F32. y :: F32}
+Vec3 :: {x :: F32. y :: F32. z :: F32}
+Vec4 :: {x :: F32. y :: F32. z :: F32. w :: F32}
+
+Mat1x1 ::       F32
+Mat1x2 ::    [2]F32
+Mat1x3 ::    [3]F32
+Mat1x4 ::    [4]F32
+Mat2x1 ::      Vec2
+Mat2x2 :: [2][2]F32
+Mat2x3 :: [2][3]F32
+Mat2x4 :: [2][4]F32
+Mat3x1 ::      Vec3
+Mat3x2 :: [3][2]F32
+Mat3x3 :: [3][3]F32
+Mat3x4 :: [3][4]F32
+Mat4x1 ::      Vec4
+Mat4x2 :: [4][2]F32
+Mat4x3 :: [4][3]F32
+Mat4x4 :: [4][4]F32
