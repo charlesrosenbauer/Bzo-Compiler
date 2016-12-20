@@ -49,6 +49,7 @@ data BzoToken = TkStartTup  { spos :: BzoPos }
 data BzoErr = Other
   | StringErr String
   | LexErr String
+  | TypeErr String
 
 
 
