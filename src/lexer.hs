@@ -30,6 +30,18 @@ data LexerState = LexerState{
 
 
 
+makeBzoPos :: LexerState -> BzoPos
+makeBzoPos (LexerState l c o n) = BzoPos l c n
+
+
+
+
+
+
+
+
+
+
 newtype Lexer a = Lexer { lex :: String -> LexerState -> Either BzoErr [(a, LexerState, String)] }
 
 
@@ -41,28 +53,14 @@ newtype Lexer a = Lexer { lex :: String -> LexerState -> Either BzoErr [(a, Lexe
 
 
 
-runLexer :: String -> Lexer a -> String -> Either BzoErr a
+runLexer :: String -> Lexer a -> String -> Either BzoErr [a]
 runLexer fname lx s =
   case (BzoLexer.lex lx s (LexerState 1 1 0 fname)) of
-    Right [(ret, _, [] )] -> Right  ret
+    Right [(ret, _, [] )] -> Right  [ret]
     Right [(_  , _, rem)] -> Left $ LexErr "Failed to consume entire input."
+    Right lst             -> Right $ fst3 $ unzip3 lst
     Left  err             -> Left err
-
-
-
-
-
-
-
-
-
-
-moveOne :: LexerState -> Char -> LexerState
-moveOne ls ch =
-  let (LexerState l c o n) = ls
-  in if(ch == '\n')
-    then LexerState (l+1) c (o+1) n
-    else LexerState l (c+1) (o+1) n
+    where fst3 (a, b, c) = a
 
 
 
@@ -189,11 +187,39 @@ instance Alternative Lexer where
 
 
 
+moveOne :: LexerState -> Char -> LexerState
+moveOne ls ch =
+  let (LexerState l c o n) = ls
+  in if(ch == '\n')
+    then LexerState (l+1) c (o+1) n
+    else LexerState l (c+1) (o+1) n
+
+
+
+
+
+
+
+
+
+
 satisfy :: (Char -> Bool) -> Lexer Char
 satisfy f = item >>= \ch ->
   if f ch
     then return ch
     else mzero
+
+
+
+
+
+
+
+
+
+
+getLexerState :: Lexer LexerState
+getLexerState = Lexer $ \s ls -> Right [(ls, ls, s)]
 
 
 
@@ -243,11 +269,66 @@ lexCharFrom cs = satisfy (\c -> elem c cs)
 
 
 
+lexExceptChar :: Char -> Lexer Char
+lexExceptChar ch = satisfy (\c -> c /= ch)
+
+
+
+
+
+
+
+
+
+
+lexExceptCharFrom :: [Char] -> Lexer Char
+lexExceptCharFrom cs = satisfy (\c -> not $ elem c cs)
+
+
+
+
+
+
+
+
+
+
+toLstLexer :: Lexer a -> Lexer [a]
+toLstLexer lx = Lexer (\s ls ->
+  case (BzoLexer.lex lx s ls) of
+    Left  err -> Left err
+    Right lst -> Right $ map xform lst)
+    where xform (a, b, c) = ([a], b, c)
+
+
+
+
+
+
+
+
+
+
 alphaL     = "abcdefghijklmnopqrstuvwxyz"
 alphaU     = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 numerals   = "0123456789"
-printable  = "`!#%^&*-=+|<>?/\\"
-whitespace = " \n\t\v"
+symbols    = "`!#%^&*-=+|<>?/\\"
+special    = "~@$(){}[]_:;',.\""
+whitespace = " \t\v"
+newline    = "\n\r"
+
+
+
+
+
+
+
+
+
+
+lexGenString :: String -> Lexer String
+lexGenString [] = return []
+lexGenString (c:cs) = do { lexChar c; lexGenString cs; return (c:cs)}
 
 
 
@@ -259,5 +340,149 @@ whitespace = " \n\t\v"
 
 
 
---lexFile :: FileName -> String -> [BzoToken]
---lexFile file syms =
+lexComment :: Lexer String
+lexComment = do
+  st <- lexChar '"'
+  cm <- many $ lexExceptChar '"'
+  nd <- lexChar '"'
+  return cm
+
+
+
+
+
+
+
+
+
+
+lexGenEscape :: Char -> Char -> Lexer Char
+lexGenEscape ch ret = do
+  a <- lexChar '\\'
+  b <- lexChar ch
+  return ret
+
+
+
+
+
+
+
+
+
+
+lexEscape :: Lexer Char
+lexEscape =
+  lexGenEscape 'n'  '\n' <|>
+  lexGenEscape 'v'  '\v' <|>
+  lexGenEscape 't'  '\t' <|>
+  lexGenEscape 'r'  '\r' <|>
+  lexGenEscape '\\' '\\' <|>
+  lexGenEscape 'n'  '\n' <|>
+  lexGenEscape '\'' '\'' <|>
+  lexGenEscape '"'  '\"' <|>
+  lexGenEscape 'a'  '\a'
+
+
+
+
+
+
+
+
+
+
+lexString :: Lexer BzoToken
+lexString = do
+  pos <- getLexerState
+  st  <- lexChar '\''
+  sr  <- many (lexEscape <|> (lexExceptChar '\''))
+  nd  <- lexChar '\''
+  return $ TkStr (makeBzoPos pos) sr
+
+
+
+
+
+
+
+
+
+
+lexWhiteSpace :: Lexer BzoToken
+lexWhiteSpace = do
+  a <- lexComment <|> (toLstLexer $ satisfy isSpace)
+  return TkNil
+
+
+
+
+
+
+
+
+
+
+lexStringToToken :: String -> (BzoPos -> BzoToken) -> Lexer BzoToken
+lexStringToToken st f = do
+  p <- getLexerState
+  s <- lexGenString st
+  return $ f (makeBzoPos p)
+
+
+
+
+
+
+
+
+
+
+lexSymbol :: Lexer BzoToken
+lexSymbol =
+  (lexStringToToken "::" (\p -> TkDefine    p)) <|>
+  (lexStringToToken ";;" (\p -> TkFnSym     p)) <|>
+  (lexStringToToken "("  (\p -> TkStartTup  p)) <|>
+  (lexStringToToken ")"  (\p -> TkEndTup    p)) <|>
+  (lexStringToToken "["  (\p -> TkStartDat  p)) <|>
+  (lexStringToToken "]"  (\p -> TkEndDat    p)) <|>
+  (lexStringToToken "{"  (\p -> TkStartDo   p)) <|>
+  (lexStringToToken "}"  (\p -> TkEndDo     p)) <|>
+  (lexStringToToken ":"  (\p -> TkFilterSym p)) <|>
+  (lexStringToToken ";"  (\p -> TkLambdaSym p)) <|>
+  (lexStringToToken "."  (\p -> TkSepExpr   p)) <|>
+  (lexStringToToken ","  (\p -> TkSepPoly   p)) <|>
+  (lexStringToToken "()" (\p -> TkTupEmpt   p)) <|>
+  (lexStringToToken "[]" (\p -> TkArrMod    p)) <|>
+  (lexStringToToken "_"  (\p -> TkWildcard  p)) <|>
+  (lexStringToToken "@"  (\p -> TkReference p)) <|>
+  (lexStringToToken "~"  (\p -> TkMutable   p))
+
+
+
+
+
+
+
+
+
+
+generalLexer :: Lexer BzoToken
+generalLexer =
+  lexWhiteSpace <|>
+  lexSymbol     <|>
+  lexString
+
+
+
+
+
+
+
+
+
+
+
+
+lexFile :: String -> String -> Either BzoErr [BzoToken]
+lexFile file syms = runLexer file generalLexer syms
