@@ -9,7 +9,8 @@ module BzoTypes where
 
 
 
-data BzoToken = TkStartTup  { spos :: BzoPos }
+data BzoToken
+  = TkStartTup     { spos :: BzoPos }
   | TkEndTup       { spos :: BzoPos }
   | TkStartDat     { spos :: BzoPos }
   | TkEndDat       { spos :: BzoPos }
@@ -35,6 +36,7 @@ data BzoToken = TkStartTup  { spos :: BzoPos }
   | TkNewline      { spos :: BzoPos }
   | TkBuiltin      { spos :: BzoPos, valId  :: String  }
   | TkBIType       { spos :: BzoPos, valId  :: String  }
+  | TkNil
   deriving Eq
 
 
@@ -49,7 +51,24 @@ data BzoToken = TkStartTup  { spos :: BzoPos }
 data BzoErr = Other
   | StringErr String
   | LexErr String
+  | ParseErr String
   | TypeErr String
+
+
+
+
+
+
+
+
+
+
+showBzErr :: BzoErr -> String
+showBzErr (StringErr   st) = "Bzo Error: " ++ (show st)
+showBzErr (LexErr      st) = "Lexer Error: " ++ (show st)
+showBzErr (TypeErr     st) = "Type Error: " ++ (show st)
+showBzErr (Other         ) = "Unknown Error?"
+instance Show BzoErr where show = showBzErr
 
 
 

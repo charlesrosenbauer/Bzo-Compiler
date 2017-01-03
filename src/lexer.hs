@@ -53,6 +53,24 @@ newtype Lexer a = Lexer { lex :: String -> LexerState -> Either BzoErr [(a, Lexe
 
 
 
+makeLexErr :: LexerState -> BzoErr
+makeLexErr ls =
+  let p = makeBzoPos ls
+      l = line p
+      c = column p
+      n = fileName p
+  in (LexErr ("Lexer error in file \"" ++ (show n) ++ "\" at line " ++ (show l) ++
+      ", column " ++ (show c) ++ ".\n"))
+
+
+
+
+
+
+
+
+
+
 runLexer :: String -> Lexer a -> String -> Either BzoErr [a]
 runLexer fname lx s =
   case (BzoLexer.lex lx s (LexerState 1 1 0 fname)) of
@@ -86,7 +104,7 @@ instance Functor Lexer where
 
 
 
-instance Applicative Lexer where
+instance Applicative Lexer where                  -- DOES NOT WORK!! FIX!!
   pure a = Lexer (\s ls -> Right [(a, ls, s)])
   (Lexer lf1) <*> (Lexer lf2) = Lexer (\s ls ->
     case (lf1 s ls) of
@@ -462,33 +480,6 @@ isLegalChar c = (isPrint c) && (not $ isSpace c) && (not $ elem c "~@_$()[]{}:;\
 
 
 
-
-
-
-
-
-
-
-
-
-
-
--- Needed yet:
-  -- LexInt
-  -- LexFlt
-  -- LexHex
-  -- LexOct
-  -- LexBin
-
-
-
-
-
-
-
-
-
-
 lexIdentifier :: Lexer BzoToken
 lexIdentifier = do
   p  <- getLexerState
@@ -554,15 +545,102 @@ lexBITypeIdentifier = do
 
 
 
-makeLexErr :: LexerState -> BzoErr
-makeLexErr ls =
-  let p = makeBzoPos ls
-      l = line p
-      c = column p
-      n = fileName p
-  in (LexErr ("Lexer error in file \"" ++ (show n) ++ "\" at line " ++ (show l) ++
-      ", column " ++ (show c) ++ ".\n"))
 
+readIntWithBase :: String -> Integer -> Integer
+readIntWithBase sr b =
+  let rs = reverse sr
+  in  (readDgt rs b)
+    where readDgt [] b = 0
+          readDgt st b =
+            let (s0 : ss) = st
+                n = case s0 of
+                  '0' -> 0
+                  '1' -> 1
+                  '2' -> 2
+                  '3' -> 3
+                  '4' -> 4
+                  '5' -> 5
+                  '6' -> 6
+                  '7' -> 7
+                  '8' -> 8
+                  '9' -> 9
+                  'a' -> 10
+                  'A' -> 10
+                  'b' -> 11
+                  'B' -> 11
+                  'c' -> 12
+                  'C' -> 12
+                  'd' -> 13
+                  'D' -> 13
+                  'e' -> 14
+                  'E' -> 14
+                  'f' -> 15
+                  'F' -> 15
+                  _   -> -1
+            in (n + (b * (readDgt ss b)))
+
+
+
+
+
+
+
+
+
+
+lexBinInt :: Lexer BzoToken
+lexBinInt = do
+  p  <- getLexerState
+  c0 <- ((lexGenString "0b") <|> (lexGenString "0B"))
+  c1 <- some $ satisfy (\c -> elem c "01")
+  return (TkInt (makeBzoPos p) (readIntWithBase c1 2))
+
+
+
+
+
+
+
+
+
+
+lexOctInt :: Lexer BzoToken
+lexOctInt = do
+  p  <- getLexerState
+  c0 <- lexGenString "0"
+  c1 <- some $ satisfy isOctDigit
+  return (TkInt (makeBzoPos p) (readIntWithBase c1 8))
+
+
+
+
+
+
+
+
+
+
+lexDecInt :: Lexer BzoToken
+lexDecInt = do
+  p <- getLexerState
+  c <- some $ satisfy isDigit
+  return (TkInt (makeBzoPos p) (readIntWithBase c 10))
+
+
+
+
+
+
+
+
+
+
+lexHexInt :: Lexer BzoToken
+lexHexInt = do
+  p  <- getLexerState
+  c0 <- ((lexGenString "0x") <|> (lexGenString "0X"))
+  c1 <- some $ satisfy isHexDigit
+  return (TkInt (makeBzoPos p) (readIntWithBase c1 16))
 
 
 
@@ -580,7 +658,11 @@ generalLexer =
   lexBITypeIdentifier <|>
   lexBIIdentifier     <|>
   lexTypeIdentifier   <|>
-  lexIdentifier
+  lexIdentifier       <|>
+  lexBinInt           <|>
+  lexOctInt           <|>
+  lexHexInt           <|>
+  lexDecInt
 
 
 
@@ -591,8 +673,8 @@ generalLexer =
 
 
 
-lexFile :: String -> String -> Either BzoErr [BzoToken]
-lexFile file syms =
+fileLexer :: String -> String -> Either BzoErr [BzoToken]
+fileLexer file syms =
   let res = runLexer file generalLexer syms
   in  case res of
     Left  err -> Left err

@@ -3,11 +3,11 @@ import Control.Monad
 import System.Environment
 import System.IO hiding (try)
 import BzoLexer
-import BzoParser
+--import BzoParser
 import BzoTypes
 import BzoTokens
 import Compiler
-import BzoError
+--import BzoError
 
 
 
@@ -76,7 +76,7 @@ flushStr str = putStr str >> hFlush stdout
 
 
 parseInput :: String -> String
-parseInput input = show $ compileFile input   --change compileFile to compileFile' to switch to lexing mode
+parseInput input = compileFile' input   --change compileFile to compileFile' to switch to lexing mode
 
 
 
