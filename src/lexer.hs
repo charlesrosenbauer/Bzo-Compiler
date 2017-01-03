@@ -105,7 +105,7 @@ instance Applicative Lexer where
 
 
 
--- | Alternative to pure for applicative lexer
+-- | Alternative to pure for applicative lexer. Not sure if it's necessary.
 pureErr :: String -> Lexer a
 pureErr err = Lexer (\s ls -> Left $ LexErr err)
 
@@ -153,7 +153,7 @@ instance Monad Lexer where
 
 
 instance MonadPlus Lexer where
-  mzero = Lexer (\ls s -> Left (LexErr "Parse Failure"))  -- Add a makeErr function later
+  mzero = Lexer (\s ls -> Left $ makeLexErr ls)  -- Add a makeErr function later
   mplus p q = Lexer (\s ls ->
     let ps = (BzoLexer.lex p s ls)
         qs = (BzoLexer.lex q s ls)
@@ -309,23 +309,6 @@ toLstLexer lx = Lexer (\s ls ->
 
 
 
-alphaL     = "abcdefghijklmnopqrstuvwxyz"
-alphaU     = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-numerals   = "0123456789"
-symbols    = "`!#%^&*-=+|<>?/\\"
-special    = "~@$(){}[]_:;',.\""
-whitespace = " \t\v"
-newline    = "\n\r"
-
-
-
-
-
-
-
-
-
-
 lexGenString :: String -> Lexer String
 lexGenString [] = return []
 lexGenString (c:cs) = do { lexChar c; lexGenString cs; return (c:cs)}
@@ -467,13 +450,137 @@ lexSymbol =
 
 
 
+isLegalChar :: Char -> Bool
+isLegalChar c = (isPrint c) && (not $ isSpace c) && (not $ elem c "~@_$()[]{}:;\'\",.")
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+-- Needed yet:
+  -- LexInt
+  -- LexFlt
+  -- LexHex
+  -- LexOct
+  -- LexBin
+
+
+
+
+
+
+
+
+
+
+lexIdentifier :: Lexer BzoToken
+lexIdentifier = do
+  p  <- getLexerState
+  c0 <- satisfy (\c -> (isLegalChar c) && (not $ isUpper c) && (not $ isDigit c))
+  cs <- many $ satisfy isLegalChar
+  return (TkId (makeBzoPos p) (c0 : cs))
+
+
+
+
+
+
+
+
+
+
+lexTypeIdentifier :: Lexer BzoToken
+lexTypeIdentifier = do
+  p  <- getLexerState
+  c0 <- satisfy isUpper
+  cs <- many $ satisfy isLegalChar
+  return (TkTypeId (makeBzoPos p) (c0 : cs))
+
+
+
+
+
+
+
+
+
+
+lexBIIdentifier :: Lexer BzoToken
+lexBIIdentifier = do
+  p  <- getLexerState
+  b  <- lexChar '$'
+  c0 <- satisfy (\c -> (isLegalChar c) && (not $ isUpper c) && (not $ isDigit c))
+  cs <- many $ satisfy isLegalChar
+  return (TkBuiltin (makeBzoPos p) (b : (c0 : cs)))
+
+
+
+
+
+
+
+
+
+
+lexBITypeIdentifier :: Lexer BzoToken
+lexBITypeIdentifier = do
+  p  <- getLexerState
+  b  <- lexChar '$'
+  c0 <- satisfy isUpper
+  cs <- many $ satisfy isLegalChar
+  return (TkBIType (makeBzoPos p) (b : (c0 : cs)))
+
+
+
+
+
+
+
+
+
+makeLexErr :: LexerState -> BzoErr
+makeLexErr ls =
+  let p = makeBzoPos ls
+      l = line p
+      c = column p
+      n = fileName p
+  in (LexErr ("Lexer error in file \"" ++ (show n) ++ "\" at line " ++ (show l) ++
+      ", column " ++ (show c) ++ ".\n"))
+
+
+
+
+
+
+
+
+
+
 generalLexer :: Lexer BzoToken
 generalLexer =
-  lexWhiteSpace <|>
-  lexSymbol     <|>
-  lexString
-
-
+  lexWhiteSpace       <|>
+  lexSymbol           <|>
+  lexString           <|>
+  lexBITypeIdentifier <|>
+  lexBIIdentifier     <|>
+  lexTypeIdentifier   <|>
+  lexIdentifier
 
 
 
@@ -485,4 +592,10 @@ generalLexer =
 
 
 lexFile :: String -> String -> Either BzoErr [BzoToken]
-lexFile file syms = runLexer file generalLexer syms
+lexFile file syms =
+  let res = runLexer file generalLexer syms
+  in  case res of
+    Left  err -> Left err
+    Right tks -> Right $ filter isValidToken tks
+  where isValidToken (TkNil) = False
+        isValidToken _         = True
