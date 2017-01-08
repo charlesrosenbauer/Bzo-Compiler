@@ -1,0 +1,44 @@
+This file is a quick explanation of how the code is organized, in order to help anyone seeking to contribute to the project quickly learn the structure. If you make any significant changes that should be noted here, please note them here.
+
+Directories:
+
+  /bin    -- A Folder for binary files resulting from compilation.
+
+  /info   -- A Folder for files relating to documentation, plans, etc.
+
+  /src    -- A Folder for Source code
+
+  /tests  -- A Folder for Bzo code used to test to make sure the compiler generates the correct output
+
+
+Source Files:
+
+  bzo.hs
+    Main file. Contains the REPL, main function, etc.
+
+  compiler.hs
+    Contains functions that run through the compilation / evaluation pipeline.
+
+  error.hs
+    Contains functions relating to BzoErr. This will be removed in a future update.
+
+  lexer.x
+    Lex file defining the lexer. This will be replaced in the future with a Haskell implementation.
+
+  parser.y
+    Happy file defining the parser. This will be replaced in the future with a Haskell implementation.
+
+  syntax.hs
+    A file containing functions and definitions for the abstract syntax tree and related types.
+
+  tokens.hs
+    A file containing functions relating to the token type. This will be removed in a future update.
+
+  types.hs
+    A file containing definitions and functions relating to many types used across the compiler.
+
+  reducedast.hs
+    A file containing definitions and functions for a transformed version of the Abstract Syntax Tree that is closer to assembly.
+
+  typechecker.hs
+    A file containing code for the type checker.
