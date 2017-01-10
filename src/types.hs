@@ -29,7 +29,7 @@ data BzoToken
   | TkArrGnrl      { spos :: BzoPos }
   | TkArrMod       { spos :: BzoPos }
   | TkInt          { spos :: BzoPos, valInt :: Integer }
-  | TkFlt          { spos :: BzoPos, valFlt :: Float   }
+  | TkFlt          { spos :: BzoPos, valFlt :: Double  }
   | TkStr          { spos :: BzoPos, valStr :: String  }
   | TkId           { spos :: BzoPos, valId  :: String  }
   | TkTypeId       { spos :: BzoPos, valId  :: String  }

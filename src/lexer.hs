@@ -71,14 +71,12 @@ makeLexErr ls =
 
 
 
-runLexer :: String -> Lexer a -> String -> Either BzoErr [a]
+runLexer :: String -> Lexer a -> String -> Either BzoErr a
 runLexer fname lx s =
   case (BzoLexer.lex lx s (LexerState 1 1 0 fname)) of
-    Right [(ret, _, [] )] -> Right  [ret]
+    Right [(ret, _, [] )] -> Right  ret
     Right [(_  , _, rem)] -> Left $ LexErr "Failed to consume entire input."
-    Right lst             -> Right $ fst3 $ unzip3 lst
     Left  err             -> Left err
-    where fst3 (a, b, c) = a
 
 
 
@@ -104,15 +102,18 @@ instance Functor Lexer where
 
 
 
-instance Applicative Lexer where                  -- DOES NOT WORK!! FIX!!
+instance Applicative Lexer where
   pure a = Lexer (\s ls -> Right [(a, ls, s)])
   (Lexer lf1) <*> (Lexer lf2) = Lexer (\s ls ->
     case (lf1 s ls) of
-      Left  err            -> Left  err
-      Right [(f, ls1, s1)] ->
-        case (lf2 s1 ls1) of
-          Left  err            -> Left  err
-          Right [(a, ls2, s2)] -> Right [(f a, ls2, s2)] )
+      Left  err -> Left err
+      Right lst ->
+        let (p1, p23) = unzip $ map (\(a, b, c) -> (a, (c, b))) lst
+            out1 = map (\(a, b) -> lf2 a b) p23
+            out2 = sepErrs out1
+        in case out2 of
+          Left  err -> Left err
+          Right val -> Right $ concat $ applyListFns p1 (\f (a, b, c) -> (f a, b, c)) val   )
 
 
 
@@ -126,6 +127,68 @@ instance Applicative Lexer where                  -- DOES NOT WORK!! FIX!!
 -- | Alternative to pure for applicative lexer. Not sure if it's necessary.
 pureErr :: String -> Lexer a
 pureErr err = Lexer (\s ls -> Left $ LexErr err)
+
+
+
+
+
+
+
+
+
+
+mapEither :: Either a b -> (b -> c) -> Either a c
+mapEither e f =
+  case e of
+    Left  err -> Left err
+    Right val -> Right $ f val
+
+
+
+
+
+
+
+
+
+
+applyListFns :: [(b -> c)] -> ((b -> c) -> a -> d) -> [[a]] -> [[d]]
+applyListFns fs fn xs = map (\(f, x) -> map (fn f) x) $ zip fs xs
+
+
+
+
+
+
+
+
+
+
+sepErrs :: [Either a [b]] -> Either a [[b]]
+sepErrs xs =
+  let (ls, rs) = partitionEithers xs
+  in  if((length ls) /= 0)
+    then Left  $ ls !! 0
+    else Right $ rs
+
+
+
+
+
+
+
+
+
+
+concatMapWithErrs' :: Either a [b] -> (b -> Either a [c]) -> Either a [c]
+concatMapWithErrs' xs fn =
+  case xs of
+    Left  err -> Left err
+    Right val ->
+      let (ls, rs) = partitionEithers $ map fn val
+      in  if((length ls) /= 0)
+        then Left  $ ls !! 0
+        else Right $ concat rs
 
 
 
@@ -171,7 +234,7 @@ instance Monad Lexer where
 
 
 instance MonadPlus Lexer where
-  mzero = Lexer (\s ls -> Left $ makeLexErr ls)  -- Add a makeErr function later
+  mzero = Lexer (\s ls -> Left $ makeLexErr ls)
   mplus p q = Lexer (\s ls ->
     let ps = (BzoLexer.lex p s ls)
         qs = (BzoLexer.lex q s ls)
@@ -193,8 +256,9 @@ instance Alternative Lexer where
   empty = mzero
   (<|>) p q = Lexer (\s ls ->
     case (BzoLexer.lex p s ls) of
-      Left err -> (BzoLexer.lex q) s ls
-      x        -> x )
+      Left  err -> (BzoLexer.lex q) s ls
+      Right []  -> (BzoLexer.lex q) s ls
+      x         -> x )
 
 
 
@@ -443,6 +507,8 @@ lexSymbol :: Lexer BzoToken
 lexSymbol =
   (lexStringToToken "::" (\p -> TkDefine    p)) <|>
   (lexStringToToken ";;" (\p -> TkFnSym     p)) <|>
+  (lexStringToToken "()" (\p -> TkTupEmpt   p)) <|>
+  (lexStringToToken "[]" (\p -> TkArrGnrl   p)) <|>
   (lexStringToToken "("  (\p -> TkStartTup  p)) <|>
   (lexStringToToken ")"  (\p -> TkEndTup    p)) <|>
   (lexStringToToken "["  (\p -> TkStartDat  p)) <|>
@@ -451,10 +517,9 @@ lexSymbol =
   (lexStringToToken "}"  (\p -> TkEndDo     p)) <|>
   (lexStringToToken ":"  (\p -> TkFilterSym p)) <|>
   (lexStringToToken ";"  (\p -> TkLambdaSym p)) <|>
+  (lexStringToToken ".." (\p -> TkArrMod    p)) <|>
   (lexStringToToken "."  (\p -> TkSepExpr   p)) <|>
   (lexStringToToken ","  (\p -> TkSepPoly   p)) <|>
-  (lexStringToToken "()" (\p -> TkTupEmpt   p)) <|>
-  (lexStringToToken "[]" (\p -> TkArrMod    p)) <|>
   (lexStringToToken "_"  (\p -> TkWildcard  p)) <|>
   (lexStringToToken "@"  (\p -> TkReference p)) <|>
   (lexStringToToken "~"  (\p -> TkMutable   p))
@@ -650,6 +715,24 @@ lexHexInt = do
 
 
 
+
+lexFlt :: Lexer BzoToken
+lexFlt = do
+  p  <- getLexerState
+  c0 <- some $ satisfy isDigit
+  c1 <- lexGenString "."
+  c2 <- some $ satisfy isDigit
+  return (TkFlt (makeBzoPos p) ((fromIntegral $ readIntWithBase c0 10) +
+    ((fromIntegral $ readIntWithBase c2 10) / (10 ^ (length c2))) ) )
+
+
+
+
+
+
+
+
+
 generalLexer :: Lexer BzoToken
 generalLexer =
   lexWhiteSpace       <|>
@@ -659,6 +742,7 @@ generalLexer =
   lexBIIdentifier     <|>
   lexTypeIdentifier   <|>
   lexIdentifier       <|>
+  lexFlt              <|>
   lexBinInt           <|>
   lexOctInt           <|>
   lexHexInt           <|>
@@ -673,9 +757,18 @@ generalLexer =
 
 
 
+generalLexerMany :: Lexer [BzoToken]
+generalLexerMany = many generalLexer
+
+
+
+
+
+
+
 fileLexer :: String -> String -> Either BzoErr [BzoToken]
 fileLexer file syms =
-  let res = runLexer file generalLexer syms
+  let res = runLexer syms generalLexerMany file
   in  case res of
     Left  err -> Left err
     Right tks -> Right $ filter isValidToken tks
