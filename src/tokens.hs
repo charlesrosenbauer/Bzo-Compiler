@@ -34,6 +34,7 @@ showTk (TkInt        _  x) = "I:"   ++ show x
 showTk (TkFlt        _  x) = "F:"   ++ show x
 showTk (TkStr        _ st) = "S:"   ++ show st
 showTk (TkId         _ st) = "ID:"  ++ show st
+showTk (TkMutId      _ st) = "MID:" ++ show st
 showTk (TkTypeId     _ st) = "TID:" ++ show st
 showTk (TkNewline       _) = "NEWL\n"
 showTk (TkBuiltin    _ st) = "BI:"  ++ show st

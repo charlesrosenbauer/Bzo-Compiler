@@ -561,6 +561,23 @@ lexIdentifier = do
 
 
 
+lexMutIdentifier :: Lexer BzoToken
+lexMutIdentifier = do
+  p  <- getLexerState
+  c0 <- lexChar '~'
+  c1 <- satisfy (\c -> (isLegalChar c) && (not $ isUpper c) && (not $ isDigit c))
+  cs <- many $ satisfy isLegalChar
+  return (TkMutId (makeBzoPos p) (c0 : (c1 : cs)))
+
+
+
+
+
+
+
+
+
+
 lexTypeIdentifier :: Lexer BzoToken
 lexTypeIdentifier = do
   p  <- getLexerState
@@ -733,9 +750,26 @@ lexFlt = do
 
 
 
+
+lexNewline :: Lexer BzoToken
+lexNewline = do
+  p <- getLexerState
+  c <- some $ lexChar '\n'
+  return (TkNewline (makeBzoPos p))
+
+
+
+
+
+
+
+
+
 generalLexer :: Lexer BzoToken
 generalLexer =
+  lexNewline          <|>
   lexWhiteSpace       <|>
+  lexMutIdentifier    <|>
   lexSymbol           <|>
   lexString           <|>
   lexBITypeIdentifier <|>
