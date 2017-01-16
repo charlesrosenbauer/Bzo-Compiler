@@ -218,7 +218,7 @@ matchTokens (ParserState s i) bzt = matchList [] i bzt matchBzoToken
 
 matchPattern :: ParserState -> [ParseItem] -> [BzoToken] -> Maybe ([ParseItem], ParserState)
 matchPattern (ParserState s i) psi bzt =
-  let stackOut = matchStack  (ParserState s i) psi
+  let stackOut = matchStack  (ParserState s i) (reverse psi)
       tokenOut = matchTokens (ParserState s i) bzt
   in case (stackOut, tokenOut) of
     ((Just (s, ss)), (Just (i, is))) -> Just (s, (ParserState ss (i ++ is)))
@@ -266,7 +266,7 @@ parseCalls_0 = Parser (\ps ->
   case matchPattern ps [(PI_BzSyn mockBzSCalls), (PI_BzSyn mockBzSCalls)] [] of
     Nothing -> Nothing
     Just ([(PI_BzSyn (BzSCalls p0 c0)), (PI_BzSyn (BzSCalls p1 c1))], (ParserState s i)) ->
-      Just (ParserState ( s ++ [(PI_BzSyn (BzSCalls p0 (c0 ++ c1)))]) i)
+      Just (ParserState ((PI_BzSyn (BzSCalls p0 (c0 ++ c1))) : s) i)
     Just _  -> Nothing    )
 
 
@@ -283,7 +283,7 @@ parseCalls_1 = Parser (\ps ->
   case matchPattern ps [(PI_BzSyn mockBzSFnDef)] [] of
     Nothing -> Nothing
     Just ([(PI_BzSyn (BzSFnDef p0 a b c d))], (ParserState s i)) ->
-      Just (ParserState (s ++ [(PI_BzSyn (BzSCalls p0 [(BzSFnDef p0 a b c d)]))]) i)
+      Just (ParserState ((PI_BzSyn (BzSCalls p0 [(BzSFnDef p0 a b c d)])) : s) i)
     Just _  -> Nothing  )
 
 
@@ -300,7 +300,7 @@ parseCalls_2 = Parser (\ps ->
   case matchPattern ps [(PI_BzSyn mockBzSFTDef)] [] of
     Nothing -> Nothing
     Just ([(PI_BzSyn (BzSFTDef p0 a b c))], (ParserState s i)) ->
-      Just (ParserState (s ++ [(PI_BzSyn (BzSCalls p0 [(BzSFTDef p0 a b c)]))]) i)
+      Just (ParserState ((PI_BzSyn (BzSCalls p0 [(BzSFTDef p0 a b c)])) : s) i)
     Just _  -> Nothing    )
 
 
@@ -317,7 +317,7 @@ parseCalls_3 = Parser (\ps ->
   case matchPattern ps [(PI_BzSyn mockBzSTyDef)] [] of
     Nothing -> Nothing
     Just ([(PI_BzSyn (BzSTyDef p0 a b c))], (ParserState s i)) ->
-      Just (ParserState (s ++ [(PI_BzSyn (BzSCalls p0 [(BzSTyDef p0 a b c)]))]) i)
+      Just (ParserState ((PI_BzSyn (BzSCalls p0 [(BzSTyDef p0 a b c)])) : s) i)
     Just _  -> Nothing    )
 
 
@@ -334,7 +334,7 @@ parseCalls_4 = Parser (\ps ->
   case matchPattern ps [(PI_BzSyn mockBzSExpr)] [] of
     Nothing -> Nothing
     Just ([(PI_BzSyn (BzSExpr p0 a))], (ParserState s i)) ->
-      Just (ParserState (s ++ [(PI_BzSyn (BzSCalls p0 [(BzSExpr p0 a)]))]) i)
+      Just (ParserState ((PI_BzSyn (BzSCalls p0 [(BzSExpr p0 a)])) : s) i)
     Just _  -> Nothing    )
 
 
@@ -351,7 +351,7 @@ parseCalls_5 = Parser (\ps ->
   case matchPattern ps [(PI_BzSyn mockBzSCalls), (PI_Token (TkNewline mockBzoPos))] [] of
     Nothing -> Nothing
     Just ([(PI_BzSyn (BzSCalls p0 a)), (PI_Token (TkNewline mockBzoPos))], (ParserState s i)) ->
-      Just (ParserState (s ++ [(PI_BzSyn (BzSCalls p0 a))]) i)
+      Just (ParserState ((PI_BzSyn (BzSCalls p0 a)) : s) i)
     Just _  -> Nothing    )
 
 
@@ -376,8 +376,40 @@ parseCalls = [parseCalls_0, parseCalls_1, parseCalls_2,
 
 
 
--- | Inputs / Outputs:
--- |    Token Inputs
--- |    isREPL
--- |
---parseFile :: [BzoToken] -> Bool -> BzoSyntax
+parseIter :: ParserState -> [Parser] -> Either BzoErr BzoSyntax
+parseIter ps p =
+  case (tryParsers ps p) of
+    Nothing ->
+      case ps of
+        (ParserState []   [])              -> Left $ ParseErr "Nothing to parse?"
+        (ParserState asts [])              -> Left $ ParseErr "Could not consume entire input."
+        _                                  -> parseIter (shiftParser ps) p
+    Just (ParserState [(PI_BzSyn ast)] []) -> Right ast
+    Just ps'                               -> parseIter ps' p
+
+
+
+
+
+
+
+
+
+
+
+runParser :: [BzoToken] -> [Parser] -> Either BzoErr BzoSyntax
+runParser tks p =
+  let ps = (ParserState [] tks)
+  in  parseIter ps p
+
+
+
+
+
+
+
+
+
+
+parseFile :: [BzoToken] -> Either BzoErr BzoSyntax
+parseFile tks = runParser tks [parseCalls]
