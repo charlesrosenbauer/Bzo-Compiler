@@ -1,0 +1,17 @@
+"
+	A Basic Standard Library for Bzo
+	Higher-Order Functions
+	Currently Incomplete
+"
+
+
+
+"High Order Functions"
+map :: ([]A. (A ;; B)) ;; []B
+(x. f) map :: x f..
+
+sReduce :: ([]A. B. (A. B) ;; B) ;; B 
+sReduce :: $seqReduce
+
+pReduce :: ([]A. (A. A) ;; A) ;; A
+pReduce :: $parReduce
