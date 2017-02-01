@@ -11,64 +11,64 @@ import BzoTypes
 
 
 data BzoSyntax
-    = FunDef {
-        --pos     :: BzoPos,
+    = BzS_FunDef {
+        pos     :: BzoPos,
         inpars :: BzoSyntax,
         fnid   :: String,
         expars :: BzoSyntax,
         def    :: BzoSyntax }
-    | TypDef {
-        --pos  :: BzoPos,
+    | BzS_TypDef {
+        pos  :: BzoPos,
         pars :: BzoSyntax,
         tyid :: String,
         typ  :: DtType }
-    | FnTypeDef {
-        --pos  :: BzoPos,
+    | BzS_FnTypeDef {
+        pos  :: BzoPos,
         fnid   :: String,
         tyIn   :: DtType,
         tyEx   :: DtType }
-    | Lambda {
-        --pos  :: BzoPos,
+    | BzS_Lambda {
+        pos  :: BzoPos,
         pars :: BzoSyntax,
         def  :: BzoSyntax }
-    | Atoms {
-        --pos  :: BzoPos,
+    | BzS_Atoms {
+        pos  :: BzoPos,
         atom  :: Atom }
-    | ArrAtom {
-        --pos  :: BzoPos,
+    | BzS_ArrAtom {
+        pos  :: BzoPos,
         atom  :: Atom }
-    | Type {
-        --pos :: BzoPos,
+    | BzS_Type {
+        pos :: BzoPos,
         mods :: [Modifier],
         typ  :: DtType }
-    | Statements {
-        --pos   :: BzoPos,
+    | BzS_Statements {
+        pos   :: BzoPos,
         exprs :: [BzoSyntax] }
-    | Expr {
-        --pos   :: BzoPos,
+    | BzS_Expr {
+        pos   :: BzoPos,
         exprs :: [BzoSyntax] }
-    | Modifiers {
-        --pos  :: BzoPos,
+    | BzS_Modifiers {
+        pos  :: BzoPos,
         mods :: [Modifier] }
-    | Calls {
+    | BzS_Calls {
         calls :: [BzoSyntax] }
-    | TupleExpr {
-        --pos :: BzoPos,
+    | BzS_TupleExpr {
+        pos :: BzoPos,
         exprs :: [BzoSyntax] }
-    | StatementBlock {
-        --pos :: BzoPos,
+    | BzS_StatementBlock {
+        pos :: BzoPos,
         inpar :: BzoSyntax,
         expar :: BzoSyntax,
         exprs :: [BzoSyntax] }
-    | DataType {
-        --pos :: BzoPos,
+    | BzS_DataType {
+        pos :: BzoPos,
         typ :: DtType }
-    | Construct {
-        --pos :: BzoPos,
+    | BzS_Construct {
+        pos :: BzoPos,
         tyId  :: String,
         modf  :: Modifier }
-    | Wildcard
-    | Undefined
+    | BzS_Wildcard
+    | BzS_Undefined
     deriving Eq
 
 
@@ -85,6 +85,7 @@ data Atom
     | AtmStr String
     | AtmId  String
     | AtmBI  String
+    | AtmTBI String
     deriving Eq
 
 
@@ -96,7 +97,7 @@ data Atom
 
 
 
-data RecUnit = RecUnit{ rid :: String, rtyp :: DtType }
+data RecUnit = [(String, DtType)]
   deriving (Eq, Show)
 
 
@@ -132,9 +133,7 @@ data DtType
 
 
 data Modifier
-    = Mutb
-    | Refr
-    | Arry
+    = Arry
     | ArSz Integer
     | ArVr String
     | Mods [Modifier]
