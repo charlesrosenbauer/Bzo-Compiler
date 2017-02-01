@@ -84,21 +84,10 @@ data Atom
     | AtmFlt Float
     | AtmStr String
     | AtmId  String
+    | AtmMut String
     | AtmBI  String
     | AtmTBI String
     deriving Eq
-
-
-
-
-
-
-
-
-
-
-data RecUnit = [(String, DtType)]
-  deriving (Eq, Show)
 
 
 
@@ -118,7 +107,7 @@ data DtType
     | DtFunc        { dtyIn :: DtType, dtyEx :: DtType }
     | DtPolymorph   { dtyps :: [DtType] }
     | DtModded      { dmod  :: Modifier, dtyp :: DtType }
-    | DtRecord      { recs  :: [RecUnit] }
+    | DtRecord      { recs :: [(String, DtType)] }
     | DtFilter      { dtyp  :: DtType, dfilter :: DtType }
     | DtUnspecified
     deriving (Eq, Show)
@@ -163,8 +152,6 @@ makeMods _ = Mods []
 
 
 showMod  :: Modifier -> String
-showMod (Mutb)   = " ~ "
-showMod (Refr)   = " @ "
 showMod (Arry)   = " [] "
 showMod (ArSz i) = " [ " ++ (show i) ++ " ] "
 showMod (ArVr v) = " [ " ++ v ++ " ] "
@@ -185,7 +172,9 @@ showAtom (AtmInt i) = show i
 showAtom (AtmFlt f) = show f
 showAtom (AtmStr s) = show s
 showAtom (AtmId  i) = show i
+showAtom (AtmMut m) = show m
 showAtom (AtmBI  s) = show s
+showAtom (AtmTBI t) = show t
 instance Show Atom where show = showAtom
 
 
