@@ -12,7 +12,7 @@ import BzoTypes
 
 data BzoSyntax
     = BzS_FunDef {
-        pos     :: BzoPos,
+        pos    :: BzoPos,
         inpars :: BzoSyntax,
         fnid   :: String,
         expars :: BzoSyntax,
@@ -24,22 +24,21 @@ data BzoSyntax
         typ  :: DtType }
     | BzS_FnTypeDef {
         pos  :: BzoPos,
-        fnid   :: String,
-        tyIn   :: DtType,
-        tyEx   :: DtType }
+        fnid :: String,
+        tyIn :: DtType,
+        tyEx :: DtType }
     | BzS_Lambda {
         pos  :: BzoPos,
         pars :: BzoSyntax,
         def  :: BzoSyntax }
     | BzS_Atoms {
         pos  :: BzoPos,
-        atom  :: Atom }
+        atom :: Atom }
     | BzS_ArrAtom {
         pos  :: BzoPos,
-        atom  :: Atom }
+        atom :: Atom }
     | BzS_Type {
-        pos :: BzoPos,
-        mods :: [Modifier],
+        pos  :: BzoPos,
         typ  :: DtType }
     | BzS_Statements {
         pos   :: BzoPos,
@@ -51,24 +50,12 @@ data BzoSyntax
         pos  :: BzoPos,
         mods :: [Modifier] }
     | BzS_Calls {
+        pos   :: BzoPos,
         calls :: [BzoSyntax] }
-    | BzS_TupleExpr {
-        pos :: BzoPos,
-        exprs :: [BzoSyntax] }
-    | BzS_StatementBlock {
-        pos :: BzoPos,
-        inpar :: BzoSyntax,
-        expar :: BzoSyntax,
-        exprs :: [BzoSyntax] }
-    | BzS_DataType {
-        pos :: BzoPos,
-        typ :: DtType }
-    | BzS_Construct {
-        pos :: BzoPos,
-        tyId  :: String,
-        modf  :: Modifier }
-    | BzS_Wildcard
-    | BzS_Undefined
+    | BzS_Wildcard {
+        pos   :: BzoPos }
+    | BzS_Undefined {
+        pos   :: BzoPos }
     deriving Eq
 
 
@@ -138,19 +125,6 @@ data Modifier
 
 
 
-makeMods :: BzoSyntax -> Modifier
-makeMods (Modifiers x) = Mods $ x
-makeMods _ = Mods []
-
-
-
-
-
-
-
-
-
-
 showMod  :: Modifier -> String
 showMod (Arry)   = " [] "
 showMod (ArSz i) = " [ " ++ (show i) ++ " ] "
@@ -187,21 +161,17 @@ instance Show Atom where show = showAtom
 
 
 showAST :: BzoSyntax -> String
-showAST (FunDef inpar fid expar def) = "{FNDEF: " ++ (show inpar) ++ " -> " ++ (show fid) ++ " -> " ++ (show expar) ++ " :: " ++ (show def) ++ "}\n\n"
-showAST (TypDef par tid def)         = "{TYDEF: " ++ (show tid) ++ " [ " ++ (show par) ++ " ] :: " ++ (show def) ++ "}\n\n"
-showAST (FnTypeDef fid inpar expar)  = "{FTDEF: " ++ (show fid) ++ " [ " ++ (show inpar) ++ " ] ;; [ " ++ (show expar) ++ " ]}\n\n"
-showAST (Lambda par def)             = " {LAMBDA: " ++ (show par) ++ " :: " ++ (show def) ++ "} "
-showAST (Atoms atm)                  = " ATOM: " ++ (show atm) ++ " "
-showAST (ArrAtom atm)                = " ARRAY ATOM: " ++ (show atm) ++ " "
-showAST (Type _ _)                   = " TYPE "
-showAST (Statements ex)              = " {ST: " ++ (concatMap showAST ex) ++ " }. "
-showAST (Expr ex)                    = " (EX: " ++ (concatMap showAST ex) ++ " ) "
-showAST (TupleExpr ex)               = " (TU: " ++ (concatMap showAST ex) ++ " ) "
-showAST (Modifiers m)                = show m
-showAST (Calls c)                    = concatMap (\s -> "CALL:: " ++ (show s) ++ "\n") c
-showAST (Wildcard)                   = " _WILDCARD_ "
-showAST (Undefined)                  = " UNDEFINED "
-showAST (StatementBlock i x def)     = "{BLOCK from " ++ (show i) ++ " to " ++ (show x) ++ ": " ++ (concatMap show def) ++ " }"
-showAST (Construct   i _)            = "(CONS: " ++ (show i) ++ ")"
-showAST (DataType d)                 = " TYPE: " ++ (show d) ++ " "
+showAST (BzS_FunDef _ inpar fid expar def) = "{FNDEF: " ++ (show inpar) ++ " -> " ++ (show fid) ++ " -> " ++ (show expar) ++ " :: " ++ (show def) ++ "}\n\n"
+showAST (BzS_TypDef _ par tid def)         = "{TYDEF: " ++ (show tid) ++ " [ " ++ (show par) ++ " ] :: " ++ (show def) ++ "}\n\n"
+showAST (BzS_FnTypeDef _ fid inpar expar)  = "{FTDEF: " ++ (show fid) ++ " [ " ++ (show inpar) ++ " ] ;; [ " ++ (show expar) ++ " ]}\n\n"
+showAST (BzS_Lambda _ par def)             = " {LAMBDA: " ++ (show par) ++ " :: " ++ (show def) ++ "} "
+showAST (BzS_Atoms _ atm)                  = " ATOM: " ++ (show atm) ++ " "
+showAST (BzS_ArrAtom _ atm)                = " ARRAY ATOM: " ++ (show atm) ++ " "
+showAST (BzS_Type _ _)                     = " TYPE "
+showAST (BzS_Statements _ ex)              = " {ST: " ++ (concatMap showAST ex) ++ " }. "
+showAST (BzS_Expr _ ex)                    = " (EX: " ++ (concatMap showAST ex) ++ " ) "
+showAST (BzS_Modifiers _ m)                = show m
+showAST (BzS_Calls _ c)                    = concatMap (\s -> "CALL:: " ++ (show s) ++ "\n") c
+showAST (BzS_Wildcard _)                   = " _WILDCARD_ "
+showAST (BzS_Undefined _)                  = " UNDEFINED "
 instance Show BzoSyntax where show = showAST
