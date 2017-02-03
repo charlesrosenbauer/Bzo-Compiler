@@ -210,13 +210,13 @@ matchTks (ParserState s i) tks =
 
 
 
--- Broken
 matchLookahead :: ParserState -> [MockParseItem] -> [BzoToken] -> Maybe ([ParseItem], ParserState)
 matchLookahead ps psi bzt =
   let stackOut = match ps (reverse psi)
       tokenOut = matchTks ps bzt
   in case (stackOut, tokenOut) of
-    ((Just (s, ss)), (Just (i, is))) -> Just (s, (ParserState ss (i ++ is)))
+    ((Just (s, (ParserState s0 i0))), (Just (i, (ParserState s1 i1)))) ->
+        Just (s, (ParserState s0 i1))
     _                                -> Nothing
 
 
