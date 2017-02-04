@@ -38,6 +38,18 @@ data MockParseItem
   | MP_Calls
   | MP_Wild
   | MP_Undef
+  | MP_Tk BzoToken
+
+
+
+
+
+
+
+
+
+
+mockPos = BzoPos 0 0 ""
 
 
 
@@ -50,6 +62,7 @@ data MockParseItem
 
 matchParseItem :: MockParseItem -> ParseItem -> Bool
 matchParseItem mp (PI_BzSyn sn) = matchSyntax mp sn
+matchParseItem (MP_Tk t) (PI_Token tk) = matchBzoToken t tk
 matchParseItem _ _ = False
 
 
@@ -99,7 +112,6 @@ matchBzoToken (TkSepExpr   a) (TkSepExpr   b) = True
 matchBzoToken (TkSepPoly   a) (TkSepPoly   b) = True
 matchBzoToken (TkFilterSym a) (TkFilterSym b) = True
 matchBzoToken (TkLambdaSym a) (TkLambdaSym b) = True
-matchBzoToken (TkMutable   a) (TkMutable   b) = True
 matchBzoToken (TkReference a) (TkReference b) = True
 matchBzoToken (TkWildcard  a) (TkWildcard  b) = True
 matchBzoToken (TkDefine    a) (TkDefine    b) = True
@@ -180,6 +192,7 @@ matchList x (a : as) (b : bs) cmp =
 
 
 
+-- | Specifically for stack
 match :: ParserState -> [MockParseItem] -> Maybe ([ParseItem], ParserState)
 match (ParserState s i) mpi =
   case (matchList [] (reverse mpi) s matchParseItem) of
@@ -195,6 +208,7 @@ match (ParserState s i) mpi =
 
 
 
+-- | Specifically for lookahead
 matchTks :: ParserState -> [BzoToken] -> Maybe ([BzoToken], ParserState)
 matchTks (ParserState s i) tks =
   case (matchList [] tks i matchBzoToken) of
