@@ -228,4 +228,67 @@ matchLookahead ps psi bzt =
 
 
 
+runParsers :: ParserState -> [Parser] -> Either [BzoErr] ParserState
+runParsers pst []       = Left []
+runParsers pst (p : ps) = case ((parse p) pst) of
+  Left  []   -> runParsers pst ps
+  Left  errs -> Left errs
+  Right pst' -> Right pst'
+
+
+
+
+
+
+
+
+
+
+tryParsers :: ParserState -> [ParserOp] -> Maybe ParserState
+tryParsers pst []       = Just pst
+tryParsers pst (p : ps) = case ((parseop p) pst) of
+  Nothing   -> tryParsers pst ps
+  Just pst' -> Just pst'
+
+
+
+
+
+
+
+
+
+
+shiftParser :: ParserState -> ParserState
+shiftParser (ParserState s (i : is)) = (ParserState (s ++ [(PI_Token i)]) is)
+shiftParser (ParserState s []) = (ParserState s [])
+
+
+
+
+
+
+
+
+
+
+parseIter :: ParserState -> [Parser] -> Either [BzoErr] BzoSyntax
+parseIter ps p =
+  case ((runParsers ps p), ps) of
+    (_         , (ParserState []  []))                 -> Left $ [ParseErr "Nothing to Parse?"]
+    (Left  []  , (ParserState _   []))                 -> Left $ [ParseErr "Parser did not consume entire file."]
+    (Left  []  , (ParserState s   i ))                 -> parseIter (shiftParser (ParserState s i)) p
+    (Left  errs,                    _)                 -> Left errs        -- | Errors!!
+    (Right (ParserState [(PI_BzSyn s)] []),    _)      -> Right s          -- | Success!!
+    (Right (ParserState s   i ),    _)                 -> parseIter (ParserState s i) p
+
+
+
+
+
+
+
+
+
+
 --parseFile :: [BzoToken] -> Either BzoErr BzoSyntax
