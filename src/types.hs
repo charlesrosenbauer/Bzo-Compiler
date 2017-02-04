@@ -20,7 +20,6 @@ data BzoToken
   | TkSepPoly      { spos :: BzoPos }
   | TkFilterSym    { spos :: BzoPos }
   | TkLambdaSym    { spos :: BzoPos }
-  | TkMutable      { spos :: BzoPos }
   | TkReference    { spos :: BzoPos }
   | TkWildcard     { spos :: BzoPos }
   | TkDefine       { spos :: BzoPos }
