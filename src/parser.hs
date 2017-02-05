@@ -50,6 +50,34 @@ data MockParseItem
 
 
 mockPos = BzoPos 0 0 ""
+mtk_StartTup  = MP_Tk $ TkStartTup  mockPos
+mtk_EndTup    = MP_Tk $ TkEndTup    mockPos
+mtk_StartDat  = MP_Tk $ TkStartDat  mockPos
+mtk_EndDat    = MP_Tk $ TkEnd       mockPos
+mtk_StartDo   = MP_Tk $ TkStartDo   mockPos
+mtk_EndDo     = MP_Tk $ TkEndDo     mockPos
+mtk_SepExpr   = MP_Tk $ TkSepExpr   mockPos
+mtk_SepPoly   = MP_Tk $ TkSepPoly   mockPos
+mtk_FilterSym = MP_Tk $ TkFilterSym mockPos
+mtk_LamdaSum  = MP_Tk $ TkLambdaSym mockPos
+mtk_Reference = MP_Tk $ TkReference mockPos
+mtk_Wildcard  = MP_Tk $ TkWildcard  mockPos
+mtk_Define    = MP_Tk $ TkDefine    mockPos
+mtk_FnSym     = MP_Tk $ TkFnSym     mockPos
+mtk_TupEmpt   = MP_Tk $ TkTupEmpt   mockPos
+mtk_ArrGnrl   = MP_Tk $ TkArrGnrl   mockPos
+mtk_ArrMod    = MP_Tk $ TkArrMod    mockPos
+mtk_Newline   = MP_Tk $ TkNewline   mockPos
+mtk_Int       = MP_Tk $ TkInt       mockPos 0
+mtk_Flt       = MP_Tk $ TkFlt       mockPos 0.0
+mtk_Str       = MP_Tk $ TkStr       mockPos "This is a Mock String"
+mtk_Id        = MP_Tk $ TkId        mockPos "this-is-a-Mock-Identifier"
+mtk_TypeId    = MP_Tk $ TkTypeId    mockPos "This-is-a-Mock-Type-Identifier"
+mtk_MutId     = MP_Tk $ TkMutId     mockPos "~this-is-a-Mock-Mutable-Identifier"
+mtk_Builtin   = MP_Tk $ TkBuiltin   mockPos "$this-is-a-Mock-Builtin"
+mtk_BIType    = MP_Tk $ TkBIType    mockPos "$This-is-a-Mock-Builtin-Type"
+mtk_Nil       = MP_Tk $ TkNil
+
 
 
 
