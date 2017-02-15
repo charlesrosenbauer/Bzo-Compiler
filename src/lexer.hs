@@ -446,6 +446,7 @@ lexEscape =
   lexGenEscape 'n'  '\n' <|>
   lexGenEscape '\'' '\'' <|>
   lexGenEscape '"'  '\"' <|>
+  lexGenEscape '0'  '\o0'<|>
   lexGenEscape 'a'  '\a'
 
 
