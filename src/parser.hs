@@ -1,6 +1,7 @@
 module BzoParser where
 import BzoTypes
 import BzoSyntax
+import BzoTokens
 
 
 
@@ -14,6 +15,7 @@ import BzoSyntax
 data ParseItem
   = PI_Token{ piTok :: BzoToken  }
   | PI_BzSyn{ piSyn :: BzoSyntax }
+  deriving Show
 
 
 
@@ -39,6 +41,7 @@ data MockParseItem
   | MP_Wild
   | MP_Undef
   | MP_Tk BzoToken
+  | MP_Tkn
 
 
 
@@ -91,6 +94,7 @@ mtk_Nil       = MP_Tk $ TkNil
 matchParseItem :: MockParseItem -> ParseItem -> Bool
 matchParseItem mp (PI_BzSyn sn) = matchSyntax mp sn
 matchParseItem (MP_Tk t) (PI_Token tk) = matchBzoToken t tk
+matchParseItem (MP_Tkn ) (PI_Token tk) = True
 matchParseItem _ _ = False
 
 
@@ -223,7 +227,7 @@ matchList x (a : as) (b : bs) cmp =
 -- | Specifically for stack
 match :: ParserState -> [MockParseItem] -> Maybe ([ParseItem], ParserState)
 match (ParserState s i) mpi =
-  case (matchList [] (reverse mpi) s matchParseItem) of
+  case (matchList [] mpi s matchParseItem) of
     Just (s, ss) -> Just (s, (ParserState ss i))
     Nothing      -> Nothing
 
@@ -254,7 +258,7 @@ matchTks (ParserState s i) tks =
 
 matchLookahead :: ParserState -> [MockParseItem] -> [BzoToken] -> Maybe ([ParseItem], ParserState)
 matchLookahead ps psi bzt =
-  let stackOut = match ps (reverse psi)
+  let stackOut = match ps psi
       tokenOut = matchTks ps bzt
   in case (stackOut, tokenOut) of
     ((Just (s, (ParserState s0 i0))), (Just (i, (ParserState s1 i1)))) ->
@@ -287,7 +291,7 @@ runParsers pst (p : ps) = case ((parse p) pst) of
 
 
 tryParsers :: ParserState -> [ParserOp] -> Maybe ParserState
-tryParsers pst []       = Just pst
+tryParsers pst []       = Nothing
 tryParsers pst (p : ps) = case ((parseop p) pst) of
   Nothing   -> tryParsers pst ps
   Just pst' -> Just pst'
