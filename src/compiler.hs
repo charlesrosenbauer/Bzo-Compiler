@@ -1,5 +1,6 @@
 module Compiler where
---import BzoParser
+import BzoParser
+import BzoParserRules
 import BzoTypes
 import BzoLexer
 import BzoSyntax
@@ -34,4 +35,5 @@ compileFile' f =
   let out = fileLexer f "Bzo"
   in  case out of
     Left  err -> show err
-    Right tks -> show tks
+    Right tks ->
+      show $ parseFile tks [parseCalls]

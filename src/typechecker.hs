@@ -139,7 +139,7 @@ makeIdMaps asf = do    -- takes an abstract syntax forest (asf)
 
 
 
-checkCall :: BzoSyntax -> BzoTypeErr
+--checkCall :: BzoSyntax -> BzoTypeErr
 --checkCall (FunDef    inpr fni expr defn) =
 --checkCall (TypDef    prs  tid typ      ) =
 --checkCall (FnTypeDef fni  tin tex      ) =

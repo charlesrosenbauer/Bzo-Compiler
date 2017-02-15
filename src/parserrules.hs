@@ -62,3 +62,17 @@ parseModifiers2 = ParserOp (\ps ->
           t1v = valId $ piTok (xs !! 1)
           pm  = PI_BzSyn $ BzS_Modifiers t0p [ArVr t1v]
       in Just (ParserState ([pm] ++ s) i) )
+
+
+
+
+
+
+
+
+
+
+parseCalls :: Parser
+parseCalls = Parser (\ps ->
+  case ps of
+    (ParserState s i) -> Left [ParseErr "TestSuccess"] )

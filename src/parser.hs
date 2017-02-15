@@ -53,7 +53,7 @@ mockPos = BzoPos 0 0 ""
 mtk_StartTup  = MP_Tk $ TkStartTup  mockPos
 mtk_EndTup    = MP_Tk $ TkEndTup    mockPos
 mtk_StartDat  = MP_Tk $ TkStartDat  mockPos
-mtk_EndDat    = MP_Tk $ TkEnd       mockPos
+mtk_EndDat    = MP_Tk $ TkEndDat    mockPos
 mtk_StartDo   = MP_Tk $ TkStartDo   mockPos
 mtk_EndDo     = MP_Tk $ TkEndDo     mockPos
 mtk_SepExpr   = MP_Tk $ TkSepExpr   mockPos
@@ -333,4 +333,8 @@ parseIter ps p =
 
 
 
---parseFile :: [BzoToken] -> Either BzoErr BzoSyntax
+parseFile :: [BzoToken] -> [Parser] -> Either BzoErr BzoSyntax
+parseFile tks ps =
+  case (parseIter (ParserState [] tks) ps) of
+    Left errs -> Left (errs !! 0)
+    Right ast -> Right ast
