@@ -227,7 +227,7 @@ matchList x (a : as) (b : bs) cmp =
 -- | Specifically for stack
 match :: ParserState -> [MockParseItem] -> Maybe ([ParseItem], ParserState)
 match (ParserState s i) mpi =
-  case (matchList [] mpi s matchParseItem) of
+  case (matchList [] (reverse mpi) s matchParseItem) of
     Just (s, ss) -> Just (s, (ParserState ss i))
     Nothing      -> Nothing
 
@@ -306,7 +306,7 @@ tryParsers pst (p : ps) = case ((parseop p) pst) of
 
 
 shiftParser :: ParserState -> ParserState
-shiftParser (ParserState s (i : is)) = (ParserState (s ++ [(PI_Token i)]) is)
+shiftParser (ParserState s (i : is)) = (ParserState ([(PI_Token i)] ++ s) is)
 shiftParser (ParserState s []) = (ParserState s [])
 
 

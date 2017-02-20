@@ -103,8 +103,8 @@ parseModifiers3 = ParserOp (\ps ->
     Just (xs, (ParserState s i)) ->
       let t0p = pos  $ piSyn (xs !! 0)
           t0v = mods $ piSyn (xs !! 0)
-          t1v = mods $ piSyn (xs !! 0)
-          ms  = PI_BzSyn $ BzS_Modifiers t0p (t0v ++ t1v)
+          t1v = mods $ piSyn (xs !! 1)
+          ms  = PI_BzSyn $ BzS_Modifiers t0p (t1v ++ t0v)
       in Just (ParserState ([ms] ++ s) i) )
 
 
@@ -125,8 +125,8 @@ parseModifiers = Parser (\ps ->
     Nothing  ->
       case ps of
         (ParserState ((PI_Token (TkStartDat (BzoPos l c f))) : (PI_Token _) : (PI_Token _) : ss) i) ->
-          Left [ParseErr ("Expected Valid Array Modifier")]
-        --(ParserState s []) -> Left [ParseErr $ show s]
+          Left [ParseErr ("Expected Valid Array Modifier at " ++ (show l) ++ ":" ++ (show c) ++ " in " ++ f)]
+        (ParserState s []) -> Left [ParseErr $ show s]
         _ -> Left []   )
 
 
