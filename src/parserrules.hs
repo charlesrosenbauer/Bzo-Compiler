@@ -61,7 +61,7 @@ parseModifiers1 = ParserOp (\ps ->
   in case (match ps x) of
     Nothing                      -> Nothing
     Just (xs, (ParserState s i)) ->
-      let t0p = spos $ piTok (xs !! 0)
+      let t0p = spos   $ piTok (xs !! 0)
           t1v = valInt $ piTok (xs !! 1)
           pm  = PI_BzSyn $ BzS_Modifiers t0p [ArSz t1v]
       in Just (ParserState ([pm] ++ s) i) )
@@ -81,7 +81,7 @@ parseModifiers2 = ParserOp (\ps ->
   in case (match ps x) of
     Nothing     -> Nothing
     Just (xs, (ParserState s i)) ->
-      let t0p = spos $ piTok (xs !! 0)
+      let t0p = spos  $ piTok (xs !! 0)
           t1v = valId $ piTok (xs !! 1)
           pm  = PI_BzSyn $ BzS_Modifiers t0p [ArVr t1v]
       in Just (ParserState ([pm] ++ s) i) )
@@ -97,6 +97,25 @@ parseModifiers2 = ParserOp (\ps ->
 
 parseModifiers3 :: ParserOp
 parseModifiers3 = ParserOp (\ps ->
+  let x = [mtk_StartDat, mtk_EndDat]
+  in case (match ps x) of
+    Nothing     -> Nothing
+    Just (xs, (ParserState s i)) ->
+      let tp = spos  $ piTok (xs !! 0)
+          pm = PI_BzSyn $ BzS_Modifiers tp [Arry]
+      in Just (ParserState ([pm] ++ s) i) )
+
+
+
+
+
+
+
+
+
+
+parseModifiers4 :: ParserOp
+parseModifiers4 = ParserOp (\ps ->
   let x = [MP_Mods, MP_Mods]
   in case (match ps x) of
     Nothing -> Nothing
@@ -119,14 +138,14 @@ parseModifiers3 = ParserOp (\ps ->
 -- | If signs of a modifier are detected, but no modifer is parsed, flag an error!
 parseModifiers :: Parser
 parseModifiers = Parser (\ps ->
-  let parseFn = [parseModifiers0, parseModifiers1, parseModifiers2, parseModifiers3]
+  let parseFn = [parseModifiers0, parseModifiers1, parseModifiers2, parseModifiers3, parseModifiers4]
   in case (tryParsers ps parseFn) of
     Just pst -> Right pst
     Nothing  ->
       case ps of
-        (ParserState ((PI_Token (TkStartDat (BzoPos l c f))) : (PI_Token _) : (PI_Token _) : ss) i) ->
+        (ParserState ((PI_Token (TkEndDat (BzoPos l c f))) : (PI_Token _) : ss) i) ->
           Left [ParseErr ("Expected Valid Array Modifier at " ++ (show l) ++ ":" ++ (show c) ++ " in " ++ f)]
-        (ParserState s []) -> Left [ParseErr $ show s]
+        --(ParserState s []) -> Left [ParseErr $ show s]
         _ -> Left []   )
 
 
