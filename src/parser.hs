@@ -337,8 +337,8 @@ parseIter ps p =
 
 
 
-parseFile :: [BzoToken] -> [Parser] -> Either BzoErr BzoSyntax
+parseFile :: [BzoToken] -> [Parser] -> Either [BzoErr] BzoSyntax
 parseFile tks ps =
   case (parseIter (ParserState [] tks) ps) of
-    Left errs -> Left (errs !! 0)
+    Left errs -> Left errs
     Right ast -> Right ast
