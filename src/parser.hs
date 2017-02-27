@@ -31,10 +31,15 @@ data MockParseItem
   | MP_TypDef
   | MP_FnTypeDef
   | MP_Lambda
-  | MP_Atoms
+  | MP_Int
+  | MP_Flt
+  | MP_Str
+  | MP_Id
+  | MP_TId
+  | MP_BId
+  | MP_BTId
   | MP_ArrAtm
-  | MP_Type
-  | MP_Stmt
+  | MP_Blck
   | MP_Expr
   | MP_Mods
   | MP_Calls
@@ -111,10 +116,15 @@ matchSyntax MP_FunDef (BzS_FunDef    _ _ _ _ _) = True
 matchSyntax MP_TypDef (BzS_TypDef      _ _ _ _) = True
 matchSyntax MP_FunDef (BzS_FnTypeDef   _ _ _ _) = True
 matchSyntax MP_Lambda (BzS_Lambda        _ _ _) = True
-matchSyntax MP_Atoms  (BzS_Atoms           _ _) = True
+matchSyntax MP_Id     (BzS_Id              _ _) = True
+matchSyntax MP_TId    (BzS_TyId            _ _) = True
+matchSyntax MP_BId    (BzS_BId             _ _) = True
+matchSyntax MP_BTId   (BzS_BTId            _ _) = True
+matchSyntax MP_Int    (BzS_Int             _ _) = True
+matchSyntax MP_Flt    (BzS_Flt             _ _) = True
+matchSyntax MP_Str    (BzS_Str             _ _) = True
 matchSyntax MP_ArrAtm (BzS_ArrAtom         _ _) = True
-matchSyntax MP_Type   (BzS_Type            _ _) = True
-matchSyntax MP_Stmt   (BzS_Statements      _ _) = True
+matchSyntax MP_Blck   (BzS_Block           _ _) = True
 matchSyntax MP_Expr   (BzS_Expr            _ _) = True
 matchSyntax MP_Mods   (BzS_Modifiers       _ _) = True
 matchSyntax MP_Calls  (BzS_Calls           _ _) = True
