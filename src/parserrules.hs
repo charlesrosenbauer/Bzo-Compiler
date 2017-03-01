@@ -221,9 +221,117 @@ parseExpr3 = genericParseOp [mtk_BIType] (\tks ->
 
 
 
+
+
+parseExpr4 :: ParserOp
+parseExpr4 = genericParseOp [mtk_Int] (\tks ->
+  PI_BzSyn $ BzS_Expr (spos $ piTok $ head tks) [BzS_Int (spos $ piTok $ head tks) (valInt $ piTok $ head tks)] )
+
+
+
+
+
+
+
+
+
+
+parseExpr5 :: ParserOp
+parseExpr5 = genericParseOp [mtk_Flt] (\tks ->
+  PI_BzSyn $ BzS_Expr (spos $ piTok $ head tks) [BzS_Flt (spos $ piTok $ head tks) (valFlt $ piTok $ head tks)] )
+
+
+
+
+
+
+
+
+
+
+parseExpr6 :: ParserOp
+parseExpr6 = genericParseOp [mtk_Str] (\tks ->
+  PI_BzSyn $ BzS_Expr (spos $ piTok $ head tks) [BzS_Str (spos $ piTok $ head tks) (valStr $ piTok $ head tks)] )
+
+
+
+
+
+
+
+
+
+
+parseExpr7 :: ParserOp
+parseExpr7 = genericParseOp [mtk_MutId] (\tks ->
+  PI_BzSyn $ BzS_Expr (spos $ piTok $ head tks) [BzS_MId (spos $ piTok $ head tks) (valId $ piTok $ head tks)] )
+
+
+
+
+
+
+
+
+
+
+parseExpr8 :: ParserOp
+parseExpr8 = genericParseOp [MP_Poly] (\psi ->
+  PI_BzSyn $ BzS_Expr (pos $ piSyn $ head psi) [piSyn $ head psi] )
+
+
+
+
+
+
+
+
+
+
+parseExpr9 :: ParserOp
+parseExpr9 = genericParseOp [MP_Cmpd] (\psi ->
+  PI_BzSyn $ BzS_Expr (pos $ piSyn $ head psi) [piSyn $ head psi] )
+
+
+
+
+
+
+
+
+
+
+parseExpr10 :: ParserOp
+parseExpr10 = genericParseOp [MP_Expr, MP_Expr] (\psi ->
+  PI_BzSyn $ BzS_Expr (pos $ piSyn $ head psi) ((exprs $ piSyn $ (psi !! 1)) ++ (exprs $ piSyn $ (head psi))) )
+
+
+
+
+
+
+
+
+
+
+parseExpr :: Parser
+parseExpr = Parser (\ps ->
+  let parseFn = [parseExpr0, parseExpr1, parseExpr2, parseExpr3, parseExpr4,
+                 parseExpr5, parseExpr6, parseExpr7, parseExpr8, parseExpr9,
+                 parseExpr10]
+  in case (tryParsers ps parseFn) of
+    Just pst -> Right pst
+    Nothing  -> Left []   )
+
+
+
+
+
+
+
 parseCalls :: Parser
 parseCalls = Parser (\ps ->
-  case (runParsers ps [parseModifiers]) of  -- | Temporary!
+  case (runParsers ps [parseExpr, parseModifiers]) of  -- | Temporary!
     Left []   -> Left []
     Left err  -> Left err
     Right ps' -> Right ps' )

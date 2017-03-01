@@ -51,7 +51,7 @@ data BzoSyntax
         sint :: Integer }
     | BzS_Flt {
         pos  :: BzoPos,
-        sflt :: Float }
+        sflt :: Double }
     | BzS_Str {
         pos  :: BzoPos,
         sstr :: String }
