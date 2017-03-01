@@ -26,7 +26,7 @@ testParserFail = Parser (\ps -> Left [ParseErr " * Test * "] )
 
 testParserPass :: Parser
 testParserPass = Parser (\ps ->
-  Right (ParserState [PI_BzSyn $ BzS_Atoms mockPos (AtmId " * Pass * ")] [] ) )
+  Right (ParserState [PI_BzSyn $ BzS_Str mockPos " * Pass * "] [] ) )
 
 
 
@@ -148,6 +148,71 @@ parseModifiers = Parser (\ps ->
         --(ParserState s []) -> Left [ParseErr $ show s]
         _ -> Left []   )
 
+
+
+
+
+
+
+
+
+
+genericParseOp :: [MockParseItem] -> ([ParseItem] -> ParseItem) -> ParserOp
+genericParseOp mpi xform = ParserOp (\ps ->
+  case (match ps mpi) of
+    Nothing -> Nothing
+    Just (xs, (ParserState s i)) -> Just (ParserState ([xform xs] ++ s) i) )
+
+
+
+
+
+
+
+
+
+parseExpr0 :: ParserOp
+parseExpr0 = genericParseOp [mtk_Id] (\tks ->
+  PI_BzSyn $ BzS_Expr (spos $ piTok $ head tks) [BzS_Id (spos $ piTok $ head tks) (valId $ piTok $ head tks)] )
+
+
+
+
+
+
+
+
+
+
+parseExpr1 :: ParserOp
+parseExpr1 = genericParseOp [mtk_TypeId] (\tks ->
+  PI_BzSyn $ BzS_Expr (spos $ piTok $ head tks) [BzS_TyId (spos $ piTok $ head tks) (valId $ piTok $ head tks)] )
+
+
+
+
+
+
+
+
+
+
+parseExpr2 :: ParserOp
+parseExpr2 = genericParseOp [mtk_Builtin] (\tks ->
+  PI_BzSyn $ BzS_Expr (spos $ piTok $ head tks) [BzS_BId (spos $ piTok $ head tks) (valId $ piTok $ head tks)] )
+
+
+
+
+
+
+
+
+
+
+parseExpr3 :: ParserOp
+parseExpr3 = genericParseOp [mtk_BIType] (\tks ->
+  PI_BzSyn $ BzS_Expr (spos $ piTok $ head tks) [BzS_BTId (spos $ piTok $ head tks) (valId $ piTok $ head tks)] )
 
 
 
