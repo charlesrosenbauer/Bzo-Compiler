@@ -37,6 +37,9 @@ data BzoSyntax
     | BzS_TyId {
         pos  :: BzoPos,
         sid  :: String }
+    | BzS_MId {
+        pos  :: BzoPos,
+        sid  :: String }
     | BzS_BId {
         pos  :: BzoPos,
         sid  :: String }

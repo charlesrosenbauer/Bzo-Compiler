@@ -36,6 +36,7 @@ data MockParseItem
   | MP_Str
   | MP_Id
   | MP_TId
+  | MP_MId
   | MP_BId
   | MP_BTId
   | MP_ArrAtm
@@ -118,6 +119,7 @@ matchSyntax MP_FunDef (BzS_FnTypeDef   _ _ _ _) = True
 matchSyntax MP_Lambda (BzS_Lambda        _ _ _) = True
 matchSyntax MP_Id     (BzS_Id              _ _) = True
 matchSyntax MP_TId    (BzS_TyId            _ _) = True
+matchSyntax MP_MId    (BzS_MId             _ _) = True
 matchSyntax MP_BId    (BzS_BId             _ _) = True
 matchSyntax MP_BTId   (BzS_BTId            _ _) = True
 matchSyntax MP_Int    (BzS_Int             _ _) = True
