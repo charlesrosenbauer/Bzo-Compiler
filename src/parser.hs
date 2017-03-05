@@ -15,6 +15,7 @@ import BzoTokens
 data ParseItem
   = PI_Token{ piTok :: BzoToken  }
   | PI_BzSyn{ piSyn :: BzoSyntax }
+  | PI_Box  { piSyn :: BzoSyntax }
   deriving Show
 
 
@@ -50,6 +51,7 @@ data MockParseItem
   | MP_Undef
   | MP_Tk BzoToken
   | MP_Tkn
+  | MP_Box
 
 
 
@@ -103,6 +105,7 @@ matchParseItem :: MockParseItem -> ParseItem -> Bool
 matchParseItem mp (PI_BzSyn sn) = matchSyntax mp sn
 matchParseItem (MP_Tk t) (PI_Token tk) = matchBzoToken t tk
 matchParseItem (MP_Tkn ) (PI_Token tk) = True
+matchParseItem (MP_Box ) (PI_Box   sn) = True
 matchParseItem _ _ = False
 
 

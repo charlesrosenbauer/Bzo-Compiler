@@ -302,7 +302,33 @@ parseExpr9 = genericParseOp [MP_Cmpd] (\psi ->
 
 
 parseExpr10 :: ParserOp
-parseExpr10 = genericParseOp [MP_Expr, MP_Expr] (\psi ->
+parseExpr10 = genericParseOp [MP_Box] (\psi ->
+  PI_BzSyn $ BzS_Expr (pos $ piSyn $ head psi) [piSyn $ head psi] )
+
+
+
+
+
+
+
+
+
+
+parseExpr11 :: ParserOp
+parseExpr11 = genericParseOp [mtk_TupEmpt] (\tks ->
+  PI_BzSyn $ BzS_Expr (spos $ piTok $ head tks) [BzS_Undefined (spos $ piTok $ head tks)] )
+
+
+
+
+
+
+
+
+
+
+parseExprFuse :: ParserOp
+parseExprFuse = genericParseOp [MP_Expr, MP_Expr] (\psi ->
   PI_BzSyn $ BzS_Expr (pos $ piSyn $ head psi) ((exprs $ piSyn $ (psi !! 1)) ++ (exprs $ piSyn $ (head psi))) )
 
 
@@ -316,9 +342,9 @@ parseExpr10 = genericParseOp [MP_Expr, MP_Expr] (\psi ->
 
 parseExpr :: Parser
 parseExpr = Parser (\ps ->
-  let parseFn = [parseExpr0, parseExpr1, parseExpr2, parseExpr3, parseExpr4,
-                 parseExpr5, parseExpr6, parseExpr7, parseExpr8, parseExpr9,
-                 parseExpr10]
+  let parseFn = [parseExpr0,  parseExpr1,  parseExpr2,  parseExpr3,  parseExpr4,
+                 parseExpr5,  parseExpr6,  parseExpr7,  parseExpr8,  parseExpr9,
+                 parseExpr10, parseExpr11, parseExprFuse]
   in case (tryParsers ps parseFn) of
     Just pst -> Right pst
     Nothing  -> Left []   )
