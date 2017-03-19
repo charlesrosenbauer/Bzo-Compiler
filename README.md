@@ -14,7 +14,9 @@ The Language
 
 The basic idea behind the language is that it is a functional / imperative hybrid; it allows you to write both purely functional and imperative code, all on top of a [mostly] functional core. Mutability is handled not unlike Uniqueness Types in languages like Clean, Mercury, and Idris. The language is designed to be as simple as possible. The syntax is somewhere between Haskell and Lisp (mostly leaning toward Haskell), but with only 13 special characters, and no keywords besides some built-in functions and types prefixed with "$".
 
-My goal is have the language focus heavily on parallelism, and compile to multiple platforms. x86, ARM, RISC-V, and Adapteva's Epiphany architecture are the main goals. In the long term, I'd like to open up the internals of the compiler using some intermediate representations, allowing other languages to utilize Bzo's parallelism features. That is of course supposing I get that far. I'm writing this all in Haskell, a language I'm still learning (despite the language's syntax resembling it). This compiler is a learning exercise for now.
+My goal is have the language focus heavily on parallelism, and compile to multiple platforms. x86, ARM, RISC-V, and Adapteva's Epiphany architecture are the main goals. The high-level nature of Bzo should make it easy to port across multiple architectures. In the long term, I'd like to open up the internals of the compiler using some intermediate representations, allowing other languages to utilize Bzo's parallelism features. That is of course supposing I get that far.
+
+Another idea I'm considering is embedding some form of bytecode into the executable, so that executables may be recompiled for new platforms without the original source code.
 
 Below is a basic explanation of some of what I have planned for the syntax. It is subject to change of course, and very little of it is currently implemented in the "compiler."
 
@@ -59,10 +61,10 @@ All symbols and their (current) intended meanings:
 Tuples
 
 [  ]
-Array Access
+Denote Array Types
 
 {  }
-Do Block
+Do Block / Record
 
 :
 Type Filter (i.e., x:I32 forces x to be of type I32.)
@@ -74,15 +76,13 @@ Denote Lambda Expression
 Define
 
 ;;
-Denote Function Type (i.e., (I32.I32);;I32 is the type of a function that takes (I32.I32) as
-an input, and produces I32 as an output.)
+Denote Function Type (i.e., (I32.I32);;I32 is the type of a function that takes (I32.I32) as an input, and produces I32 as an output.)
 
 .
 Expression Separator. This works a bit like a semicolon in other languages.
 
 ,
-Option Separator. This is like an Expression Separator, but used specifically in Polymorphic
-Types, similar to | in Haskell type definitions.
+Option Separator. This is like an Expression Separator, but used specifically in Polymorphic Types, similar to | in Haskell type definitions.
 
 ..
 Convert to Array Function
@@ -103,15 +103,16 @@ General Array modifier. Used to denote an array type without specifying size
 Namespace separator
 
 ~...
-Mutability Modifier; when added to the beginning of an identifier, the associated variable is
-treated as a Unique / Mutable variable.
+Mutability Modifier; when added to the beginning of an identifier, the associated variable is treated as a Unique / Mutable variable.
 
 _
 Wildcard. Used for discarding a value in pattern matching, as it is in many other languages.
 
 $...
-Denote Builtin; this character is only available for use in identifiers for types and functions
-built in to the language. Most types and functions that use builtins will be given an alias.
+Denote Builtin; this character is only available for use in identifiers for types and functions built in to the language. Most types and functions that use builtins will be given an alias.
+
+Identifiers beginning with uppercase letters are denoted as types. Identifiers beginning with lowercase letters or symbols are defined as functions or variables.
+
 
 ```
 What Hello World will likely look like:
