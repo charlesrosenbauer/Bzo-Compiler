@@ -340,6 +340,17 @@ parseExprFuse = genericParseOp [MP_Expr, MP_Expr] (\psi ->
 
 
 
+-- parse additional expression cases, combine with function and type modifiers, and filters
+
+
+
+
+
+
+
+
+
+
 parseExpr :: Parser
 parseExpr = Parser (\ps ->
   let parseFn = [parseExpr0,  parseExpr1,  parseExpr2,  parseExpr3,  parseExpr4,
@@ -348,6 +359,75 @@ parseExpr = Parser (\ps ->
   in case (tryParsers ps parseFn) of
     Just pst -> Right pst
     Nothing  -> Left []   )
+
+
+
+
+
+
+
+
+
+
+-- parse tuples
+
+
+
+
+
+
+
+
+
+
+-- parse lambdas
+
+
+
+
+
+
+
+
+
+
+-- parse filters
+
+
+
+
+
+
+
+
+
+
+-- parse do-blocks
+
+
+
+
+
+
+
+
+
+
+-- parse records
+
+
+
+
+
+
+
+
+
+
+-- parse call/definition types
+
+
+
 
 
 
