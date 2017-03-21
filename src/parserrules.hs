@@ -161,7 +161,7 @@ genericParseOp :: [MockParseItem] -> ([ParseItem] -> ParseItem) -> ParserOp
 genericParseOp mpi xform = ParserOp (\ps ->
   case (match ps mpi) of
     Nothing -> Nothing
-    Just (xs, (ParserState s i)) -> Just (ParserState ([xform xs] ++ s) i) )
+    Just (xs, (ParserState s i)) -> Just (ParserState ([xform $ reverse xs] ++ s) i) )
 
 
 
@@ -329,7 +329,7 @@ parseExpr11 = genericParseOp [mtk_TupEmpt] (\tks ->
 
 parseExprFuse :: ParserOp
 parseExprFuse = genericParseOp [MP_Expr, MP_Expr] (\psi ->
-  PI_BzSyn $ BzS_Expr (pos $ piSyn $ head psi) ((exprs $ piSyn $ (psi !! 1)) ++ (exprs $ piSyn $ (head psi))) )
+  PI_BzSyn $ BzS_Expr (pos $ piSyn $ head psi) ((exprs $ piSyn $ (head psi)) ++ (exprs $ piSyn $ (psi !! 1))) )
 
 
 
@@ -355,7 +355,8 @@ parseExpr :: Parser
 parseExpr = Parser (\ps ->
   let parseFn = [parseExpr0,  parseExpr1,  parseExpr2,  parseExpr3,  parseExpr4,
                  parseExpr5,  parseExpr6,  parseExpr7,  parseExpr8,  parseExpr9,
-                 parseExpr10, parseExpr11, parseExprFuse]
+                 parseExpr10, parseExpr11, parseExprFuse,
+                 parseCmpd0,  parseCmpd1,  parseCmpd2,  parseCmpd3 ]
   in case (tryParsers ps parseFn) of
     Just pst -> Right pst
     Nothing  -> Left []   )
@@ -370,6 +371,48 @@ parseExpr = Parser (\ps ->
 
 
 -- parse tuples
+parseCmpd0 :: ParserOp
+parseCmpd0 = genericParseOp [MP_Expr, mtk_SepExpr] (\psi ->
+  PI_CMPD [piSyn $ psi !! 0])
+
+
+
+
+
+
+
+
+
+
+parseCmpd1 :: ParserOp
+parseCmpd1 = genericParseOp [MP_Cpx, MP_Cpx] (\psi ->
+  PI_CMPD $ (piSyns $ head psi) ++ (piSyns (psi !! 1)))
+
+
+
+
+
+
+
+
+
+
+parseCmpd2 :: ParserOp
+parseCmpd2 = genericParseOp [mtk_StartTup, MP_Cpx, mtk_EndTup] (\psi ->
+  PI_BzSyn $ BzS_Cmpd (spos $ piTok $ head psi) (piSyns (psi !! 1)))
+
+
+
+
+
+
+
+
+
+
+parseCmpd3 :: ParserOp
+parseCmpd3 = genericParseOp [mtk_StartTup, MP_Cpx, MP_Expr, mtk_EndTup] (\psi ->
+  PI_BzSyn $ BzS_Cmpd (spos $ piTok $ head psi) ((piSyns (psi !! 1)) ++ [piSyn $ psi !! 2]))
 
 
 
