@@ -356,7 +356,8 @@ parseExpr = Parser (\ps ->
   let parseFn = [parseExpr0,  parseExpr1,  parseExpr2,  parseExpr3,  parseExpr4,
                  parseExpr5,  parseExpr6,  parseExpr7,  parseExpr8,  parseExpr9,
                  parseExpr10, parseExpr11, parseExprFuse,
-                 parseCmpd0,  parseCmpd1,  parseCmpd2,  parseCmpd3 ]
+                 parseCmpd0,  parseCmpd1,  parseCmpd2,  parseCmpd3,
+                 parsePoly0,  parsePoly1,  parsePoly2,  parsePoly3 ]
   in case (tryParsers ps parseFn) of
     Just pst -> Right pst
     Nothing  -> Left []   )
@@ -413,6 +414,58 @@ parseCmpd2 = genericParseOp [mtk_StartTup, MP_Cpx, mtk_EndTup] (\psi ->
 parseCmpd3 :: ParserOp
 parseCmpd3 = genericParseOp [mtk_StartTup, MP_Cpx, MP_Expr, mtk_EndTup] (\psi ->
   PI_BzSyn $ BzS_Cmpd (spos $ piTok $ head psi) ((piSyns (psi !! 1)) ++ [piSyn $ psi !! 2]))
+
+
+
+
+
+
+
+
+
+
+parsePoly0 :: ParserOp
+parsePoly0 = genericParseOp [MP_Expr, mtk_SepPoly] (\psi ->
+  PI_POLY [piSyn $ psi !! 0])
+
+
+
+
+
+
+
+
+
+
+parsePoly1 :: ParserOp
+parsePoly1 = genericParseOp [MP_Plx, MP_Plx] (\psi ->
+  PI_POLY $ (piSyns $ head psi) ++ (piSyns (psi !! 1)))
+
+
+
+
+
+
+
+
+
+
+parsePoly2 :: ParserOp
+parsePoly2 = genericParseOp [mtk_StartTup, MP_Plx, mtk_EndTup] (\psi ->
+  PI_BzSyn $ BzS_Poly (spos $ piTok $ head psi) (piSyns (psi !! 1)))
+
+
+
+
+
+
+
+
+
+
+parsePoly3 :: ParserOp
+parsePoly3 = genericParseOp [mtk_StartTup, MP_Plx, MP_Expr, mtk_EndTup] (\psi ->
+  PI_BzSyn $ BzS_Poly (spos $ piTok $ head psi) ((piSyns (psi !! 1)) ++ [piSyn $ psi !! 2]))
 
 
 
