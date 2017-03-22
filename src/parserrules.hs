@@ -476,8 +476,8 @@ parsePoly3 = genericParseOp [mtk_StartTup, MP_Plx, MP_Expr, mtk_EndTup] (\psi ->
 
 
 
-simplifyTokens0 :: ParserOp
-simplifyTokens0 = genericParseOp [mtk_StartTup, mtk_Newline] (\psi ->
+simplify0 :: ParserOp
+simplify0 = genericParseOp [mtk_StartTup, mtk_Newline] (\psi ->
   PI_Token $ TkStartTup (spos $ piTok $ head psi))
 
 
@@ -489,8 +489,8 @@ simplifyTokens0 = genericParseOp [mtk_StartTup, mtk_Newline] (\psi ->
 
 
 
-simplifyTokens1 :: ParserOp
-simplifyTokens1 = genericParseOp [mtk_Newline, mtk_EndTup] (\psi ->
+simplify1 :: ParserOp
+simplify1 = genericParseOp [mtk_Newline, mtk_EndTup] (\psi ->
   PI_Token $ TkEndTup (spos $ piTok $ psi !! 1))
 
 
@@ -502,8 +502,8 @@ simplifyTokens1 = genericParseOp [mtk_Newline, mtk_EndTup] (\psi ->
 
 
 
-simplifyTokens2 :: ParserOp
-simplifyTokens2 = genericParseOp [mtk_EndTup, mtk_Newline] (\psi ->
+simplify2 :: ParserOp
+simplify2 = genericParseOp [mtk_EndTup, mtk_Newline] (\psi ->
   PI_Token $ TkEndTup (spos $ piTok $ head psi))
 
 
@@ -515,9 +515,33 @@ simplifyTokens2 = genericParseOp [mtk_EndTup, mtk_Newline] (\psi ->
 
 
 
-simplifyTokens :: Parser
-simplifyTokens = Parser (\ps ->
-  let parseFn = [simplifyTokens0, simplifyTokens1, simplifyTokens2]
+simplify3 :: ParserOp
+simplify3 = genericParseOp [MP_Cpx, mtk_Newline] (\psi -> (head psi))
+
+
+
+
+
+
+
+
+
+
+simplify4 :: ParserOp
+simplify4 = genericParseOp [MP_Plx, mtk_Newline] (\psi -> (head psi))
+
+
+
+
+
+
+
+
+
+
+simplify :: Parser
+simplify = Parser (\ps ->
+  let parseFn = [simplify0, simplify1, simplify2, simplify3, simplify4]
   in case (tryParsers ps parseFn) of
     Just pst -> Right pst
     Nothing  -> Left []   )
@@ -588,7 +612,7 @@ simplifyTokens = Parser (\ps ->
 
 parseCalls :: Parser
 parseCalls = Parser (\ps ->
-  case (runParsers ps [parseExpr, parseModifiers, simplifyTokens]) of  -- | Temporary!
+  case (runParsers ps [parseExpr, parseModifiers, simplify]) of  -- | Temporary!
     Left []   -> Left []
     Left err  -> Left err
     Right ps' -> Right ps' )
