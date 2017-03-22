@@ -476,6 +476,61 @@ parsePoly3 = genericParseOp [mtk_StartTup, MP_Plx, MP_Expr, mtk_EndTup] (\psi ->
 
 
 
+simplifyTokens0 :: ParserOp
+simplifyTokens0 = genericParseOp [mtk_StartTup, mtk_Newline] (\psi ->
+  PI_Token $ TkStartTup (spos $ piTok $ head psi))
+
+
+
+
+
+
+
+
+
+
+simplifyTokens1 :: ParserOp
+simplifyTokens1 = genericParseOp [mtk_Newline, mtk_EndTup] (\psi ->
+  PI_Token $ TkEndTup (spos $ piTok $ psi !! 1))
+
+
+
+
+
+
+
+
+
+
+simplifyTokens2 :: ParserOp
+simplifyTokens2 = genericParseOp [mtk_EndTup, mtk_Newline] (\psi ->
+  PI_Token $ TkEndTup (spos $ piTok $ head psi))
+
+
+
+
+
+
+
+
+
+
+simplifyTokens :: Parser
+simplifyTokens = Parser (\ps ->
+  let parseFn = [simplifyTokens0, simplifyTokens1, simplifyTokens2]
+  in case (tryParsers ps parseFn) of
+    Just pst -> Right pst
+    Nothing  -> Left []   )
+
+
+
+
+
+
+
+
+
+
 -- parse lambdas
 
 
@@ -533,7 +588,7 @@ parsePoly3 = genericParseOp [mtk_StartTup, MP_Plx, MP_Expr, mtk_EndTup] (\psi ->
 
 parseCalls :: Parser
 parseCalls = Parser (\ps ->
-  case (runParsers ps [parseExpr, parseModifiers]) of  -- | Temporary!
+  case (runParsers ps [parseExpr, parseModifiers, simplifyTokens]) of  -- | Temporary!
     Left []   -> Left []
     Left err  -> Left err
     Right ps' -> Right ps' )
