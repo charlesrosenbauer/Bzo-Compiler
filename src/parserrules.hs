@@ -171,6 +171,21 @@ genericParseOp mpi xform = ParserOp (\ps ->
 
 
 
+
+genericNotLookaheadParseOp :: [MockParseItem] -> [BzoToken] -> ([ParseItem] -> ParseItem) -> ParserOp
+genericNotLookaheadParseOp mpi bzt xform = ParserOp (\ps ->
+  case (matchNotLookahead ps mpi bzt) of
+    Nothing -> Nothing
+    Just (xs, (ParserState s i)) -> Just (ParserState ([xform $ reverse xs] ++ s) i) )
+
+
+
+
+
+
+
+
+
 parseExpr0 :: ParserOp
 parseExpr0 = genericParseOp [mtk_Id] (\tks ->
   PI_BzSyn $ BzS_Expr (spos $ piTok $ head tks) [BzS_Id (spos $ piTok $ head tks) (valId $ piTok $ head tks)] )
