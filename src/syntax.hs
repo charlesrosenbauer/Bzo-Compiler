@@ -61,6 +61,10 @@ data BzoSyntax
     | BzS_Cmpd {
         pos   :: BzoPos,
         exprs :: [BzoSyntax] }
+    | BzS_FnTy {
+        pos   :: BzoPos,
+        tyIn  :: BzoSyntax,
+        tyEx  :: BzoSyntax }
     | BzS_ArrAtom {
         pos  :: BzoPos,
         atom :: BzoSyntax }

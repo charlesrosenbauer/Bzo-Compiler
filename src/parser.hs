@@ -58,6 +58,7 @@ data MockParseItem
   | MP_Plx
   | MP_Tpx
   | MP_Tup
+  | MP_Typ
 
 
 
@@ -110,6 +111,10 @@ mtk_Nil       = MP_Tk $ TkNil
 matchParseItem :: MockParseItem -> ParseItem -> Bool
 matchParseItem (MP_Tup ) (PI_BzSyn (BzS_Cmpd p x)) = True
 matchParseItem (MP_Tup ) (PI_BzSyn (BzS_Poly p x)) = True
+matchParseItem (MP_Typ ) (PI_BzSyn (BzS_Cmpd p x)) = True
+matchParseItem (MP_Typ ) (PI_BzSyn (BzS_Poly p x)) = True
+matchParseItem (MP_Typ ) (PI_Box   sn) = True
+matchParseItem (MP_Typ ) (PI_Token (TkTypeId p i)) = True
 matchParseItem mp (PI_BzSyn sn) = matchSyntax mp sn
 matchParseItem (MP_Tk t) (PI_Token tk) = matchBzoToken t tk
 matchParseItem (MP_Tkn ) (PI_Token tk) = True
