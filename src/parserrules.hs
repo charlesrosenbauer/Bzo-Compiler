@@ -628,6 +628,9 @@ parseFnType = genericParseOp [MP_Typ, mtk_FnSym, MP_Typ] (\psi ->
 
 
 -- parse call/definition types
+parseCall0 :: ParserOp
+parseCall0 = genericParseOp [MP_Id, mtk_Define, MP_FnTy] (\psi ->
+  PI_BzSyn $ BzS_FnTypeDef (pos $ piSyn $ head psi) (sid $ piSyn $ head psi) (tyIn $ piSyn $ psi !! 2) (tyEx $ piSyn $ psi !! 2) )
 
 
 
