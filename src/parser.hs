@@ -18,6 +18,7 @@ data ParseItem
   | PI_Box  { piSyn :: BzoSyntax }
   | PI_CMPD { piSyns:: [BzoSyntax] }
   | PI_POLY { piSyns:: [BzoSyntax] }
+  | PI_Fltr { piSyn :: BzoSyntax }
   deriving Show
 
 

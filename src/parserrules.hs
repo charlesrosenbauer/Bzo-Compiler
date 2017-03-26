@@ -595,7 +595,26 @@ parseFnType = genericParseOp [MP_Typ, mtk_FnSym, MP_Typ] (\psi ->
 
 
 -- parse filters
+parseFilter0 :: ParserOp
+parseFilter0 = genericParseOp [mtk_FilterSym, MP_TId] (\psi ->
+  PI_Fltr $ piSyn (psi !! 1) )
 
+
+
+
+
+
+
+
+
+
+parseFilter1 :: ParserOp
+parseFilter1 = genericParseOp [mtk_FilterSym, MP_Typ] (\psi ->
+  PI_Fltr $ case (psi !! 1) of
+    (PI_Box                x  ) -> x
+    (PI_BzSyn (BzS_Cmpd ps xs)) -> (BzS_Cmpd ps xs)
+    (PI_BzSyn (BzS_Poly ps xs)) -> (BzS_Poly ps xs)
+    (PI_BzSyn (BzS_TyId ps  i)) -> (BzS_TyId ps  i) )
 
 
 
