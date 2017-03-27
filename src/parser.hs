@@ -43,6 +43,7 @@ data MockParseItem
   | MP_MId
   | MP_BId
   | MP_BTId
+  | MP_Name
   | MP_Poly
   | MP_Cmpd
   | MP_FnTy
@@ -144,6 +145,7 @@ matchSyntax MP_TId    (BzS_TyId            _ _) = True
 matchSyntax MP_MId    (BzS_MId             _ _) = True
 matchSyntax MP_BId    (BzS_BId             _ _) = True
 matchSyntax MP_BTId   (BzS_BTId            _ _) = True
+matchSyntax MP_Name   (BzS_Namespace       _ _) = True
 matchSyntax MP_Int    (BzS_Int             _ _) = True
 matchSyntax MP_Flt    (BzS_Flt             _ _) = True
 matchSyntax MP_Str    (BzS_Str             _ _) = True

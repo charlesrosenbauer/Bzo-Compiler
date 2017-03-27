@@ -35,6 +35,9 @@ data BzoSyntax
     | BzS_BTId {
         pos  :: BzoPos,
         sid  :: String }
+    | BzS_Namespace{
+        pos  :: BzoPos,
+        sid  :: String }
     | BzS_MapMod {
         pos  :: BzoPos }
     | BzS_Wildcard {
@@ -116,6 +119,7 @@ showAST (BzS_MId _ i)                      = " MID: " ++ (show i)
 showAST (BzS_TyId _ i)                     = " TID: " ++ (show i)
 showAST (BzS_BId _ i)                      = " BID: " ++ (show i)
 showAST (BzS_BTId _ i)                     = " BTID: " ++ (show i)
+showAST (BzS_Namespace _ i)                = " @ " ++ (show i)
 showAST (BzS_Int _ i)                      = " INT: " ++ (show i)
 showAST (BzS_Flt _ f)                      = " FLT: " ++ (show f)
 showAST (BzS_Str _ s)                      = " STR: " ++ (show s)
