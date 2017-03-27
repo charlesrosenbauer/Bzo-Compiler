@@ -46,10 +46,8 @@ data MockParseItem
   | MP_Poly
   | MP_Cmpd
   | MP_FnTy
-  | MP_ArrAtm
   | MP_Blck
   | MP_Expr
-  | MP_Mods
   | MP_Calls
   | MP_Wild
   | MP_Undef
@@ -152,10 +150,8 @@ matchSyntax MP_Str    (BzS_Str             _ _) = True
 matchSyntax MP_Poly   (BzS_Poly            _ _) = True
 matchSyntax MP_Cmpd   (BzS_Cmpd            _ _) = True
 matchSyntax MP_FnTy   (BzS_FnTy          _ _ _) = True
-matchSyntax MP_ArrAtm (BzS_ArrAtom         _ _) = True
 matchSyntax MP_Blck   (BzS_Block           _ _) = True
 matchSyntax MP_Expr   (BzS_Expr            _ _) = True
-matchSyntax MP_Mods   (BzS_Modifiers       _ _) = True
 matchSyntax MP_Calls  (BzS_Calls           _ _) = True
 matchSyntax MP_Wild   (BzS_Wildcard          _) = True
 matchSyntax MP_Undef  (BzS_Undefined         _) = True

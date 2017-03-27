@@ -36,7 +36,7 @@ testParserPass = Parser (\ps ->
 
 
 
-
+{-
 parseModifiers0 :: ParserOp
 parseModifiers0 = ParserOp (\ps ->
   case (match ps [mtk_ArrGnrl]) of
@@ -147,7 +147,7 @@ parseModifiers = Parser (\ps ->
           Left [ParseErr ("Expected Valid Array Modifier at " ++ (show l) ++ ":" ++ (show c) ++ " in " ++ f)]
         --(ParserState s []) -> Left [ParseErr $ show s]
         _ -> Left []   )
-
+-}
 
 
 
@@ -662,7 +662,7 @@ parseCall0 = genericParseOp [MP_Id, mtk_Define, MP_FnTy] (\psi ->
 
 parseCalls :: Parser
 parseCalls = Parser (\ps ->
-  case (runParsers ps [parseExpr, parseModifiers, simplify]) of  -- | Temporary!
+  case (runParsers ps [parseExpr, {-parseModifiers,-} simplify]) of  -- | Temporary!
     Left []   -> Left []
     Left err  -> Left err
     Right ps' -> Right ps' )
