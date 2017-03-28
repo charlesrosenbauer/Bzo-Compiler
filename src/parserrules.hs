@@ -646,6 +646,91 @@ parseFnType = genericParseOp [MP_Typ, mtk_FnSym, MP_Typ] (\psi ->
 
 
 
+parseLambda0 :: ParserOp
+parseLambda0 = genericParseOp [mtk_LamdaSym, MP_Box, mtk_Define] (\psi ->
+  PI_LHead (spos $ piTok $ head psi) (piSyn $ psi !! 1) )
+
+
+
+
+
+
+
+
+
+
+parseLambda1 :: ParserOp
+parseLambda1 = ParserOp (\ps ->
+  let x = [mtk_LamdaSym, MP_Expr, mtk_Define]
+  in case (match ps x) of
+    Nothing                      -> Nothing
+    Just (xs, (ParserState s i)) ->
+      let t0p = spos  $ piTok (xs !! 0)
+          t1v = exprs $ piSyn (xs !! 1)
+          pm  = PI_LHead t0p (t1v !! 0)
+      in case t1v of
+        [x] -> Just (ParserState ([pm] ++ s) i)
+        xs  -> Nothing )
+
+
+
+
+
+
+
+
+
+
+parseLambda2 :: ParserOp
+parseLambda2 = genericParseOp [MP_LHead, MP_Expr, mtk_Newline] (\psi ->
+  PI_BzSyn $ BzS_Lambda (piPos $ head psi) (piSyn $ head psi) (piSyn $ psi !! 1) )
+
+
+
+
+
+
+
+
+
+
+parseLambdaErr :: ParserOp
+parseLambdaErr = ParserOp (\ps ->
+  let x = [mtk_LamdaSym, MP_Expr, mtk_Define]
+  in case (match ps x) of
+    Nothing                      -> Nothing
+    Just (xs, (ParserState s i)) ->
+      case (exprs $ piSyn (xs !! 1)) of
+        [x] -> Nothing
+        xs  -> Just (ParserState ([PI_Err "Invalid Parameters to Lambda"]) i) )
+
+
+
+
+
+
+
+
+
+
+parseLambda :: Parser
+parseLambda = Parser (\ps ->
+  let parseFn = [parseLambda0, parseLambda1, parseLambda2]
+      errFn   = [parseLambdaErr]
+  in case (tryParsers ps parseFn, tryParsers ps errFn) of
+    (Just pst,        _ ) -> Right pst
+    (Nothing , Just errs) -> Left  [ParseErr (piErr $ head $ stack errs)]
+    (Nothing , Nothing  ) -> Left  [] )
+
+
+
+
+
+
+
+
+
+
 -- parse filters
 parseFilter0 :: ParserOp
 parseFilter0 = genericParseOp [mtk_FilterSym, MP_TId] (\psi ->
@@ -799,7 +884,7 @@ parsePrimitives = Parser (\ps ->
 
 parseCalls :: Parser
 parseCalls = Parser (\ps ->
-  case (runParsers ps [parseName, parsePrimitives, parseExpr, {-parseModifiers,-} simplify]) of  -- | Temporary!
+  case (runParsers ps [parseName, parsePrimitives, parseLambda, parseExpr, {-parseModifiers,-} simplify]) of  -- | Temporary!
     Left []   -> Left []
     Left err  -> Left err
     Right ps' -> Right ps' )

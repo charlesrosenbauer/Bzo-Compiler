@@ -19,6 +19,7 @@ data ParseItem
   | PI_CMPD { piSyns:: [BzoSyntax] }
   | PI_POLY { piSyns:: [BzoSyntax] }
   | PI_Fltr { piSyn :: BzoSyntax }
+  | PI_LHead{ piPos :: BzoPos, piSyn :: BzoSyntax }
   | PI_Err  { piErr :: String }
   deriving Show
 
@@ -61,6 +62,7 @@ data MockParseItem
   | MP_Tpx
   | MP_Tup
   | MP_Typ
+  | MP_LHead
   | MP_Any
 
 
@@ -82,7 +84,7 @@ mtk_EndDo     = MP_Tk $ TkEndDo     mockPos
 mtk_SepExpr   = MP_Tk $ TkSepExpr   mockPos
 mtk_SepPoly   = MP_Tk $ TkSepPoly   mockPos
 mtk_FilterSym = MP_Tk $ TkFilterSym mockPos
-mtk_LamdaSum  = MP_Tk $ TkLambdaSym mockPos
+mtk_LamdaSym  = MP_Tk $ TkLambdaSym mockPos
 mtk_Reference = MP_Tk $ TkReference mockPos
 mtk_Wildcard  = MP_Tk $ TkWildcard  mockPos
 mtk_Define    = MP_Tk $ TkDefine    mockPos
@@ -113,6 +115,7 @@ mtk_Nil       = MP_Tk $ TkNil
 
 matchParseItem :: MockParseItem -> ParseItem -> Bool
 matchParseItem (MP_Any ) _                         = True
+matchParseItem (MP_LHead)(PI_LHead           _ _ ) = True
 matchParseItem (MP_Tup ) (PI_BzSyn (BzS_Cmpd p x)) = True
 matchParseItem (MP_Tup ) (PI_BzSyn (BzS_Poly p x)) = True
 matchParseItem (MP_Typ ) (PI_BzSyn (BzS_Cmpd p x)) = True
