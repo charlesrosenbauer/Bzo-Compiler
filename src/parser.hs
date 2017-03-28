@@ -395,8 +395,156 @@ parseIter ps p =
 
 
 
+isBracket :: BzoToken -> Bool
+isBracket (TkStartDo  _) = True
+isBracket (TkStartTup _) = True
+isBracket (TkStartDat _) = True
+isBracket (TkEndDo    _) = True
+isBracket (TkEndTup   _) = True
+isBracket (TkEndDat   _) = True
+isBracket _              = False
+
+
+
+
+
+
+
+
+
+
+-- Probably could use a monad, but that's too much work
+combineBracketChecks :: ([BzoToken] -> (Maybe [BzoErr], [BzoToken])) -> ([BzoToken] -> (Maybe [BzoErr], [BzoToken])) -> [BzoToken] -> (Maybe [BzoErr], [BzoToken])
+combineBracketChecks f0 f1 tks =
+  let a = case (f0 tks) of
+            (Just errs, tks') -> (errs, f1 tks')
+            (Nothing  , tks') -> ([]  , f1 tks')
+  in case a of
+      ([],      (Nothing   , tks')) -> (Nothing              , tks')
+      (errs0,   (Just errs1, tks')) -> (Just (errs0 ++ errs1), tks')
+      (errs0,   (Nothing   , tks')) -> (Just errs0           , tks')
+
+
+
+
+
+
+
+
+
+
+bracketCheck_Tuple :: [BzoToken] -> (Maybe [BzoErr], [BzoToken])
+bracketCheck_Tuple ((TkStartTup ps) : tks) = combineBracketChecks bracketCheck_Tuple bracketCheck_Tuple tks
+bracketCheck_Tuple ((TkEndTup   ps) : tks) = (Nothing, tks)
+bracketCheck_Tuple ((TkStartDat ps) : tks) = combineBracketChecks bracketCheck_Data  bracketCheck_Tuple tks
+bracketCheck_Tuple ((TkEndDat   ps) : tks) = (Just $ [ParseErr "Invalid placement of ']' inside Tuple"], tks)
+bracketCheck_Tuple ((TkStartDo  ps) : tks) = (Just $ [ParseErr "Invalid placement of '{' inside Tuple"], tks)
+bracketCheck_Tuple ((TkEndDo    ps) : tks) = (Just $ [ParseErr "Invalid placement of '}' inside Tuple"], tks)
+bracketCheck_Tuple ([]                   ) = (Just $ [ParseErr "Mismatched parentheses"], [])
+bracketCheck_Tuple (_ : tks)               = (Just $ [ParseErr "This error should not occur. Please notify the developer that something is wrong in the bracketCheck_Tuple function"], tks)
+
+
+
+
+
+
+
+
+
+
+bracketCheck_Data :: [BzoToken] -> (Maybe [BzoErr], [BzoToken])
+bracketCheck_Data ((TkStartTup ps) : tks) = combineBracketChecks bracketCheck_Tuple bracketCheck_Data tks
+bracketCheck_Data ((TkEndTup   ps) : tks) = (Just $ [ParseErr "Invalid placement of ')' inside Array Modifier"], tks)
+bracketCheck_Data ((TkStartDat ps) : tks) = combineBracketChecks bracketCheck_Data bracketCheck_Data  tks
+bracketCheck_Data ((TkEndDat   ps) : tks) = (Nothing, tks)
+bracketCheck_Data ((TkStartDo  ps) : tks) = (Just $ [ParseErr "Invalid placement of '{' inside Array Modifier"], tks)
+bracketCheck_Data ((TkEndDo    ps) : tks) = (Just $ [ParseErr "Invalid placement of '}' inside Array Modifier"], tks)
+bracketCheck_Data ([]                   ) = (Just $ [ParseErr "Mismatched Square Brackets"], [])
+bracketCheck_Data (_ : tks)               = (Just $ [ParseErr "This error should not occur. Please notify the developer that something is wrong in the bracketCheck_Data function"], tks)
+
+
+
+
+
+
+
+
+
+
+bracketCheck_Block :: [BzoToken] -> (Maybe [BzoErr], [BzoToken])
+bracketCheck_Block ((TkStartTup ps) : tks) = combineBracketChecks bracketCheck_Tuple bracketCheck_Block tks
+bracketCheck_Block ((TkEndTup   ps) : tks) = (Just $ [ParseErr "Invalid placement of ')' inside Block"], tks)
+bracketCheck_Block ((TkStartDat ps) : tks) = combineBracketChecks bracketCheck_Data bracketCheck_Block  tks
+bracketCheck_Block ((TkEndDat   ps) : tks) = (Just $ [ParseErr "Invalid placement of '}' inside Block"], tks)
+bracketCheck_Block ((TkStartDo  ps) : tks) = combineBracketChecks bracketCheck_Block bracketCheck_Block tks
+bracketCheck_Block ((TkEndDo    ps) : tks) = (Nothing, tks)
+bracketCheck_Block ([]                   ) = (Just $ [ParseErr "Mismatched Braces"], [])
+bracketCheck_Block (_ : tks)               = (Just $ [ParseErr "This error should not occur. Please notify the developer that something is wrong in the bracketCheck_Block function"], tks)
+
+
+
+
+
+
+
+
+
+bracketCheckFn :: [BzoToken] -> (Maybe [BzoErr], [BzoToken])
+bracketCheckFn (t : ts) = case t of
+          (TkStartTup ps) -> bracketCheck_Tuple ts
+          (TkStartDat ps) -> bracketCheck_Data  ts
+          (TkStartDo  ps) -> bracketCheck_Block ts
+          (TkEndTup   ps) -> (Just $ [ParseErr "Mismatched parentheses!"], ts)
+          (TkEndDat   ps) -> (Just $ [ParseErr "Mismatched square brackets!"], ts)
+          (TkEndDo    ps) -> (Just $ [ParseErr "Mismatched braces!"], ts)
+          _               -> (Just $ [ParseErr "This error should not occur. Please notify the developer that something is wrong in the bracketCheckFn function"], ts)
+
+
+
+
+
+
+
+
+
+
+maybeMerge :: [a] -> Maybe [a] -> [a]
+maybeMerge a (Just b) = a ++ b
+maybeMerge a _        = a
+
+
+
+
+
+
+
+
+
+
+bracketCheck :: [BzoToken] -> Maybe [BzoErr]
+bracketCheck tks =
+  let tks' = filter isBracket tks
+  in checkIter tks' bracketCheckFn
+    where checkIter x f = case x of
+            [] -> Nothing
+            _  -> case (f x) of
+                    (Nothing, []) -> Nothing
+                    (Nothing, ts) -> checkIter ts f
+                    (Just es, []) -> Just es
+                    (Just es, ts) -> Just $ maybeMerge es (checkIter ts f)
+
+
+
+
+
+
+
+
+
 parseFile :: [BzoToken] -> [Parser] -> Either [BzoErr] BzoSyntax
 parseFile tks ps =
-  case (parseIter (ParserState [] tks) ps) of
-    Left errs -> Left errs
-    Right ast -> Right ast
+  let bracketErrs = bracketCheck tks
+  in case (bracketErrs, parseIter (ParserState [] tks) ps) of
+      (Just errs,        _ ) -> Left [ParseErr $ show (filter isBracket tks)] --Left errs
+      (Nothing  , Left errs) -> Left errs
+      (Nothing  , Right ast) -> Right ast
