@@ -355,6 +355,19 @@ parseExpr12 = genericParseOp [MP_Name] (\psi ->
 
 
 
+parseExpr13 :: ParserOp
+parseExpr13 = genericParseOp [mtk_Wildcard] (\psi ->
+  PI_BzSyn $ BzS_Expr (pos $ piSyn $ head psi) [BzS_Wildcard (pos $ piSyn $ head psi)] )
+
+
+
+
+
+
+
+
+
+
 parseExprFuse :: ParserOp
 parseExprFuse = genericParseOp [MP_Expr, MP_Expr] (\psi ->
   PI_BzSyn $ BzS_Expr (pos $ piSyn $ head psi) ((exprs $ piSyn $ (head psi)) ++ (exprs $ piSyn $ (psi !! 1))) )
@@ -383,12 +396,14 @@ parseExpr :: Parser
 parseExpr = Parser (\ps ->
   let parseFn = [parseExpr0,  parseExpr1,  parseExpr2,  parseExpr3,  parseExpr4,
                  parseExpr5,  parseExpr6,  parseExpr7,  parseExpr8,  parseExpr9,
-                 parseExpr10, parseExpr11, parseExpr12, parseExprFuse,
+                 parseExpr10, parseExpr11, parseExpr12, parseExpr13, parseExprFuse,
                  parseCmpd0,  parseCmpd1,  parseCmpd2,  parseCmpd3,
                  parsePoly0,  parsePoly1,  parsePoly2,  parsePoly3 ]
-  in case (tryParsers ps parseFn) of
-    Just pst -> Right pst
-    Nothing  -> Left []   )
+      errFn   = [errCmpd,     errPoly ]
+  in case (tryParsers ps parseFn, tryParsers ps errFn) of
+    (Just pst,       _ ) -> Right pst
+    (Nothing , Just err) -> Left [ParseErr (piErr $ head $ stack err)]
+    (Nothing , Nothing ) -> Left [] )
 
 
 
@@ -442,6 +457,30 @@ parseCmpd2 = genericParseOp [mtk_StartTup, MP_Cpx, mtk_EndTup] (\psi ->
 parseCmpd3 :: ParserOp
 parseCmpd3 = genericParseOp [mtk_StartTup, MP_Cpx, MP_Expr, mtk_EndTup] (\psi ->
   PI_BzSyn $ BzS_Cmpd (spos $ piTok $ head psi) ((piSyns (psi !! 1)) ++ [piSyn $ psi !! 2]))
+
+
+
+
+
+
+
+
+
+
+errCmpd :: ParserOp
+errCmpd = genericParseOp [mtk_StartTup, MP_Cpx, MP_Plx] (\psi -> PI_Err "Invalid form of Compound-form Tuple")
+
+
+
+
+
+
+
+
+
+
+errPoly :: ParserOp
+errPoly = genericParseOp [mtk_StartTup, MP_Plx, MP_Cpx] (\psi -> PI_Err "Invalid form of Polymorph-form Tuple")
 
 
 
@@ -688,7 +727,7 @@ parseName0 = genericParseOp [mtk_Reference, mtk_TypeId] (\psi ->
 
 
 parseNameErr :: ParserOp
-parseNameErr = genericParseOp [mtk_Reference, MP_Any] (\psi -> PI_Err )
+parseNameErr = genericParseOp [mtk_Reference, MP_Any] (\psi -> PI_Err "Invalid Namespace Identifier")
 
 
 
@@ -705,7 +744,7 @@ parseName = Parser (\ps ->
       errFn   = [parseNameErr]
   in case (tryParsers ps parseFn, tryParsers ps errFn) of
     (Just pst,       _ ) -> Right pst
-    (Nothing , Just pst) -> Left [ParseErr "Invalid Namespace Identifier"]
+    (Nothing , Just pst) -> Left [ParseErr (piErr $ head $ stack pst)]
     (Nothing , Nothing ) -> Left []   )
 
 
@@ -717,9 +756,50 @@ parseName = Parser (\ps ->
 
 
 
+parsePrimitives0 :: ParserOp
+parsePrimitives0 = genericParseOp [mtk_StartTup, mtk_EndTup] (\psi ->
+  PI_Token $ TkTupEmpt (spos $ piTok $ head psi) )
+
+
+
+
+
+
+
+
+
+
+parsePrimitives1 :: ParserOp
+parsePrimitives1 = genericParseOp [mtk_StartDat, mtk_EndDat] (\psi ->
+  PI_Token $ TkArrGnrl (spos $ piTok $ head psi) )
+
+
+
+
+
+
+
+
+
+
+parsePrimitives :: Parser
+parsePrimitives = Parser (\ps ->
+  let parseFn = [parsePrimitives0, parsePrimitives1]
+  in case tryParsers ps parseFn of
+    Just pst -> Right pst
+    Nothing  -> Left []   )
+
+
+
+
+
+
+
+
+
 parseCalls :: Parser
 parseCalls = Parser (\ps ->
-  case (runParsers ps [parseName, parseExpr, {-parseModifiers,-} simplify]) of  -- | Temporary!
+  case (runParsers ps [parseName, parsePrimitives, parseExpr, {-parseModifiers,-} simplify]) of  -- | Temporary!
     Left []   -> Left []
     Left err  -> Left err
     Right ps' -> Right ps' )

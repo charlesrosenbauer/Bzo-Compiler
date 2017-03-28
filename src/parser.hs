@@ -19,7 +19,7 @@ data ParseItem
   | PI_CMPD { piSyns:: [BzoSyntax] }
   | PI_POLY { piSyns:: [BzoSyntax] }
   | PI_Fltr { piSyn :: BzoSyntax }
-  | PI_Err
+  | PI_Err  { piErr :: String }
   deriving Show
 
 
