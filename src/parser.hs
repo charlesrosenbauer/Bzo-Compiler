@@ -19,6 +19,7 @@ data ParseItem
   | PI_CMPD { piSyns:: [BzoSyntax] }
   | PI_POLY { piSyns:: [BzoSyntax] }
   | PI_Fltr { piSyn :: BzoSyntax }
+  | PI_Err
   deriving Show
 
 
@@ -60,6 +61,7 @@ data MockParseItem
   | MP_Tpx
   | MP_Tup
   | MP_Typ
+  | MP_Any
 
 
 
@@ -110,6 +112,7 @@ mtk_Nil       = MP_Tk $ TkNil
 
 
 matchParseItem :: MockParseItem -> ParseItem -> Bool
+matchParseItem (MP_Any ) _                         = True
 matchParseItem (MP_Tup ) (PI_BzSyn (BzS_Cmpd p x)) = True
 matchParseItem (MP_Tup ) (PI_BzSyn (BzS_Poly p x)) = True
 matchParseItem (MP_Typ ) (PI_BzSyn (BzS_Cmpd p x)) = True

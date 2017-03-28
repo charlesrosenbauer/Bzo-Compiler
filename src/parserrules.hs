@@ -331,7 +331,20 @@ parseExpr10 = genericParseOp [MP_Box] (\psi ->
 
 parseExpr11 :: ParserOp
 parseExpr11 = genericParseOp [mtk_TupEmpt] (\tks ->
-  PI_BzSyn $ BzS_Expr (spos $ piTok $ head tks) [BzS_Undefined (spos $ piTok $ head tks)] )
+  PI_BzSyn $ BzS_Expr (spos $ piTok $ head tks) [BzS_Nil (spos $ piTok $ head tks)] )
+
+
+
+
+
+
+
+
+
+
+parseExpr12 :: ParserOp
+parseExpr12 = genericParseOp [MP_Name] (\psi ->
+  PI_BzSyn $ BzS_Expr (pos $ piSyn $ head psi) [BzS_Namespace (pos $ piSyn $ head psi) (sid $ piSyn $ head psi)] )
 
 
 
@@ -370,7 +383,7 @@ parseExpr :: Parser
 parseExpr = Parser (\ps ->
   let parseFn = [parseExpr0,  parseExpr1,  parseExpr2,  parseExpr3,  parseExpr4,
                  parseExpr5,  parseExpr6,  parseExpr7,  parseExpr8,  parseExpr9,
-                 parseExpr10, parseExpr11, parseExprFuse,
+                 parseExpr10, parseExpr11, parseExpr12, parseExprFuse,
                  parseCmpd0,  parseCmpd1,  parseCmpd2,  parseCmpd3,
                  parsePoly0,  parsePoly1,  parsePoly2,  parsePoly3 ]
   in case (tryParsers ps parseFn) of
@@ -660,9 +673,53 @@ parseCall0 = genericParseOp [MP_Id, mtk_Define, MP_FnTy] (\psi ->
 
 
 
+-- parse namespace
+parseName0 :: ParserOp
+parseName0 = genericParseOp [mtk_Reference, mtk_TypeId] (\psi ->
+  PI_BzSyn $ BzS_Namespace (spos $ piTok $ head psi) (valId $ piTok $ (psi !! 1)) )
+
+
+
+
+
+
+
+
+
+
+parseNameErr :: ParserOp
+parseNameErr = genericParseOp [mtk_Reference, MP_Any] (\psi -> PI_Err )
+
+
+
+
+
+
+
+
+
+
+parseName :: Parser
+parseName = Parser (\ps ->
+  let parseFn = [parseName0]
+      errFn   = [parseNameErr]
+  in case (tryParsers ps parseFn, tryParsers ps errFn) of
+    (Just pst,       _ ) -> Right pst
+    (Nothing , Just pst) -> Left [ParseErr "Invalid Namespace Identifier"]
+    (Nothing , Nothing ) -> Left []   )
+
+
+
+
+
+
+
+
+
+
 parseCalls :: Parser
 parseCalls = Parser (\ps ->
-  case (runParsers ps [parseExpr, {-parseModifiers,-} simplify]) of  -- | Temporary!
+  case (runParsers ps [parseName, parseExpr, {-parseModifiers,-} simplify]) of  -- | Temporary!
     Left []   -> Left []
     Left err  -> Left err
     Right ps' -> Right ps' )
