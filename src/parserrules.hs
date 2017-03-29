@@ -783,6 +783,62 @@ parseFilter1 = genericParseOp [mtk_FilterSym, MP_Typ] (\psi ->
 
 
 
+-- parse box
+parseBox0 :: ParserOp
+parseBox0 = genericParseOp [mtk_StartTup, MP_Expr, mtk_EndTup] (\psi ->
+  PI_Box $ piSyn (psi !! 1) )
+
+
+
+
+
+
+
+
+
+
+parseBox1 :: ParserOp
+parseBox1 = genericParseOp [mtk_StartTup, MP_Box, mtk_EndTup] (\psi ->
+  PI_Box $ piSyn (psi !! 1) )
+
+
+
+
+
+
+
+
+
+
+parseBox2 :: ParserOp
+parseBox2 = genericParseOp [mtk_StartTup, MP_FnTy, mtk_EndTup] (\psi ->
+  PI_Box $ piSyn (psi !! 1) )
+
+
+
+
+
+
+
+
+
+
+parseBox :: Parser
+parseBox = Parser (\ps ->
+  let parseFn = [parseBox0, parseBox1, parseBox2]
+  in case (tryParsers ps parseFn) of
+    Just pst -> Right pst
+    Nothing  -> Left [] )
+
+
+
+
+
+
+
+
+
+
 -- parse call/definition types
 parseCall0 :: ParserOp
 parseCall0 = genericParseOp [MP_Id, mtk_Define, MP_FnTy] (\psi ->
@@ -884,7 +940,7 @@ parsePrimitives = Parser (\ps ->
 
 parseCalls :: Parser
 parseCalls = Parser (\ps ->
-  case (runParsers ps [parseName, parsePrimitives, parseLambda, parseExpr, {-parseModifiers,-} simplify]) of  -- | Temporary!
+  case (runParsers ps [parseName, parsePrimitives, parseBox, parseLambda, parseExpr, {-parseModifiers,-} simplify]) of  -- | Temporary!
     Left []   -> Left []
     Left err  -> Left err
     Right ps' -> Right ps' )
