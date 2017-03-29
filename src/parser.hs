@@ -62,6 +62,10 @@ data MockParseItem
   | MP_Tpx
   | MP_Tup
   | MP_Typ
+  | MP_Filt
+  | MP_AGMod
+  | MP_ASMod
+  | MP_AXMod
   | MP_LHead
   | MP_Any
 
@@ -157,6 +161,10 @@ matchSyntax MP_Flt    (BzS_Flt             _ _) = True
 matchSyntax MP_Str    (BzS_Str             _ _) = True
 matchSyntax MP_Poly   (BzS_Poly            _ _) = True
 matchSyntax MP_Cmpd   (BzS_Cmpd            _ _) = True
+matchSyntax MP_Filt   (BzS_Filter          _ _) = True
+matchSyntax MP_AGMod  (BzS_ArrGenMod         _) = True
+matchSyntax MP_ASMod  (BzS_ArrSzMod        _ _) = True
+matchSyntax MP_AXMod  (BzS_ArrExprMod      _ _) = True
 matchSyntax MP_FnTy   (BzS_FnTy          _ _ _) = True
 matchSyntax MP_Blck   (BzS_Block           _ _) = True
 matchSyntax MP_Expr   (BzS_Expr            _ _) = True
