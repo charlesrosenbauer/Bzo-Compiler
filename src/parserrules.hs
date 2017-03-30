@@ -397,7 +397,7 @@ parseExpr :: Parser
 parseExpr = Parser (\ps ->
   let parseFn = [parseExpr0,  parseExpr1,  parseExpr2,  parseExpr3,  parseExpr4,
                  parseExpr5,  parseExpr6,  parseExpr7,  parseExpr8,  parseExpr9,
-                 parseExpr10, parseExpr11, parseExpr12, parseExpr13, parseExpr14,
+                 {-parseExpr10,-} parseExpr11, parseExpr12, parseExpr13, parseExpr14,
                  parseExpr15, parseExpr16, parseExpr17, parseExprFuse,
                  parseCmpd0,  parseCmpd1,  parseCmpd2,  parseCmpd3,
                  parsePoly0,  parsePoly1,  parsePoly2,  parsePoly3 ]
@@ -648,6 +648,35 @@ parseFnType = genericParseOp [MP_Typ, mtk_FnSym, MP_Typ] (\psi ->
 
 
 
+parseFnTyErr :: ParserOp
+parseFnTyErr = genericParseOp [MP_Parse, mtk_FnSym, MP_Parse] (\psi ->
+  PI_Err $ "Invalid Parameters to Function Type Expression : " ++ (show $ psi !! 2) )
+
+
+
+
+
+
+
+
+
+
+parseFnTy :: Parser
+parseFnTy = Parser (\ps ->
+  case (tryParsers ps [parseFnType], tryParsers ps [parseFnTyErr]) of
+    (Just pst,        _ ) -> Right pst
+    (Nothing , Just errs) -> Left  [ParseErr (piErr $ head $ stack errs)]
+    (Nothing , Nothing  ) -> Left  [])
+
+
+
+
+
+
+
+
+
+
 parseLambda0 :: ParserOp
 parseLambda0 = genericParseOp [mtk_LamdaSym, MP_Box, mtk_Define] (\psi ->
   PI_LHead (spos $ piTok $ head psi) (piSyn $ psi !! 1) )
@@ -825,9 +854,22 @@ parseBox2 = genericParseOp [mtk_StartTup, MP_FnTy, mtk_EndTup] (\psi ->
 
 
 
+parseBox3 :: ParserOp
+parseBox3 = genericParseOp [mtk_StartTup, MP_Lambda, mtk_EndTup] (\psi ->
+  PI_Box $ piSyn (psi !! 1) )
+
+
+
+
+
+
+
+
+
+
 parseBox :: Parser
 parseBox = Parser (\ps ->
-  let parseFn = [parseBox0, parseBox1, parseBox2]
+  let parseFn = [parseBox0, parseBox1, parseBox2, parseBox3]
   in case (tryParsers ps parseFn) of
     Just pst -> Right pst
     Nothing  -> Left [] )
@@ -942,7 +984,7 @@ parsePrimitives = Parser (\ps ->
 
 parseCalls :: Parser
 parseCalls = Parser (\ps ->
-  case (runParsers ps [parseName, parsePrimitives, parseBox, parseLambda, parseExpr, parseModifiers, simplify]) of  -- | Temporary!
+  case (runParsers ps [parseName, parsePrimitives, parseExpr, parseFnTy, parseLambda, parseBox, parseModifiers, simplify]) of
     Left []   -> Left []
     Left err  -> Left err
     Right ps' -> Right ps' )
