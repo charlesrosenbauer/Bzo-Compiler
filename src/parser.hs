@@ -15,7 +15,6 @@ import BzoTokens
 data ParseItem
   = PI_Token{ piTok :: BzoToken  }
   | PI_BzSyn{ piSyn :: BzoSyntax }
-  | PI_Box  { piSyn :: BzoSyntax }
   | PI_CMPD { piSyns:: [BzoSyntax] }
   | PI_POLY { piSyns:: [BzoSyntax] }
   | PI_Fltr { piSyn :: BzoSyntax }
@@ -128,11 +127,11 @@ matchParseItem (MP_Tup ) (PI_BzSyn (BzS_Poly p x)) = True
 matchParseItem (MP_Typ ) (PI_BzSyn (BzS_Cmpd p x)) = True
 matchParseItem (MP_Typ ) (PI_BzSyn (BzS_Poly p x)) = True
 matchParseItem (MP_Typ ) (PI_BzSyn (BzS_TyId p x)) = True
-matchParseItem (MP_Typ ) (PI_Box               _ ) = True
+matchParseItem (MP_Typ ) (PI_BzSyn (BzS_Box  p x)) = True
 matchParseItem mp (PI_BzSyn sn) = matchSyntax mp sn
 matchParseItem (MP_Tk t) (PI_Token tk) = matchBzoToken t tk
 matchParseItem (MP_Tkn ) (PI_Token tk) = True
-matchParseItem (MP_Box ) (PI_Box   sn) = True
+matchParseItem (MP_Box ) (PI_BzSyn (BzS_Box p x)) = True
 matchParseItem (MP_Cpx ) (PI_CMPD  xs) = True
 matchParseItem (MP_Plx ) (PI_POLY  xs) = True
 matchParseItem (MP_Tpx ) (PI_POLY  xs) = True

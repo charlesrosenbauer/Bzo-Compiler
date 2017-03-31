@@ -62,6 +62,9 @@ data BzoSyntax
     | BzS_Expr {
         pos   :: BzoPos,
         exprs :: [BzoSyntax] }
+    | BzS_Box {
+        pos   :: BzoPos,
+        expr  :: BzoSyntax }
     | BzS_Poly {
         pos   :: BzoPos,
         exprs :: [BzoSyntax] }

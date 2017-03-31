@@ -628,12 +628,12 @@ simplify = Parser (\ps ->
 parseFnType :: ParserOp
 parseFnType = genericParseOp [MP_Typ, mtk_FnSym, MP_Typ] (\psi ->
   let (p, t0) = case head psi of
-        (PI_Box                x  ) -> (pos x, x)
+        (PI_BzSyn (BzS_Box  ps  x)) -> (pos x, x)
         (PI_BzSyn (BzS_Cmpd ps xs)) -> (ps, (BzS_Cmpd ps xs))
         (PI_BzSyn (BzS_Poly ps xs)) -> (ps, (BzS_Poly ps xs))
         (PI_BzSyn (BzS_TyId ps  i)) -> (ps, (BzS_TyId ps  i))
       t1      = case head psi of
-        (PI_Box                x  ) -> x
+        (PI_BzSyn (BzS_Box  ps  x)) -> x
         (PI_BzSyn (BzS_Cmpd ps xs)) -> (BzS_Cmpd ps xs)
         (PI_BzSyn (BzS_Poly ps xs)) -> (BzS_Poly ps xs)
         (PI_BzSyn (BzS_TyId ps  i)) -> (BzS_TyId ps  i)
@@ -779,7 +779,7 @@ parseFilter0 = genericParseOp [mtk_FilterSym, MP_TId] (\psi ->
 parseFilter1 :: ParserOp
 parseFilter1 = genericParseOp [mtk_FilterSym, MP_Typ] (\psi ->
   PI_Fltr $ case (psi !! 1) of
-    (PI_Box                x  ) -> x
+    (PI_BzSyn (BzS_Box  ps  x)) -> x
     (PI_BzSyn (BzS_Cmpd ps xs)) -> (BzS_Cmpd ps xs)
     (PI_BzSyn (BzS_Poly ps xs)) -> (BzS_Poly ps xs)
     (PI_BzSyn (BzS_TyId ps  i)) -> (BzS_TyId ps  i) )
@@ -817,7 +817,7 @@ parseFilter1 = genericParseOp [mtk_FilterSym, MP_Typ] (\psi ->
 -- parse box
 parseBox0 :: ParserOp
 parseBox0 = genericParseOp [mtk_StartTup, MP_Expr, mtk_EndTup] (\psi ->
-  PI_Box $ piSyn (psi !! 1) )
+  PI_BzSyn $ BzS_Box  (spos $ piTok $ head psi) (piSyn (psi !! 1)) )
 
 
 
@@ -830,7 +830,7 @@ parseBox0 = genericParseOp [mtk_StartTup, MP_Expr, mtk_EndTup] (\psi ->
 
 parseBox1 :: ParserOp
 parseBox1 = genericParseOp [mtk_StartTup, MP_Box, mtk_EndTup] (\psi ->
-  PI_Box $ piSyn (psi !! 1) )
+  PI_BzSyn $ BzS_Box (spos $ piTok $ head psi) (piSyn (psi !! 1)) )
 
 
 
@@ -843,7 +843,7 @@ parseBox1 = genericParseOp [mtk_StartTup, MP_Box, mtk_EndTup] (\psi ->
 
 parseBox2 :: ParserOp
 parseBox2 = genericParseOp [mtk_StartTup, MP_FnTy, mtk_EndTup] (\psi ->
-  PI_Box $ piSyn (psi !! 1) )
+  PI_BzSyn $ BzS_Box (spos $ piTok $ head psi) (piSyn (psi !! 1)) )
 
 
 
@@ -856,7 +856,7 @@ parseBox2 = genericParseOp [mtk_StartTup, MP_FnTy, mtk_EndTup] (\psi ->
 
 parseBox3 :: ParserOp
 parseBox3 = genericParseOp [mtk_StartTup, MP_Lambda, mtk_EndTup] (\psi ->
-  PI_Box $ piSyn (psi !! 1) )
+  PI_BzSyn $ BzS_Box (spos $ piTok $ head psi) (piSyn (psi !! 1)) )
 
 
 
