@@ -632,11 +632,19 @@ parseFnType = genericParseOp [MP_Typ, mtk_FnSym, MP_Typ] (\psi ->
         (PI_BzSyn (BzS_Cmpd ps xs)) -> (ps, (BzS_Cmpd ps xs))
         (PI_BzSyn (BzS_Poly ps xs)) -> (ps, (BzS_Poly ps xs))
         (PI_BzSyn (BzS_TyId ps  i)) -> (ps, (BzS_TyId ps  i))
-      t1      = case head psi of
+        (PI_BzSyn (BzS_Expr p' [BzS_Box  ps  x])) -> (pos x, x)
+        (PI_BzSyn (BzS_Expr p' [BzS_Cmpd ps xs])) -> (ps, (BzS_Cmpd ps xs))
+        (PI_BzSyn (BzS_Expr p' [BzS_Poly ps xs])) -> (ps, (BzS_Poly ps xs))
+        (PI_BzSyn (BzS_Expr p' [BzS_TyId ps  i])) -> (ps, (BzS_TyId ps  i))
+      t1      = case (psi !! 2) of
         (PI_BzSyn (BzS_Box  ps  x)) -> x
         (PI_BzSyn (BzS_Cmpd ps xs)) -> (BzS_Cmpd ps xs)
         (PI_BzSyn (BzS_Poly ps xs)) -> (BzS_Poly ps xs)
         (PI_BzSyn (BzS_TyId ps  i)) -> (BzS_TyId ps  i)
+        (PI_BzSyn (BzS_Expr p' [BzS_Box  ps  x])) -> x
+        (PI_BzSyn (BzS_Expr p' [BzS_Cmpd ps xs])) -> (BzS_Cmpd ps xs)
+        (PI_BzSyn (BzS_Expr p' [BzS_Poly ps xs])) -> (BzS_Poly ps xs)
+        (PI_BzSyn (BzS_Expr p' [BzS_TyId ps  i])) -> (BzS_TyId ps  i)
   in PI_BzSyn $ BzS_FnTy p t0 t1 )
 
 
