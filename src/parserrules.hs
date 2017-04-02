@@ -36,7 +36,7 @@ testParserPass = Parser (\ps ->
 
 
 
-
+{-
 parseModifiers0 :: ParserOp
 parseModifiers0 = genericParseOp [mtk_StartDat, mtk_EndDat] (\psi ->
   PI_BzSyn $ BzS_ArrGenMod (spos $ piTok $ head psi) )
@@ -267,7 +267,7 @@ parseExpr9 = genericParseOp [MP_Cmpd] (\psi ->
 
 parseExpr10 :: ParserOp
 parseExpr10 = genericParseOp [MP_Box] (\psi ->
-  PI_BzSyn $ BzS_Expr (pos $ piSyn $ head psi) [piSyn $ head psi] )
+  PI_BzSyn $ BzS_Expr (pos $ piSyn $ head psi) [expr $ piSyn $ head psi] )
 
 
 
@@ -397,7 +397,7 @@ parseExpr :: Parser
 parseExpr = Parser (\ps ->
   let parseFn = [parseExpr0,  parseExpr1,  parseExpr2,  parseExpr3,  parseExpr4,
                  parseExpr5,  parseExpr6,  parseExpr7,  parseExpr8,  parseExpr9,
-                 {-parseExpr10,-} parseExpr11, parseExpr12, parseExpr13, parseExpr14,
+                 parseExpr10, parseExpr11, parseExpr12, parseExpr13, parseExpr14,
                  parseExpr15, parseExpr16, parseExpr17, parseExprFuse,
                  parseCmpd0,  parseCmpd1,  parseCmpd2,  parseCmpd3,
                  parsePoly0,  parsePoly1,  parsePoly2,  parsePoly3 ]
@@ -981,7 +981,7 @@ parsePrimitives = Parser (\ps ->
   in case tryParsers ps parseFn of
     Just pst -> Right pst
     Nothing  -> Left []   )
-
+-}
 
 
 
@@ -992,7 +992,7 @@ parsePrimitives = Parser (\ps ->
 
 parseCalls :: Parser
 parseCalls = Parser (\ps ->
-  case (runParsers ps [parseName, parsePrimitives, parseExpr, parseFnTy, parseLambda, parseBox, parseModifiers, simplify]) of
+  case (runParsers ps []) of
     Left []   -> Left []
     Left err  -> Left err
     Right ps' -> Right ps' )
