@@ -36,6 +36,36 @@ testParserPass = Parser (\ps ->
 
 
 
+
+genericParseOp :: [MockParseItem] -> ([ParseItem] -> ParseItem) -> ParserOp
+genericParseOp mpi xform = ParserOp (\ps ->
+  case (match ps mpi) of
+    Nothing -> Nothing
+    Just (xs, (ParserState s i)) -> Just (ParserState ([xform $ reverse xs] ++ s) i) )
+
+
+
+
+
+
+
+
+
+
+genericNotLookaheadParseOp :: [MockParseItem] -> [BzoToken] -> ([ParseItem] -> ParseItem) -> ParserOp
+genericNotLookaheadParseOp mpi bzt xform = ParserOp (\ps ->
+  case (matchNotLookahead ps mpi bzt) of
+    Nothing -> Nothing
+    Just (xs, (ParserState s i)) -> Just (ParserState ([xform $ reverse xs] ++ s) i) )
+
+
+
+
+
+
+
+
+
 {-
 parseModifiers0 :: ParserOp
 parseModifiers0 = genericParseOp [mtk_StartDat, mtk_EndDat] (\psi ->
@@ -97,35 +127,6 @@ parseModifiers = Parser (\ps ->
   in case (tryParsers ps parseFn) of
     Just pst -> Right pst
     Nothing  -> Left  [] )
-
-
-
-
-
-
-
-
-
-genericParseOp :: [MockParseItem] -> ([ParseItem] -> ParseItem) -> ParserOp
-genericParseOp mpi xform = ParserOp (\ps ->
-  case (match ps mpi) of
-    Nothing -> Nothing
-    Just (xs, (ParserState s i)) -> Just (ParserState ([xform $ reverse xs] ++ s) i) )
-
-
-
-
-
-
-
-
-
-
-genericNotLookaheadParseOp :: [MockParseItem] -> [BzoToken] -> ([ParseItem] -> ParseItem) -> ParserOp
-genericNotLookaheadParseOp mpi bzt xform = ParserOp (\ps ->
-  case (matchNotLookahead ps mpi bzt) of
-    Nothing -> Nothing
-    Just (xs, (ParserState s i)) -> Just (ParserState ([xform $ reverse xs] ++ s) i) )
 
 
 
@@ -990,9 +991,170 @@ parsePrimitives = Parser (\ps ->
 
 
 
+
+
+parsePrimitive0 :: ParserOp
+parsePrimitive0 = genericParseOp [mtk_Id] (\tk ->
+  PI_BzSyn $ BzS_Id (spos $ piTok $ head tk) (valId $ piTok $ head tk))
+
+
+
+
+
+
+
+
+
+
+parsePrimitive1 :: ParserOp
+parsePrimitive1 = genericParseOp [mtk_MutId] (\tk ->
+  PI_BzSyn $ BzS_MId (spos $ piTok $ head tk) (valId $ piTok $ head tk))
+
+
+
+
+
+
+
+
+
+
+parsePrimitive2 :: ParserOp
+parsePrimitive2 = genericParseOp [mtk_TypeId] (\tk ->
+  PI_BzSyn $ BzS_TyId (spos $ piTok $ head tk) (valId $ piTok $ head tk))
+
+
+
+
+
+
+
+
+
+
+parsePrimitive3 :: ParserOp
+parsePrimitive3 = genericParseOp [mtk_Int] (\tk ->
+  PI_BzSyn $ BzS_Int (spos $ piTok $ head tk) (valInt $ piTok $ head tk))
+
+
+
+
+
+
+
+
+
+
+parsePrimitive4 :: ParserOp
+parsePrimitive4 = genericParseOp [mtk_Flt] (\tk ->
+  PI_BzSyn $ BzS_Flt (spos $ piTok $ head tk) (valFlt $ piTok $ head tk))
+
+
+
+
+
+
+
+
+
+
+parsePrimitive5 :: ParserOp
+parsePrimitive5 = genericParseOp [mtk_Str] (\tk ->
+  PI_BzSyn $ BzS_Str (spos $ piTok $ head tk) (valStr $ piTok $ head tk))
+
+
+
+
+
+
+
+
+
+
+parsePrimitive6 :: ParserOp
+parsePrimitive6 = genericParseOp [mtk_Builtin] (\tk ->
+  PI_BzSyn $ BzS_BId (spos $ piTok $ head tk) (valId $ piTok $ head tk))
+
+
+
+
+
+
+
+
+
+
+parsePrimitive7 :: ParserOp
+parsePrimitive7 = genericParseOp [mtk_BIType] (\tk ->
+  PI_BzSyn $ BzS_BId (spos $ piTok $ head tk) (valId $ piTok $ head tk))
+
+
+
+
+
+
+
+
+
+
+parsePrimitive8 :: ParserOp
+parsePrimitive8 = genericParseOp [mtk_Wildcard] (\tk ->
+  PI_BzSyn $ BzS_Wildcard (spos $ piTok $ head tk))
+
+
+
+
+
+
+
+
+
+
+parsePrimitive9 :: ParserOp
+parsePrimitive9 = genericParseOp [mtk_TupEmpt] (\tk ->
+  PI_BzSyn $ BzS_Nil (spos $ piTok $ head tk))
+
+
+
+
+
+
+
+
+
+
+parsePrimitive10 :: ParserOp
+parsePrimitive10 = genericParseOp [mtk_ArrMod] (\tk ->
+  PI_BzSyn $ BzS_MapMod (spos $ piTok $ head tk))
+
+
+
+
+
+
+
+
+
+
+parsePrimitives :: Parser
+parsePrimitives = Parser (\ps ->
+  let parseFn = [parsePrimitive0,  parsePrimitive1,  parsePrimitive2,  parsePrimitive3,
+                 parsePrimitive4,  parsePrimitive5,  parsePrimitive6,  parsePrimitive7,
+                 parsePrimitive8,  parsePrimitive9,  parsePrimitive10]
+  in case tryParsers ps parseFn of
+    Just pst -> Right pst
+    Nothing  -> Left []  )
+
+
+
+
+
+
+
+
 parseCalls :: Parser
 parseCalls = Parser (\ps ->
-  case (runParsers ps []) of
+  case (runParsers ps [parsePrimitives]) of
     Left []   -> Left []
     Left err  -> Left err
     Right ps' -> Right ps' )

@@ -130,6 +130,7 @@ showAST (BzS_Poly _ p)                     = " {POLY: " ++ (concatMap showAST p)
 showAST (BzS_Cmpd _ c)                     = " {CMPD: " ++ (concatMap showAST c) ++ "} "
 showAST (BzS_Block _ ex)                   = " {BK: " ++ (concatMap showAST ex) ++ " } "
 showAST (BzS_Expr _ ex)                    = " (EX: " ++ (concatMap showAST ex) ++ " ) "
+showAST (BzS_Box  _ ex)                    = " (BX: " ++ (showAST ex) ++ ") "
 showAST (BzS_Calls _ c)                    = concatMap (\s -> " CALL:: " ++ (show s) ++ "\n") c
 showAST (BzS_Wildcard _)                   = " _ "
 showAST (BzS_MapMod _)                     = " .. "

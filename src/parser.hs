@@ -17,8 +17,6 @@ data ParseItem
   | PI_BzSyn{ piSyn :: BzoSyntax }
   | PI_CMPD { piSyns:: [BzoSyntax] }
   | PI_POLY { piSyns:: [BzoSyntax] }
-  | PI_Fltr { piSyn :: BzoSyntax }
-  | PI_LHead{ piPos :: BzoPos, piSyn :: BzoSyntax }
   | PI_Err  { piErr :: String }
   deriving Show
 
@@ -59,15 +57,13 @@ data MockParseItem
   | MP_Cpx
   | MP_Plx
   | MP_Tpx
-  | MP_Tup
-  | MP_Typ
   | MP_Filt
   | MP_AGMod
   | MP_ASMod
   | MP_AXMod
-  | MP_LHead
   | MP_Any
   | MP_Parse
+  | MP_Item
 
 
 
@@ -121,24 +117,35 @@ matchParseItem :: MockParseItem -> ParseItem -> Bool
 matchParseItem (MP_Parse)(PI_Token tk) = False
 matchParseItem (MP_Parse) _            = True
 matchParseItem (MP_Any ) _                         = True
-matchParseItem (MP_LHead)(PI_LHead           _ _ ) = True
-matchParseItem (MP_Tup ) (PI_BzSyn (BzS_Cmpd p x)) = True
-matchParseItem (MP_Tup ) (PI_BzSyn (BzS_Poly p x)) = True
-matchParseItem (MP_Typ ) (PI_BzSyn (BzS_Cmpd p x)) = True
-matchParseItem (MP_Typ ) (PI_BzSyn (BzS_Poly p x)) = True
-matchParseItem (MP_Typ ) (PI_BzSyn (BzS_TyId p x)) = True
-matchParseItem (MP_Typ ) (PI_BzSyn (BzS_Expr ps [BzS_Box  p x])) = True
-matchParseItem (MP_Typ ) (PI_BzSyn (BzS_Expr ps [BzS_Cmpd p x])) = True
-matchParseItem (MP_Typ ) (PI_BzSyn (BzS_Expr ps [BzS_Poly p x])) = True
-matchParseItem (MP_Typ ) (PI_BzSyn (BzS_Expr ps [BzS_TyId p x])) = True
-matchParseItem mp (PI_BzSyn sn) = matchSyntax mp sn
 matchParseItem (MP_Tk t) (PI_Token tk) = matchBzoToken t tk
 matchParseItem (MP_Tkn ) (PI_Token tk) = True
-matchParseItem (MP_Box ) (PI_BzSyn (BzS_Box p x)) = True
 matchParseItem (MP_Cpx ) (PI_CMPD  xs) = True
 matchParseItem (MP_Plx ) (PI_POLY  xs) = True
 matchParseItem (MP_Tpx ) (PI_POLY  xs) = True
 matchParseItem (MP_Tpx ) (PI_CMPD  xs) = True
+matchParseItem (MP_Item) (PI_BzSyn (BzS_Id         p i)) = True
+matchParseItem (MP_Item) (PI_BzSyn (BzS_MId        p i)) = True
+matchParseItem (MP_Item) (PI_BzSyn (BzS_TyId       p i)) = True
+matchParseItem (MP_Item) (PI_BzSyn (BzS_BTId       p i)) = True
+matchParseItem (MP_Item) (PI_BzSyn (BzS_BId        p i)) = True
+matchParseItem (MP_Item) (PI_BzSyn (BzS_Flt        p i)) = True
+matchParseItem (MP_Item) (PI_BzSyn (BzS_Str        p i)) = True
+matchParseItem (MP_Item) (PI_BzSyn (BzS_Int        p i)) = True
+matchParseItem (MP_Item) (PI_BzSyn (BzS_ArrGenMod    p)) = True
+matchParseItem (MP_Item) (PI_BzSyn (BzS_ArrSzMod   p i)) = True
+matchParseItem (MP_Item) (PI_BzSyn (BzS_ArrExprMod p i)) = True
+matchParseItem (MP_Item) (PI_BzSyn (BzS_Wildcard     p)) = True
+matchParseItem (MP_Item) (PI_BzSyn (BzS_Nil          p)) = True
+matchParseItem (MP_Item) (PI_BzSyn (BzS_MapMod       p)) = True
+matchParseItem (MP_Item) (PI_BzSyn (BzS_Namespace  p i)) = True
+matchParseItem (MP_Item) (PI_BzSyn (BzS_Cmpd       p i)) = True
+matchParseItem (MP_Item) (PI_BzSyn (BzS_Poly       p i)) = True
+matchParseItem (MP_Item) (PI_BzSyn (BzS_Box        p i)) = True
+matchParseItem (MP_Item) (PI_BzSyn (BzS_Expr       p i)) = True
+matchParseItem (MP_Item) (PI_BzSyn (BzS_FnTy     p a b)) = True
+matchParseItem (MP_Item) (PI_BzSyn (BzS_Lambda   p a b)) = True
+matchParseItem (MP_Item) (PI_BzSyn (BzS_Filter     p i)) = True
+matchParseItem mp (PI_BzSyn sn) = matchSyntax mp sn
 matchParseItem _ _ = False
 
 
