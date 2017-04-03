@@ -1152,9 +1152,106 @@ parsePrimitives = Parser (\ps ->
 
 
 
+
+
+parseCompound0 :: ParserOp
+parseCompound0 = genericParseOp [MP_Item, mtk_SepExpr] (\psi ->
+  PI_CPX $ BzS_Expr (pos $ piSyn $ head psi) [piSyn $ head psi])
+
+
+
+
+
+
+
+
+
+
+parseCompound1 :: ParserOp
+parseCompound1 = genericParseOp [MP_Item, MP_Cpx] (\psi ->
+  PI_CPX $ BzS_Expr (pos $ piSyn $ head psi) ([piSyn $ head psi] ++ (exprs $ piSyn $ (psi !! 1))) )
+
+
+
+
+
+
+
+
+
+
+parseCompound2 :: ParserOp
+parseCompound2 = genericParseOp [MP_Cpx, MP_Cpx] (\psi ->
+  PI_CPXS $ [piSyn $ head psi] ++ [piSyn $ (psi !! 1)] )
+
+
+
+
+
+
+
+
+
+
+parseCompound3 :: ParserOp
+parseCompound3 = genericParseOp [MP_Cpxs, MP_Cpx] (\psi ->
+  PI_CPXS $ [piSyn $ psi !! 1] ++ (piSyns $ (head psi)) )
+
+
+
+
+
+
+
+
+
+
+parseCompound4 :: ParserOp
+parseCompound4 = genericParseOp [mtk_StartTup, MP_Cpx, mtk_EndTup] (\psi ->
+  PI_BzSyn $ BzS_Cmpd (spos $ piTok $ head psi) [piSyn $ psi !! 1] )
+
+
+
+
+
+
+
+
+
+
+parseCompound5 :: ParserOp
+parseCompound5 = genericParseOp [mtk_StartTup, MP_Cpxs, mtk_EndTup] (\psi ->
+  PI_BzSyn $ BzS_Cmpd (spos $ piTok $ head psi) (piSyns $ psi !! 1) )
+
+
+
+
+
+
+
+
+
+
+parseCompound :: Parser
+parseCompound = Parser (\ps ->
+  let parseFn = [parseCompound0, parseCompound1, parseCompound2,
+                 parseCompound3, parseCompound4, parseCompound5]
+  in case tryParsers ps parseFn of
+    Just ps -> Right ps
+    Nothing -> Left [] )
+
+
+
+
+
+
+
+
+
+
 parseCalls :: Parser
 parseCalls = Parser (\ps ->
-  case (runParsers ps [parsePrimitives]) of
+  case (runParsers ps [parsePrimitives, parseCompound]) of
     Left []   -> Left []
     Left err  -> Left err
     Right ps' -> Right ps' )

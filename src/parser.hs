@@ -15,8 +15,10 @@ import BzoTokens
 data ParseItem
   = PI_Token{ piTok :: BzoToken  }
   | PI_BzSyn{ piSyn :: BzoSyntax }
-  | PI_CMPD { piSyns:: [BzoSyntax] }
-  | PI_POLY { piSyns:: [BzoSyntax] }
+  | PI_CPXS { piSyns:: [BzoSyntax] }
+  | PI_CPX  { piSyn :: BzoSyntax }
+  | PI_PLXS { piSyns:: [BzoSyntax] }
+  | PI_PLX  { piSyn :: BzoSyntax }
   | PI_Err  { piErr :: String }
   deriving Show
 
@@ -54,9 +56,12 @@ data MockParseItem
   | MP_Tk BzoToken
   | MP_Tkn
   | MP_Box
+  | MP_Cpxs
+  | MP_Plxs
   | MP_Cpx
   | MP_Plx
   | MP_Tpx
+  | MP_Tpxs
   | MP_Filt
   | MP_AGMod
   | MP_ASMod
@@ -119,10 +124,14 @@ matchParseItem (MP_Parse) _            = True
 matchParseItem (MP_Any ) _                         = True
 matchParseItem (MP_Tk t) (PI_Token tk) = matchBzoToken t tk
 matchParseItem (MP_Tkn ) (PI_Token tk) = True
-matchParseItem (MP_Cpx ) (PI_CMPD  xs) = True
-matchParseItem (MP_Plx ) (PI_POLY  xs) = True
-matchParseItem (MP_Tpx ) (PI_POLY  xs) = True
-matchParseItem (MP_Tpx ) (PI_CMPD  xs) = True
+matchParseItem (MP_Cpx ) (PI_CPX   x ) = True
+matchParseItem (MP_Cpxs) (PI_CPXS  xs) = True
+matchParseItem (MP_Plx ) (PI_PLX   x ) = True
+matchParseItem (MP_Plxs) (PI_PLXS  xs) = True
+matchParseItem (MP_Tpx ) (PI_PLX   x ) = True
+matchParseItem (MP_Tpx ) (PI_CPX   x ) = True
+matchParseItem (MP_Tpxs) (PI_PLXS  xs) = True
+matchParseItem (MP_Tpxs) (PI_CPXS  xs) = True
 matchParseItem (MP_Item) (PI_BzSyn (BzS_Id         p i)) = True
 matchParseItem (MP_Item) (PI_BzSyn (BzS_MId        p i)) = True
 matchParseItem (MP_Item) (PI_BzSyn (BzS_TyId       p i)) = True
