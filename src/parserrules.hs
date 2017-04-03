@@ -1232,10 +1232,37 @@ parseCompound5 = genericParseOp [mtk_StartTup, MP_Cpxs, mtk_EndTup] (\psi ->
 
 
 
+parseCompound6 :: ParserOp
+parseCompound6 = genericParseOp [mtk_StartTup, MP_Cpxs, MP_Tx] (\psi ->
+  PI_BzSyn $ BzS_Cmpd (spos $ piTok $ head psi) ((piSyns $ psi !! 1) ++ [piSyn $ psi !! 2]) )
+
+
+
+
+
+
+
+
+
+
+parseCompound7 :: ParserOp
+parseCompound7 = genericParseOp [mtk_StartTup, MP_Cpx, MP_Tx] (\psi ->
+  PI_BzSyn $ BzS_Cmpd (spos $ piTok $ head psi) ([piSyn $ psi !! 1] ++ [piSyn $ psi !! 2]) )
+
+
+
+
+
+
+
+
+
+
 parseCompound :: Parser
 parseCompound = Parser (\ps ->
   let parseFn = [parseCompound0, parseCompound1, parseCompound2,
-                 parseCompound3, parseCompound4, parseCompound5]
+                 parseCompound3, parseCompound4, parseCompound5,
+                 parseCompound6, parseCompound7]
   in case tryParsers ps parseFn of
     Just ps -> Right ps
     Nothing -> Left [] )
@@ -1327,10 +1354,37 @@ parsePolymorph5 = genericParseOp [mtk_StartTup, MP_Plxs, mtk_EndTup] (\psi ->
 
 
 
+parsePolymorph6 :: ParserOp
+parsePolymorph6 = genericParseOp [mtk_StartTup, MP_Plxs, MP_Tx] (\psi ->
+  PI_BzSyn $ BzS_Poly (spos $ piTok $ head psi) ((piSyns $ psi !! 1) ++ [piSyn $ psi !! 2]) )
+
+
+
+
+
+
+
+
+
+
+parsePolymorph7 :: ParserOp
+parsePolymorph7 = genericParseOp [mtk_StartTup, MP_Plx, MP_Tx] (\psi ->
+  PI_BzSyn $ BzS_Poly (spos $ piTok $ head psi) ([piSyn $ psi !! 1] ++ [piSyn $ psi !! 2]) )
+
+
+
+
+
+
+
+
+
+
 parsePolymorph :: Parser
 parsePolymorph = Parser (\ps ->
   let parseFn = [parsePolymorph0, parsePolymorph1, parsePolymorph2,
-                 parsePolymorph3, parsePolymorph4, parsePolymorph5]
+                 parsePolymorph3, parsePolymorph4, parsePolymorph5,
+                 parsePolymorph6, parsePolymorph7]
   in case tryParsers ps parseFn of
     Just ps -> Right ps
     Nothing -> Left [] )
@@ -1344,9 +1398,63 @@ parsePolymorph = Parser (\ps ->
 
 
 
+parseTupleEtc0 :: ParserOp
+parseTupleEtc0 = genericParseOp [MP_Item, mtk_EndTup] (\psi ->
+  PI_TX $ BzS_Expr (pos $ piSyn $ head psi) [piSyn $ head psi] )
+
+
+
+
+
+
+
+
+
+
+parseTupleEtc1 :: ParserOp
+parseTupleEtc1 = genericParseOp [MP_Item, MP_Tx] (\psi ->
+  PI_TX $ BzS_Expr (pos $ piSyn $ head psi) ([piSyn $ head psi] ++ (exprs $ piSyn $ psi !! 1)) )
+
+
+
+
+
+
+
+
+
+
+parseTupleEtc2 :: ParserOp
+parseTupleEtc2 = genericParseOp [mtk_StartTup, MP_Tx] (\psi ->
+  PI_BzSyn $ BzS_Box (spos $ piTok $ head psi) (piSyn $ psi !! 1) )
+
+
+
+
+
+
+
+
+
+
+parseTupleEtc :: Parser
+parseTupleEtc = Parser (\ps ->
+  let parseFn = [parseTupleEtc0, parseTupleEtc1, parseTupleEtc2]
+  in case tryParsers ps parseFn of
+    Just ps -> Right ps
+    Nothing -> Left  [] )
+
+
+
+
+
+
+
+
+
 parseCalls :: Parser
 parseCalls = Parser (\ps ->
-  case (runParsers ps [parsePrimitives, parseCompound, parsePolymorph]) of
+  case (runParsers ps [parsePrimitives, parseCompound, parsePolymorph, parseTupleEtc]) of
     Left []   -> Left []
     Left err  -> Left err
     Right ps' -> Right ps' )
