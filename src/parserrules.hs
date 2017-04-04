@@ -1035,9 +1035,156 @@ parseTupleEtc = Parser (\ps ->
 
 
 
+
+parseSimplify0 :: ParserOp
+parseSimplify0 = genericParseOp [mtk_Newline, mtk_EndTup] (\psi ->
+  PI_Token $ TkEndTup (spos $ piTok $ psi !! 1) )
+
+
+
+
+
+
+
+
+
+
+parseSimplify1 :: ParserOp
+parseSimplify1 = genericParseOp [mtk_StartTup, mtk_Newline] (\psi ->
+  PI_Token $ TkStartTup (spos $ piTok $ psi !! 0) )
+
+
+
+
+
+
+
+
+
+
+parseSimplify2 :: ParserOp
+parseSimplify2 = genericParseOp [mtk_StartTup, mtk_EndTup] (\psi ->
+  PI_Token $ TkTupEmpt (spos $ piTok $ psi !! 1) )
+
+
+
+
+
+
+
+
+
+
+parseSimplify3 :: ParserOp
+parseSimplify3 = genericParseOp [mtk_StartTup, mtk_Newline, mtk_EndTup] (\psi ->
+  PI_Token $ TkTupEmpt (spos $ piTok $ psi !! 0) )
+
+
+
+
+
+
+
+
+
+
+parseSimplify4 :: ParserOp
+parseSimplify4 = genericParseOp [mtk_StartDat, mtk_EndDat] (\psi ->
+  PI_Token $ TkArrGnrl (spos $ piTok $ psi !! 0) )
+
+
+
+
+
+
+
+
+
+
+parseSimplify5 :: ParserOp
+parseSimplify5 = genericParseOp [mtk_StartDat, mtk_Newline, mtk_EndDat] (\psi ->
+  PI_Token $ TkArrGnrl (spos $ piTok $ psi !! 0) )
+
+
+
+
+
+
+
+
+
+
+parseSimplify6 :: ParserOp
+parseSimplify6 = genericParseOp [mtk_StartDat, mtk_Newline] (\psi ->
+  PI_Token $ TkStartDat (spos $ piTok $ psi !! 0) )
+
+
+
+
+
+
+
+
+
+
+parseSimplify7 :: ParserOp
+parseSimplify7 = genericParseOp [mtk_Newline, mtk_EndDat] (\psi ->
+  PI_Token $ TkEndDat (spos $ piTok $ psi !! 1) )
+
+
+
+
+
+
+
+
+
+
+parseSimplify8 :: ParserOp
+parseSimplify8 = genericParseOp [mtk_StartDo, mtk_Newline] (\psi ->
+  PI_Token $ TkStartDo (spos $ piTok $ psi !! 0) )
+
+
+
+
+
+
+
+
+
+
+parseSimplify9 :: ParserOp
+parseSimplify9 = genericParseOp [mtk_Newline, mtk_EndDo] (\psi ->
+  PI_Token $ TkEndDo (spos $ piTok $ psi !! 1) )
+
+
+
+
+
+
+
+
+
+
+parseSimplify :: Parser
+parseSimplify = Parser (\ps ->
+  let parseFn = [parseSimplify0, parseSimplify1, parseSimplify2, parseSimplify3,
+                 parseSimplify4, parseSimplify5, parseSimplify6, parseSimplify7,
+                 parseSimplify8, parseSimplify9 ]
+  in case tryParsers ps parseFn of
+    Just pst -> Right pst
+    Nothing  -> Left [] )
+
+
+
+
+
+
+
+
 parseCalls :: Parser
 parseCalls = Parser (\ps ->
-  case (runParsers ps [parsePrimitives, parseCompound, parsePolymorph, parseTupleEtc]) of
+  case (runParsers ps [parsePrimitives, parseSimplify, parseCompound, parsePolymorph, parseTupleEtc]) of
     Left []   -> Left []
     Left err  -> Left err
     Right ps' -> Right ps' )
