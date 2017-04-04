@@ -841,13 +841,62 @@ parseCompoundErr3 = genericParseOp [MP_Cpxs, MP_Plxs] (\psi -> PI_Err "Invalid c
 
 
 
+parseCompoundErr4 :: ParserOp
+parseCompoundErr4 = genericParseOp [MP_Cpx, mtk_Newline, MP_Plx] (\psi -> PI_Err "Invalid combination of polymorphic and compound expressions.")
+
+
+
+
+
+
+
+
+
+
+parseCompoundErr5 :: ParserOp
+parseCompoundErr5 = genericParseOp [MP_Cpxs, mtk_Newline, MP_Plx] (\psi -> PI_Err "Invalid combination of polymorphic and compound expressions.")
+
+
+
+
+
+
+
+
+
+
+parseCompoundErr6 :: ParserOp
+parseCompoundErr6 = genericParseOp [MP_Cpx, mtk_Newline, MP_Plxs] (\psi -> PI_Err "Invalid combination of polymorphic and compound expressions.")
+
+
+
+
+
+
+
+
+
+
+parseCompoundErr7 :: ParserOp
+parseCompoundErr7 = genericParseOp [MP_Cpxs, mtk_Newline, MP_Plxs] (\psi -> PI_Err "Invalid combination of polymorphic and compound expressions.")
+
+
+
+
+
+
+
+
+
+
 parseCompound :: Parser
 parseCompound = Parser (\ps ->
   let parseFn = [parseCompound0,  parseCompound1,  parseCompound2,
                  parseCompound3,  parseCompound4,  parseCompound5,
                  parseCompound6,  parseCompound7,  parseCompound8,
                  parseCompound9,  parseCompound10, parseCompound11]
-      errFn = [parseCompoundErr0, parseCompoundErr1, parseCompoundErr2, parseCompoundErr3]
+      errFn = [parseCompoundErr0, parseCompoundErr1, parseCompoundErr2, parseCompoundErr3,
+               parseCompoundErr4, parseCompoundErr5, parseCompoundErr6, parseCompoundErr7]
   in case (tryParsers ps parseFn, tryParsers ps errFn) of
     (Just ps,      _ ) -> Right ps
     (Nothing, Nothing) -> Left []
@@ -1066,13 +1115,62 @@ parsePolymorphErr3 = genericParseOp [MP_Plxs, MP_Cpxs] (\psi -> PI_Err "Invalid 
 
 
 
+parsePolymorphErr4 :: ParserOp
+parsePolymorphErr4 = genericParseOp [MP_Plx, mtk_Newline, MP_Cpx] (\psi -> PI_Err "Invalid combination of polymorphic and compound expressions.")
+
+
+
+
+
+
+
+
+
+
+parsePolymorphErr5 :: ParserOp
+parsePolymorphErr5 = genericParseOp [MP_Plxs, mtk_Newline, MP_Cpx] (\psi -> PI_Err "Invalid combination of polymorphic and compound expressions.")
+
+
+
+
+
+
+
+
+
+
+parsePolymorphErr6 :: ParserOp
+parsePolymorphErr6 = genericParseOp [MP_Plx, mtk_Newline, MP_Cpxs] (\psi -> PI_Err "Invalid combination of polymorphic and compound expressions.")
+
+
+
+
+
+
+
+
+
+
+parsePolymorphErr7 :: ParserOp
+parsePolymorphErr7 = genericParseOp [MP_Plxs, mtk_Newline, MP_Cpxs] (\psi -> PI_Err "Invalid combination of polymorphic and compound expressions.")
+
+
+
+
+
+
+
+
+
+
 parsePolymorph :: Parser
 parsePolymorph = Parser (\ps ->
   let parseFn = [parsePolymorph0,  parsePolymorph1,  parsePolymorph2,
                  parsePolymorph3,  parsePolymorph4,  parsePolymorph5,
                  parsePolymorph6,  parsePolymorph7,  parsePolymorph8,
                  parsePolymorph9,  parsePolymorph10, parsePolymorph11]
-      errFn   = [parsePolymorphErr0, parsePolymorphErr1, parsePolymorphErr2, parsePolymorphErr3]
+      errFn   = [parsePolymorphErr0, parsePolymorphErr1, parsePolymorphErr2, parsePolymorphErr3,
+                 parsePolymorphErr4, parsePolymorphErr5, parsePolymorphErr6, parsePolymorphErr7]
   in case (tryParsers ps parseFn, tryParsers ps errFn) of
     (Just ps,      _ ) -> Right ps
     (Nothing, Nothing) -> Left []
