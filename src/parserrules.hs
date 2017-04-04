@@ -741,6 +741,58 @@ parseCompound7 = genericParseOp [mtk_StartTup, MP_Cpx, MP_Tx] (\psi ->
 
 
 
+parseCompound8 :: ParserOp
+parseCompound8 = genericParseOp [MP_Cpxs, mtk_Newline, MP_Cpx] (\psi ->
+  PI_CPXS $ [piSyn $ psi !! 2] ++ (piSyns $ (head psi)) )
+
+
+
+
+
+
+
+
+
+
+parseCompound9 :: ParserOp
+parseCompound9 = genericParseOp [MP_Cpx, mtk_Newline, MP_Cpx] (\psi ->
+  PI_CPXS $ [piSyn $ head psi] ++ [piSyn $ (psi !! 2)] )
+
+
+
+
+
+
+
+
+
+
+parseCompound10 :: ParserOp
+parseCompound10 = genericParseOp [mtk_StartTup, MP_Cpx, mtk_Newline, MP_Tx] (\psi ->
+  PI_BzSyn $ BzS_Cmpd (spos $ piTok $ head psi) ([piSyn $ psi !! 1] ++ [piSyn $ psi !! 3]) )
+
+
+
+
+
+
+
+
+
+
+parseCompound11 :: ParserOp
+parseCompound11 = genericParseOp [mtk_StartTup, MP_Cpxs, mtk_Newline, MP_Tx] (\psi ->
+  PI_BzSyn $ BzS_Cmpd (spos $ piTok $ head psi) ((piSyns $ psi !! 1) ++ [piSyn $ psi !! 3]) )
+
+
+
+
+
+
+
+
+
+
 parseCompoundErr0 :: ParserOp
 parseCompoundErr0 = genericParseOp [MP_Cpx, MP_Plx] (\psi -> PI_Err "Invalid combination of polymorphic and compound expressions.")
 
@@ -791,9 +843,10 @@ parseCompoundErr3 = genericParseOp [MP_Cpxs, MP_Plxs] (\psi -> PI_Err "Invalid c
 
 parseCompound :: Parser
 parseCompound = Parser (\ps ->
-  let parseFn = [parseCompound0, parseCompound1, parseCompound2,
-                 parseCompound3, parseCompound4, parseCompound5,
-                 parseCompound6, parseCompound7]
+  let parseFn = [parseCompound0,  parseCompound1,  parseCompound2,
+                 parseCompound3,  parseCompound4,  parseCompound5,
+                 parseCompound6,  parseCompound7,  parseCompound8,
+                 parseCompound9,  parseCompound10, parseCompound11]
       errFn = [parseCompoundErr0, parseCompoundErr1, parseCompoundErr2, parseCompoundErr3]
   in case (tryParsers ps parseFn, tryParsers ps errFn) of
     (Just ps,      _ ) -> Right ps
@@ -913,6 +966,58 @@ parsePolymorph7 = genericParseOp [mtk_StartTup, MP_Plx, MP_Tx] (\psi ->
 
 
 
+parsePolymorph8 :: ParserOp
+parsePolymorph8 = genericParseOp [MP_Plxs, mtk_Newline, MP_Plx] (\psi ->
+  PI_PLXS $ [piSyn $ psi !! 2] ++ (piSyns $ (head psi)) )
+
+
+
+
+
+
+
+
+
+
+parsePolymorph9 :: ParserOp
+parsePolymorph9 = genericParseOp [MP_Plx, mtk_Newline, MP_Plx] (\psi ->
+  PI_PLXS $ [piSyn $ head psi] ++ [piSyn $ (psi !! 2)] )
+
+
+
+
+
+
+
+
+
+
+parsePolymorph10 :: ParserOp
+parsePolymorph10 = genericParseOp [mtk_StartTup, MP_Plx, mtk_Newline, MP_Tx] (\psi ->
+  PI_BzSyn $ BzS_Poly (spos $ piTok $ head psi) ([piSyn $ psi !! 1] ++ [piSyn $ psi !! 3]) )
+
+
+
+
+
+
+
+
+
+
+parsePolymorph11 :: ParserOp
+parsePolymorph11 = genericParseOp [mtk_StartTup, MP_Plxs, mtk_Newline, MP_Tx] (\psi ->
+  PI_BzSyn $ BzS_Poly (spos $ piTok $ head psi) ((piSyns $ psi !! 1) ++ [piSyn $ psi !! 3]) )
+
+
+
+
+
+
+
+
+
+
 parsePolymorphErr0 :: ParserOp
 parsePolymorphErr0 = genericParseOp [MP_Plx, MP_Cpx] (\psi -> PI_Err "Invalid combination of polymorphic and compound expressions.")
 
@@ -963,9 +1068,10 @@ parsePolymorphErr3 = genericParseOp [MP_Plxs, MP_Cpxs] (\psi -> PI_Err "Invalid 
 
 parsePolymorph :: Parser
 parsePolymorph = Parser (\ps ->
-  let parseFn = [parsePolymorph0, parsePolymorph1, parsePolymorph2,
-                 parsePolymorph3, parsePolymorph4, parsePolymorph5,
-                 parsePolymorph6, parsePolymorph7]
+  let parseFn = [parsePolymorph0,  parsePolymorph1,  parsePolymorph2,
+                 parsePolymorph3,  parsePolymorph4,  parsePolymorph5,
+                 parsePolymorph6,  parsePolymorph7,  parsePolymorph8,
+                 parsePolymorph9,  parsePolymorph10, parsePolymorph11]
       errFn   = [parsePolymorphErr0, parsePolymorphErr1, parsePolymorphErr2, parsePolymorphErr3]
   in case (tryParsers ps parseFn, tryParsers ps errFn) of
     (Just ps,      _ ) -> Right ps
@@ -1182,9 +1288,53 @@ parseSimplify = Parser (\ps ->
 
 
 
+
+
+parseExpr0 :: ParserOp
+parseExpr0 = genericParseOp [MP_Item, mtk_Newline] (\psi ->
+  PI_BzSyn $ BzS_Expr (pos $ piSyn $ head psi) [piSyn $ head psi] )
+
+
+
+
+
+
+
+
+
+
+parseExpr1 :: ParserOp
+parseExpr1 = genericParseOp [MP_Item, MP_Expr] (\psi ->
+  PI_BzSyn $ BzS_Expr (pos $ piSyn $ head psi) ([piSyn $ head psi] ++ (exprs $ piSyn $ head psi)) )
+
+
+
+
+
+
+
+
+
+
+parseExpr :: Parser
+parseExpr = Parser (\ps ->
+  let parseFn = [parseExpr0, parseExpr1]
+  in case tryParsers ps parseFn of
+    Just pst -> Right pst
+    Nothing  -> Left [] )
+
+
+
+
+
+
+
+
+
 parseCalls :: Parser
 parseCalls = Parser (\ps ->
-  case (runParsers ps [parsePrimitives, parseSimplify, parseCompound, parsePolymorph, parseTupleEtc]) of
+  case (runParsers ps [parsePrimitives, parseSimplify, parseCompound,
+                       parsePolymorph,  parseTupleEtc, parseExpr     ]) of
     Left []   -> Left []
     Left err  -> Left err
     Right ps' -> Right ps' )
