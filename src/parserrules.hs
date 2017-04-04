@@ -137,45 +137,6 @@ parseModifiers = Parser (\ps ->
 
 
 
-simplify3 :: ParserOp
-simplify3 = genericParseOp [MP_Cpx, mtk_Newline] (\psi -> (head psi))
-
-
-
-
-
-
-
-
-
-
-simplify4 :: ParserOp
-simplify4 = genericParseOp [MP_Plx, mtk_Newline] (\psi -> (head psi))
-
-
-
-
-
-
-
-
-
-
-simplify :: Parser
-simplify = Parser (\ps ->
-  let parseFn = [simplify0, simplify1, simplify2, simplify3, simplify4]
-  in case (tryParsers ps parseFn) of
-    Just pst -> Right pst
-    Nothing  -> Left []   )
-
-
-
-
-
-
-
-
-
 
 -- parse lambdas and function-related syntax
 parseFnType :: ParserOp
@@ -322,37 +283,6 @@ parseLambda = Parser (\ps ->
 
 
 
-
--- parse filters
-parseFilter0 :: ParserOp
-parseFilter0 = genericParseOp [mtk_FilterSym, MP_TId] (\psi ->
-  PI_Fltr $ piSyn (psi !! 1) )
-
-
-
-
-
-
-
-
-
-
-parseFilter1 :: ParserOp
-parseFilter1 = genericParseOp [mtk_FilterSym, MP_Typ] (\psi ->
-  PI_Fltr $ case (psi !! 1) of
-    (PI_BzSyn (BzS_Box  ps  x)) -> x
-    (PI_BzSyn (BzS_Cmpd ps xs)) -> (BzS_Cmpd ps xs)
-    (PI_BzSyn (BzS_Poly ps xs)) -> (BzS_Poly ps xs)
-    (PI_BzSyn (BzS_TyId ps  i)) -> (BzS_TyId ps  i) )
-
-
-
-
-
-
-
-
-
 -- parse do-blocks
 
 
@@ -367,104 +297,6 @@ parseFilter1 = genericParseOp [mtk_FilterSym, MP_Typ] (\psi ->
 -- parse records
 
 
-
-
-
-
-
-
-
-
--- parse call/definition types
-parseCall0 :: ParserOp
-parseCall0 = genericParseOp [MP_Id, mtk_Define, MP_FnTy] (\psi ->
-  PI_BzSyn $ BzS_FnTypeDef (pos $ piSyn $ head psi) (sid $ piSyn $ head psi) (tyIn $ piSyn $ psi !! 2) (tyEx $ piSyn $ psi !! 2) )
-
-
-
-
-
-
-
-
-
-
--- parse namespace
-parseName0 :: ParserOp
-parseName0 = genericParseOp [mtk_Reference, mtk_TypeId] (\psi ->
-  PI_BzSyn $ BzS_Namespace (spos $ piTok $ head psi) (valId $ piTok $ (psi !! 1)) )
-
-
-
-
-
-
-
-
-
-
-parseNameErr :: ParserOp
-parseNameErr = genericParseOp [mtk_Reference, MP_Any] (\psi -> PI_Err "Invalid Namespace Identifier")
-
-
-
-
-
-
-
-
-
-
-parseName :: Parser
-parseName = Parser (\ps ->
-  let parseFn = [parseName0]
-      errFn   = [parseNameErr]
-  in case (tryParsers ps parseFn, tryParsers ps errFn) of
-    (Just pst,       _ ) -> Right pst
-    (Nothing , Just pst) -> Left [ParseErr (piErr $ head $ stack pst)]
-    (Nothing , Nothing ) -> Left []   )
-
-
-
-
-
-
-
-
-
-
-parsePrimitives0 :: ParserOp
-parsePrimitives0 = genericParseOp [mtk_StartTup, mtk_EndTup] (\psi ->
-  PI_Token $ TkTupEmpt (spos $ piTok $ head psi) )
-
-
-
-
-
-
-
-
-
-
-parsePrimitives1 :: ParserOp
-parsePrimitives1 = genericParseOp [mtk_StartDat, mtk_EndDat] (\psi ->
-  PI_Token $ TkArrGnrl (spos $ piTok $ head psi) )
-
-
-
-
-
-
-
-
-
-
-parsePrimitives :: Parser
-parsePrimitives = Parser (\ps ->
-  let parseFn = [parsePrimitives0, parsePrimitives1]
-  in case tryParsers ps parseFn of
-    Just pst -> Right pst
-    Nothing  -> Left []   )
 -}
 
 
@@ -1429,10 +1261,67 @@ parseExpr = Parser (\ps ->
 
 
 
+
+parseFilter :: ParserOp
+parseFilter = genericParseOp [mtk_FilterSym, MP_Item] (\psi ->
+  PI_BzSyn $ BzS_Filter (spos $ piTok $ head psi) (piSyn $ psi !! 1) )
+
+
+
+
+
+
+
+
+
+
+parseName :: ParserOp
+parseName = genericParseOp [mtk_Reference, MP_TId] (\psi ->
+  PI_BzSyn $ BzS_Namespace (spos $ piTok $ head psi) (sid $ piSyn $ psi !! 1) )
+
+
+
+
+
+
+
+
+
+
+parseNameErr :: ParserOp
+parseNameErr = genericParseOp [mtk_Reference, MP_Any] (\psi -> PI_Err "Invalid Namespace Identifier" )
+
+
+
+
+
+
+
+
+
+
+parseMisc :: Parser
+parseMisc = Parser (\ps ->
+  let parseFn = [parseFilter, parseName]
+      errFn   = [parseNameErr]
+  in case (tryParsers ps parseFn, tryParsers ps errFn) of
+    (Just pst,      _ ) -> Right pst
+    (Nothing , Nothing) -> Left []
+    (Nothing , Just er) -> Left [ParseErr (piErr $ head $ stack er)] )
+
+
+
+
+
+
+
+
+
+
 parseCalls :: Parser
 parseCalls = Parser (\ps ->
   case (runParsers ps [parsePrimitives, parseSimplify, parseCompound,
-                       parsePolymorph,  parseTupleEtc, parseExpr     ]) of
+                       parsePolymorph,  parseTupleEtc, parseExpr, parseMisc ]) of
     Left []   -> Left []
     Left err  -> Left err
     Right ps' -> Right ps' )

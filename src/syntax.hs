@@ -44,7 +44,7 @@ data BzoSyntax
         pos   :: BzoPos }
     | BzS_Filter {
         pos   :: BzoPos,
-        filt  :: String }
+        filt  :: BzoSyntax }
     | BzS_ArrGenMod{
         pos   :: BzoPos }
     | BzS_ArrSzMod{
