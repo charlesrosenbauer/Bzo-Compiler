@@ -1344,7 +1344,7 @@ parseTypeCall1 = genericParseOp [MP_TId, mtk_Define, MP_Expr] (\psi ->
 
 
 
-parseTypeCallErr :: ParserOp
+parseTypeCallErr :: ParserOp    -- | Not currently working. Not sure why
 parseTypeCallErr = genericParseOp [MP_Any, MP_TId, mtk_Define, MP_Expr] (\psi ->
   PI_Err "Invalid Parameter to Type Definition" )
 
@@ -1375,11 +1375,79 @@ parseTypeCall = Parser (\ps ->
 
 
 
+parseFnCall0 :: ParserOp
+parseFnCall0 = genericParseOp [MP_Tup, MP_Id, MP_Tup, mtk_Define, MP_Expr] (\psi ->
+  PI_BzSyn $ BzS_FunDef (pos $ piSyn $ head psi) (piSyn $ head psi) (sid $ piSyn $ psi !! 1) (piSyn $ psi !! 2) (piSyn $ psi !! 4) )
+
+
+
+
+
+
+
+
+
+
+parseFnCall1 :: ParserOp
+parseFnCall1 = genericParseOp [MP_Tup, MP_Id, mtk_Define, MP_Expr] (\psi ->
+  PI_BzSyn $ BzS_FunDef (pos $ piSyn $ head psi) (piSyn $ head psi) (sid $ piSyn $ psi !! 1) (BzS_Undefined) (piSyn $ psi !! 3) )
+
+
+
+
+
+
+
+
+
+
+parseFnCall2 :: ParserOp
+parseFnCall2 = genericParseOp [MP_Id, MP_Tup, mtk_Define, MP_Expr] (\psi ->
+  PI_BzSyn $ BzS_FunDef (pos $ piSyn $ head psi) (BzS_Undefined) (sid $ piSyn $ head psi) (piSyn $ psi !! 1) (piSyn $ psi !! 3) )
+
+
+
+
+
+
+
+
+
+
+parseFnCall3 :: ParserOp
+parseFnCall3 = genericParseOp [MP_Id, mtk_Define, MP_Expr] (\psi ->
+  PI_BzSyn $ BzS_FunDef (pos $ piSyn $ head psi) (BzS_Undefined) (sid $ piSyn $ head psi) (BzS_Undefined) (piSyn $ psi !! 2) )
+
+
+
+
+
+
+
+
+
+
+parseFnCall :: Parser
+parseFnCall = Parser (\ps ->
+  let parseFn = [parseFnCall0, parseFnCall1, parseFnCall2, parseFnCall3]
+  in case tryParsers ps parseFn of
+    Just pst -> Right pst
+    Nothing  -> Left [] )
+
+
+
+
+
+
+
+
+
+
 parseCalls :: Parser
 parseCalls = Parser (\ps ->
   case (runParsers ps [parsePrimitives, parseSimplify, parseCompound,
                        parsePolymorph,  parseTupleEtc, parseExpr, parseMisc,
-                       parseTypeCall ]) of
+                       parseTypeCall, parseFnCall ]) of
     Left []   -> Left []
     Left err  -> Left err
     Right ps' -> Right ps' )
