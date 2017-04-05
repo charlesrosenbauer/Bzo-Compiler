@@ -22,7 +22,7 @@ main :: IO()
 main = do
     args <- getArgs
     case length args of
-        0 -> mainLoop_ (== "$quit") (readPrompt "Bzo>>> ") (\s -> (putStrLn $ parseInput s))
+        0 -> mainLoop_ (== "$quit") (readPrompt "Bzo>>> ") (\s -> (putStrLn $ parseInput (s ++ "\n")))
         otherwise -> do
             (loadMany args) >>= (printMany . parseMany)
 

@@ -97,8 +97,7 @@ data BzoSyntax
     | BzS_Calls {
         pos   :: BzoPos,
         calls :: [BzoSyntax] }
-    | BzS_Undefined {
-        pos   :: BzoPos }
+    | BzS_Undefined
     deriving Eq
 
 
@@ -138,5 +137,5 @@ showAST (BzS_ArrGenMod _)                  = " [] "
 showAST (BzS_ArrSzMod _ i)                 = " [ " ++ (show  i) ++ " ] "
 showAST (BzS_ArrExprMod _ ex)              = " [ " ++ (show ex) ++ " ] "
 showAST (BzS_Nil _)                        = " () "
-showAST (BzS_Undefined _)                  = " UNDEFINED "
+showAST (BzS_Undefined)                    = " UNDEFINED "
 instance Show BzoSyntax where show = showAST

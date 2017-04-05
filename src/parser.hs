@@ -71,6 +71,7 @@ data MockParseItem
   | MP_Any
   | MP_Parse
   | MP_Item
+  | MP_Tup
 
 
 
@@ -157,6 +158,9 @@ matchParseItem (MP_Item) (PI_BzSyn (BzS_Expr       p i)) = True
 matchParseItem (MP_Item) (PI_BzSyn (BzS_FnTy     p a b)) = True
 matchParseItem (MP_Item) (PI_BzSyn (BzS_Lambda   p a b)) = True
 matchParseItem (MP_Item) (PI_BzSyn (BzS_Filter     p i)) = True
+matchParseItem (MP_Tup ) (PI_BzSyn (BzS_Box        p x)) = True
+matchParseItem (MP_Tup ) (PI_BzSyn (BzS_Cmpd       p x)) = True
+matchParseItem (MP_Tup ) (PI_BzSyn (BzS_Poly       p x)) = True
 matchParseItem mp (PI_BzSyn sn) = matchSyntax mp sn
 matchParseItem _ _ = False
 
@@ -194,7 +198,7 @@ matchSyntax MP_Blck   (BzS_Block           _ _) = True
 matchSyntax MP_Expr   (BzS_Expr            _ _) = True
 matchSyntax MP_Calls  (BzS_Calls           _ _) = True
 matchSyntax MP_Wild   (BzS_Wildcard          _) = True
-matchSyntax MP_Undef  (BzS_Undefined         _) = True
+matchSyntax MP_Undef  (BzS_Undefined          ) = True
 matchSyntax _ _ = False
 
 
