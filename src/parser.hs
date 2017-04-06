@@ -356,24 +356,6 @@ matchLookahead ps psi bzt =
 
 
 
-matchNotLookahead :: ParserState -> [MockParseItem] -> [BzoToken] -> Maybe ([ParseItem], ParserState)
-matchNotLookahead ps psi bzt =
-  let stackOut = match ps psi
-      tokenOut = matchTks ps bzt
-  in case (stackOut, tokenOut) of
-    ((Just (s, (ParserState s0 i0))), Nothing) ->
-        Just (s, (ParserState s0 i0))
-    _                                -> Nothing
-
-
-
-
-
-
-
-
-
-
 runParsers :: ParserState -> [Parser] -> Either [BzoErr] ParserState
 runParsers pst []       = Left []
 runParsers pst (p : ps) = case ((parse p) pst) of

@@ -52,20 +52,6 @@ genericParseOp mpi xform = ParserOp (\ps ->
 
 
 
-genericNotLookaheadParseOp :: [MockParseItem] -> [BzoToken] -> ([ParseItem] -> ParseItem) -> ParserOp
-genericNotLookaheadParseOp mpi bzt xform = ParserOp (\ps ->
-  case (matchNotLookahead ps mpi bzt) of
-    Nothing -> Nothing
-    Just (xs, (ParserState s i)) -> Just (ParserState ([xform $ reverse xs] ++ s) i) )
-
-
-
-
-
-
-
-
-
 {-
 -- parse lambdas and function-related syntax
 parseFnType :: ParserOp
