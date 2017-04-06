@@ -52,117 +52,6 @@ genericParseOp mpi xform = ParserOp (\ps ->
 
 
 
-{-
--- parse lambdas and function-related syntax
-parseLambda0 :: ParserOp
-parseLambda0 = genericParseOp [mtk_LamdaSym, MP_Box, mtk_Define] (\psi ->
-  PI_LHead (spos $ piTok $ head psi) (piSyn $ psi !! 1) )
-
-
-
-
-
-
-
-
-
-
-parseLambda1 :: ParserOp
-parseLambda1 = ParserOp (\ps ->
-  let x = [mtk_LamdaSym, MP_Expr, mtk_Define]
-  in case (match ps x) of
-    Nothing                      -> Nothing
-    Just (xs, (ParserState s i)) ->
-      let t0p = spos  $ piTok (xs !! 0)
-          t1v = exprs $ piSyn (xs !! 1)
-          pm  = PI_LHead t0p (t1v !! 0)
-      in case t1v of
-        [x] -> Just (ParserState ([pm] ++ s) i)
-        xs  -> Nothing )
-
-
-
-
-
-
-
-
-
-
-parseLambda2 :: ParserOp
-parseLambda2 = genericParseOp [MP_LHead, MP_Expr, mtk_Newline] (\psi ->
-  PI_BzSyn $ BzS_Lambda (piPos $ head psi) (piSyn $ head psi) (piSyn $ psi !! 1) )
-
-
-
-
-
-
-
-
-
-
-parseLambdaErr :: ParserOp
-parseLambdaErr = ParserOp (\ps ->
-  let x = [mtk_LamdaSym, MP_Expr, mtk_Define]
-  in case (match ps x) of
-    Nothing                      -> Nothing
-    Just (xs, (ParserState s i)) ->
-      case (exprs $ piSyn (xs !! 1)) of
-        [x] -> Nothing
-        xs  -> Just (ParserState ([PI_Err "Invalid Parameters to Lambda"]) i) )
-
-
-
-
-
-
-
-
-
-
-parseLambda :: Parser
-parseLambda = Parser (\ps ->
-  let parseFn = [parseLambda0, parseLambda1, parseLambda2]
-      errFn   = [parseLambdaErr]
-  in case (tryParsers ps parseFn, tryParsers ps errFn) of
-    (Just pst,        _ ) -> Right pst
-    (Nothing , Just errs) -> Left  [ParseErr (piErr $ head $ stack errs)]
-    (Nothing , Nothing  ) -> Left  [] )
-
-
-
-
-
-
-
-
-
--- parse do-blocks
-
-
-
-
-
-
-
-
-
-
--- parse records
-
-
--}
-
-
-
-
-
-
-
-
-
-
 parsePrimitive0 :: ParserOp
 parsePrimitive0 = genericParseOp [mtk_Id] (\tk ->
   PI_BzSyn $ BzS_Id (spos $ piTok $ head tk) (valId $ piTok $ head tk))
@@ -1517,12 +1406,67 @@ parseFnTyDef = Parser (\ps ->
 
 
 
+parseLambda0 :: ParserOp
+parseLambda0 = genericParseOp [mtk_LamdaSym, MP_Vr, mtk_Define, MP_Def] (\psi ->
+  PI_BzSyn $ BzS_Lambda (spos $ piTok $ head psi) (piSyn $ psi !! 1) (piSyn $ psi !! 3) )
+
+
+
+
+
+
+
+
+
+
+parseLambda1 :: ParserOp
+parseLambda1 = genericParseOp [mtk_LamdaSym, MP_Vr, mtk_Define, MP_Cpx] (\psi ->
+  PI_BzSyn $ BzS_Lambda (spos $ piTok $ head psi) (piSyn $ psi !! 1) (piSyn $ psi !! 3) )
+
+
+
+
+
+
+
+
+
+
+parseLambda2 :: ParserOp
+parseLambda2 = genericParseOp [mtk_StartTup, mtk_LamdaSym, MP_Vr, mtk_Define, MP_Tx] (\psi ->
+  PI_BzSyn $ BzS_Box (spos $ piTok $ head psi) (BzS_Lambda (spos $ piTok $ psi !! 1) (piSyn $ psi !! 2) (piSyn $ psi !! 4)) )
+
+
+
+
+
+
+
+
+
+
+parseLambda :: Parser
+parseLambda = Parser (\ps ->
+  let parseFn = [parseLambda0, parseLambda1, parseLambda2]
+  in case tryParsers ps parseFn of
+    Just pst -> Right pst
+    Nothing  -> Left [] )
+
+
+
+
+
+
+
+
+
+
 parseCalls :: Parser
 parseCalls = Parser (\ps ->
   case (runParsers ps [parseModifiers, parsePrimitives, parseSimplify,
                        parseCompound, parsePolymorph,  parseTupleEtc, parseExpr,
-                       parseMisc, parseTypeCall, parseFnCall, parseFnTy,
-                       parseFnTyDef ]) of
+                       parseMisc, parseTypeCall, parseLambda, parseFnCall,
+                       parseFnTy, parseFnTyDef ]) of
     Left []   -> Left []
     Left err  -> Left err
     Right ps' -> Right ps' )
