@@ -54,66 +54,6 @@ genericParseOp mpi xform = ParserOp (\ps ->
 
 {-
 -- parse lambdas and function-related syntax
-parseFnType :: ParserOp
-parseFnType = genericParseOp [MP_Typ, mtk_FnSym, MP_Typ] (\psi ->
-  let (p, t0) = case head psi of
-        (PI_BzSyn (BzS_Box  ps  x)) -> (pos x, x)
-        (PI_BzSyn (BzS_Cmpd ps xs)) -> (ps, (BzS_Cmpd ps xs))
-        (PI_BzSyn (BzS_Poly ps xs)) -> (ps, (BzS_Poly ps xs))
-        (PI_BzSyn (BzS_TyId ps  i)) -> (ps, (BzS_TyId ps  i))
-        (PI_BzSyn (BzS_Expr p' [BzS_Box  ps  x])) -> (pos x, x)
-        (PI_BzSyn (BzS_Expr p' [BzS_Cmpd ps xs])) -> (ps, (BzS_Cmpd ps xs))
-        (PI_BzSyn (BzS_Expr p' [BzS_Poly ps xs])) -> (ps, (BzS_Poly ps xs))
-        (PI_BzSyn (BzS_Expr p' [BzS_TyId ps  i])) -> (ps, (BzS_TyId ps  i))
-      t1      = case (psi !! 2) of
-        (PI_BzSyn (BzS_Box  ps  x)) -> x
-        (PI_BzSyn (BzS_Cmpd ps xs)) -> (BzS_Cmpd ps xs)
-        (PI_BzSyn (BzS_Poly ps xs)) -> (BzS_Poly ps xs)
-        (PI_BzSyn (BzS_TyId ps  i)) -> (BzS_TyId ps  i)
-        (PI_BzSyn (BzS_Expr p' [BzS_Box  ps  x])) -> x
-        (PI_BzSyn (BzS_Expr p' [BzS_Cmpd ps xs])) -> (BzS_Cmpd ps xs)
-        (PI_BzSyn (BzS_Expr p' [BzS_Poly ps xs])) -> (BzS_Poly ps xs)
-        (PI_BzSyn (BzS_Expr p' [BzS_TyId ps  i])) -> (BzS_TyId ps  i)
-  in PI_BzSyn $ BzS_FnTy p t0 t1 )
-
-
-
-
-
-
-
-
-
-
-parseFnTyErr :: ParserOp
-parseFnTyErr = genericParseOp [MP_Parse, mtk_FnSym, MP_Parse] (\psi ->
-  PI_Err $ "Invalid Parameters to Function Type Expression : " ++ (show $ psi !! 2) )
-
-
-
-
-
-
-
-
-
-
-parseFnTy :: Parser
-parseFnTy = Parser (\ps ->
-  case (tryParsers ps [parseFnType], tryParsers ps [parseFnTyErr]) of
-    (Just pst,        _ ) -> Right pst
-    (Nothing , Just errs) -> Left  [ParseErr (piErr $ head $ stack errs)]
-    (Nothing , Nothing  ) -> Left  [])
-
-
-
-
-
-
-
-
-
-
 parseLambda0 :: ParserOp
 parseLambda0 = genericParseOp [mtk_LamdaSym, MP_Box, mtk_Define] (\psi ->
   PI_LHead (spos $ piTok $ head psi) (piSyn $ psi !! 1) )
@@ -1492,11 +1432,57 @@ parseModifiers = Parser (\ps ->
 
 
 
+parseFnTy0 :: ParserOp
+parseFnTy0 = genericParseOp [MP_Typ, mtk_FnSym, MP_Typ] (\psi ->
+  PI_BzSyn $ BzS_FnTy (pos $ piSyn $ head psi) (piSyn $ head psi) (piSyn $ psi !! 2) )
+
+
+
+
+
+
+
+
+
+
+parseFnTyErr :: ParserOp
+parseFnTyErr = genericParseOp [MP_Any, mtk_FnSym, MP_Any] (\psi ->
+  PI_Err "Invalid parameters to Function Type" )
+
+
+
+
+
+
+
+
+
+
+parseFnTy :: Parser
+parseFnTy = Parser (\ps ->
+  let parseFn = [parseFnTy0]
+      errFn   = [parseFnTyErr]
+  in case (tryParsers ps parseFn, tryParsers ps errFn) of
+    (Just pst,      _ ) -> Right pst
+    (Nothing , Just er) -> Left  [ParseErr (piErr $ head $ stack er)]
+    (Nothing , Nothing) -> Left  [] )
+
+
+
+
+
+
+
+
+
+
+
+
 parseCalls :: Parser
 parseCalls = Parser (\ps ->
   case (runParsers ps [parseModifiers, parsePrimitives, parseSimplify,
                        parseCompound, parsePolymorph,  parseTupleEtc, parseExpr,
-                       parseMisc, parseTypeCall, parseFnCall ]) of
+                       parseMisc, parseTypeCall, parseFnCall, parseFnTy ]) of
     Left []   -> Left []
     Left err  -> Left err
     Right ps' -> Right ps' )

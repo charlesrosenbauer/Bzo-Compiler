@@ -161,6 +161,7 @@ matchParseItem (MP_Typ ) (PI_BzSyn (BzS_Poly       p x)) = True
 matchParseItem (MP_Typ ) (PI_BzSyn (BzS_Box        p x)) = True
 matchParseItem (MP_Typ ) (PI_BzSyn (BzS_TyId       p i)) = True
 matchParseItem (MP_Typ ) (PI_BzSyn (BzS_BTId       p i)) = True
+matchParseItem (MP_Typ ) (PI_MX                      x ) = True
 matchParseItem (MP_Mod ) (PI_BzSyn (BzS_ArrGenMod  p  )) = True
 matchParseItem (MP_Mod ) (PI_BzSyn (BzS_ArrSzMod   p s)) = True
 matchParseItem (MP_Mod ) (PI_BzSyn (BzS_ArrExprMod p x)) = True
