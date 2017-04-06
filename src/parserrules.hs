@@ -1489,13 +1489,40 @@ parseFnTy = Parser (\ps ->
 
 
 
+parseFnTyDef0 :: ParserOp
+parseFnTyDef0 = genericParseOp [MP_Id, mtk_Define, MP_FnTy, mtk_Newline] (\psi ->
+  PI_BzSyn $ BzS_FnTypeDef (pos $ piSyn $ head psi) (sid $ piSyn $ head psi) (piSyn $ psi !! 2))
+
+
+
+
+
+
+
+
+
+
+parseFnTyDef :: Parser
+parseFnTyDef = Parser (\ps ->
+  case tryParsers ps [parseFnTyDef0] of
+    Just pst -> Right pst
+    Nothing  -> Left [] )
+
+
+
+
+
+
+
+
 
 
 parseCalls :: Parser
 parseCalls = Parser (\ps ->
   case (runParsers ps [parseModifiers, parsePrimitives, parseSimplify,
                        parseCompound, parsePolymorph,  parseTupleEtc, parseExpr,
-                       parseMisc, parseTypeCall, parseFnCall, parseFnTy ]) of
+                       parseMisc, parseTypeCall, parseFnCall, parseFnTy,
+                       parseFnTyDef ]) of
     Left []   -> Left []
     Left err  -> Left err
     Right ps' -> Right ps' )

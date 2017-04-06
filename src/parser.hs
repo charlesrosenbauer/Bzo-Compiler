@@ -184,7 +184,6 @@ matchParseItem (MP_Item) (PI_BzSyn (BzS_Cmpd       p i)) = True
 matchParseItem (MP_Item) (PI_BzSyn (BzS_Poly       p i)) = True
 matchParseItem (MP_Item) (PI_BzSyn (BzS_Box        p i)) = True
 matchParseItem (MP_Item) (PI_BzSyn (BzS_Expr       p i)) = True
---matchParseItem (MP_Item) (PI_BzSyn (BzS_FnTy     p a b)) = True
 matchParseItem (MP_Item) (PI_BzSyn (BzS_Lambda   p a b)) = True
 matchParseItem (MP_Item) (PI_BzSyn (BzS_Filter     p i)) = True
 matchParseItem (MP_Tup ) (PI_BzSyn (BzS_Box        p x)) = True
@@ -205,7 +204,7 @@ matchParseItem _ _ = False
 matchSyntax :: MockParseItem -> BzoSyntax -> Bool
 matchSyntax MP_FunDef (BzS_FunDef    _ _ _ _ _) = True
 matchSyntax MP_TypDef (BzS_TypDef      _ _ _ _) = True
-matchSyntax MP_FunDef (BzS_FnTypeDef   _ _ _ _) = True
+matchSyntax MP_FunDef (BzS_FnTypeDef     _ _ _) = True
 matchSyntax MP_Lambda (BzS_Lambda        _ _ _) = True
 matchSyntax MP_Id     (BzS_Id              _ _) = True
 matchSyntax MP_TId    (BzS_TyId            _ _) = True
