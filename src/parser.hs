@@ -20,6 +20,7 @@ data ParseItem
   | PI_PLXS { piSyns:: [BzoSyntax] }
   | PI_PLX  { piSyn :: BzoSyntax }
   | PI_TX   { piSyn :: BzoSyntax }
+  | PI_RX   { piSyn :: BzoSyntax }
   | PI_Err  { piErr :: String }
   deriving Show
 
@@ -63,6 +64,7 @@ data MockParseItem
   | MP_Plx
   | MP_Tpx
   | MP_Tx
+  | MP_Rx
   | MP_Tpxs
   | MP_Filt
   | MP_AGMod
@@ -132,6 +134,7 @@ matchParseItem (MP_Cpxs) (PI_CPXS  xs) = True
 matchParseItem (MP_Plx ) (PI_PLX   x ) = True
 matchParseItem (MP_Plxs) (PI_PLXS  xs) = True
 matchParseItem (MP_Tx  ) (PI_TX    x ) = True
+matchParseItem (MP_Rx  ) (PI_RX    x ) = True
 matchParseItem (MP_Tpx ) (PI_PLX   x ) = True
 matchParseItem (MP_Tpx ) (PI_CPX   x ) = True
 matchParseItem (MP_Tpxs) (PI_PLXS  xs) = True

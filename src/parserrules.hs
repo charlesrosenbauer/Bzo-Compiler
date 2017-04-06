@@ -67,77 +67,6 @@ genericNotLookaheadParseOp mpi bzt xform = ParserOp (\ps ->
 
 
 {-
-parseModifiers0 :: ParserOp
-parseModifiers0 = genericParseOp [mtk_StartDat, mtk_EndDat] (\psi ->
-  PI_BzSyn $ BzS_ArrGenMod (spos $ piTok $ head psi) )
-
-
-
-
-
-
-
-
-
-
-parseModifiers1 :: ParserOp
-parseModifiers1 = genericParseOp [mtk_ArrGnrl] (\psi ->
-  PI_BzSyn $ BzS_ArrGenMod (spos $ piTok $ head psi) )
-
-
-
-
-
-
-
-
-
-
-parseModifiers2 :: ParserOp
-parseModifiers2 = genericParseOp [mtk_StartDat, MP_Int, mtk_EndDat] (\psi ->
-  PI_BzSyn $ BzS_ArrSzMod (spos $ piTok $ head psi) (sint $ piSyn $ psi !! 1) )
-
-
-
-
-
-
-
-
-
-
-parseModifiers3 :: ParserOp
-parseModifiers3 = genericParseOp [mtk_StartDat, MP_Expr, mtk_EndDat] (\psi ->
-  case (psi !! 1) of
-    (PI_BzSyn (BzS_Expr _ [BzS_Int _ i])) -> PI_BzSyn $ BzS_ArrSzMod   (spos $ piTok $ head psi) i
-    (PI_BzSyn (BzS_Expr p            x )) -> PI_BzSyn $ BzS_ArrExprMod (spos $ piTok $ head psi) (BzS_Expr p x) )
-
-
-
-
-
-
-
-
-
-
-parseModifiers :: Parser
-parseModifiers = Parser (\ps ->
-  let parseFn = [parseModifiers0, parseModifiers1, parseModifiers2, parseModifiers3]
-  in case (tryParsers ps parseFn) of
-    Just pst -> Right pst
-    Nothing  -> Left  [] )
-
-
-
-
-
-
-
-
-
-
-
 -- parse lambdas and function-related syntax
 parseFnType :: ParserOp
 parseFnType = genericParseOp [MP_Typ, mtk_FnSym, MP_Typ] (\psi ->
@@ -1443,11 +1372,93 @@ parseFnCall = Parser (\ps ->
 
 
 
+parseModifiers0 :: ParserOp
+parseModifiers0 = genericParseOp [mtk_ArrGnrl] (\psi ->
+  PI_BzSyn $ BzS_ArrGenMod (spos $ piTok $ head psi) )
+
+
+
+
+
+
+
+
+
+
+parseModifiers1 :: ParserOp
+parseModifiers1 = genericParseOp [mtk_StartDat, MP_Int, mtk_EndDat] (\psi ->
+  PI_BzSyn $ BzS_ArrSzMod (spos $ piTok $ head psi) (sint $ piSyn $ psi !! 1) )
+
+
+
+
+
+
+
+
+
+
+parseModifiers2 :: ParserOp
+parseModifiers2 = genericParseOp [MP_Item, mtk_EndDat] (\psi ->
+  PI_RX $ BzS_Expr (pos $ piSyn $ head psi) [piSyn $ head psi] )
+
+
+
+
+
+
+
+
+
+
+parseModifiers3 :: ParserOp
+parseModifiers3 = genericParseOp [MP_Item, MP_Rx] (\psi ->
+  PI_RX $ BzS_Expr (pos $ piSyn $ head psi) ([piSyn $ head psi] ++ (exprs $ piSyn $ psi !! 1)) )
+
+
+
+
+
+
+
+
+
+
+parseModifiers4 :: ParserOp
+parseModifiers4 = genericParseOp [mtk_StartDat, MP_Rx] (\psi ->
+  PI_BzSyn $ BzS_ArrExprMod (spos $ piTok $ head psi) (piSyn $ psi !! 1) )
+
+
+
+
+
+
+
+
+
+
+parseModifiers :: Parser
+parseModifiers = Parser (\ps ->
+  let parseFn = [parseModifiers0, parseModifiers1, parseModifiers2, parseModifiers3,
+                 parseModifiers4 ]
+  in case tryParsers ps parseFn of
+    Just pst -> Right pst
+    Nothing  -> Left [] )
+
+
+
+
+
+
+
+
+
+
 parseCalls :: Parser
 parseCalls = Parser (\ps ->
-  case (runParsers ps [parsePrimitives, parseSimplify, parseCompound,
-                       parsePolymorph,  parseTupleEtc, parseExpr, parseMisc,
-                       parseTypeCall, parseFnCall ]) of
+  case (runParsers ps [parseModifiers, parsePrimitives, parseSimplify,
+                       parseCompound, parsePolymorph,  parseTupleEtc, parseExpr,
+                       parseMisc, parseTypeCall, parseFnCall ]) of
     Left []   -> Left []
     Left err  -> Left err
     Right ps' -> Right ps' )
