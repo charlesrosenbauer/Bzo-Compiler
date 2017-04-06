@@ -136,7 +136,7 @@ mtk_Nil       = MP_Tk $ TkNil
 matchParseItem :: MockParseItem -> ParseItem -> Bool
 matchParseItem (MP_Parse)(PI_Token tk) = False
 matchParseItem (MP_Parse) _            = True
-matchParseItem (MP_Any ) _                         = True
+matchParseItem (MP_Any  ) _            = True
 matchParseItem (MP_Tk t) (PI_Token tk) = matchBzoToken t tk
 matchParseItem (MP_Tkn ) (PI_Token tk) = True
 matchParseItem (MP_Cpx ) (PI_CPX   x ) = True
@@ -184,7 +184,7 @@ matchParseItem (MP_Item) (PI_BzSyn (BzS_Cmpd       p i)) = True
 matchParseItem (MP_Item) (PI_BzSyn (BzS_Poly       p i)) = True
 matchParseItem (MP_Item) (PI_BzSyn (BzS_Box        p i)) = True
 matchParseItem (MP_Item) (PI_BzSyn (BzS_Expr       p i)) = True
-matchParseItem (MP_Item) (PI_BzSyn (BzS_FnTy     p a b)) = True
+--matchParseItem (MP_Item) (PI_BzSyn (BzS_FnTy     p a b)) = True
 matchParseItem (MP_Item) (PI_BzSyn (BzS_Lambda   p a b)) = True
 matchParseItem (MP_Item) (PI_BzSyn (BzS_Filter     p i)) = True
 matchParseItem (MP_Tup ) (PI_BzSyn (BzS_Box        p x)) = True

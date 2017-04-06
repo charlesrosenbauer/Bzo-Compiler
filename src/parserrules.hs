@@ -911,9 +911,22 @@ parseTupleEtc2 = genericParseOp [mtk_StartTup, MP_Tx] (\psi ->
 
 
 
+parseTupleEtc3 :: ParserOp
+parseTupleEtc3 = genericParseOp [mtk_StartTup, MP_FnTy, mtk_EndTup] (\psi ->
+  PI_BzSyn $ BzS_Box (spos $ piTok $ head psi) (piSyn $ psi !! 1) )
+
+
+
+
+
+
+
+
+
+
 parseTupleEtc :: Parser
 parseTupleEtc = Parser (\ps ->
-  let parseFn = [parseTupleEtc0, parseTupleEtc1, parseTupleEtc2]
+  let parseFn = [parseTupleEtc0, parseTupleEtc1, parseTupleEtc2, parseTupleEtc3]
   in case tryParsers ps parseFn of
     Just ps -> Right ps
     Nothing -> Left  [] )
@@ -1445,8 +1458,8 @@ parseFnTy0 = genericParseOp [MP_Typ, mtk_FnSym, MP_Typ] (\psi ->
 
 
 
-parseFnTyErr :: ParserOp
-parseFnTyErr = genericParseOp [MP_Any, mtk_FnSym, MP_Any] (\psi ->
+parseFnTyErr :: ParserOp -- Not currently working. MP_Parse appears to trigger from Modifiers
+parseFnTyErr = genericParseOp [MP_Any, mtk_FnSym, MP_Parse] (\psi ->
   PI_Err "Invalid parameters to Function Type" )
 
 
@@ -1462,7 +1475,7 @@ parseFnTy :: Parser
 parseFnTy = Parser (\ps ->
   let parseFn = [parseFnTy0]
       errFn   = [parseFnTyErr]
-  in case (tryParsers ps parseFn, tryParsers ps errFn) of
+  in case (tryParsers ps parseFn, {-tryParsers ps errFn-}Nothing) of
     (Just pst,      _ ) -> Right pst
     (Nothing , Just er) -> Left  [ParseErr (piErr $ head $ stack er)]
     (Nothing , Nothing) -> Left  [] )
