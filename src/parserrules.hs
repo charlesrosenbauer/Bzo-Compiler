@@ -1423,10 +1423,62 @@ parseModifiers4 = genericParseOp [mtk_StartDat, MP_Rx] (\psi ->
 
 
 
+parseModifiers5 :: ParserOp
+parseModifiers5 = genericParseOp [MP_Mod, MP_Mod] (\psi ->
+  PI_MS $ BzS_Expr (pos $ piSyn $ head psi) ([piSyn $ head psi]++[piSyn $ psi !! 1]) )
+
+
+
+
+
+
+
+
+
+
+parseModifiers6 :: ParserOp
+parseModifiers6 = genericParseOp [MP_Ms, MP_Mod] (\psi ->
+  PI_MS $ BzS_Expr (pos $ piSyn $ head psi) ((exprs $ piSyn $ head psi) ++ [piSyn $ psi !! 1]) )
+
+
+
+
+
+
+
+
+
+
+parseModifiers7 :: ParserOp
+parseModifiers7 = genericParseOp [MP_Ms, MP_Item] (\psi ->
+  PI_MX $ BzS_Expr (pos $ piSyn $ head psi) ((exprs $ piSyn $ head psi) ++ [piSyn $ psi !! 1]) )
+
+
+
+
+
+
+
+
+
+
+parseModifiers8 :: ParserOp
+parseModifiers8 = genericParseOp [MP_Mod, MP_Item] (\psi ->
+  PI_MX $ BzS_Expr (pos $ piSyn $ head psi) ([piSyn $ head psi] ++ [piSyn $ psi !! 1]) )
+
+
+
+
+
+
+
+
+
 parseModifiers :: Parser
 parseModifiers = Parser (\ps ->
   let parseFn = [parseModifiers0, parseModifiers1, parseModifiers2, parseModifiers3,
-                 parseModifiers4 ]
+                 parseModifiers4, parseModifiers5, parseModifiers6, parseModifiers7,
+                 parseModifiers8 ]
   in case tryParsers ps parseFn of
     Just pst -> Right pst
     Nothing  -> Left [] )

@@ -21,6 +21,7 @@ data ParseItem
   | PI_PLX  { piSyn :: BzoSyntax }
   | PI_TX   { piSyn :: BzoSyntax }
   | PI_RX   { piSyn :: BzoSyntax }
+  | PI_MS   { piSyn :: BzoSyntax }
   | PI_MX   { piSyn :: BzoSyntax }
   | PI_BKX  { piSyns:: [BzoSyntax] }
   | PI_Err  { piErr :: String }
@@ -81,6 +82,7 @@ data MockParseItem
   | MP_Vr
   | MP_Def
   | MP_Mx
+  | MP_Ms
   | MP_Bkx
 
 
@@ -147,7 +149,7 @@ matchParseItem (MP_Tpx ) (PI_PLX   x ) = True
 matchParseItem (MP_Tpx ) (PI_CPX   x ) = True
 matchParseItem (MP_Tpxs) (PI_PLXS  xs) = True
 matchParseItem (MP_Tpxs) (PI_CPXS  xs) = True
-matchParseItem (MP_Mx  ) (PI_MX    xs) = True
+matchParseItem (MP_Ms  ) (PI_MS    xs) = True
 matchParseItem (MP_Bkx ) (PI_BKX   xs) = True
 matchParseItem (MP_Vr  ) (PI_BzSyn (BzS_Cmpd       p x)) = True
 matchParseItem (MP_Vr  ) (PI_BzSyn (BzS_Poly       p x)) = True
@@ -172,6 +174,7 @@ matchParseItem (MP_Item) (PI_BzSyn (BzS_BId        p i)) = True
 matchParseItem (MP_Item) (PI_BzSyn (BzS_Flt        p i)) = True
 matchParseItem (MP_Item) (PI_BzSyn (BzS_Str        p i)) = True
 matchParseItem (MP_Item) (PI_BzSyn (BzS_Int        p i)) = True
+matchParseItem (MP_Item) (PI_MX                      x ) = True
 matchParseItem (MP_Item) (PI_BzSyn (BzS_ArrGenMod    p)) = True
 matchParseItem (MP_Item) (PI_BzSyn (BzS_ArrSzMod   p i)) = True
 matchParseItem (MP_Item) (PI_BzSyn (BzS_ArrExprMod p i)) = True
