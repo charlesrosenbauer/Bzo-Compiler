@@ -813,9 +813,23 @@ parseTupleEtc3 = genericParseOp [mtk_StartTup, MP_FnTy, mtk_EndTup] (\psi ->
 
 
 
+parseTupleEtc4 :: ParserOp
+parseTupleEtc4 = genericParseOp [MP_Item, mtk_Newline, mtk_EndTup] (\psi ->
+  PI_TX $ BzS_Expr (pos $ piSyn $ head psi) [piSyn $ head psi] )
+
+
+
+
+
+
+
+
+
+
 parseTupleEtc :: Parser
 parseTupleEtc = Parser (\ps ->
-  let parseFn = [parseTupleEtc0, parseTupleEtc1, parseTupleEtc2, parseTupleEtc3]
+  let parseFn = [parseTupleEtc0, parseTupleEtc1, parseTupleEtc2, parseTupleEtc3,
+                 parseTupleEtc4]
   in case tryParsers ps parseFn of
     Just ps -> Right ps
     Nothing -> Left  [] )
@@ -1133,7 +1147,7 @@ parseTypeCall = Parser (\ps ->
 
 
 parseFnCall0 :: ParserOp
-parseFnCall0 = genericParseOp [MP_Tup, MP_Id, MP_Tup, mtk_Define, MP_Def] (\psi ->
+parseFnCall0 = genericParseOp [MP_Tup, MP_Id, MP_Tup, mtk_Define, MP_Expr] (\psi ->
   PI_BzSyn $ BzS_FunDef (pos $ piSyn $ head psi) (piSyn $ head psi) (sid $ piSyn $ psi !! 1) (piSyn $ psi !! 2) (piSyn $ psi !! 4) )
 
 
@@ -1146,7 +1160,7 @@ parseFnCall0 = genericParseOp [MP_Tup, MP_Id, MP_Tup, mtk_Define, MP_Def] (\psi 
 
 
 parseFnCall1 :: ParserOp
-parseFnCall1 = genericParseOp [MP_Tup, MP_Id, mtk_Define, MP_Def] (\psi ->
+parseFnCall1 = genericParseOp [MP_Tup, MP_Id, mtk_Define, MP_Expr] (\psi ->
   PI_BzSyn $ BzS_FunDef (pos $ piSyn $ head psi) (piSyn $ head psi) (sid $ piSyn $ psi !! 1) (BzS_Undefined) (piSyn $ psi !! 3) )
 
 
@@ -1159,7 +1173,7 @@ parseFnCall1 = genericParseOp [MP_Tup, MP_Id, mtk_Define, MP_Def] (\psi ->
 
 
 parseFnCall2 :: ParserOp
-parseFnCall2 = genericParseOp [MP_Id, MP_Tup, mtk_Define, MP_Def] (\psi ->
+parseFnCall2 = genericParseOp [MP_Id, MP_Tup, mtk_Define, MP_Expr] (\psi ->
   PI_BzSyn $ BzS_FunDef (pos $ piSyn $ head psi) (BzS_Undefined) (sid $ piSyn $ head psi) (piSyn $ psi !! 1) (piSyn $ psi !! 3) )
 
 
@@ -1172,7 +1186,59 @@ parseFnCall2 = genericParseOp [MP_Id, MP_Tup, mtk_Define, MP_Def] (\psi ->
 
 
 parseFnCall3 :: ParserOp
-parseFnCall3 = genericParseOp [MP_Id, mtk_Define, MP_Def] (\psi ->
+parseFnCall3 = genericParseOp [MP_Id, mtk_Define, MP_Expr] (\psi ->
+  PI_BzSyn $ BzS_FunDef (pos $ piSyn $ head psi) (BzS_Undefined) (sid $ piSyn $ head psi) (BzS_Undefined) (piSyn $ psi !! 2) )
+
+
+
+
+
+
+
+
+
+
+parseFnCall4 :: ParserOp
+parseFnCall4 = genericParseOp [MP_Tup, MP_Id, MP_Tup, mtk_Define, MP_Blck, mtk_Newline] (\psi ->
+  PI_BzSyn $ BzS_FunDef (pos $ piSyn $ head psi) (piSyn $ head psi) (sid $ piSyn $ psi !! 1) (piSyn $ psi !! 2) (piSyn $ psi !! 4) )
+
+
+
+
+
+
+
+
+
+
+parseFnCall5 :: ParserOp
+parseFnCall5 = genericParseOp [MP_Tup, MP_Id, mtk_Define, MP_Blck, mtk_Newline] (\psi ->
+  PI_BzSyn $ BzS_FunDef (pos $ piSyn $ head psi) (piSyn $ head psi) (sid $ piSyn $ psi !! 1) (BzS_Undefined) (piSyn $ psi !! 3) )
+
+
+
+
+
+
+
+
+
+
+parseFnCall6 :: ParserOp
+parseFnCall6 = genericParseOp [MP_Id, MP_Tup, mtk_Define, MP_Blck, mtk_Newline] (\psi ->
+  PI_BzSyn $ BzS_FunDef (pos $ piSyn $ head psi) (BzS_Undefined) (sid $ piSyn $ head psi) (piSyn $ psi !! 1) (piSyn $ psi !! 3) )
+
+
+
+
+
+
+
+
+
+
+parseFnCall7 :: ParserOp
+parseFnCall7 = genericParseOp [MP_Id, mtk_Define, MP_Blck, mtk_Newline] (\psi ->
   PI_BzSyn $ BzS_FunDef (pos $ piSyn $ head psi) (BzS_Undefined) (sid $ piSyn $ head psi) (BzS_Undefined) (piSyn $ psi !! 2) )
 
 
@@ -1186,7 +1252,8 @@ parseFnCall3 = genericParseOp [MP_Id, mtk_Define, MP_Def] (\psi ->
 
 parseFnCall :: Parser
 parseFnCall = Parser (\ps ->
-  let parseFn = [parseFnCall0, parseFnCall1, parseFnCall2, parseFnCall3]
+  let parseFn = [parseFnCall0, parseFnCall1, parseFnCall2, parseFnCall3,
+                 parseFnCall4, parseFnCall5, parseFnCall6, parseFnCall7]
   in case tryParsers ps parseFn of
     Just pst -> Right pst
     Nothing  -> Left [] )
@@ -1462,8 +1529,8 @@ parseLambda = Parser (\ps ->
 
 
 
-parseBlock1 :: ParserOp
-parseBlock1 = genericParseOp [mtk_StartDo, mtk_EndDo, mtk_Newline] (\psi ->
+parseBlock0 :: ParserOp
+parseBlock0 = genericParseOp [mtk_StartDo, mtk_EndDo] (\psi ->
   PI_BzSyn $ BzS_Block (spos $ piTok $ head psi) [] )
 
 
@@ -1475,8 +1542,8 @@ parseBlock1 = genericParseOp [mtk_StartDo, mtk_EndDo, mtk_Newline] (\psi ->
 
 
 
-parseBlock2 :: ParserOp
-parseBlock2 = genericParseOp [MP_Item, mtk_EndDo] (\psi ->
+parseBlock1 :: ParserOp
+parseBlock1 = genericParseOp [MP_Item, mtk_EndDo] (\psi ->
   PI_BKX $ BzS_Expr (pos $ piSyn $ head psi) [piSyn $ head psi] )
 
 
@@ -1488,8 +1555,8 @@ parseBlock2 = genericParseOp [MP_Item, mtk_EndDo] (\psi ->
 
 
 
-parseBlock3 :: ParserOp
-parseBlock3 = genericParseOp [MP_Item, MP_Bkx] (\psi ->
+parseBlock2 :: ParserOp
+parseBlock2 = genericParseOp [MP_Item, MP_Bkx] (\psi ->
   PI_BKX $ BzS_Expr (pos $ piSyn $ head psi) ([piSyn $ head psi] ++ (exprs $ piSyn $ psi !! 1)) )
 
 
@@ -1501,8 +1568,8 @@ parseBlock3 = genericParseOp [MP_Item, MP_Bkx] (\psi ->
 
 
 
-parseBlock4 :: ParserOp
-parseBlock4 = genericParseOp [MP_Expr, MP_Expr] (\psi ->
+parseBlock3 :: ParserOp
+parseBlock3 = genericParseOp [MP_Expr, MP_Expr] (\psi ->
   PI_Exs $ [piSyn $ head psi] ++ [piSyn $ psi !! 1] )
 
 
@@ -1514,8 +1581,8 @@ parseBlock4 = genericParseOp [MP_Expr, MP_Expr] (\psi ->
 
 
 
-parseBlock5 :: ParserOp
-parseBlock5 = genericParseOp [MP_Exs, MP_Expr] (\psi ->
+parseBlock4 :: ParserOp
+parseBlock4 = genericParseOp [MP_Exs, MP_Expr] (\psi ->
   PI_Exs $ (piSyns $ head psi) ++ [piSyn $ psi !! 1] )
 
 
@@ -1527,8 +1594,8 @@ parseBlock5 = genericParseOp [MP_Exs, MP_Expr] (\psi ->
 
 
 
-parseBlock6 :: ParserOp
-parseBlock6 = genericParseOp [mtk_StartDo, MP_Expr, mtk_EndDo, mtk_Newline] (\psi ->
+parseBlock5 :: ParserOp
+parseBlock5 = genericParseOp [mtk_StartDo, MP_Expr, mtk_EndDo] (\psi ->
   PI_BzSyn $ BzS_Block (spos $ piTok $ head psi) [piSyn $ psi !! 1] )
 
 
@@ -1540,8 +1607,8 @@ parseBlock6 = genericParseOp [mtk_StartDo, MP_Expr, mtk_EndDo, mtk_Newline] (\ps
 
 
 
-parseBlock7 :: ParserOp
-parseBlock7 = genericParseOp [mtk_StartDo, MP_Exs, mtk_EndDo, mtk_Newline] (\psi ->
+parseBlock6 :: ParserOp
+parseBlock6 = genericParseOp [mtk_StartDo, MP_Exs, mtk_EndDo] (\psi ->
   PI_BzSyn $ BzS_Block (spos $ piTok $ head psi) (piSyns $ psi !! 1) )
 
 
@@ -1553,8 +1620,8 @@ parseBlock7 = genericParseOp [mtk_StartDo, MP_Exs, mtk_EndDo, mtk_Newline] (\psi
 
 
 
-parseBlock8 :: ParserOp
-parseBlock8 = genericParseOp [mtk_StartDo, MP_Exs, MP_Bkx, mtk_Newline] (\psi ->
+parseBlock7 :: ParserOp
+parseBlock7 = genericParseOp [mtk_StartDo, MP_Exs, MP_Bkx] (\psi ->
   PI_BzSyn $ BzS_Block (spos $ piTok $ head psi) ((piSyns $ psi !! 1) ++ [piSyn $ psi !! 2]) )
 
 
@@ -1566,8 +1633,8 @@ parseBlock8 = genericParseOp [mtk_StartDo, MP_Exs, MP_Bkx, mtk_Newline] (\psi ->
 
 
 
-parseBlock9 :: ParserOp
-parseBlock9 = genericParseOp [mtk_StartDo, MP_Expr, MP_Bkx, mtk_Newline] (\psi ->
+parseBlock8 :: ParserOp
+parseBlock8 = genericParseOp [mtk_StartDo, MP_Expr, MP_Bkx] (\psi ->
   PI_BzSyn $ BzS_Block (spos $ piTok $ head psi) ([piSyn $ psi !! 1] ++ [piSyn $ psi !! 2]) )
 
 
@@ -1579,8 +1646,8 @@ parseBlock9 = genericParseOp [mtk_StartDo, MP_Expr, MP_Bkx, mtk_Newline] (\psi -
 
 
 
-parseBlock10 :: ParserOp
-parseBlock10 = genericParseOp [mtk_StartDo, MP_Bkx, mtk_Newline] (\psi ->
+parseBlock9 :: ParserOp
+parseBlock9 = genericParseOp [mtk_StartDo, MP_Bkx] (\psi ->
   PI_BzSyn $ BzS_Block (spos $ piTok $ head psi) [piSyn $ psi !! 1] )
 
 
@@ -1594,9 +1661,8 @@ parseBlock10 = genericParseOp [mtk_StartDo, MP_Bkx, mtk_Newline] (\psi ->
 
 parseBlock :: Parser
 parseBlock = Parser (\ps ->
-  let parseFn = [parseBlock1 , parseBlock2 , parseBlock3 , parseBlock4 ,
-                 parseBlock5 , parseBlock6 , parseBlock7 , parseBlock8 , parseBlock9 ,
-                 parseBlock10]
+  let parseFn = [parseBlock0 , parseBlock1 , parseBlock2 , parseBlock3 , parseBlock4 ,
+                 parseBlock5 , parseBlock6 , parseBlock7 , parseBlock8 , parseBlock9 ]
   in case tryParsers ps parseFn of
     Just pst -> Right pst
     Nothing  -> Left [] )
@@ -1610,12 +1676,67 @@ parseBlock = Parser (\ps ->
 
 
 
+parseCallFuse0 :: ParserOp
+parseCallFuse0 = genericParseOp [MP_SOF, MP_CallItem] (\psi ->
+  PI_BzSyn $ BzS_Calls (pos $ piSyn $ psi !! 1) [piSyn $ psi !! 1] )
+
+
+
+
+
+
+
+
+
+
+parseCallFuse1 :: ParserOp
+parseCallFuse1 = genericParseOp [MP_Calls, MP_CallItem] (\psi ->
+  PI_BzSyn $ BzS_Calls (pos $ piSyn $ psi !! 1) ((calls $ piSyn $ head psi) ++ [piSyn $ psi !! 1]) )
+
+
+
+
+
+
+
+
+
+
+parseCallFuse2 :: ParserOp
+parseCallFuse2 = genericParseOp [MP_Calls, MP_Exs] (\psi ->
+  PI_BzSyn $ BzS_Calls (pos $ piSyn $ psi !! 1) ((calls $ piSyn $ head psi) ++ (piSyns $ psi !! 1)) )
+
+
+
+
+
+
+
+
+
+
+parseCallFuse :: Parser
+parseCallFuse = Parser (\ps ->
+  let parseFn = [parseCallFuse0, parseCallFuse1, parseCallFuse2]
+  in case tryParsers ps parseFn of
+    Just pst -> Right pst
+    Nothing  -> Left  [] )
+
+
+
+
+
+
+
+
+
+
 parseCalls :: Parser
 parseCalls = Parser (\ps ->
-  case (runParsers ps [parseModifiers, parsePrimitives, parseSimplify,
-                       parseCompound, parsePolymorph,  parseTupleEtc, parseExpr,
-                       parseMisc, parseTypeCall, parseLambda, parseFnCall,
-                       parseFnTy, parseFnTyDef, parseBlock ]) of
+  case (runParsers ps [parseModifiers, parsePrimitives, parseSimplify, parseTupleEtc,
+                       parseCompound, parsePolymorph, parseExpr, parseMisc,
+                       parseTypeCall, parseLambda, parseFnCall, parseFnTy,
+                       parseFnTyDef, parseBlock, parseCallFuse ]) of
     Left []   -> Left []
     Left err  -> Left err
     Right ps' -> Right ps' )
