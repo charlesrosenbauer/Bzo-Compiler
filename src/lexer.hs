@@ -4,6 +4,7 @@ import Data.Char
 import Data.Either
 import Control.Monad
 import Control.Applicative
+import Debug.Trace
 
 
 
@@ -217,7 +218,7 @@ concatMapWithErrs xs fn =
 instance Monad Lexer where
   return    = pure
   (>>=) p f = Lexer (\s ls ->
-    let lf = (\(a, ls', s') -> BzoLexer.lex (f a) s' ls)
+    let lf = (\(a, ls', s') -> BzoLexer.lex (f a) s' ls')
         ps = (BzoLexer.lex p) s ls
     in case ps of
       Left  err -> Left err
@@ -272,7 +273,7 @@ moveOne :: LexerState -> Char -> LexerState
 moveOne ls ch =
   let (LexerState l c o n) = ls
   in if(ch == '\n')
-    then LexerState (l+1) c (o+1) n
+    then LexerState (l+1) 1 (o+1) n
     else LexerState l (c+1) (o+1) n
 
 
