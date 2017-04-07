@@ -30,10 +30,10 @@ import BzoTokens
 
 
 
-compileFile' :: String -> String
-compileFile' f =
-  let out = fileLexer f "Bzo"
+compileFile' :: String -> String -> String
+compileFile' name f =
+  let out = fileLexer f name
   in  case out of
     Left  err -> show err
     Right tks ->
-      show $ parseFile tks [parseCalls]
+      show $ parseFile name tks [parseCalls]

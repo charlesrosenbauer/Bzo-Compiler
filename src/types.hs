@@ -49,10 +49,10 @@ data BzoToken
 
 
 data BzoErr = Other
-  | StringErr String
-  | LexErr String
-  | ParseErr String
-  | TypeErr String
+  | StringErr { position::BzoPos, errorStr::String }
+  | LexErr    { position::BzoPos, errorStr::String }
+  | ParseErr  { position::BzoPos, errorStr::String }
+  | TypeErr   { position::BzoPos, errorStr::String }
 
 
 
@@ -64,12 +64,24 @@ data BzoErr = Other
 
 
 showBzErr :: BzoErr -> String
-showBzErr (StringErr   st) = "Bzo Error: " ++ (show st)
-showBzErr (LexErr      st) = "Lexer Error: " ++ (show st)
-showBzErr (ParseErr    st) = "Parse Error: " ++ (show st)
-showBzErr (TypeErr     st) = "Type Error: " ++ (show st)
-showBzErr (Other         ) = "Unknown Error?"
+showBzErr (StringErr  p st) = "Bzo Error:\n" ++ (showErrPos p) ++ (show st)
+showBzErr (LexErr     p st) = "Lexer Error:\n" ++ (showErrPos p) ++ (show st)
+showBzErr (ParseErr   p st) = "Parse Error:\n" ++ (showErrPos p) ++ (show st)
+showBzErr (TypeErr    p st) = "Type Error:\n" ++ (showErrPos p) ++ (show st)
+showBzErr (Other          ) = "Unknown Error?"
 instance Show BzoErr where show = showBzErr
+
+
+
+
+
+
+
+
+
+
+showErrPos :: BzoPos -> String
+showErrPos p = "In file \"" ++ (fileName p) ++ "\", at " ++ (show $ line p) ++ ":" ++ (show $ column p) ++ " ::\n"
 
 
 

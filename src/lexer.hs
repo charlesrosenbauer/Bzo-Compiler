@@ -59,8 +59,7 @@ makeLexErr ls =
       l = line p
       c = column p
       n = fileName p
-  in (LexErr ("Lexer error in file \"" ++ (show n) ++ "\" at line " ++ (show l) ++
-      ", column " ++ (show c) ++ ".\n"))
+  in (LexErr (BzoPos l c n) "Lexer error\n")
 
 
 
@@ -75,7 +74,7 @@ runLexer :: String -> Lexer a -> String -> Either BzoErr a
 runLexer fname lx s =
   case (BzoLexer.lex lx s (LexerState 1 1 0 fname)) of
     Right [(ret, _, [] )] -> Right  ret
-    Right [(_  , _, rem)] -> Left $ LexErr "Failed to consume entire input."
+    Right [(_  , s, rem)] -> Left $ LexErr (BzoPos (lsLine s) (lsColumn s) (lsFName s)) "Failed to consume entire input."
     Left  err             -> Left err
 
 
@@ -126,7 +125,7 @@ instance Applicative Lexer where
 
 -- | Alternative to pure for applicative lexer. Not sure if it's necessary.
 pureErr :: String -> Lexer a
-pureErr err = Lexer (\s ls -> Left $ LexErr err)
+pureErr err = Lexer (\s ls -> Left $ LexErr (BzoPos (lsLine ls) (lsColumn ls) (lsFName ls)) err)
 
 
 

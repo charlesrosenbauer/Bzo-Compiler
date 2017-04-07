@@ -22,9 +22,9 @@ main :: IO()
 main = do
     args <- getArgs
     case length args of
-        0 -> mainLoop_ (== "$quit") (readPrompt "Bzo>>> ") (\s -> (putStrLn $ parseInput (s ++ "\n")))
+        0 -> mainLoop_ (== "$quit") (readPrompt "Bzo>>> ") (\s -> (putStrLn $ parseInput ("REPL", (s ++ "\n"))))
         otherwise -> do
-            (loadMany args) >>= (printMany . parseMany)
+            (loadMany args) >>= (printMany . parseMany . (\ss -> zip args ss))
 
 
 
@@ -75,8 +75,8 @@ flushStr str = putStr str >> hFlush stdout
 
 
 
-parseInput :: String -> String
-parseInput input = compileFile' input   --change compileFile to compileFile' to switch to lexing mode
+parseInput :: (String, String) -> String
+parseInput (name, input) = compileFile' name input   --change compileFile to compileFile' to switch to lexing mode
 
 
 
@@ -98,7 +98,7 @@ loadMany files = sequence $ map readFile files
 
 
 
-parseMany :: [String] -> [String]
+parseMany :: [(String, String)] -> [String]
 parseMany s = map parseInput s
 
 

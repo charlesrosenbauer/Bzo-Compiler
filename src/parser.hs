@@ -25,9 +25,27 @@ data ParseItem
   | PI_MX   { piSyn :: BzoSyntax }
   | PI_BKX  { piSyn :: BzoSyntax }
   | PI_Exs  { piSyns:: [BzoSyntax] }
-  | PI_Err  { piErr :: String }
+  | PI_Err  { piErr :: BzoErr }
   | PI_SOF
   deriving Show
+
+
+
+
+
+
+
+
+
+
+getPIPos :: ParseItem -> BzoPos
+getPIPos (PI_Token         tk) = spos tk
+getPIPos (PI_SOF             ) = BzoPos 0 0 "Empty File"
+getPIPos (PI_Err           er) = position er
+getPIPos (PI_CPXS          ps) = pos $ head ps
+getPIPos (PI_PLXS          ps) = pos $ head ps
+getPIPos (PI_Exs           ps) = pos $ head ps
+getPIPos x                     = pos $ piSyn x
 
 
 
@@ -293,6 +311,8 @@ matchBzoToken _               _               = False
 
 
 data ParserState = ParserState{
+  fname     :: String,
+  lastPos   :: BzoPos,
   stack     :: [ParseItem],
   input     :: [BzoToken] }
 
@@ -346,9 +366,9 @@ matchList x (a : as) (b : bs) cmp =
 
 -- | Specifically for stack
 match :: ParserState -> [MockParseItem] -> Maybe ([ParseItem], ParserState)
-match (ParserState s i) mpi =
+match (ParserState f p s i) mpi =
   case (matchList [] (reverse mpi) s matchParseItem) of
-    Just (s, ss) -> Just (s, (ParserState ss i))
+    Just (s, ss) -> Just (s, (ParserState f p ss i))
     Nothing      -> Nothing
 
 
@@ -362,9 +382,9 @@ match (ParserState s i) mpi =
 
 -- | Specifically for lookahead
 matchTks :: ParserState -> [BzoToken] -> Maybe ([BzoToken], ParserState)
-matchTks (ParserState s i) tks =
+matchTks (ParserState f p s i) tks =
   case (matchList [] tks i matchBzoToken) of
-    Just (i, is) -> Just (i, (ParserState s is))
+    Just (i, is) -> Just (i, (ParserState f p s is))
     Nothing      -> Nothing
 
 
@@ -381,8 +401,8 @@ matchLookahead ps psi bzt =
   let stackOut = match ps psi
       tokenOut = matchTks ps bzt
   in case (stackOut, tokenOut) of
-    ((Just (s, (ParserState s0 i0))), (Just (i, (ParserState s1 i1)))) ->
-        Just (s, (ParserState s0 i1))
+    ((Just (s, (ParserState f p s0 i0))), (Just (i, (ParserState _ _ s1 i1)))) ->
+        Just (s, (ParserState f p s0 i1))
     _                                -> Nothing
 
 
@@ -426,8 +446,8 @@ tryParsers pst (p : ps) = case ((parseop p) pst) of
 
 
 shiftParser :: ParserState -> ParserState
-shiftParser (ParserState s (i : is)) = (ParserState ([(PI_Token i)] ++ s) is)
-shiftParser (ParserState s []) = (ParserState s [])
+shiftParser (ParserState f p s (i : is)) = (ParserState f p ([(PI_Token i)] ++ s) is)
+shiftParser (ParserState f p s []) = (ParserState f p s [])
 
 
 
@@ -441,13 +461,13 @@ shiftParser (ParserState s []) = (ParserState s [])
 parseIter :: ParserState -> [Parser] -> Either [BzoErr] BzoSyntax
 parseIter ps p =
   case ((runParsers ps p), ps) of
-    (_         , (ParserState []  []))                 -> Left $ [ParseErr "Nothing to Parse?"]
-    (_         , (ParserState [PI_SOF]  []))           -> Left $ [ParseErr "Nothing to Parse?"]
-    (Left  []  , (ParserState _   []))                 -> Left $ [ParseErr "Parser did not consume entire file."]
-    (Left  []  , (ParserState s   i ))                 -> parseIter (shiftParser (ParserState s i)) p
-    (Left  errs,                    _)                 -> Left errs        -- | Errors!!
-    (Right (ParserState [(PI_BzSyn s)] []),    _)      -> Right s          -- | Success!!
-    (Right (ParserState s   i ),    _)                 -> parseIter (ParserState s i) p
+    (_         , (ParserState f p' []  []))                 -> Left $ [ParseErr (BzoPos 0 0 f) "Nothing to Parse?"]
+    (_         , (ParserState f p' [PI_SOF]  []))           -> Left $ [ParseErr (BzoPos 0 0 f) "Nothing to Parse?"]
+    (Left  []  , (ParserState f p' _   []))                 -> Left $ [ParseErr p' "Parser did not consume entire file."]
+    (Left  []  , (ParserState f p' s   i ))                 -> parseIter (shiftParser (ParserState f p' s i)) p
+    (Left  errs,                        _)                  -> Left errs        -- | Errors!!
+    (Right (ParserState f p' [(PI_BzSyn s)] []),    _)      -> Right s          -- | Success!!
+    (Right (ParserState f p' s   i ),    _)                 -> parseIter (ParserState f (getPIPos $ head s) s i) p
 
 
 
@@ -517,11 +537,11 @@ bracketCheck_Tuple :: [BzoToken] -> (Maybe [BzoErr], [BzoToken])
 bracketCheck_Tuple ((TkStartTup ps) : tks) = combineBracketChecks bracketCheck_Tuple bracketCheck_Tuple tks
 bracketCheck_Tuple ((TkEndTup   ps) : tks) = (Nothing, tks)
 bracketCheck_Tuple ((TkStartDat ps) : tks) = combineBracketChecks bracketCheck_Data  bracketCheck_Tuple tks
-bracketCheck_Tuple ((TkEndDat   ps) : tks) = recoverBracketCheck bracketCheck_Tuple [ParseErr "Invalid placement of ']' inside Tuple"] tks
+bracketCheck_Tuple ((TkEndDat   ps) : tks) = recoverBracketCheck bracketCheck_Tuple [ParseErr ps "Invalid placement of ']' inside Tuple"] tks
 bracketCheck_Tuple ((TkStartDo  ps) : tks) = combineBracketChecks bracketCheck_Block bracketCheck_Tuple tks
-bracketCheck_Tuple ((TkEndDo    ps) : tks) = recoverBracketCheck bracketCheck_Tuple [ParseErr "Invalid placement of '}' inside Tuple"] tks
-bracketCheck_Tuple ([]                   ) = (Just $ [ParseErr "Mismatched parentheses"], [])
-bracketCheck_Tuple (_ : tks)               = (Just $ [ParseErr "This error should not occur. Please notify the developer that something is wrong in the bracketCheck_Tuple function"], tks)
+bracketCheck_Tuple ((TkEndDo    ps) : tks) = recoverBracketCheck bracketCheck_Tuple [ParseErr ps "Invalid placement of '}' inside Tuple"] tks
+bracketCheck_Tuple ([]                   ) = (Just $ [ParseErr (BzoPos 0 0 "Fix Me") "Mismatched parentheses"], [])
+bracketCheck_Tuple (tk : tks)              = (Just $ [ParseErr (spos tk) "This error should not occur. Please notify the developer that something is wrong in the bracketCheck_Tuple function"], tks)
 
 
 
@@ -534,13 +554,13 @@ bracketCheck_Tuple (_ : tks)               = (Just $ [ParseErr "This error shoul
 
 bracketCheck_Data :: [BzoToken] -> (Maybe [BzoErr], [BzoToken])
 bracketCheck_Data ((TkStartTup ps) : tks) = combineBracketChecks bracketCheck_Tuple bracketCheck_Data tks
-bracketCheck_Data ((TkEndTup   ps) : tks) = recoverBracketCheck bracketCheck_Data [ParseErr "Invalid placement of ')' inside Array Modifier"] tks
+bracketCheck_Data ((TkEndTup   ps) : tks) = recoverBracketCheck bracketCheck_Data [ParseErr ps "Invalid placement of ')' inside Array Modifier"] tks
 bracketCheck_Data ((TkStartDat ps) : tks) = combineBracketChecks bracketCheck_Data bracketCheck_Data  tks
 bracketCheck_Data ((TkEndDat   ps) : tks) = (Nothing, tks)
 bracketCheck_Data ((TkStartDo  ps) : tks) = combineBracketChecks bracketCheck_Block bracketCheck_Data tks
-bracketCheck_Data ((TkEndDo    ps) : tks) = recoverBracketCheck bracketCheck_Data [ParseErr "Invalid placement of '}' inside Array Modifier"] tks
-bracketCheck_Data ([]                   ) = (Just $ [ParseErr "Mismatched Square Brackets"], [])
-bracketCheck_Data (_ : tks)               = (Just $ [ParseErr "This error should not occur. Please notify the developer that something is wrong in the bracketCheck_Data function"], tks)
+bracketCheck_Data ((TkEndDo    ps) : tks) = recoverBracketCheck bracketCheck_Data [ParseErr ps "Invalid placement of '}' inside Array Modifier"] tks
+bracketCheck_Data ([]                   ) = (Just $ [ParseErr (BzoPos 0 0 "Fix Me") "Mismatched Square Brackets"], [])
+bracketCheck_Data (tk : tks)              = (Just $ [ParseErr (spos tk) "This error should not occur. Please notify the developer that something is wrong in the bracketCheck_Data function"], tks)
 
 
 
@@ -553,13 +573,13 @@ bracketCheck_Data (_ : tks)               = (Just $ [ParseErr "This error should
 
 bracketCheck_Block :: [BzoToken] -> (Maybe [BzoErr], [BzoToken])
 bracketCheck_Block ((TkStartTup ps) : tks) = combineBracketChecks bracketCheck_Tuple bracketCheck_Block tks
-bracketCheck_Block ((TkEndTup   ps) : tks) = recoverBracketCheck bracketCheck_Block [ParseErr "Invalid placement of ')' inside Block"] tks
+bracketCheck_Block ((TkEndTup   ps) : tks) = recoverBracketCheck bracketCheck_Block [ParseErr ps "Invalid placement of ')' inside Block"] tks
 bracketCheck_Block ((TkStartDat ps) : tks) = combineBracketChecks bracketCheck_Data bracketCheck_Block  tks
-bracketCheck_Block ((TkEndDat   ps) : tks) = recoverBracketCheck bracketCheck_Block [ParseErr "Invalid placement of ']' inside Block"] tks
+bracketCheck_Block ((TkEndDat   ps) : tks) = recoverBracketCheck bracketCheck_Block [ParseErr ps "Invalid placement of ']' inside Block"] tks
 bracketCheck_Block ((TkStartDo  ps) : tks) = combineBracketChecks bracketCheck_Block bracketCheck_Block tks
 bracketCheck_Block ((TkEndDo    ps) : tks) = (Nothing, tks)
-bracketCheck_Block ([]                   ) = (Just $ [ParseErr "Mismatched Braces"], [])
-bracketCheck_Block (_ : tks)               = (Just $ [ParseErr "This error should not occur. Please notify the developer that something is wrong in the bracketCheck_Block function"], tks)
+bracketCheck_Block ([]                   ) = (Just $ [ParseErr (BzoPos 0 0 "Fix Me") "Mismatched Braces"], [])
+bracketCheck_Block (tk : tks)              = (Just $ [ParseErr (spos tk) "This error should not occur. Please notify the developer that something is wrong in the bracketCheck_Block function"], tks)
 
 
 
@@ -574,10 +594,10 @@ bracketCheckFn (t : ts) = case t of
           (TkStartTup ps) -> bracketCheck_Tuple ts
           (TkStartDat ps) -> bracketCheck_Data  ts
           (TkStartDo  ps) -> bracketCheck_Block ts
-          (TkEndTup   ps) -> (Just $ [ParseErr "Mismatched parentheses!"], ts)
-          (TkEndDat   ps) -> (Just $ [ParseErr "Mismatched square brackets!"], ts)
-          (TkEndDo    ps) -> (Just $ [ParseErr "Mismatched braces!"], ts)
-          _               -> (Just $ [ParseErr "This error should not occur. Please notify the developer that something is wrong in the bracketCheckFn function"], ts)
+          (TkEndTup   ps) -> (Just $ [ParseErr ps "Mismatched parentheses!"], ts)
+          (TkEndDat   ps) -> (Just $ [ParseErr ps "Mismatched square brackets!"], ts)
+          (TkEndDo    ps) -> (Just $ [ParseErr ps "Mismatched braces!"], ts)
+          tk              -> (Just $ [ParseErr (spos tk) "This error should not occur. Please notify the developer that something is wrong in the bracketCheckFn function"], ts)
 
 
 
@@ -621,10 +641,10 @@ bracketCheck tks =
 
 
 
-parseFile :: [BzoToken] -> [Parser] -> Either [BzoErr] BzoSyntax
-parseFile tks ps =
+parseFile :: String -> [BzoToken] -> [Parser] -> Either [BzoErr] BzoSyntax
+parseFile f tks ps =
   let bracketErrs = bracketCheck tks
-  in case (bracketErrs, parseIter (ParserState [PI_SOF] tks) ps) of
+  in case (bracketErrs, parseIter (ParserState f (BzoPos 0 0 f) [PI_SOF] tks) ps) of
       (Just errs,        _ ) -> Left errs
       (Nothing  , Left errs) -> Left errs
       (Nothing  , Right ast) -> Right ast
