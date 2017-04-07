@@ -1133,7 +1133,7 @@ parseTypeCall = Parser (\ps ->
 
 
 parseFnCall0 :: ParserOp
-parseFnCall0 = genericParseOp [MP_Tup, MP_Id, MP_Tup, mtk_Define, MP_Expr] (\psi ->
+parseFnCall0 = genericParseOp [MP_Tup, MP_Id, MP_Tup, mtk_Define, MP_Def] (\psi ->
   PI_BzSyn $ BzS_FunDef (pos $ piSyn $ head psi) (piSyn $ head psi) (sid $ piSyn $ psi !! 1) (piSyn $ psi !! 2) (piSyn $ psi !! 4) )
 
 
@@ -1146,7 +1146,7 @@ parseFnCall0 = genericParseOp [MP_Tup, MP_Id, MP_Tup, mtk_Define, MP_Expr] (\psi
 
 
 parseFnCall1 :: ParserOp
-parseFnCall1 = genericParseOp [MP_Tup, MP_Id, mtk_Define, MP_Expr] (\psi ->
+parseFnCall1 = genericParseOp [MP_Tup, MP_Id, mtk_Define, MP_Def] (\psi ->
   PI_BzSyn $ BzS_FunDef (pos $ piSyn $ head psi) (piSyn $ head psi) (sid $ piSyn $ psi !! 1) (BzS_Undefined) (piSyn $ psi !! 3) )
 
 
@@ -1159,7 +1159,7 @@ parseFnCall1 = genericParseOp [MP_Tup, MP_Id, mtk_Define, MP_Expr] (\psi ->
 
 
 parseFnCall2 :: ParserOp
-parseFnCall2 = genericParseOp [MP_Id, MP_Tup, mtk_Define, MP_Expr] (\psi ->
+parseFnCall2 = genericParseOp [MP_Id, MP_Tup, mtk_Define, MP_Def] (\psi ->
   PI_BzSyn $ BzS_FunDef (pos $ piSyn $ head psi) (BzS_Undefined) (sid $ piSyn $ head psi) (piSyn $ psi !! 1) (piSyn $ psi !! 3) )
 
 
@@ -1172,7 +1172,7 @@ parseFnCall2 = genericParseOp [MP_Id, MP_Tup, mtk_Define, MP_Expr] (\psi ->
 
 
 parseFnCall3 :: ParserOp
-parseFnCall3 = genericParseOp [MP_Id, mtk_Define, MP_Expr] (\psi ->
+parseFnCall3 = genericParseOp [MP_Id, mtk_Define, MP_Def] (\psi ->
   PI_BzSyn $ BzS_FunDef (pos $ piSyn $ head psi) (BzS_Undefined) (sid $ piSyn $ head psi) (BzS_Undefined) (piSyn $ psi !! 2) )
 
 
@@ -1461,12 +1461,161 @@ parseLambda = Parser (\ps ->
 
 
 
+
+parseBlock1 :: ParserOp
+parseBlock1 = genericParseOp [mtk_StartDo, mtk_EndDo, mtk_Newline] (\psi ->
+  PI_BzSyn $ BzS_Block (spos $ piTok $ head psi) [] )
+
+
+
+
+
+
+
+
+
+
+parseBlock2 :: ParserOp
+parseBlock2 = genericParseOp [MP_Item, mtk_EndDo] (\psi ->
+  PI_BKX $ BzS_Expr (pos $ piSyn $ head psi) [piSyn $ head psi] )
+
+
+
+
+
+
+
+
+
+
+parseBlock3 :: ParserOp
+parseBlock3 = genericParseOp [MP_Item, MP_Bkx] (\psi ->
+  PI_BKX $ BzS_Expr (pos $ piSyn $ head psi) ([piSyn $ head psi] ++ (exprs $ piSyn $ psi !! 1)) )
+
+
+
+
+
+
+
+
+
+
+parseBlock4 :: ParserOp
+parseBlock4 = genericParseOp [MP_Expr, MP_Expr] (\psi ->
+  PI_Exs $ [piSyn $ head psi] ++ [piSyn $ psi !! 1] )
+
+
+
+
+
+
+
+
+
+
+parseBlock5 :: ParserOp
+parseBlock5 = genericParseOp [MP_Exs, MP_Expr] (\psi ->
+  PI_Exs $ (piSyns $ head psi) ++ [piSyn $ psi !! 1] )
+
+
+
+
+
+
+
+
+
+
+parseBlock6 :: ParserOp
+parseBlock6 = genericParseOp [mtk_StartDo, MP_Expr, mtk_EndDo, mtk_Newline] (\psi ->
+  PI_BzSyn $ BzS_Block (spos $ piTok $ head psi) [piSyn $ psi !! 1] )
+
+
+
+
+
+
+
+
+
+
+parseBlock7 :: ParserOp
+parseBlock7 = genericParseOp [mtk_StartDo, MP_Exs, mtk_EndDo, mtk_Newline] (\psi ->
+  PI_BzSyn $ BzS_Block (spos $ piTok $ head psi) (piSyns $ psi !! 1) )
+
+
+
+
+
+
+
+
+
+
+parseBlock8 :: ParserOp
+parseBlock8 = genericParseOp [mtk_StartDo, MP_Exs, MP_Bkx, mtk_Newline] (\psi ->
+  PI_BzSyn $ BzS_Block (spos $ piTok $ head psi) ((piSyns $ psi !! 1) ++ [piSyn $ psi !! 2]) )
+
+
+
+
+
+
+
+
+
+
+parseBlock9 :: ParserOp
+parseBlock9 = genericParseOp [mtk_StartDo, MP_Expr, MP_Bkx, mtk_Newline] (\psi ->
+  PI_BzSyn $ BzS_Block (spos $ piTok $ head psi) ([piSyn $ psi !! 1] ++ [piSyn $ psi !! 2]) )
+
+
+
+
+
+
+
+
+
+
+parseBlock10 :: ParserOp
+parseBlock10 = genericParseOp [mtk_StartDo, MP_Bkx, mtk_Newline] (\psi ->
+  PI_BzSyn $ BzS_Block (spos $ piTok $ head psi) [piSyn $ psi !! 1] )
+
+
+
+
+
+
+
+
+
+
+parseBlock :: Parser
+parseBlock = Parser (\ps ->
+  let parseFn = [parseBlock1 , parseBlock2 , parseBlock3 , parseBlock4 ,
+                 parseBlock5 , parseBlock6 , parseBlock7 , parseBlock8 , parseBlock9 ,
+                 parseBlock10]
+  in case tryParsers ps parseFn of
+    Just pst -> Right pst
+    Nothing  -> Left [] )
+
+
+
+
+
+
+
+
+
+
 parseCalls :: Parser
 parseCalls = Parser (\ps ->
   case (runParsers ps [parseModifiers, parsePrimitives, parseSimplify,
                        parseCompound, parsePolymorph,  parseTupleEtc, parseExpr,
                        parseMisc, parseTypeCall, parseLambda, parseFnCall,
-                       parseFnTy, parseFnTyDef ]) of
+                       parseFnTy, parseFnTyDef, parseBlock ]) of
     Left []   -> Left []
     Left err  -> Left err
     Right ps' -> Right ps' )
