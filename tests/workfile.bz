@@ -1,3 +1,6 @@
+
+
+
 "Mostly just a second file for testing purposes"
 
 ? :: (Bool. A. A) ;; A
@@ -10,9 +13,9 @@
 Bool :: ( True, False )
 
 
-Vec2 :: {x :: F32. y :: F32}
-Vec3 :: {x :: F32. y :: F32. z :: F32}
-Vec4 :: {x :: F32. y :: F32. z :: F32. w :: F32}
+Vec2 :: (x : F32. y : F32)
+Vec3 :: (x : F32. y : F32. z : F32)
+Vec4 :: (x : F32. y : F32. z : F32. w : F32)
 
 Mat1x1 ::       F32
 Mat1x2 ::    [2]F32
@@ -47,13 +50,13 @@ main :: {
 
 
 # :: Index ;; (A ;; (A. Index))
-x # :: ;v :: (v. x)
+(x) # :: (;v :: (v. x))
 
 # :: (Index. Index) ;; (A ;; (A. Index. Index))
-(x. y) # :: ;v :: (v. x. y)
+(x. y) # :: (;v :: (v. x. y))
 
 # :: (Index. Index. Index) ;; (A ;; (A. Index. Index. Index))
-(x. y. z) # :: ;v :: (v. x. y. z)
+(x. y. z) # :: (;v :: (v. x. y. z))
 
 
 

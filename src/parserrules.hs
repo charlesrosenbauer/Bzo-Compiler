@@ -1715,9 +1715,21 @@ parseCallFuse2 = genericParseOp [MP_Calls, MP_Exs] (\psi ->
 
 
 
+parseCallFuse3 :: ParserOp
+parseCallFuse3 = genericParseOp [MP_SOF, mtk_Newline] (\psi -> PI_SOF)
+
+
+
+
+
+
+
+
+
+
 parseCallFuse :: Parser
 parseCallFuse = Parser (\ps ->
-  let parseFn = [parseCallFuse0, parseCallFuse1, parseCallFuse2]
+  let parseFn = [parseCallFuse0, parseCallFuse1, parseCallFuse2, parseCallFuse3]
   in case tryParsers ps parseFn of
     Just pst -> Right pst
     Nothing  -> Left  [] )
