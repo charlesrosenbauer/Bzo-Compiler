@@ -1,4 +1,7 @@
-'Mostly just a second file for testing purposes'
+
+
+
+"Mostly just a second file for testing purposes"
 
 ? :: (Bool. A. A) ;; A
 
@@ -10,9 +13,9 @@
 Bool :: ( True, False )
 
 
-Vec2 :: {x :: F32. y :: F32}
-Vec3 :: {x :: F32. y :: F32. z :: F32}
-Vec4 :: {x :: F32. y :: F32. z :: F32. w :: F32}
+Vec2 :: (x : F32. y : F32)
+Vec3 :: (x : F32. y : F32. z : F32)
+Vec4 :: (x : F32. y : F32. z : F32. w : F32)
 
 Mat1x1 ::       F32
 Mat1x2 ::    [2]F32
@@ -30,3 +33,35 @@ Mat4x1 ::      Vec4
 Mat4x2 :: [4][2]F32
 Mat4x3 :: [4][3]F32
 Mat4x4 :: [4][4]F32
+
+
+
+
+
+
+main :: () ;; Console
+main :: {
+  ~c : Console
+  ('Hello World!'. ~c) println ~c
+}
+
+
+
+
+
+# :: Index ;; (A ;; (A. Index))
+(x) # :: (;v :: (v. x))
+
+# :: (Index. Index) ;; (A ;; (A. Index. Index))
+(x. y) # :: (;v :: (v. x. y))
+
+# :: (Index. Index. Index) ;; (A ;; (A. Index. Index. Index))
+(x. y. z) # :: (;v :: (v. x. y. z))
+
+
+
+testFn :: () ;; ()
+testFn :: {
+  (0. 1. 2. 3) ~arr
+  2 (2 #) arr
+}

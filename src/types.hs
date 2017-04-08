@@ -9,7 +9,8 @@ module BzoTypes where
 
 
 
-data BzoToken = TkStartTup  { spos :: BzoPos }
+data BzoToken
+  = TkStartTup     { spos :: BzoPos }
   | TkEndTup       { spos :: BzoPos }
   | TkStartDat     { spos :: BzoPos }
   | TkEndDat       { spos :: BzoPos }
@@ -19,7 +20,6 @@ data BzoToken = TkStartTup  { spos :: BzoPos }
   | TkSepPoly      { spos :: BzoPos }
   | TkFilterSym    { spos :: BzoPos }
   | TkLambdaSym    { spos :: BzoPos }
-  | TkMutable      { spos :: BzoPos }
   | TkReference    { spos :: BzoPos }
   | TkWildcard     { spos :: BzoPos }
   | TkDefine       { spos :: BzoPos }
@@ -28,13 +28,15 @@ data BzoToken = TkStartTup  { spos :: BzoPos }
   | TkArrGnrl      { spos :: BzoPos }
   | TkArrMod       { spos :: BzoPos }
   | TkInt          { spos :: BzoPos, valInt :: Integer }
-  | TkFlt          { spos :: BzoPos, valFlt :: Float   }
+  | TkFlt          { spos :: BzoPos, valFlt :: Double  }
   | TkStr          { spos :: BzoPos, valStr :: String  }
   | TkId           { spos :: BzoPos, valId  :: String  }
   | TkTypeId       { spos :: BzoPos, valId  :: String  }
+  | TkMutId        { spos :: BzoPos, valId  :: String  }
   | TkNewline      { spos :: BzoPos }
   | TkBuiltin      { spos :: BzoPos, valId  :: String  }
   | TkBIType       { spos :: BzoPos, valId  :: String  }
+  | TkNil
   deriving Eq
 
 
@@ -47,9 +49,10 @@ data BzoToken = TkStartTup  { spos :: BzoPos }
 
 
 data BzoErr = Other
-  | StringErr String
-  | LexErr String
-  | TypeErr String
+  | StringErr { position::BzoPos, errorStr::String }
+  | LexErr    { position::BzoPos, errorStr::String }
+  | ParseErr  { position::BzoPos, errorStr::String }
+  | TypeErr   { position::BzoPos, errorStr::String }
 
 
 
@@ -60,74 +63,37 @@ data BzoErr = Other
 
 
 
--- Creating a custom position type so that Parsec types don't have to be moved around everywhere.
--- This also makes it easy to add extra information here later to pass around
+showBzErr :: BzoErr -> String
+showBzErr (StringErr  p st) = "Bzo Error:\n" ++ (showErrPos p) ++ (show st)
+showBzErr (LexErr     p st) = "Lexer Error:\n" ++ (showErrPos p) ++ (show st)
+showBzErr (ParseErr   p st) = "Parse Error:\n" ++ (showErrPos p) ++ (show st)
+showBzErr (TypeErr    p st) = "Type Error:\n" ++ (showErrPos p) ++ (show st)
+showBzErr (Other          ) = "Unknown Error?"
+instance Show BzoErr where show = showBzErr
+
+
+
+
+
+
+
+
+
+
+showErrPos :: BzoPos -> String
+showErrPos p = "In file \"" ++ (fileName p) ++ "\", at " ++ (show $ line p) ++ ":" ++ (show $ column p) ++ " ::\n"
+
+
+
+
+
+
+
+
+
+
 data BzoPos = BzoPos {
   line     :: Int,
   column   :: Int,
   fileName :: String }
   deriving (Eq, Show)
-
-
-
-
-
-
-
-
-
-
-countLines :: [BzoToken] -> Int -> [Int]
-countLines ((TkNewline t):ts) n = [n + 1] ++ (countLines ts (n + 1))
-countLines (t:ts) n = [n] ++ (countLines ts n)
-
-
-
-
-
-
-
-
-
-
-getLineNumbers :: [BzoToken] -> [BzoToken]
-getLineNumbers tk = do
-  let linenums = countLines tk 0
-  map (\(t, n) -> (tkChangePos t n)) $ zip tk linenums
-
-
-
-
-
-
-
-
-
-
---tkChangePos :: BzoToken -> Int -> BzoToken
-tkChangePos (TkStartTup    p) n = TkStartTup    $ BzoPos n (column p) (fileName p)
-tkChangePos (TkEndTup      p) n = TkEndTup      $ BzoPos n (column p) (fileName p)
-tkChangePos (TkStartDat    p) n = TkStartDat    $ BzoPos n (column p) (fileName p)
-tkChangePos (TkEndDat      p) n = TkEndDat      $ BzoPos n (column p) (fileName p)
-tkChangePos (TkStartDo     p) n = TkStartDo     $ BzoPos n (column p) (fileName p)
-tkChangePos (TkEndDo       p) n = TkEndDo       $ BzoPos n (column p) (fileName p)
-tkChangePos (TkSepExpr     p) n = TkSepExpr     $ BzoPos n (column p) (fileName p)
-tkChangePos (TkSepPoly     p) n = TkSepPoly     $ BzoPos n (column p) (fileName p)
-tkChangePos (TkFilterSym   p) n = TkFilterSym   $ BzoPos n (column p) (fileName p)
-tkChangePos (TkLambdaSym   p) n = TkLambdaSym   $ BzoPos n (column p) (fileName p)
-tkChangePos (TkMutable     p) n = TkMutable     $ BzoPos n (column p) (fileName p)
-tkChangePos (TkReference   p) n = TkReference   $ BzoPos n (column p) (fileName p)
-tkChangePos (TkWildcard    p) n = TkWildcard    $ BzoPos n (column p) (fileName p)
-tkChangePos (TkDefine      p) n = TkDefine      $ BzoPos n (column p) (fileName p)
-tkChangePos (TkFnSym       p) n = TkFnSym       $ BzoPos n (column p) (fileName p)
-tkChangePos (TkTupEmpt     p) n = TkTupEmpt     $ BzoPos n (column p) (fileName p)
-tkChangePos (TkArrGnrl     p) n = TkArrGnrl     $ BzoPos n (column p) (fileName p)
-tkChangePos (TkArrMod      p) n = TkArrMod      $ BzoPos n (column p) (fileName p)
-tkChangePos (TkInt       p i) n = TkInt         ( BzoPos n (column p) (fileName p)) i
-tkChangePos (TkFlt       p f) n = TkFlt         ( BzoPos n (column p) (fileName p)) f
-tkChangePos (TkStr       p s) n = TkStr         ( BzoPos n (column p) (fileName p)) s
-tkChangePos (TkId        p i) n = TkId          ( BzoPos n (column p) (fileName p)) i
-tkChangePos (TkTypeId    p i) n = TkTypeId      ( BzoPos n (column p) (fileName p)) i
-tkChangePos (TkNewline     p) n = TkNewline     ( BzoPos n (column p) (fileName p))
-tkChangePos (TkBuiltin   p i) n = TkBuiltin     ( BzoPos n (column p) (fileName p)) i
-tkChangePos (TkBIType    p i) n = TkBIType      ( BzoPos n (column p) (fileName p)) i

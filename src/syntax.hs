@@ -11,183 +11,93 @@ import BzoTypes
 
 
 data BzoSyntax
-    = FunDef {
-        --pos     :: BzoPos,
+    = BzS_Int {
+        pos  :: BzoPos,
+        sint :: Integer }
+    | BzS_Flt {
+        pos  :: BzoPos,
+        sflt :: Double }
+    | BzS_Str {
+        pos  :: BzoPos,
+        sstr :: String }
+    | BzS_Id {
+        pos  :: BzoPos,
+        sid  :: String }
+    | BzS_TyId {
+        pos  :: BzoPos,
+        sid  :: String }
+    | BzS_MId {
+        pos  :: BzoPos,
+        sid  :: String }
+    | BzS_BId {
+        pos  :: BzoPos,
+        sid  :: String }
+    | BzS_BTId {
+        pos  :: BzoPos,
+        sid  :: String }
+    | BzS_Namespace{
+        pos  :: BzoPos,
+        sid  :: String }
+    | BzS_MapMod {
+        pos  :: BzoPos }
+    | BzS_Wildcard {
+        pos   :: BzoPos }
+    | BzS_Filter {
+        pos   :: BzoPos,
+        filt  :: BzoSyntax }
+    | BzS_ArrGenMod{
+        pos   :: BzoPos }
+    | BzS_ArrSzMod{
+        pos   :: BzoPos,
+        sint  :: Integer }
+    | BzS_ArrExprMod{
+        pos   :: BzoPos,
+        def   :: BzoSyntax }
+    | BzS_Nil {
+        pos   :: BzoPos }
+    | BzS_Lambda {
+        pos  :: BzoPos,
+        pars :: BzoSyntax,
+        def  :: BzoSyntax }
+    | BzS_Expr {
+        pos   :: BzoPos,
+        exprs :: [BzoSyntax] }
+    | BzS_Box {
+        pos   :: BzoPos,
+        expr  :: BzoSyntax }
+    | BzS_Poly {
+        pos   :: BzoPos,
+        exprs :: [BzoSyntax] }
+    | BzS_Cmpd {
+        pos   :: BzoPos,
+        exprs :: [BzoSyntax] }
+    | BzS_FnTy {
+        pos   :: BzoPos,
+        tyIn  :: BzoSyntax,
+        tyEx  :: BzoSyntax }
+    | BzS_Block {
+        pos   :: BzoPos,
+        exprs :: [BzoSyntax] }
+    | BzS_FunDef {
+        pos    :: BzoPos,
         inpars :: BzoSyntax,
         fnid   :: String,
         expars :: BzoSyntax,
         def    :: BzoSyntax }
-    | TypDef {
-        --pos  :: BzoPos,
+    | BzS_TypDef {
+        pos  :: BzoPos,
         pars :: BzoSyntax,
         tyid :: String,
-        typ  :: DtType }
-    | FnTypeDef {
-        --pos  :: BzoPos,
-        fnid   :: String,
-        tyIn   :: DtType,
-        tyEx   :: DtType }
-    | Lambda {
-        --pos  :: BzoPos,
-        pars :: BzoSyntax,
+        typ  :: BzoSyntax }
+    | BzS_FnTypeDef {
+        pos  :: BzoPos,
+        fnid :: String,
         def  :: BzoSyntax }
-    | Atoms {
-        --pos  :: BzoPos,
-        atom  :: Atom }
-    | ArrAtom {
-        --pos  :: BzoPos,
-        atom  :: Atom }
-    | Type {
-        --pos :: BzoPos,
-        mods :: [Modifier],
-        typ  :: DtType }
-    | Statements {
-        --pos   :: BzoPos,
-        exprs :: [BzoSyntax] }
-    | Expr {
-        --pos   :: BzoPos,
-        exprs :: [BzoSyntax] }
-    | Modifiers {
-        --pos  :: BzoPos,
-        mods :: [Modifier] }
-    | Calls {
+    | BzS_Calls {
+        pos   :: BzoPos,
         calls :: [BzoSyntax] }
-    | TupleExpr {
-        --pos :: BzoPos,
-        exprs :: [BzoSyntax] }
-    | StatementBlock {
-        --pos :: BzoPos,
-        inpar :: BzoSyntax,
-        expar :: BzoSyntax,
-        exprs :: [BzoSyntax] }
-    | DataType {
-        --pos :: BzoPos,
-        typ :: DtType }
-    | Construct {
-        --pos :: BzoPos,
-        tyId  :: String,
-        modf  :: Modifier }
-    | Wildcard
-    | Undefined
+    | BzS_Undefined
     deriving Eq
-
-
-
-
-
-
-
-
-
-data Atom
-    = AtmInt Integer
-    | AtmFlt Float
-    | AtmStr String
-    | AtmId  String
-    | AtmBI  String
-    deriving Eq
-
-
-
-
-
-
-
-
-
-
-data RecUnit = RecUnit{ rid :: String, rtyp :: DtType }
-  deriving (Eq, Show)
-
-
-
-
-
-
-
-
-
-
-data DtType
-    = DtNilType
-    | DtTuple       { dtyps :: [DtType] }
-    | DtCoreType    { id    :: String }
-    | DtTypeVar     { id    :: String }
-    | DtBIType      { id    :: String }
-    | DtFunc        { dtyIn :: DtType, dtyEx :: DtType }
-    | DtPolymorph   { dtyps :: [DtType] }
-    | DtModded      { dmod  :: Modifier, dtyp :: DtType }
-    | DtRecord      { recs  :: [RecUnit] }
-    | DtFilter      { dtyp  :: DtType, dfilter :: DtType }
-    | DtUnspecified
-    deriving (Eq, Show)
-
-
-
-
-
-
-
-
-
-
-data Modifier
-    = Mutb
-    | Refr
-    | Arry
-    | ArSz Integer
-    | ArVr String
-    | Mods [Modifier]
-    | ModUnspecified
-    deriving Eq
-
-
-
-
-
-
-
-
-
-
-makeMods :: BzoSyntax -> Modifier
-makeMods (Modifiers x) = Mods $ x
-makeMods _ = Mods []
-
-
-
-
-
-
-
-
-
-
-showMod  :: Modifier -> String
-showMod (Mutb)   = " ~ "
-showMod (Refr)   = " @ "
-showMod (Arry)   = " [] "
-showMod (ArSz i) = " [ " ++ (show i) ++ " ] "
-showMod (ArVr v) = " [ " ++ v ++ " ] "
-showMod (Mods m) = concatMap showMod m
-instance Show Modifier where show = showMod
-
-
-
-
-
-
-
-
-
-
-showAtom :: Atom -> String
-showAtom (AtmInt i) = show i
-showAtom (AtmFlt f) = show f
-showAtom (AtmStr s) = show s
-showAtom (AtmId  i) = show i
-showAtom (AtmBI  s) = show s
-instance Show Atom where show = showAtom
 
 
 
@@ -199,21 +109,32 @@ instance Show Atom where show = showAtom
 
 
 showAST :: BzoSyntax -> String
-showAST (FunDef inpar fid expar def) = "{FNDEF: " ++ (show inpar) ++ " -> " ++ (show fid) ++ " -> " ++ (show expar) ++ " :: " ++ (show def) ++ "}\n\n"
-showAST (TypDef par tid def)         = "{TYDEF: " ++ (show tid) ++ " [ " ++ (show par) ++ " ] :: " ++ (show def) ++ "}\n\n"
-showAST (FnTypeDef fid inpar expar)  = "{FTDEF: " ++ (show fid) ++ " [ " ++ (show inpar) ++ " ] ;; [ " ++ (show expar) ++ " ]}\n\n"
-showAST (Lambda par def)             = " {LAMBDA: " ++ (show par) ++ " :: " ++ (show def) ++ "} "
-showAST (Atoms atm)                  = " ATOM: " ++ (show atm) ++ " "
-showAST (ArrAtom atm)                = " ARRAY ATOM: " ++ (show atm) ++ " "
-showAST (Type _ _)                   = " TYPE "
-showAST (Statements ex)              = " {ST: " ++ (concatMap showAST ex) ++ " }. "
-showAST (Expr ex)                    = " (EX: " ++ (concatMap showAST ex) ++ " ) "
-showAST (TupleExpr ex)               = " (TU: " ++ (concatMap showAST ex) ++ " ) "
-showAST (Modifiers m)                = show m
-showAST (Calls c)                    = concatMap (\s -> "CALL:: " ++ (show s) ++ "\n") c
-showAST (Wildcard)                   = " _WILDCARD_ "
-showAST (Undefined)                  = " UNDEFINED "
-showAST (StatementBlock i x def)     = "{BLOCK from " ++ (show i) ++ " to " ++ (show x) ++ ": " ++ (concatMap show def) ++ " }"
-showAST (Construct   i _)            = "(CONS: " ++ (show i) ++ ")"
-showAST (DataType d)                 = " TYPE: " ++ (show d) ++ " "
+showAST (BzS_FunDef _ inpar fid expar def) = " {FNDEF: " ++ (show inpar) ++ " -> " ++ (show fid) ++ " -> " ++ (show expar) ++ " :: " ++ (show def) ++ "}\n\n"
+showAST (BzS_TypDef _ par tid def)         = " {TYDEF: " ++ (show tid) ++ " [ " ++ (show par) ++ " ] :: " ++ (show def) ++ "}\n\n"
+showAST (BzS_FnTypeDef _ fid def)          = " {FTDEF: " ++ (show fid) ++ " [ " ++ (show def) ++ " ]}\n\n"
+showAST (BzS_Lambda _ par def)             = " {LAMBDA: " ++ (show par) ++ " :: " ++ (show def) ++ "} "
+showAST (BzS_FnTy _ tin tex)               = " {FNTY: " ++ (show tin) ++ " ;;" ++ (show tex) ++ "} "
+showAST (BzS_Filter _ filt)                = " {FILTER: " ++ (show filt) ++ "} "
+showAST (BzS_Id _ i)                       = " ID: " ++ (show i)
+showAST (BzS_MId _ i)                      = " MID: " ++ (show i)
+showAST (BzS_TyId _ i)                     = " TID: " ++ (show i)
+showAST (BzS_BId _ i)                      = " BID: " ++ (show i)
+showAST (BzS_BTId _ i)                     = " BTID: " ++ (show i)
+showAST (BzS_Namespace _ i)                = " @ " ++ (show i)
+showAST (BzS_Int _ i)                      = " INT: " ++ (show i)
+showAST (BzS_Flt _ f)                      = " FLT: " ++ (show f)
+showAST (BzS_Str _ s)                      = " STR: " ++ (show s)
+showAST (BzS_Poly _ p)                     = " {POLY: " ++ (concatMap showAST p) ++ "} "
+showAST (BzS_Cmpd _ c)                     = " {CMPD: " ++ (concatMap showAST c) ++ "} "
+showAST (BzS_Block _ ex)                   = " {BK: " ++ (concatMap showAST ex) ++ " } "
+showAST (BzS_Expr _ ex)                    = " (EX: " ++ (concatMap showAST ex) ++ " ) "
+showAST (BzS_Box  _ ex)                    = " (BX: " ++ (showAST ex) ++ ") "
+showAST (BzS_Calls _ c)                    = concatMap (\s -> " CALL:: " ++ (show s) ++ "\n") c
+showAST (BzS_Wildcard _)                   = " _ "
+showAST (BzS_MapMod _)                     = " .. "
+showAST (BzS_ArrGenMod _)                  = " [] "
+showAST (BzS_ArrSzMod _ i)                 = " [ " ++ (show  i) ++ " ] "
+showAST (BzS_ArrExprMod _ ex)              = " [ " ++ (show ex) ++ " ] "
+showAST (BzS_Nil _)                        = " () "
+showAST (BzS_Undefined)                    = " UNDEFINED "
 instance Show BzoSyntax where show = showAST
