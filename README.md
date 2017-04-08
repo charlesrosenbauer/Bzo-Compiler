@@ -2,7 +2,7 @@
 Compiler for a custom programming language I'm developing called Bzo
 
 
-Note: This branch is under heavy development and likely will be very unstable. The parser generators being used in the main branch do not provide the necessary amount of information for useful error messages, and are in need of some significant bug fixes anyway. This branch is an attempt to rewrite them entirely in normal Haskell, without the use of parser generators. This should provide more flexibility, more freedom, and easier maintenence.
+Note: Error messages are currently a little buggy. Sorry for any inconvenience there.
 
 
 Building and Trying Out the Compiler
