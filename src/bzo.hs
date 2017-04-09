@@ -76,7 +76,7 @@ flushStr str = putStr str >> hFlush stdout
 
 
 parseInput :: (String, String) -> String
-parseInput (name, input) = compileFile' name input   --change compileFile to compileFile' to switch to lexing mode
+parseInput (name, input) = compileFile name input
 
 
 

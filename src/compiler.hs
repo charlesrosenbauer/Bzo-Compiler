@@ -15,11 +15,10 @@ import BzoTokens
 
 
 
---This function will eventually become the compiler pipeline
---compileFile :: String -> BzoSyntax
---compileFile f = do
---  let lex = fileLexer (f ++ "\n")   -- adding a newline to the end corrects a bug in the REPL parser
---  bzoParser lex
+data BzoSettings
+  = BzoSettings {
+    importedFiles :: [(FilePath, String)],
+    linkedFiles   :: [(FilePath, String)]}
 
 
 
@@ -29,9 +28,8 @@ import BzoTokens
 
 
 
-
-compileFile' :: String -> String -> String
-compileFile' name f =
+compileFile :: String -> String -> String
+compileFile name f =
   let out = fileLexer f name
   in  case out of
     Left  err -> show err
