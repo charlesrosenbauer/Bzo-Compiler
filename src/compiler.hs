@@ -15,19 +15,6 @@ import BzoTokens
 
 
 
-data BzoSettings
-  = BzoSettings {
-    importedFiles :: [(FilePath, String)],
-    linkedFiles   :: [(FilePath, String)]}
-
-
-
-
-
-
-
-
-
 compileFile :: String -> String -> String
 compileFile name f =
   let out = fileLexer f name
