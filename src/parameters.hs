@@ -10,6 +10,17 @@ import Data.List
 
 
 
+data SpecificFlags = Flag_OutputLLVM | Flag_OutputAssembly | Flag_FastMath   -- | Mostly placeholders, though these are likely to still be used
+
+
+
+
+
+
+
+
+
+
 data OptimizationSettings = Opt_OL1 | Opt_OL2 | Opt_OL3 | Opt_OL4 |          -- | Latency
                             Opt_OS1 | Opt_OS2 | Opt_OS3 | Opt_OS4 |          -- | Size
                             Opt_OT1 | Opt_OT2 | Opt_OT3 | Opt_OT4 | Opt_Nil  -- | Throughput, Nil
@@ -38,9 +49,8 @@ data BzoSettings
   = BzoSettings {
     importedFiles :: [(FilePath, String)],
     libraryFiles  :: [(FilePath, String)],
-    flags         :: [String],
+    flags         :: [SpecificFlags],
     optFlags      :: OptimizationSetting,
-    parFlags      :: [(String, FilePath],
     prefixFlags   :: [PrefixFlags] }
 
 
@@ -66,12 +76,24 @@ parseFlag s = case (head s) of
 
 
 
-parsePrefixFlag :: String -> Maybe (String, String)
+parsePrefixFlag :: String -> Maybe PrefixFlags
 parsePrefixFlag s
-  | isPrefixOf "-p=" s = Just $ drop 3 s    -- Path to search for missing files
-  | isPrefixOf "-g=" s = Just $ drop 3 s    -- Thread Granularity
-  | isPrefixOf "-o=" s = Just $ drop 3 s    -- Output Path
+  | isPrefixOf "-p=" s = Just $ FilePath $ drop 3 s    -- Path to search for missing files
+  | isPrefixOf "-g=" s = Just $ GranFlag $ drop 3 s    -- Thread Granularity
+  | isPrefixOf "-o=" s = Just $ OutFlag  $ drop 3 s    -- Output Path
   | otherwise          = Nothing
+
+
+
+
+
+
+
+
+
+
+addPrefixFlag :: BzoSettings -> PrefixFlags -> BzoSettings
+addPrefixFlag (BzoSettings imp lib flg opt par pfx) f = BzoSettings imp lib flg opt par (pfx ++ [f])
 
 
 
@@ -114,5 +136,45 @@ parseOptimization s =
 
 
 
---parseParameters :: [String] -> BzoSettings
---parseParameters =
+addOptFlag :: BzoSettings -> OptimizationSettings -> BzoSettings
+addOptFlag (BzoSettings imp lib flg opt par pfx) f = BzoSettings imp lib flg f par pfx
+
+
+
+
+
+
+
+
+
+
+parseSpecificFlags :: String -> Maybe SpecificFlags
+parseSpecificFlags s = lookup [("-outputLLVM"    , Flag_OutputLLVM    ),
+                               ("-outputAssembly", Flag_OutputAssembly),
+                               ("-fastmath"      , Flag_FastMath      )]
+
+
+
+
+
+
+
+
+
+
+addSpecificFlag :: BzoSettings -> SpecificFlags -> BzoSettings
+addSpecificFlag (BzoSettings imp lib flg opt par pfx) f = BzoSettings imp lib ([f] ++ flg) opt par pfx
+
+
+
+
+
+
+
+
+
+
+parseParameters :: [String] -> Either BzoErr BzoSettings
+parseParameters pars =
+  let settings = BzoSettings [] [] [] Opt_Nil []
+  in
