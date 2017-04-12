@@ -369,6 +369,58 @@ parseCompound11 = genericParseOp [mtk_StartTup, MP_Cpxs, mtk_Newline, MP_Tx] (\p
 
 
 
+parseCompound12 :: ParserOp
+parseCompound12 = genericParseOp [mtk_StartTup, MP_Cpxs, MP_Expr, mtk_EndTup] (\psi ->
+  PI_BzSyn $ BzS_Cmpd (spos $ piTok $ head psi) ((piSyns $ psi !! 1) ++ [piSyn $ psi !! 2]) )
+
+
+
+
+
+
+
+
+
+
+parseCompound13 :: ParserOp
+parseCompound13 = genericParseOp [mtk_StartTup, MP_Cpx, MP_Expr, mtk_EndTup] (\psi ->
+  PI_BzSyn $ BzS_Cmpd (spos $ piTok $ head psi) ([piSyn $ psi !! 1] ++ [piSyn $ psi !! 2]) )
+
+
+
+
+
+
+
+
+
+
+parseCompound14 :: ParserOp
+parseCompound14 = genericParseOp [mtk_StartTup, MP_Cpx, mtk_Newline, MP_Expr, mtk_EndTup] (\psi ->
+  PI_BzSyn $ BzS_Cmpd (spos $ piTok $ head psi) ([piSyn $ psi !! 1] ++ [piSyn $ psi !! 3]) )
+
+
+
+
+
+
+
+
+
+
+parseCompound15 :: ParserOp
+parseCompound15 = genericParseOp [mtk_StartTup, MP_Cpxs, mtk_Newline, MP_Expr, mtk_EndTup] (\psi ->
+  PI_BzSyn $ BzS_Cmpd (spos $ piTok $ head psi) ((piSyns $ psi !! 1) ++ [piSyn $ psi !! 3]) )
+
+
+
+
+
+
+
+
+
+
 parseCompoundErr0 :: ParserOp
 parseCompoundErr0 = genericParseOp [MP_Cpx, MP_Plx] (\psi -> PI_Err $ ParseErr (getPIPos $ head psi) "Invalid combination of polymorphic and compound expressions.")
 
@@ -470,7 +522,9 @@ parseCompound = Parser (\ps ->
   let parseFn = [parseCompound0,  parseCompound1,  parseCompound2,
                  parseCompound3,  parseCompound4,  parseCompound5,
                  parseCompound6,  parseCompound7,  parseCompound8,
-                 parseCompound9,  parseCompound10, parseCompound11]
+                 parseCompound9,  parseCompound10, parseCompound11,
+                 parseCompound12, parseCompound13, parseCompound14,
+                 parseCompound15]
       errFn = [parseCompoundErr0, parseCompoundErr1, parseCompoundErr2, parseCompoundErr3,
                parseCompoundErr4, parseCompoundErr5, parseCompoundErr6, parseCompoundErr7]
   in case (tryParsers ps parseFn, tryParsers ps errFn) of
@@ -643,6 +697,58 @@ parsePolymorph11 = genericParseOp [mtk_StartTup, MP_Plxs, mtk_Newline, MP_Tx] (\
 
 
 
+parsePolymorph12 :: ParserOp
+parsePolymorph12 = genericParseOp [mtk_StartTup, MP_Plxs, MP_Expr, mtk_EndTup] (\psi ->
+  PI_BzSyn $ BzS_Poly (spos $ piTok $ head psi) ((piSyns $ psi !! 1) ++ [piSyn $ psi !! 2]) )
+
+
+
+
+
+
+
+
+
+
+parsePolymorph13 :: ParserOp
+parsePolymorph13 = genericParseOp [mtk_StartTup, MP_Plx, MP_Expr, mtk_EndTup] (\psi ->
+  PI_BzSyn $ BzS_Poly (spos $ piTok $ head psi) ([piSyn $ psi !! 1] ++ [piSyn $ psi !! 2]) )
+
+
+
+
+
+
+
+
+
+
+parsePolymorph14 :: ParserOp
+parsePolymorph14 = genericParseOp [mtk_StartTup, MP_Plx, mtk_Newline, MP_Expr, mtk_EndTup] (\psi ->
+  PI_BzSyn $ BzS_Poly (spos $ piTok $ head psi) ([piSyn $ psi !! 1] ++ [piSyn $ psi !! 3]) )
+
+
+
+
+
+
+
+
+
+
+parsePolymorph15 :: ParserOp
+parsePolymorph15 = genericParseOp [mtk_StartTup, MP_Plxs, mtk_Newline, MP_Expr, mtk_EndTup] (\psi ->
+  PI_BzSyn $ BzS_Poly (spos $ piTok $ head psi) ((piSyns $ psi !! 1) ++ [piSyn $ psi !! 3]) )
+
+
+
+
+
+
+
+
+
+
 parsePolymorphErr0 :: ParserOp
 parsePolymorphErr0 = genericParseOp [MP_Plx, MP_Cpx] (\psi -> PI_Err $ ParseErr (getPIPos $ head psi) "Invalid combination of polymorphic and compound expressions.")
 
@@ -744,7 +850,9 @@ parsePolymorph = Parser (\ps ->
   let parseFn = [parsePolymorph0,  parsePolymorph1,  parsePolymorph2,
                  parsePolymorph3,  parsePolymorph4,  parsePolymorph5,
                  parsePolymorph6,  parsePolymorph7,  parsePolymorph8,
-                 parsePolymorph9,  parsePolymorph10, parsePolymorph11]
+                 parsePolymorph9,  parsePolymorph10, parsePolymorph11,
+                 parsePolymorph12, parsePolymorph13, parsePolymorph14,
+                 parsePolymorph15]
       errFn   = [parsePolymorphErr0, parsePolymorphErr1, parsePolymorphErr2, parsePolymorphErr3,
                  parsePolymorphErr4, parsePolymorphErr5, parsePolymorphErr6, parsePolymorphErr7]
   in case (tryParsers ps parseFn, tryParsers ps errFn) of
