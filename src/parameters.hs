@@ -12,8 +12,48 @@ import System.IO
 
 
 
+readIntMaybeIter :: Maybe Int -> Char -> Maybe Int
+readIntMaybeIter i c =
+  case i of
+    Nothing -> Nothing
+    Just x  ->
+      case c of
+        '0' -> Just $ (x * 10)
+        '1' -> Just $ (x * 10) + 1
+        '2' -> Just $ (x * 10) + 2
+        '3' -> Just $ (x * 10) + 3
+        '4' -> Just $ (x * 10) + 4
+        '5' -> Just $ (x * 10) + 5
+        '6' -> Just $ (x * 10) + 6
+        '7' -> Just $ (x * 10) + 7
+        '8' -> Just $ (x * 10) + 8
+        '9' -> Just $ (x * 10) + 9
+        _   -> Nothing
+
+
+
+
+
+
+
+
+
+
+readIntMaybe :: [Char] -> Maybe Int
+readIntMaybe s = foldl readIntMaybeIter (Just 0) s
+
+
+
+
+
+
+
+
+
+
 data SpecificFlags = Flag_OutputLLVM | Flag_OutputAssembly | Flag_FastMath
                    | Flag_PureBzo     -- | Mostly placeholders, though these are likely to still be used
+                   deriving Show
 
 
 
@@ -26,7 +66,9 @@ data SpecificFlags = Flag_OutputLLVM | Flag_OutputAssembly | Flag_FastMath
 
 data OptimizationSettings = Opt_OL1 | Opt_OL2 | Opt_OL3 | Opt_OL4 |          -- | Latency
                             Opt_OS1 | Opt_OS2 | Opt_OS3 | Opt_OS4 |          -- | Size
-                            Opt_OT1 | Opt_OT2 | Opt_OT3 | Opt_OT4 | Opt_Nil  -- | Throughput, Nil
+                            Opt_OT1 | Opt_OT2 | Opt_OT3 | Opt_OT4 |          -- | Throughput
+                            Opt_Nil | Opt_None                               -- | Nil
+                            deriving (Show, Eq)
 
 
 
@@ -37,7 +79,7 @@ data OptimizationSettings = Opt_OL1 | Opt_OL2 | Opt_OL3 | Opt_OL4 |          -- 
 
 
 
-data PrefixFlags = PathFlag FilePath | GranFlag Int | OutFlag FilePath | EnvFlag FilePath
+data PrefixFlags = PathFlag FilePath | GranFlag Int | OutFlag FilePath | EnvFlag FilePath deriving Show
 
 
 
@@ -53,8 +95,9 @@ data BzoSettings
     importedFiles :: [(FilePath, String)],
     libraryFiles  :: [(FilePath, String)],
     flags         :: [SpecificFlags],
-    optFlags      :: OptimizationSettings,
+    optFlag       :: OptimizationSettings,
     prefixFlags   :: [PrefixFlags] }
+    deriving Show
 
 
 
@@ -65,10 +108,22 @@ data BzoSettings
 
 
 
-parseFlag :: String -> Maybe String
-parseFlag s = case (head s) of
-  '-' -> Just s
-  _   -> Nothing
+parseImport :: String -> Maybe String
+parseImport s = case (head s) of
+  '-' -> Nothing
+  _   -> Just s
+
+
+
+
+
+
+
+
+
+
+addImport :: BzoSettings -> String -> BzoSettings
+addImport (BzoSettings imp lib flg opt pfx) f = BzoSettings (imp ++ [(f, "")]) lib flg opt pfx
 
 
 
@@ -82,9 +137,12 @@ parseFlag s = case (head s) of
 parsePrefixFlag :: String -> Maybe PrefixFlags
 parsePrefixFlag s
   | isPrefixOf "-p="   s = Just $ PathFlag $ drop 3 s           -- Path to search for missing files
-  | isPrefixOf "-g="   s = Just $ GranFlag $ read $ drop 3 s    -- Thread Granularity (add potential failure here if input is not a valid int)
   | isPrefixOf "-o="   s = Just $ OutFlag  $ drop 3 s           -- Output Path
   | isPrefixOf "-env=" s = Just $ EnvFlag  $ drop 5 s           -- Environment Path
+  | isPrefixOf "-g="   s =
+      case (readIntMaybe $ drop 3 s) of
+        Just x  -> Just $ GranFlag x    -- Thread Granularity (add potential failure here if input is not a valid int)
+        Nothing -> Nothing
   | otherwise          = Nothing
 
 
@@ -108,28 +166,30 @@ addPrefixFlag (BzoSettings imp lib flg opt pfx) f = BzoSettings imp lib flg opt 
 
 
 
-parseOptimization :: String -> Maybe OptimizationSettings
-parseOptimization s =
-  case s of
-    "-O"   -> Just Opt_OT2
-    "-O0"  -> Just Opt_Nil
-    "-O1"  -> Just Opt_OT1
-    "-O2"  -> Just Opt_OT2
-    "-O3"  -> Just Opt_OT3
-    "-O4"  -> Just Opt_OT4
-    "-OT1" -> Just Opt_OT1
-    "-OT2" -> Just Opt_OT2
-    "-OT3" -> Just Opt_OT3
-    "-OT4" -> Just Opt_OT4
-    "-OS1" -> Just Opt_OS1
-    "-OS2" -> Just Opt_OS2
-    "-OS3" -> Just Opt_OS3
-    "-OS4" -> Just Opt_OS4
-    "-OL1" -> Just Opt_OL1
-    "-OL2" -> Just Opt_OL2
-    "-OL3" -> Just Opt_OL3
-    "-OL4" -> Just Opt_OL4
-    _      -> Nothing
+parseOptimization :: BzoSettings -> String -> Maybe OptimizationSettings
+parseOptimization st s =
+  if (optFlag st /= Opt_None)
+    then Nothing
+    else case s of
+          "-O"   -> Just Opt_OT2
+          "-O0"  -> Just Opt_Nil
+          "-O1"  -> Just Opt_OT1
+          "-O2"  -> Just Opt_OT2
+          "-O3"  -> Just Opt_OT3
+          "-O4"  -> Just Opt_OT4
+          "-OT1" -> Just Opt_OT1
+          "-OT2" -> Just Opt_OT2
+          "-OT3" -> Just Opt_OT3
+          "-OT4" -> Just Opt_OT4
+          "-OS1" -> Just Opt_OS1
+          "-OS2" -> Just Opt_OS2
+          "-OS3" -> Just Opt_OS3
+          "-OS4" -> Just Opt_OS4
+          "-OL1" -> Just Opt_OL1
+          "-OL2" -> Just Opt_OL2
+          "-OL3" -> Just Opt_OL3
+          "-OL4" -> Just Opt_OL4
+          _      -> Nothing
 
 
 
@@ -217,9 +277,10 @@ foldParameter input par =
   case input of
     Left err -> Left err
     Right st ->
-      let out = tryMaybeList st [(genericParameterParse par (parsePrefixFlag,    addPrefixFlag  )),
-                                 (genericParameterParse par (parseOptimization,  addOptFlag     )),
-                                 (genericParameterParse par (parseSpecificFlags, addSpecificFlag))]
+      let out = tryMaybeList st [(genericParameterParse par (parsePrefixFlag     , addPrefixFlag  )),
+                                 (genericParameterParse par (parseOptimization st, addOptFlag     )),
+                                 (genericParameterParse par (parseSpecificFlags  , addSpecificFlag)),
+                                 (genericParameterParse par (parseImport         , addImport      ))]
       in case out of
         Nothing -> Left $ ParamErr "Invalid parameter"   -- Add more specificity
         Just x  -> Right x
@@ -235,5 +296,5 @@ foldParameter input par =
 
 parseParameters :: [String] -> Either BzoErr BzoSettings
 parseParameters pars =
-  let settings = BzoSettings [] [] [] Opt_Nil []
+  let settings = BzoSettings [] [] [] Opt_None []
   in foldl foldParameter (Right settings) pars
