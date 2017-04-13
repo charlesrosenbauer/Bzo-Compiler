@@ -53,6 +53,7 @@ data BzoErr = Other
   | LexErr    { position::BzoPos, errorStr::String }
   | ParseErr  { position::BzoPos, errorStr::String }
   | TypeErr   { position::BzoPos, errorStr::String }
+  | ParamErr  { errStr::String }
 
 
 
@@ -68,7 +69,7 @@ showBzErr (StringErr  p st) = "Bzo Error:\n" ++ (showErrPos p) ++ (show st)
 showBzErr (LexErr     p st) = "Lexer Error:\n" ++ (showErrPos p) ++ (show st)
 showBzErr (ParseErr   p st) = "Parse Error:\n" ++ (showErrPos p) ++ (show st)
 showBzErr (TypeErr    p st) = "Type Error:\n" ++ (showErrPos p) ++ (show st)
-showBzErr (Other          ) = "Unknown Error?"
+showBzErr (ParamErr     st) = "Parameter Error:\n" ++ (show st)  
 instance Show BzoErr where show = showBzErr
 
 

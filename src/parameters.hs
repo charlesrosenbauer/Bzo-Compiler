@@ -1,5 +1,7 @@
 module BzoParameterParser where
 import Data.List
+import BzoTypes
+import System.IO
 
 
 
@@ -10,7 +12,8 @@ import Data.List
 
 
 
-data SpecificFlags = Flag_OutputLLVM | Flag_OutputAssembly | Flag_FastMath   -- | Mostly placeholders, though these are likely to still be used
+data SpecificFlags = Flag_OutputLLVM | Flag_OutputAssembly | Flag_FastMath
+                   | Flag_PureBzo     -- | Mostly placeholders, though these are likely to still be used
 
 
 
@@ -34,7 +37,7 @@ data OptimizationSettings = Opt_OL1 | Opt_OL2 | Opt_OL3 | Opt_OL4 |          -- 
 
 
 
-data PrefixFlags = PathFlag FilePath | GranFlag Int | OutFlag FilePath
+data PrefixFlags = PathFlag FilePath | GranFlag Int | OutFlag FilePath | EnvFlag FilePath
 
 
 
@@ -50,7 +53,7 @@ data BzoSettings
     importedFiles :: [(FilePath, String)],
     libraryFiles  :: [(FilePath, String)],
     flags         :: [SpecificFlags],
-    optFlags      :: OptimizationSetting,
+    optFlags      :: OptimizationSettings,
     prefixFlags   :: [PrefixFlags] }
 
 
@@ -78,9 +81,10 @@ parseFlag s = case (head s) of
 
 parsePrefixFlag :: String -> Maybe PrefixFlags
 parsePrefixFlag s
-  | isPrefixOf "-p=" s = Just $ FilePath $ drop 3 s    -- Path to search for missing files
-  | isPrefixOf "-g=" s = Just $ GranFlag $ drop 3 s    -- Thread Granularity
-  | isPrefixOf "-o=" s = Just $ OutFlag  $ drop 3 s    -- Output Path
+  | isPrefixOf "-p="   s = Just $ PathFlag $ drop 3 s           -- Path to search for missing files
+  | isPrefixOf "-g="   s = Just $ GranFlag $ read $ drop 3 s    -- Thread Granularity (add potential failure here if input is not a valid int)
+  | isPrefixOf "-o="   s = Just $ OutFlag  $ drop 3 s           -- Output Path
+  | isPrefixOf "-env=" s = Just $ EnvFlag  $ drop 5 s           -- Environment Path
   | otherwise          = Nothing
 
 
@@ -93,7 +97,7 @@ parsePrefixFlag s
 
 
 addPrefixFlag :: BzoSettings -> PrefixFlags -> BzoSettings
-addPrefixFlag (BzoSettings imp lib flg opt par pfx) f = BzoSettings imp lib flg opt par (pfx ++ [f])
+addPrefixFlag (BzoSettings imp lib flg opt pfx) f = BzoSettings imp lib flg opt (pfx ++ [f])
 
 
 
@@ -137,7 +141,7 @@ parseOptimization s =
 
 
 addOptFlag :: BzoSettings -> OptimizationSettings -> BzoSettings
-addOptFlag (BzoSettings imp lib flg opt par pfx) f = BzoSettings imp lib flg f par pfx
+addOptFlag (BzoSettings imp lib flg opt pfx) f = BzoSettings imp lib flg f pfx
 
 
 
@@ -149,9 +153,10 @@ addOptFlag (BzoSettings imp lib flg opt par pfx) f = BzoSettings imp lib flg f p
 
 
 parseSpecificFlags :: String -> Maybe SpecificFlags
-parseSpecificFlags s = lookup [("-outputLLVM"    , Flag_OutputLLVM    ),
-                               ("-outputAssembly", Flag_OutputAssembly),
-                               ("-fastmath"      , Flag_FastMath      )]
+parseSpecificFlags s = lookup s [("-output-llvm"    , Flag_OutputLLVM    ),
+                                 ("-output-assembly", Flag_OutputAssembly),
+                                 ("-fastmath"       , Flag_FastMath      ),
+                                 ("-pure-bzo"       , Flag_PureBzo       )]
 
 
 
@@ -163,7 +168,61 @@ parseSpecificFlags s = lookup [("-outputLLVM"    , Flag_OutputLLVM    ),
 
 
 addSpecificFlag :: BzoSettings -> SpecificFlags -> BzoSettings
-addSpecificFlag (BzoSettings imp lib flg opt par pfx) f = BzoSettings imp lib ([f] ++ flg) opt par pfx
+addSpecificFlag (BzoSettings imp lib flg opt pfx) f = BzoSettings imp lib ([f] ++ flg) opt pfx
+
+
+
+
+
+
+
+
+
+
+genericParameterParse :: String -> ((String -> Maybe a), (BzoSettings -> a -> BzoSettings)) -> BzoSettings -> Maybe BzoSettings
+genericParameterParse str (fa, fb) settings =
+  let par = fa str
+  in case par of
+    Nothing -> Nothing
+    Just a  -> Just $ fb settings a
+
+
+
+
+
+
+
+
+
+
+
+tryMaybeList :: a -> [a -> Maybe b] -> Maybe b
+tryMaybeList a []       = Nothing
+tryMaybeList a (f : fs) =
+  case (f a) of
+    Just x  -> Just x
+    Nothing -> tryMaybeList a fs
+
+
+
+
+
+
+
+
+
+
+foldParameter :: Either BzoErr BzoSettings -> String -> Either BzoErr BzoSettings
+foldParameter input par =
+  case input of
+    Left err -> Left err
+    Right st ->
+      let out = tryMaybeList st [(genericParameterParse par (parsePrefixFlag,    addPrefixFlag  )),
+                                 (genericParameterParse par (parseOptimization,  addOptFlag     )),
+                                 (genericParameterParse par (parseSpecificFlags, addSpecificFlag))]
+      in case out of
+        Nothing -> Left $ ParamErr "Invalid parameter"   -- Add more specificity
+        Just x  -> Right x
 
 
 
@@ -177,4 +236,4 @@ addSpecificFlag (BzoSettings imp lib flg opt par pfx) f = BzoSettings imp lib ([
 parseParameters :: [String] -> Either BzoErr BzoSettings
 parseParameters pars =
   let settings = BzoSettings [] [] [] Opt_Nil []
-  in
+  in foldl foldParameter (Right settings) pars
