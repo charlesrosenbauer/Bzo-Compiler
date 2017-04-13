@@ -282,7 +282,7 @@ foldParameter input par =
                                  (genericParameterParse par (parseSpecificFlags  , addSpecificFlag)),
                                  (genericParameterParse par (parseImport         , addImport      ))]
       in case out of
-        Nothing -> Left $ ParamErr "Invalid parameter"   -- Add more specificity
+        Nothing -> Left $ ParamErr $ "Error on parameter " ++ (show par)
         Just x  -> Right x
 
 
