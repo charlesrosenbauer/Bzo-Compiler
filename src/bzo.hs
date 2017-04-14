@@ -7,6 +7,7 @@ import BzoLexer
 import BzoTypes
 import BzoTokens
 import Compiler
+import BzoParameterParser
 --import BzoError
 
 
@@ -21,10 +22,10 @@ import Compiler
 main :: IO()
 main = do
     args <- getArgs
-    case length args of
-        0 -> mainLoop_ (== "$quit") (readPrompt "Bzo>>> ") (\s -> (putStrLn $ parseInput ("REPL", (s ++ "\n"))))
-        otherwise -> do
-            (loadMany args) >>= (printMany . parseMany . (\ss -> zip args ss))
+    case parseParameters args of
+      Left  (ParamErr                         err) -> putStrLn err
+      Right (BzoSettings  []  []  [] Opt_None  []) -> mainLoop_ (== "$quit") (readPrompt "Bzo>>> ") (\s -> (putStrLn $ parseInput ("REPL", (s ++ "\n"))))
+      Right (BzoSettings imp lib flg opt      pfx) -> (loadMany $ map fst imp) >>= (printMany . parseMany . (\ss -> zip args ss))
 
 
 
