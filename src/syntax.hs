@@ -108,6 +108,24 @@ data BzoSyntax
 
 
 
+data CfgSyntax
+  = LibLine {
+      cpos    :: BzoPos,
+      libName :: String,
+      libPath :: FilePath }
+  | LibLines {
+      cpos     :: BzoPos,
+      libLines :: [CfgSyntax] }
+  deriving (Eq, Show)
+
+
+
+
+
+
+
+
+
 showAST :: BzoSyntax -> String
 showAST (BzS_FunDef _ inpar fid expar def) = " {FNDEF: " ++ (show inpar) ++ " -> " ++ (show fid) ++ " -> " ++ (show expar) ++ " :: " ++ (show def) ++ "}\n\n"
 showAST (BzS_TypDef _ par tid def)         = " {TYDEF: " ++ (show tid) ++ " [ " ++ (show par) ++ " ] :: " ++ (show def) ++ "}\n\n"

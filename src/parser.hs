@@ -27,6 +27,7 @@ data ParseItem
   | PI_Exs  { piSyns:: [BzoSyntax] }
   | PI_Err  { piErr :: BzoErr }
   | PI_SOF
+  | PI_Cfg  { piCfg :: CfgSyntax }
   deriving Show
 
 
@@ -45,6 +46,7 @@ getPIPos (PI_Err           er) = position er
 getPIPos (PI_CPXS          ps) = pos $ head ps
 getPIPos (PI_PLXS          ps) = pos $ head ps
 getPIPos (PI_Exs           ps) = pos $ head ps
+getPIPos (PI_Cfg           ps) = cpos ps
 getPIPos x                     = pos $ piSyn x
 
 
@@ -107,6 +109,8 @@ data MockParseItem
   | MP_Exs
   | MP_SOF
   | MP_CallItem
+  | MP_Cfg_Line
+  | MP_Cfg_Lines
 
 
 
@@ -220,6 +224,8 @@ matchParseItem (MP_Tup ) (PI_BzSyn (BzS_Box        p x)) = True
 matchParseItem (MP_Tup ) (PI_BzSyn (BzS_Cmpd       p x)) = True
 matchParseItem (MP_Tup ) (PI_BzSyn (BzS_Poly       p x)) = True
 matchParseItem (MP_Tup ) (PI_BzSyn (BzS_Nil        p  )) = True
+matchParseItem (MP_Cfg_Line) (PI_Cfg    (LibLine p a b)) = True
+matchParseItem (MP_Cfg_Lines)(PI_Cfg    (LibLines  p x)) = True
 matchParseItem mp (PI_BzSyn sn) = matchSyntax mp sn
 matchParseItem _ _ = False
 
@@ -300,6 +306,21 @@ matchBzoToken (TkBuiltin a b) (TkBuiltin c d) = True
 matchBzoToken (TkBIType  a b) (TkBIType  c d) = True
 matchBzoToken (TkNil        ) (TkNil        ) = True
 matchBzoToken _               _               = False
+
+
+
+
+
+
+
+
+
+
+genericParseOp :: [MockParseItem] -> ([ParseItem] -> ParseItem) -> ParserOp
+genericParseOp mpi xform = ParserOp (\ps ->
+  case (match ps mpi) of
+    Nothing -> Nothing
+    Just (xs, (ParserState f p s i)) -> Just (ParserState f p ([xform $ reverse xs] ++ s) i) )
 
 
 
@@ -458,15 +479,15 @@ shiftParser (ParserState f p s []) = (ParserState f p s [])
 
 
 
-parseIter :: ParserState -> [Parser] -> Either [BzoErr] BzoSyntax
+parseIter :: ParserState -> [Parser] -> Either [BzoErr] ParseItem
 parseIter ps p =
   case ((runParsers ps p), ps) of
     (_         , (ParserState f p' []  []))                 -> Left $ [ParseErr (BzoPos 0 0 f) "Nothing to Parse?"]
     (_         , (ParserState f p' [PI_SOF]  []))           -> Left $ [ParseErr (BzoPos 0 0 f) "Nothing to Parse?"]
     (Left  []  , (ParserState f p' _   []))                 -> Left $ [ParseErr p' "Parser did not consume entire file."]
     (Left  []  , (ParserState f p' s   i ))                 -> parseIter (shiftParser (ParserState f p' s i)) p
-    (Left  errs,                        _)                  -> Left errs        -- | Errors!!
-    (Right (ParserState f p' [(PI_BzSyn s)] []),    _)      -> Right s          -- | Success!!
+    (Left  errs,                        _)                  -> Left errs              -- | Errors!!
+    (Right (ParserState f p' [(PI_BzSyn s)] []),    _)      -> Right (PI_BzSyn s)     -- | Success!!
     (Right (ParserState f p' s   i ),    _)                 -> parseIter (ParserState f (getPIPos $ head s) s i) p
 
 
@@ -647,4 +668,4 @@ parseFile f tks ps =
   in case (bracketErrs, parseIter (ParserState f (BzoPos 0 0 f) [PI_SOF] tks) ps) of
       (Just errs,        _ ) -> Left errs
       (Nothing  , Left errs) -> Left errs
-      (Nothing  , Right ast) -> Right ast
+      (Nothing  , Right ast) -> Right piSyn $ ast

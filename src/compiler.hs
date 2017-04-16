@@ -10,7 +10,6 @@ import BzoLexer
 import BzoSyntax
 import BzoTokens
 import BzoParameterParser
-import Debug.Trace
 
 
 
@@ -69,18 +68,6 @@ isEnvPath _           = False
 
 
 
-filterMaybe :: [a] -> (a -> Maybe b) -> [b]
-filterMaybe xs f = catMaybes $ filter isJust $ map f xs
-
-
-
-
-
-
-
-
-
-
 getLibraryCfg :: BzoSettings -> IO (Either BzoErr String)
 getLibraryCfg (BzoSettings imp lib flg opt pfx) =
   let paths = ["/usr/lib",
@@ -98,3 +85,14 @@ getLibraryCfg (BzoSettings imp lib flg opt pfx) =
                                 [] -> Left $ PrepErr "No valid path to a valid Bzo Environment\n"
                                 ps -> Right$ head ps) validFiles
     return $ firstPath
+
+
+
+
+
+
+
+
+
+
+--getLibraryCfgContents :: BzoSettings -> IO (Either BzoErr )

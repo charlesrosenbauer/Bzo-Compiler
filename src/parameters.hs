@@ -79,7 +79,12 @@ data OptimizationSettings = Opt_OL1 | Opt_OL2 | Opt_OL3 | Opt_OL4 |          -- 
 
 
 
-data PrefixFlags = PathFlag FilePath | GranFlag Int | OutFlag FilePath | EnvFlag FilePath deriving Show
+data PrefixFlags
+  = PathFlag {flgpath :: FilePath}
+  | GranFlag Int
+  | OutFlag {flgpath :: FilePath}
+  | EnvFlag {flgpath :: FilePath}
+  deriving Show
 
 
 

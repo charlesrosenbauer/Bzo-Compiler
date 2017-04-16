@@ -37,21 +37,6 @@ testParserPass = Parser (\ps ->
 
 
 
-genericParseOp :: [MockParseItem] -> ([ParseItem] -> ParseItem) -> ParserOp
-genericParseOp mpi xform = ParserOp (\ps ->
-  case (match ps mpi) of
-    Nothing -> Nothing
-    Just (xs, (ParserState f p s i)) -> Just (ParserState f p ([xform $ reverse xs] ++ s) i) )
-
-
-
-
-
-
-
-
-
-
 parsePrimitive0 :: ParserOp
 parsePrimitive0 = genericParseOp [mtk_Id] (\tk ->
   PI_BzSyn $ BzS_Id (spos $ piTok $ head tk) (valId $ piTok $ head tk))
