@@ -488,6 +488,7 @@ parseIter ps p =
     (Left  []  , (ParserState f p' s   i ))                 -> parseIter (shiftParser (ParserState f p' s i)) p
     (Left  errs,                        _)                  -> Left errs              -- | Errors!!
     (Right (ParserState f p' [(PI_BzSyn s)] []),    _)      -> Right (PI_BzSyn s)     -- | Success!!
+    (Right (ParserState f p' [(PI_Cfg   s)] []),    _)      -> Right (PI_Cfg   s)     -- | Success!!
     (Right (ParserState f p' s   i ),    _)                 -> parseIter (ParserState f (getPIPos $ head s) s i) p
 
 
@@ -668,4 +669,4 @@ parseFile f tks ps =
   in case (bracketErrs, parseIter (ParserState f (BzoPos 0 0 f) [PI_SOF] tks) ps) of
       (Just errs,        _ ) -> Left errs
       (Nothing  , Left errs) -> Left errs
-      (Nothing  , Right ast) -> Right piSyn $ ast
+      (Nothing  , Right ast) -> Right $ piSyn ast

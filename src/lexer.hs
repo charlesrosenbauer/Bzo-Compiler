@@ -800,11 +800,11 @@ generalLexerMany = many generalLexer
 
 
 
-fileLexer :: String -> String -> Either BzoErr [BzoToken]
+fileLexer :: String -> String -> Either [BzoErr] [BzoToken]
 fileLexer file syms =
   let res = runLexer syms generalLexerMany file
   in  case res of
-    Left  err -> Left err
+    Left  err -> Left [err]
     Right tks -> Right $ filter isValidToken tks
   where isValidToken (TkNil) = False
         isValidToken _         = True

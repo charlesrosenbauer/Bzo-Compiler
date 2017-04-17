@@ -10,6 +10,7 @@ import BzoLexer
 import BzoSyntax
 import BzoTokens
 import BzoParameterParser
+import BzoConfigParser
 
 
 
@@ -68,23 +69,57 @@ isEnvPath _           = False
 
 
 
-getLibraryCfg :: BzoSettings -> IO (Either BzoErr String)
+applyWithErr :: (b -> Either a c) -> Either a b -> Either a c
+applyWithErr f x =
+  case x of
+    Left  a -> Left  a
+    Right b -> f b
+
+
+
+
+
+
+
+
+
+
+applyWithErrList :: (b -> Either a c) -> Either [a] b -> Either [a] c
+applyWithErrList f x =
+  case x of
+    Left  a -> Left a
+    Right b ->
+      case f b of
+        Left  a -> Left [a]
+        Right b -> Right b
+
+
+
+
+
+
+
+
+
+
+getLibraryCfg :: BzoSettings -> IO (Either [BzoErr] String)
 getLibraryCfg (BzoSettings imp lib flg opt pfx) =
-  let paths = ["/usr/lib",
+  let paths = ((map flgpath (filter isEnvPath pfx)) ++
+              ["/usr/lib",
                "/urs/lib64",
                "/lib",
                "/lib64",
                "/opt/lib",
                "/opt/lib64",
-               "/opt"] ++ (map flgpath (filter isEnvPath pfx))
-      paths' = map (\s -> appendFilePath s "/bzo/cfg/libs.cfg") paths
+               "/opt"])
+      paths' = map (\s -> appendFilePath s "bzo/cfg/libs.cfg") paths
       validPaths = filterM doesFileExist paths'
   in do
     validFiles <- fmap (\x -> sequence $ map readFile x) validPaths
     firstPath  <- fmap (\fs -> case fs of
-                                [] -> Left $ PrepErr "No valid path to a valid Bzo Environment\n"
+                                [] -> Left [PrepErr "No valid path to a valid Bzo Environment\n"]
                                 ps -> Right$ head ps) validFiles
-    return $ firstPath
+    return firstPath
 
 
 
@@ -95,4 +130,8 @@ getLibraryCfg (BzoSettings imp lib flg opt pfx) =
 
 
 
---getLibraryCfgContents :: BzoSettings -> IO (Either BzoErr )
+getLibraryCfgContents :: BzoSettings -> IO (Either [BzoErr] CfgSyntax)
+getLibraryCfgContents settings =
+  let text = getLibraryCfg settings
+      tks  = fmap (applyWithErr (\s -> fileLexer s "libs.cfg")) text
+  in fmap (applyWithErr $ parseLibCfgFile "libs.cfg") tks
