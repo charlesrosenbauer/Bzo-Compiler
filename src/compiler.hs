@@ -3,6 +3,8 @@ import System.IO
 import System.Directory
 import Control.Monad
 import Data.Maybe
+import Data.List
+import Data.Either
 import BzoParser
 import BzoParserRules
 import BzoTypes
@@ -21,13 +23,85 @@ import BzoConfigParser
 
 
 
-compileFile :: String -> String -> String
-compileFile name f =
-  let out = fileLexer f name
-  in  case out of
-    Left  err -> show err
-    Right tks ->
-      show $ parseFile name tks [parseCalls]
+compileFilePass :: BzoSettings -> IO ()
+compileFilePass (BzoSettings imp lib flg opt pfx) =
+  let valid = areFilesValid (map fst imp)
+  in do
+      lCfg  <- getLibraryCfgContents (BzoSettings imp lib flg opt pfx)
+      files <- loadSourceFiles imp
+      -- TODO: Preprocessor
+      -- TODO: Type Checker
+      -- TODO: Static Analysis
+      -- TODO: Code Generation
+      putStrLn $ case valid of
+                  Nothing -> show (((applyWithErr wrappedParserMap). wrappedLexerMap) files)
+                  Just er -> show er
+
+
+
+
+
+
+
+
+
+
+wrappedLexerMap :: [(FilePath, String)] -> Either [BzoErr] [(FilePath, [BzoToken])]
+wrappedLexerMap fs =
+  let contents = map (\(f, c) -> fileLexer f c) fs
+      errors   = concat $ lefts contents
+      passes   = rights contents
+  in case errors of
+      [] -> Right $ zip (map fst fs) passes
+      er -> Left  er
+
+
+
+
+
+
+
+
+
+
+wrappedParserMap :: [(FilePath, [BzoToken])] -> Either [BzoErr] [BzoSyntax]
+wrappedParserMap tks =
+  let contents = map (\(f, t) -> parseFile f t [parseCalls]) tks
+      errors   = concat $ lefts contents
+      passes   = rights contents
+  in case errors of
+    [] -> Right passes
+    er -> Left  er
+
+
+
+
+
+
+
+
+
+
+loadSourceFiles :: [(FilePath, String)] -> IO [(FilePath, String)]
+loadSourceFiles ps =
+  let paths = map fst ps
+      texts = sequence $ map readFile paths
+  in  fmap (zip paths) texts
+
+
+
+
+
+
+
+
+
+
+areFilesValid :: [FilePath] -> Maybe BzoErr
+areFilesValid fs =
+  case filter (\s -> not $ (isSuffixOf ".bz" s) || (isSuffixOf ".lbz" s)) fs of
+    [] -> Nothing
+    xs -> Just $ PrepErr ("The following files have invalid extensions : " ++ (show xs))
 
 
 
