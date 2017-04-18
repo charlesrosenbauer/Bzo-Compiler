@@ -75,7 +75,7 @@ All symbols and their (current) intended meanings:
 Tuples
 
 [  ]
-Denote Array Types
+Denote Array Types. Placing an integer literal specifies the exact size, and expressions inside can be used for either dynamic allocation or pattern matching.
 
 {  }
 Do Block / Record
@@ -84,7 +84,7 @@ Do Block / Record
 Type Filter (i.e., x:I32 forces x to be of type I32.)
 
 ;
-Denote Lambda Expression
+Denote Lambda Expression (i.e., ;x :: (x. 5)+ is a lambda expression that adds 5 to its input, and returns the result)
 
 ::
 Define
@@ -131,33 +131,36 @@ Identifiers beginning with uppercase letters are denoted as types. Identifiers b
 ```
 What Hello World will likely look like:
 ```
-'IO' $import
+Main $module
+IO   $import
 
-main :: IO
+main :: () ;; ()
 
-main :: ~c:Console. ("Hello World!". ~c) println ~c
+main :: {
+  ~c:Console
+  ('Hello World!'. ~c) println ~c }
 ```
 Explanation:
-First we import the IO library.
-Then we define main as type IO.
-Then we define main's behavior all on one line ({} braces are required for multi-line functions). First, define a mutable variable ~c, and set its type as Console. Console is the "key" type for text IO. The Console type would also be fixed to only allow one variable of its type to be created to avoid race conditions. We pass the string 'Hello World!' and ~c both into the println function, and pass the result (the "transformed" Console state) back into ~c.
+First we define the file as the main module, and import the IO library.
+Then we define main as type () ;; (), as the main function has no inputs or outputs.
+Then we define main's behavior. A definition containing multiple expressions is placed between braces ( {} ). First, define a mutable variable ~c, and set its type as Console. Console is the "key" type for text IO. The Console type would also be fixed to only allow one variable of its type to be created to avoid race conditions. We pass the string 'Hello World!' and ~c both into the println function, and pass the result (the "transformed" Console state) back into ~c.
 
 
 Hypotenuse Function:
 ```
 hypot :: (N:Num. N) ;; N
 
-(a.b) hypot q :: (a.b)^2..+ \2 q
+(a.b) hypot (q) :: (a.b)^2..+ \2 q
 
-hypot :: ^2..+ \2
+hypot :: ^2.. + \2
 ```
 
 Explanation:
 Okay, this is a bit complicated. In fact, I've written two implementations of it here. They do the same thing, but the bottom one just omits stuff the compiler could figure out anyway. First, we define the hypot function to take in inputs of type (N. N), and produce outputs of type N. N in this case is a type variable, allowing for hypot to be used generically. The ":Num" appended to it requires N to be of type Num. But why use the type variable then? Num is actually a set of types, defined as (Int, Flt, Unt). As a result, Num works a bit like a type class. What the type signature for the function here means is that hypot will take any two inputs that are included in Num (signed and unsigned integers, and floats), however only if the two inputs are of the same type. It then returns a single value of the same type.
 
-Then we define hypot's behavior. The (a.b) before hypot are the input parameters, and the q afterward is the output parameter. It is then defined by taking the array, and passing it into the "^2" function, which squares numbers. By adding the ".." afterward, it is transformed into an array function, and because a and b are both presumed to be of the same type, the tuple can be interpreted as an array. Thus "^2.." returns a new tuple containing the squares of a and b respectively. That gets passed into the + function, which simply returns the sum of all its inputs. That gets passed into the "\2" function, which returns the square root of its input. This gets passed into q, which is of course the output parameter.
+Then we define hypot's behavior. The (a.b) before hypot are the input parameters, and the (q) afterward is the output parameter. Inputs and outputs must be placed within parentheses if they are not already present. It is then defined by taking the array, and passing it into the "^2" function, which squares numbers. By adding the ".." afterward, it is transformed into an array function, and because a and b are both presumed to be of the same type, the tuple can be interpreted as an array. Thus "^2.." returns a new tuple containing the squares of a and b respectively. That gets passed into the + function, which simply returns the sum of all its inputs. That gets passed into the "\2" function, which returns the square root of its input. This gets passed into q, which is of course the output parameter.
 
-The second implementation, again, behaves the same. It just leaves the compiler to determine the inputs and outputs. In fact, without the specific type definition there (which wouldn't be manditory anyway), the second implementation could actually be more general than the first, as the compiler could find implementations for it on arrays (and tuples) of any size.
+The second implementation, again, behaves the same. It just leaves the compiler to determine the inputs and outputs. In fact, without the specific type definition there (which wouldn't be mandatory anyway), the second implementation could actually be more general than the first, as the compiler could find implementations for it on arrays (and tuples) of any size.
 
 
 
