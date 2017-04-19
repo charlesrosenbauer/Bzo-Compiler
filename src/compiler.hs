@@ -5,6 +5,7 @@ import Control.Monad
 import Data.Maybe
 import Data.List
 import Data.Either
+import Data.Tuple
 import BzoParser
 import BzoParserRules
 import BzoTypes
@@ -34,9 +35,20 @@ compileFilePass (BzoSettings imp lib flg opt pfx) =
       -- TODO: Static Analysis
       -- TODO: Code Generation
       putStrLn $ case valid of
-                  Nothing -> show (((applyWithErr wrappedParserMap). wrappedLexerMap) files)
+                  Nothing -> show (((applyWithErr wrappedParserMap). wrappedLexerMap) $ map swap files)
                   Just er -> show er
 
+
+
+
+
+
+
+
+
+
+compileExpression :: (FilePath, String) -> String
+compileExpression s = show (((applyWithErr wrappedParserMap). wrappedLexerMap) [swap s])
 
 
 

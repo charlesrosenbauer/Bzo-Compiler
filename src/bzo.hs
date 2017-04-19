@@ -1,9 +1,8 @@
 module Main where
 import Control.Monad
 import System.Environment
-import System.IO hiding (try)
+import System.IO
 import BzoLexer
---import BzoParser
 import BzoTypes
 import BzoTokens
 import Compiler
@@ -24,8 +23,8 @@ main = do
     args <- getArgs
     case parseParameters args of
       Left  (ParamErr                         err) -> putStrLn err
-      Right (BzoSettings  []  []  [] Opt_None  []) -> mainLoop_ (== "$quit") (readPrompt "Bzo>>> ") (\s -> (putStrLn $ parseInput ("REPL", (s ++ "\n"))))
-      Right (BzoSettings imp lib flg opt      pfx) -> (loadMany $ map fst imp) >>= (printMany . parseMany . (\ss -> zip args ss))
+      Right (BzoSettings  []  []  [] Opt_None  []) -> mainLoop_ (== "$quit") (readPrompt "Bzo>>> ") (\s -> (putStrLn $ compileExpression ("REPL", (s ++ "\n"))))
+      Right settings                               -> compileFilePass settings
 
 
 
@@ -66,41 +65,6 @@ readPrompt prompt = flushStr prompt >> getLine
 
 flushStr :: String -> IO ()
 flushStr str = putStr str >> hFlush stdout
-
-
-
-
-
-
-
-
-
-
-parseInput :: (String, String) -> String
-parseInput (name, input) = compileFile name input
-
-
-
-
-
-
-
-
-
-
-loadMany :: [FilePath] -> IO [String]
-loadMany files = sequence $ map readFile files
-
-
-
-
-
-
-
-
-
-parseMany :: [(String, String)] -> [String]
-parseMany s = map parseInput s
 
 
 
