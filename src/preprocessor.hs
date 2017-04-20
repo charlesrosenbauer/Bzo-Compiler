@@ -1,8 +1,11 @@
 module BzoPreprocessor where
 import BzoLexer
 import BzoParser
+import BzoSyntax
+import BzoTypes
 import Control.Monad
 import System.Environment
+import Compiler
 import System.IO hiding (try)
 
 
@@ -28,12 +31,14 @@ data BzoProjectSyntax
 
 
 
-loadAST :: String -> String -> Either [BzoErr] BzoSyntax
-loadAST fname fcontent =
-  let lexSyms = fileLexer fname fcontent
-  case lexSyms of
-    Left err -> [err]
-    Right ts -> parseFile fname ts [parseCalls]
+getModuleName :: BzoSyntax -> Either BzoErr String    -- Should probably find a more general way to accomplish this.
+getModuleName ast =
+  case ast of
+    (BzS_Calls pos (c : cs)) ->
+      case c of
+        (BzS_Expr p [(BzS_TyId _ tid), (BzS_BTId _ "$Module")]) -> Right tid
+        _                                                       -> Left $ PrepErr "Invalid Formatting in File: expected module definition"
+    expr                     -> Left  $ PrepErr "Invalid Formatting in File"
 
 
 
@@ -44,5 +49,5 @@ loadAST fname fcontent =
 
 
 
-preprocessStage :: [FilePath] -> IO Either [BzoErr] BzoProjectSyntax
-preprocessStage = do
+--preprocessStage :: [FilePath] -> IO Either [BzoErr] BzoProjectSyntax
+--preprocessStage = do
