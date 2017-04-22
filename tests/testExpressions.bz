@@ -1,3 +1,4 @@
+Test $Module
 
 'A bunch of potential Bzo expressions for use in testing expression parsing'
 'Many of these may show up in the standard library'

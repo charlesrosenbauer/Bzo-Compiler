@@ -19,8 +19,9 @@ import System.IO hiding (try)
 
 data BzoProjectSyntax
   = BzoProjectSyntax{
-      fileAST  :: BzoSyntax,
-      fileDeps :: [BzoProjectSyntax] }
+      moduleName :: String,
+      fileAST    :: BzoSyntax,
+      fileDeps   :: [BzoProjectSyntax] }
 
 
 
@@ -169,14 +170,14 @@ matchBCall3 s p0 expr p1 =
 
 
 
-getModuleName :: BzoSyntax -> Either BzoErr String    -- Should probably find a more general way to accomplish this.
-getModuleName ast =
-  case ast of
-    (BzS_Calls pos (c : cs)) ->
-      case c of
-        (BzS_Expr p [(BzS_TyId _ tid), (BzS_BTId _ "$Module")]) -> Right tid
-        _                                                       -> Left $ PrepErr "Invalid Formatting in File: expected module definition"
-    expr                     -> Left  $ PrepErr "Invalid Formatting in File"
+
+
+verifyAST :: Maybe (String, BzoSyntax) -> Maybe (String, BzoSyntax)   -- Add import, link, importAs, and linkAs
+verifyAST Nothing = Nothing
+verifyAST (Just (modName, (BzS_Calls p (x : xs)))) =
+      case (matchBCall1 "$Module" mkPat_TId x) of
+        Just syn -> Just (sid syn, (BzS_Calls p xs))
+        _        -> Nothing
 
 
 
@@ -186,6 +187,5 @@ getModuleName ast =
 
 
 
-
---preprocessStage :: [FilePath] -> IO Either [BzoErr] BzoProjectSyntax
---preprocessStage = do
+--preprocessProgram :: FilePath -> BzoSettings -> [BzoSyntax] -> IO (Either [BzoErr] BzoProjectSyntax)
+--preprocessProgram libs settings ast =
