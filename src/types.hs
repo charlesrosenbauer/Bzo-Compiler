@@ -53,8 +53,9 @@ data BzoErr = Other
   | LexErr    { position::BzoPos, errorStr::String }
   | ParseErr  { position::BzoPos, errorStr::String }
   | TypeErr   { position::BzoPos, errorStr::String }
-  | ParamErr  { errStr::String }
-  | PrepErr   { errStr::String}
+  | ParamErr  { errorStr::String }
+  | CfgErr    { errorStr::String }
+  | PrepErr   { position::BzoPos, errorStr::String}
 
 
 
@@ -71,7 +72,8 @@ showBzErr (LexErr     p st) = "Lexer Error:\n" ++ (showErrPos p) ++ (show st)
 showBzErr (ParseErr   p st) = "Parse Error:\n" ++ (showErrPos p) ++ (show st)
 showBzErr (TypeErr    p st) = "Type Error:\n" ++ (showErrPos p) ++ (show st)
 showBzErr (ParamErr     st) = "Parameter Error:\n" ++ (show st)
-showBzErr (PrepErr      st) = "Preprocessor Error:\n" ++ (show st)
+showBzErr (CfgErr       st) = "Configuration Error:\n" ++ (show st)
+showBzErr (PrepErr    p st) = "Preprocessor Error:\n" ++ (showErrPos p) ++ (show st)
 instance Show BzoErr where show = showBzErr
 
 

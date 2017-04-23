@@ -113,7 +113,7 @@ areFilesValid :: [FilePath] -> Maybe BzoErr
 areFilesValid fs =
   case filter (\s -> not $ (isSuffixOf ".bz" s) || (isSuffixOf ".lbz" s)) fs of
     [] -> Nothing
-    xs -> Just $ PrepErr ("The following files have invalid extensions : " ++ (show xs))
+    xs -> Just $ CfgErr ("The following files have invalid extensions : " ++ (show xs))
 
 
 
@@ -203,7 +203,7 @@ getLibraryCfg (BzoSettings imp lib flg opt pfx) =
   in do
     validFiles <- fmap (\x -> sequence $ map readFile x) validPaths
     firstPath  <- fmap (\fs -> case fs of
-                                [] -> Left [PrepErr "No valid path to a valid Bzo Environment\n"]
+                                [] -> Left [CfgErr "No valid path to a valid Bzo Environment\n"]
                                 ps -> Right$ head ps) validFiles
     return firstPath
 

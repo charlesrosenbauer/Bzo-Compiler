@@ -172,12 +172,12 @@ matchBCall3 s p0 expr p1 =
 
 
 
-verifyAST :: Maybe (String, BzoSyntax) -> Maybe (String, BzoSyntax)   -- Add import, link, importAs, and linkAs
-verifyAST Nothing = Nothing
-verifyAST (Just (modName, (BzS_Calls p (x : xs)))) =
+verifyAST :: Either [BzoErr] (String, BzoSyntax) -> Either [BzoErr] (String, BzoSyntax)   -- Add import, link, importAs, and linkAs
+verifyAST (Left errs) = Left errs
+verifyAST (Right (modName, (BzS_Calls p (x : xs)))) =
       case (matchBCall1 "$Module" mkPat_TId x) of
-        Just syn -> Just (sid syn, (BzS_Calls p xs))
-        _        -> Nothing
+        Just syn -> Right (sid syn, (BzS_Calls p xs))
+        _        -> Left [PrepErr p "Illegal formatting. $Module must be defined at beginning of file.\n"]
 
 
 
