@@ -5,7 +5,6 @@ import BzoSyntax
 import BzoTypes
 import Control.Monad
 import System.Environment
-import Compiler
 import System.IO hiding (try)
 
 
@@ -18,14 +17,31 @@ import System.IO hiding (try)
 
 
 data BzoFileData
-  = BzoProjectSyntax{
-      bps_moduleName    :: String,
-      bps_filepath      :: FilePath,
-      bps_fileAST       :: BzoSyntax,
-      bps_fileImports   :: [String],
-      bps_fileLinks     :: [String],
-      bps_fileImporsAs  :: [(String, String)],
-      bps_fileLinksAs   :: [(String, String)]}
+  = BzoFileData{
+      bfd_moduleName    :: String,
+      bfd_filepath      :: FilePath,
+      bfd_fileAST       :: BzoSyntax,
+      bfd_fileImports   :: [String],
+      bfd_fileLinks     :: [String],
+      bfd_fileImporsAs  :: [(String, String)],
+      bfd_fileLinksAs   :: [(String, String)]}
+
+
+
+
+
+
+
+
+
+
+showBzoFileData :: BzoFileData -> String
+showBzoFileData (BzoFileData mn pth ast imp lnk impa lnka) =
+  "Module: " ++ mn ++ "\nPath: " ++ pth ++
+    "\nImports: " ++ (show imp) ++ "\nAliased Imports: " ++ (show impa) ++
+    "\nLinks: "   ++ (show lnk) ++ "\nAliased Links: "   ++ (show lnka) ++
+    "\nAST:\n"     ++ (show ast)
+instance Show BzoFileData where show = showBzoFileData
 
 
 
@@ -176,26 +192,43 @@ matchBCall3 s p0 expr p1 =
 
 
 
-verifyAST :: Either [BzoErr] (Bool, BzoFileData) -> Either [BzoErr] (Bool, BzoFileData)
+verifyAST :: Either [BzoErr] (Bool, BzoSyntax, BzoFileData) -> Either [BzoErr] (Bool, BzoSyntax, BzoFileData)
 verifyAST (Left errs) = Left errs
-verifyAST (Right (False, (BzoProjectSyntax "" path (BzS_Calls p (x : xs)) [] [] [] []))) =
+
+
+
+
+verifyAST (Right (b,     (BzS_Calls p []),     (BzoFileData mn path ast imp lnk impa lnka))) = Right (b, ast, (BzoFileData mn path ast imp lnk impa lnka))
+
+
+
+
+verifyAST (Right (False, ast, (BzoFileData "" path (BzS_Calls p (x:xs)) [] [] [] []))) =
       case (matchBCall1 "$Module" mkPat_TId x) of
-        Just syn -> verifyAST $ Right (False, (BzoProjectSyntax (sid syn) path (BzS_Calls p xs) [] [] [] []))
+        Just syn -> verifyAST $ Right (False, (BzS_Calls p xs), (BzoFileData (sid syn) path (BzS_Calls p xs) [] [] [] []))
         _        -> Left [PrepErr p "Illegal formatting. $Module must be defined at beginning of file.\n"]
-verifyAST (Right (False, (BzoProjectSyntax mn path (BzS_Calls p (x : xs)) imp lnk impa lnka))) =
+
+
+
+
+verifyAST (Right (False, ast, (BzoFileData mn path (BzS_Calls p (x : xs)) imp lnk impa lnka))) =
       case (matchBCall1 "$import" mkPat_TId x) of
-        Just syn -> verifyAST $ Right (False, (BzoProjectSyntax mn path (BzS_Calls p xs) ([sid syn] ++ imp) lnk impa lnka))
+        Just syn -> verifyAST $ Right (False, (BzS_Calls p xs), (BzoFileData mn path (BzS_Calls p xs) ([sid syn] ++ imp) lnk impa lnka))
         _        ->
           case (matchBCall1 "$link" mkPat_TId x) of
-            Just syn -> verifyAST $ Right (False, (BzoProjectSyntax mn path (BzS_Calls p xs) imp ([sid syn] ++ lnk) impa lnka))
+            Just syn -> verifyAST $ Right (False, (BzS_Calls p xs), (BzoFileData mn path (BzS_Calls p xs) imp ([sid syn] ++ lnk) impa lnka))
             _        ->
               case (matchBCall3 "$importAs" mkPat_TId x mkPat_TId) of
-                Just (a, b) -> verifyAST $ Right (False, (BzoProjectSyntax mn path (BzS_Calls p xs) imp lnk ([(sid a, sid b)] ++ impa) lnka))
+                Just (a, b) -> verifyAST $ Right (False, (BzS_Calls p xs), (BzoFileData mn path (BzS_Calls p xs) imp lnk ([(sid a, sid b)] ++ impa) lnka))
                 _           ->
                   case (matchBCall3 "$linkAs" mkPat_TId x mkPat_TId) of
-                    Just (a, b) -> verifyAST $ Right (False, (BzoProjectSyntax mn path (BzS_Calls p xs) imp lnk impa ([(sid a, sid b)] ++ lnka)))
-                    _           -> verifyAST $ Right (True,  (BzoProjectSyntax mn path (BzS_Calls p (x : xs)) imp lnk impa lnka))
-verifyAST (Right (True, (BzoProjectSyntax mn path (BzS_Calls p (x : xs)) imp lnk impa lnka))) =
+                    Just (a, b) -> verifyAST $ Right (False, (BzS_Calls p xs), (BzoFileData mn path (BzS_Calls p xs) imp lnk impa ([(sid a, sid b)] ++ lnka)))
+                    _           -> verifyAST $ Right (True,  ast,              (BzoFileData mn path (BzS_Calls p (x : xs)) imp lnk impa lnka))
+
+
+
+
+verifyAST (Right (True, (BzS_Calls p (x : xs)), (BzoFileData mn path ast imp lnk impa lnka))) =
       case (matchBCall1 "$import" mkPat_TId x) of
         Just syn -> Left [PrepErr (pos x) "Illegal formatting. All instances of $import must be at the beginning of file.\n"]
         _        ->
@@ -207,7 +240,8 @@ verifyAST (Right (True, (BzoProjectSyntax mn path (BzS_Calls p (x : xs)) imp lnk
                 _        ->
                   case (matchBCall3 "$linkAs" mkPat_TId x mkPat_TId) of
                     Just syn -> Left [PrepErr (pos x) "Illegal formatting. All instances of $linkAs must be at the beginning of file.\n"]
-                    _        -> Right (True,  (BzoProjectSyntax mn path (BzS_Calls p (x : xs)) imp lnk impa lnka))
+                    _        -> verifyAST $ Right (True, (BzS_Calls p xs), (BzoFileData mn path ast imp lnk impa lnka))
+
 
 
 

@@ -14,6 +14,7 @@ import BzoSyntax
 import BzoTokens
 import BzoParameterParser
 import BzoConfigParser
+import BzoPreprocessor
 
 
 
@@ -35,7 +36,7 @@ compileFilePass (BzoSettings imp lib flg opt pfx) =
       -- TODO: Static Analysis
       -- TODO: Code Generation
       putStrLn $ case valid of
-                  Nothing -> show (((applyWithErr wrappedParserMap). wrappedLexerMap) $ map swap files)
+                  Nothing -> show (((applyWithErr wrappedPrepMap). (applyWithErr wrappedParserMap). wrappedLexerMap) $ map swap files)
                   Just er -> show er
 
 
@@ -81,6 +82,24 @@ wrappedParserMap tks =
   let contents = map (\(f, t) -> parseFile f t [parseCalls]) tks
       errors   = concat $ lefts contents
       passes   = rights contents
+  in case errors of
+    [] -> Right passes
+    er -> Left  er
+
+
+
+
+
+
+
+
+
+
+wrappedPrepMap :: [BzoSyntax] -> Either [BzoErr] [BzoFileData]
+wrappedPrepMap asts =
+  let contents = map (\syn -> verifyAST (Right (False, syn, (BzoFileData "" (fileName $ pos syn) syn [] [] [] [])))) asts
+      errors   = concat $ lefts contents
+      passes   = map (\(a, b, c) -> c) $ rights contents
   in case errors of
     [] -> Right passes
     er -> Left  er
