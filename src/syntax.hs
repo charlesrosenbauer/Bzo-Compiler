@@ -127,9 +127,9 @@ data CfgSyntax
 
 
 showAST :: BzoSyntax -> String
-showAST (BzS_FunDef _ inpar fid expar def) = " {FNDEF: " ++ (show inpar) ++ " -> " ++ (show fid) ++ " -> " ++ (show expar) ++ " :: " ++ (show def) ++ "}\n\n"
-showAST (BzS_TypDef _ par tid def)         = " {TYDEF: " ++ (show tid) ++ " [ " ++ (show par) ++ " ] :: " ++ (show def) ++ "}\n\n"
-showAST (BzS_FnTypeDef _ fid def)          = " {FTDEF: " ++ (show fid) ++ " [ " ++ (show def) ++ " ]}\n\n"
+showAST (BzS_FunDef _ inpar fid expar def) = " {FNDEF: " ++ (show inpar) ++ " -> " ++ (show fid) ++ " -> " ++ (show expar) ++ " :: " ++ (show def) ++ "}"
+showAST (BzS_TypDef _ par tid def)         = " {TYDEF: " ++ (show tid) ++ " [ " ++ (show par) ++ " ] :: " ++ (show def) ++ "}"
+showAST (BzS_FnTypeDef _ fid def)          = " {FTDEF: " ++ (show fid) ++ " [ " ++ (show def) ++ " ]}"
 showAST (BzS_Lambda _ par def)             = " {LAMBDA: " ++ (show par) ++ " :: " ++ (show def) ++ "} "
 showAST (BzS_FnTy _ tin tex)               = " {FNTY: " ++ (show tin) ++ " ;;" ++ (show tex) ++ "} "
 showAST (BzS_Filter _ filt)                = " {FILTER: " ++ (show filt) ++ "} "
