@@ -9,7 +9,7 @@ Building and Trying Out the Compiler
 
 If you're interested in trying out what's currently there (not much), you may build the program using the provided makefile. The output executable file may show up in the /src directory. The resulting program can be run in a command line. If parameters are provided, it will attempt to interpret each parameter as a file name, then print the results of the lexer to the command line. If none are provided, the program will simply enter the REPL, allowing Bzo expressions to be entered, providing the user with the results from the lexer. Enter $quit to exit.
 
-While not [currently] implemented, this compiler will soon support libraries. Because the long-term goal is to have a self-hosted compiler, this compiler is mostly intended for bootstrapping purposes. Do not expect setup to be great; it's all temporary. That said, in order to set up the library, create a directories in your /opt, /opt/lib, /opt/lib64, /lib, /lib64, /usr/lib or /usr/lib64 folders (UNIX system required), and name it "bzo." Inside, create a folder called "libs" and a folder called "cfg". This will be your Bzo environment. If you wish for it to be somewhere else, you can instead place it anywhere else, but you will need to specify with the "-env= ..." argument whenever starting up the Bzo compiler.
+While not [currently] implemented, this compiler will soon support libraries. Because the long-term goal is to have a self-hosted compiler, this compiler is mostly intended for bootstrapping purposes. Do not expect setup to be great; it's all temporary. That said, in order to set up the library, create a directories in any one of your /opt, /opt/lib, /opt/lib64, /lib, /lib64, /usr/lib or /usr/lib64 folders (UNIX system required), and name it "bzo." Inside, create a folder called "libs" and a folder called "cfg". This will be your Bzo environment. If you wish for it to be somewhere else, you can instead place it anywhere else, but you will need to specify with the "-env= ..." argument whenever starting up the Bzo compiler.
 
 Inside bzo/cfg, create a text file called "libs.cfg". Each line must be a library ID (anything that is a valid Type Identifier in Bzo), followed by whitespace and then the path to the source files (in single quotes), relative to the bzo/libs folder.
 
@@ -56,6 +56,8 @@ Some Ideas Behind the Language [WIP]
 * Polymorphic types, Algebraic types, and Containers are supported, but not Type Classes.
 
 * Lambda expressions are of course supported. They are denoted with a single semicolon.
+
+* Source files may use the extensions .bz or .lbz. .lbz is used for literate programming. When using literate programming, lines are comments by default. Lines starting with the ">" character are read as code, with the ">" character omitted.
 
 * Other features: pattern matching, efficient zipper support, and the ability to use what would normally be considered special characters in identifiers (so long as they aren't used in the normal syntax).
 
