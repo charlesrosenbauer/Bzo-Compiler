@@ -410,6 +410,7 @@ lexComment = do
   st <- lexChar '"'
   cm <- many $ lexExceptChar '"'
   nd <- lexChar '"'
+  nl <- many $ lexChar '\n'
   return cm
 
 
