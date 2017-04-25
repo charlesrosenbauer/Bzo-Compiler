@@ -240,7 +240,10 @@ verifyAST (Right (True, (BzS_Calls p (x : xs)), (BzoFileData mn path ast imp lnk
                 _        ->
                   case (matchBCall3 "$linkAs" mkPat_TId x mkPat_TId) of
                     Just syn -> Left [PrepErr (pos x) "Illegal formatting. All instances of $linkAs must be at the beginning of file.\n"]
-                    _        -> verifyAST $ Right (True, (BzS_Calls p xs), (BzoFileData mn path ast imp lnk impa lnka))
+                    _        ->
+                      case (matchBCall1 "$Module" mkPat_TId x) of
+                        Just syn -> Left [PrepErr (pos x) "Illegal formatting. Only one instance of $Module per file.\n"]
+                        _        -> verifyAST $ Right (True, (BzS_Calls p xs), (BzoFileData mn path ast imp lnk impa lnka))
 
 
 
