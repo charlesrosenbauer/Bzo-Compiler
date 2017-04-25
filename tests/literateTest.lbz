@@ -1,0 +1,27 @@
+
+
+
+
+This is a test file for the Literate Bzo parsing mode.
+Here, any line that does not start with the '>' character automatically is commented out.
+This is great for walking the reader through hard-to-understand code.
+
+
+
+Here we initialize the file:
+
+> LiterateTest $Module
+> Math         $link
+
+
+Here we define a function:
+
+> ! :: Integer ;; Integer
+> (x) ! :: (x -?. 0. (x. x -1 !))?
+> (1) ! :: 1
+> (0) ! :: 1
+
+The above function is a factorial function. If the input is negative, it returns 0.
+If the value is 1 or 0, it returns 1.
+For all other values, we calculate the factorial recursively.
+It is valid for all Integer types.
