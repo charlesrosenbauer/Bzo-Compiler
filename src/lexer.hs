@@ -2,6 +2,7 @@ module BzoLexer where
 import BzoTypes
 import Data.Char
 import Data.Either
+import Data.List
 import Control.Monad
 import Control.Applicative
 import Debug.Trace
@@ -801,9 +802,45 @@ generalLexerMany = many generalLexer
 
 
 
-fileLexer :: String -> String -> Either [BzoErr] [BzoToken]
-fileLexer file syms =
-  let res = runLexer syms generalLexerMany file
+
+
+
+literateTransform :: String -> String
+literateTransform text =
+  let l  = lines text
+      ls = map (\x -> if((length x > 0) && (head x == '>'))
+                        then (" " ++ (drop 1 x) ++ "\n")
+                        else ("\n")) l
+  in concat ls
+
+
+
+
+
+
+
+
+
+
+tryLiterateTransform :: FilePath -> String -> String
+tryLiterateTransform file text =
+  if isSuffixOf ".lbz" file
+    then literateTransform text
+    else text
+
+
+
+
+
+
+
+
+
+
+fileLexer :: String -> FilePath -> Either [BzoErr] [BzoToken]
+fileLexer syms file =
+  let text = tryLiterateTransform file syms
+      res  = runLexer file generalLexerMany text
   in  case res of
     Left  err -> Left [err]
     Right tks -> Right $ filter isValidToken tks
