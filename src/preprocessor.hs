@@ -3,6 +3,7 @@ import BzoLexer
 import BzoParser
 import BzoSyntax
 import BzoTypes
+import Data.Map.Strict
 import Control.Monad
 import System.Environment
 import System.IO hiding (try)
@@ -253,6 +254,10 @@ verifyAST (Right (True, (BzS_Calls p (x : xs)), (BzoFileData mn path ast imp lnk
 
 
 
-
---preprocessProgram :: FilePath -> BzoSettings -> [BzoSyntax] -> IO (Either [BzoErr] BzoProjectSyntax)
---preprocessProgram libs settings ast =
+{- Heavy Construction Zone!!
+loadFullProject :: FilePath -> CfgSyntax -> [BzoFileData] -> IO (Either [BzoErr] [BzoFileData])
+loadFullProject path (LibLines p ls) ds =
+  let libpaths  = scanl (\m x -> insert (libName x) (libPath (x ++ path)) m) empty ls      -- produce Map of library names to library paths
+      linkNeeds = concatMap (\(BzoFileData mn fp sn fi fl ia la) -> fl ++ (map fst la)) ls -- get list of libraries to import
+  in
+-}
