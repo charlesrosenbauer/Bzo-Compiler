@@ -1,8 +1,15 @@
 module BzoPreprocessor where
 import BzoLexer
 import BzoParser
+import BzoParserRules
 import BzoSyntax
 import BzoTypes
+import BzoParameterParser
+import BzoConfigParser
+import Data.Maybe
+import Data.List
+import Data.Either
+import Data.Tuple
 import Data.Map.Strict
 import System.Directory
 import Control.Monad
@@ -289,11 +296,11 @@ loadFullProject path (LibLines p ls) ds =
 
 wrappedLexerMap :: [(FilePath, String)] -> Either [BzoErr] [(FilePath, [BzoToken])]
 wrappedLexerMap fs =
-  let contents = map (\(f, c) -> fileLexer f c) fs
+  let contents = Prelude.map (\(f, c) -> fileLexer f c) fs
       errors   = concat $ lefts contents
       passes   = rights contents
   in case errors of
-      [] -> Right $ zip (map fst fs) passes
+      [] -> Right $ zip (Prelude.map fst fs) passes
       er -> Left  er
 
 
@@ -307,7 +314,7 @@ wrappedLexerMap fs =
 
 wrappedParserMap :: [(FilePath, [BzoToken])] -> Either [BzoErr] [BzoSyntax]
 wrappedParserMap tks =
-  let contents = map (\(f, t) -> parseFile f t [parseCalls]) tks
+  let contents = Prelude.map (\(f, t) -> parseFile f t [parseCalls]) tks
       errors   = concat $ lefts contents
       passes   = rights contents
   in case errors of
@@ -325,9 +332,9 @@ wrappedParserMap tks =
 
 wrappedPrepMap :: [BzoSyntax] -> Either [BzoErr] [BzoFileData]
 wrappedPrepMap asts =
-  let contents = map (\syn -> verifyAST (Right (False, syn, (BzoFileData "" (fileName $ pos syn) syn [] [] [] [])))) asts
+  let contents = Prelude.map (\syn -> verifyAST (Right (False, syn, (BzoFileData "" (fileName $ pos syn) syn [] [] [] [])))) asts
       errors   = concat $ lefts contents
-      passes   = map (\(a, b, c) -> c) $ rights contents
+      passes   = Prelude.map (\(a, b, c) -> c) $ rights contents
   in case errors of
     [] -> Right passes
     er -> Left  er
@@ -343,8 +350,8 @@ wrappedPrepMap asts =
 
 loadSourceFiles :: [(FilePath, String)] -> IO [(FilePath, String)]
 loadSourceFiles ps =
-  let paths = map fst ps
-      texts = sequence $ map readFile paths
+  let paths = Prelude.map fst ps
+      texts = sequence $ Prelude.map readFile paths
   in  fmap (zip paths) texts
 
 
@@ -358,7 +365,7 @@ loadSourceFiles ps =
 
 areFilesValid :: [FilePath] -> Maybe BzoErr
 areFilesValid fs =
-  case filter (\s -> not $ (isSuffixOf ".bz" s) || (isSuffixOf ".lbz" s)) fs of
+  case Prelude.filter (\s -> not $ (isSuffixOf ".bz" s) || (isSuffixOf ".lbz" s)) fs of
     [] -> Nothing
     xs -> Just $ CfgErr ("The following files have invalid extensions : " ++ (show xs))
 
@@ -437,7 +444,7 @@ applyWithErrList f x =
 
 getLibraryCfg :: BzoSettings -> IO (Either [BzoErr] String)
 getLibraryCfg (BzoSettings imp lib flg opt pfx) =
-  let paths = ((map flgpath (filter isEnvPath pfx)) ++
+  let paths = ((Prelude.map flgpath (Prelude.filter isEnvPath pfx)) ++
               ["/usr/lib",
                "/urs/lib64",
                "/lib",
@@ -445,10 +452,10 @@ getLibraryCfg (BzoSettings imp lib flg opt pfx) =
                "/opt/lib",
                "/opt/lib64",
                "/opt"])
-      paths' = map (\s -> appendFilePath s "bzo/cfg/libs.cfg") paths
+      paths' = Prelude.map (\s -> appendFilePath s "bzo/cfg/libs.cfg") paths
       validPaths = filterM doesFileExist paths'
   in do
-    validFiles <- fmap (\x -> sequence $ map readFile x) validPaths
+    validFiles <- fmap (\x -> sequence $ Prelude.map readFile x) validPaths
     firstPath  <- fmap (\fs -> case fs of
                                 [] -> Left [CfgErr "No valid path to a valid Bzo Environment\n"]
                                 ps -> Right$ head ps) validFiles

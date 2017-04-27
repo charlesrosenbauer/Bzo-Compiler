@@ -2,19 +2,14 @@ module Compiler where
 import System.IO
 import System.Directory
 import Control.Monad
-import Data.Maybe
-import Data.List
-import Data.Either
 import Data.Tuple
 import BzoParser
-import BzoParserRules
 import BzoTypes
 import BzoLexer
 import BzoSyntax
 import BzoTokens
-import BzoParameterParser
-import BzoConfigParser
 import BzoPreprocessor
+import BzoParameterParser
 
 
 
