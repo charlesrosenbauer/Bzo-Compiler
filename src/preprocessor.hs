@@ -263,7 +263,8 @@ verifyAST (Right (True, (BzS_Calls p (x : xs)), (BzoFileData mn path ast imp lnk
 
 
 {- Heavy Construction Zone!!
-loadLibsPass :: Either [BzoErr] (Map String FilePath, [BzoFileData], [String]) -> Either [BzoErr] (Map String FilePath, [String])
+-- check loaded files for library dependencies, load libraries, repeat until no dependencies remain
+loadLibsPass :: Either [BzoErr] (Map String [FilePath], [BzoFileData], [String]) -> Either [BzoErr] (Map String [FilePath], [String])
 loadLibsPass (Left     errs) = Left errs
 loadLibsPass (Right m dt []) = Right m dt []
 loadLibsPass (Right libpaths files importNext) = do
@@ -279,11 +280,16 @@ loadLibsPass (Right libpaths files importNext) = do
 
 
 
+-- load data about libraries, call loadLibsPath
 loadFullProject :: FilePath -> CfgSyntax -> [BzoFileData] -> IO (Either [BzoErr] [BzoFileData])
 loadFullProject path (LibLines p ls) ds =
-  let libpaths  = scanl (\m x -> insert (libName x) (libPath (x ++ path)) m) empty ls      -- produce Map of library names to library paths
-      linkNeeds = concatMap (\(BzoFileData mn fp sn fi fl ia la) -> fl ++ (map fst la)) ls -- get list of libraries to import
-  in
+  let libpaths = map (\x -> (libName x, libPath x)) ls                                                                 -- format list of known libraries into list of tuples
+      libdata  = mapM (\(lname, lpath) -> getDirectoryContents (appendFilePath path ("bzo/libs/" ++ lpath))) libpaths  -- load contents of library directories
+      libdata' = fmap (\x -> (filter (\y -> (isSuffixOf ".bz" y) or (isSuffixOf ".lbz" y))) x) libdata                 -- filter out contents that are not bzo source files
+      libpmap  = fmap (scanl (\m x -> insert (libName x) (libPath (x ++ path)) m) empty) libdata'                      -- produce Map of library names to library contents
+  in do
+    libraryData <- libpmap
+    return expression
 -}
 
 
