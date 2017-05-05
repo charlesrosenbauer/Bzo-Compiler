@@ -264,12 +264,13 @@ verifyAST (Right (True, (BzS_Calls p (x : xs)), (BzoFileData mn path ast imp lnk
 
 {- Heavy Construction Zone!!
 -- check loaded files for library dependencies, load libraries, repeat until no dependencies remain
-loadLibsPass :: Either [BzoErr] (Map String [FilePath], [BzoFileData], [String]) -> Either [BzoErr] (Map String [FilePath], [String])
-loadLibsPass (Left     errs) = Left errs
-loadLibsPass (Right m dt []) = Right m dt []
+loadLibsPass :: Either [BzoErr] (Map String [FilePath], [BzoFileData], [String]) -> IO Either [BzoErr] (Map String [FilePath], [String])
+loadLibsPass (Left     errs) = return $ Left errs
+loadLibsPass (Right m dt []) = return $ Right m dt []
 loadLibsPass (Right libpaths files importNext) = do
-
-  return expression
+  libcontents <- sequence readFile (map (lookup libpaths) importNext)   -- going to need some extra code to handle the maybes
+  -- lex, parse, preprocess files
+  return loadLibsPass (Right libpaths (files ++ newfiles) importNext')
 
 
 
@@ -289,7 +290,11 @@ loadFullProject path (LibLines p ls) ds =
       libpmap  = fmap (scanl (\m x -> insert (libName x) (libPath (x ++ path)) m) empty) libdata'                      -- produce Map of library names to library contents
   in do
     libraryData <- libpmap
+
     return expression
+
+loadFullProject _ _ _ = do
+  return (Left [PrepErr (BzoPos 0 0 "Full Project") "Something isn't working correctly with library loading?\n"])
 -}
 
 
