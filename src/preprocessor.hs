@@ -481,7 +481,7 @@ applyWithErrList f x =
 
 
 
-getLibraryCfg :: BzoSettings -> IO (Either [BzoErr] String)
+getLibraryCfg :: BzoSettings -> IO (Either [BzoErr] (FilePath, String))
 getLibraryCfg (BzoSettings imp lib flg opt pfx) =
   let paths = ((Prelude.map flgpath (Prelude.filter isEnvPath pfx)) ++
               ["/usr/lib",
@@ -494,10 +494,11 @@ getLibraryCfg (BzoSettings imp lib flg opt pfx) =
       paths' = Prelude.map (\s -> appendFilePath s "bzo/cfg/libs.cfg") paths
       validPaths = filterM doesFileExist paths'
   in do
+    validPaths'<- validPaths
     validFiles <- fmap (\x -> sequence $ Prelude.map readFile x) validPaths
     firstPath  <- fmap (\fs -> case fs of
                                 [] -> Left [CfgErr "No valid path to a valid Bzo Environment\n"]
-                                ps -> Right$ head ps) validFiles
+                                ps -> Right (head validPaths', head ps)) validFiles
     return firstPath
 
 
@@ -512,5 +513,5 @@ getLibraryCfg (BzoSettings imp lib flg opt pfx) =
 getLibraryCfgContents :: BzoSettings -> IO (Either [BzoErr] CfgSyntax)
 getLibraryCfgContents settings =
   let text = getLibraryCfg settings
-      tks  = fmap (applyWithErr (\s -> fileLexer s "libs.cfg")) text
+      tks  = fmap (applyWithErr (\(p, s) -> fileLexer s p)) text
   in fmap (applyWithErr $ parseLibCfgFile "libs.cfg") tks
