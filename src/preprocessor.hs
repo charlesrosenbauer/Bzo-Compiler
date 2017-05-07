@@ -264,11 +264,11 @@ verifyAST (Right (True, (BzS_Calls p (x : xs)), (BzoFileData mn path ast imp lnk
 
 {- Heavy Construction Zone!!
 -- check loaded files for library dependencies, load libraries, repeat until no dependencies remain
-loadLibsPass :: Either [BzoErr] (Map String [FilePath], [BzoFileData], [String]) -> IO Either [BzoErr] (Map String [FilePath], [String])
-loadLibsPass (Left     errs) = return $ Left errs
-loadLibsPass (Right m dt []) = return $ Right m dt []
-loadLibsPass (Right libpaths files importNext) = do
-  libcontents <- sequence readFile (map (lookup libpaths) importNext)   -- going to need some extra code to handle the maybes
+loadLibsPass :: Either [BzoErr] (Map String [FilePath], [BzoFileData], [String]) -> IO (Either [BzoErr] (Map String [FilePath], [BzoFileData], [String]))
+loadLibsPass (Left         errs) = return $ Left errs
+loadLibsPass (Right (m, dt, [])) = return $ Right (m, dt, [])
+loadLibsPass (Right (libpaths, files, importNext)) = do
+  libcontents <- sequence readFile (Prelude.map (Data.Map.Strict.lookup libpaths) importNext)   -- going to need some extra code to handle the maybes
   -- lex, parse, preprocess files
   return loadLibsPass (Right libpaths (files ++ newfiles) importNext')
 
@@ -284,10 +284,10 @@ loadLibsPass (Right libpaths files importNext) = do
 -- load data about libraries, call loadLibsPath
 loadFullProject :: FilePath -> CfgSyntax -> [BzoFileData] -> IO (Either [BzoErr] [BzoFileData])
 loadFullProject path (LibLines p ls) ds =
-  let libpaths = map (\x -> (libName x, libPath x)) ls                                                                 -- format list of known libraries into list of tuples
+  let libpaths = Prelude.map (\x -> (libName x, libPath x)) ls                                                         -- format list of known libraries into list of tuples
       libdata  = mapM (\(lname, lpath) -> getDirectoryContents (appendFilePath path ("bzo/libs/" ++ lpath))) libpaths  -- load contents of library directories
-      libdata' = fmap (\x -> (filter (\y -> (isSuffixOf ".bz" y) or (isSuffixOf ".lbz" y))) x) libdata                 -- filter out contents that are not bzo source files
-      libpmap  = fmap (scanl (\m x -> insert (libName x) (libPath (x ++ path)) m) empty) libdata'                      -- produce Map of library names to library contents
+      libdata' = fmap (\x -> (Prelude.filter (\y -> (isSuffixOf ".bz" y) or (isSuffixOf ".lbz" y))) x) libdata                 -- filter out contents that are not bzo source files
+      libpmap  = fmap (scanl (\m x -> Data.Map.Strict.insert (libName x) (libPath (x ++ path)) m) empty) libdata'                      -- produce Map of library names to library contents
   in do
     libraryData <- libpmap
 
@@ -295,7 +295,7 @@ loadFullProject path (LibLines p ls) ds =
 
 loadFullProject _ _ _ = do
   return (Left [PrepErr (BzoPos 0 0 "Full Project") "Something isn't working correctly with library loading?\n"])
--}
+--}
 
 
 
