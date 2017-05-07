@@ -14,6 +14,7 @@ import Data.Map.Strict
 import System.Directory
 import Control.Monad
 import System.Environment
+import Debug.Trace
 import System.IO hiding (try)
 
 
@@ -262,15 +263,15 @@ verifyAST (Right (True, (BzS_Calls p (x : xs)), (BzoFileData mn path ast imp lnk
 
 
 
-{- Heavy Construction Zone!!
+--Heavy Construction Zone!!
 -- check loaded files for library dependencies, load libraries, repeat until no dependencies remain
 loadLibsPass :: Either [BzoErr] (Map String [FilePath], [BzoFileData], [String]) -> IO (Either [BzoErr] (Map String [FilePath], [BzoFileData], [String]))
 loadLibsPass (Left         errs) = return $ Left errs
 loadLibsPass (Right (m, dt, [])) = return $ Right (m, dt, [])
-loadLibsPass (Right (libpaths, files, importNext)) = do
-  libcontents <- sequence readFile (Prelude.map (Data.Map.Strict.lookup libpaths) importNext)   -- going to need some extra code to handle the maybes
+--loadLibsPass (Right (libpaths, files, importNext)) = do
+  --libcontents <- sequence readFile (Prelude.map (Data.Map.Strict.lookup libpaths) importNext)   -- going to need some extra code to handle the maybes
   -- lex, parse, preprocess files
-  return loadLibsPass (Right libpaths (files ++ newfiles) importNext')
+  --return loadLibsPass (Right libpaths (files ++ newfiles) importNext')
 
 
 
@@ -285,17 +286,16 @@ loadLibsPass (Right (libpaths, files, importNext)) = do
 loadFullProject :: FilePath -> CfgSyntax -> [BzoFileData] -> IO (Either [BzoErr] [BzoFileData])
 loadFullProject path (LibLines p ls) ds =
   let libpaths = Prelude.map (\x -> (libName x, libPath x)) ls                                                         -- format list of known libraries into list of tuples
-      libdata  = mapM (\(lname, lpath) -> getDirectoryContents (appendFilePath path ("bzo/libs/" ++ lpath))) libpaths  -- load contents of library directories
-      libdata' = fmap (\x -> (Prelude.filter (\y -> (isSuffixOf ".bz" y) or (isSuffixOf ".lbz" y))) x) libdata                 -- filter out contents that are not bzo source files
-      libpmap  = fmap (scanl (\m x -> Data.Map.Strict.insert (libName x) (libPath (x ++ path)) m) empty) libdata'                      -- produce Map of library names to library contents
+      libdata  = mapM (\(lname, lpath) -> (lname, getDirectoryContents (appendFilePath path ("bzo/libs/" ++ lpath)))) libpaths  -- load contents of library directories
+      --libdata' = fmap (\x -> (Prelude.filter (\y -> or((isSuffixOf ".bz" y), (isSuffixOf ".lbz" y))) x)) libdata                 -- filter out contents that are not bzo source files
+      --libpmap  = fmap (scanl (\m x -> Data.Map.Strict.insert (libName x) (libPath (x ++ path)) m) empty) libdata'                      -- produce Map of library names to library contents
   in do
-    libraryData <- libpmap
-
-    return expression
+    --libraryData <- libpmap
+    return $ trace (show path) $ Right ds
 
 loadFullProject _ _ _ = do
   return (Left [PrepErr (BzoPos 0 0 "Full Project") "Something isn't working correctly with library loading?\n"])
---}
+
 
 
 
@@ -349,6 +349,19 @@ wrappedPrepMap asts =
   in case errors of
     [] -> Right passes
     er -> Left  er
+
+
+
+
+
+
+
+
+
+
+wrappedLibLoader :: Either [BzoErr] CfgSyntax ->[BzoFileData] -> IO (Either [BzoErr] [BzoFileData])
+wrappedLibLoader (Right cfg) ds = loadFullProject (fileName $ cpos cfg) cfg ds
+wrappedLibLoader (Left  err) _  = return $ Left err
 
 
 
@@ -424,6 +437,21 @@ applyWithErr :: (b -> Either a c) -> Either a b -> Either a c
 applyWithErr f x =
   case x of
     Left  a -> Left  a
+    Right b -> f b
+
+
+
+
+
+
+
+
+
+
+applyWithErrM :: Monad m => (b -> m (Either a c)) -> Either a b -> m (Either a c)
+applyWithErrM f x =
+  case x of
+    Left  a -> return $ Left  a
     Right b -> f b
 
 
