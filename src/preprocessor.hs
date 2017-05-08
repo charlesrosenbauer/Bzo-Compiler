@@ -485,13 +485,13 @@ getLibraryCfg :: BzoSettings -> IO (Either [BzoErr] (FilePath, String))
 getLibraryCfg (BzoSettings imp lib flg opt pfx) =
   let paths = ((Prelude.map flgpath (Prelude.filter isEnvPath pfx)) ++
               ["/usr/lib",
-               "/urs/lib64",
+               "/usr/lib64",
                "/lib",
                "/lib64",
                "/opt/lib",
                "/opt/lib64",
                "/opt"])
-      paths' = Prelude.map (\s -> appendFilePath s "bzo/cfg/libs.cfg") paths
+      paths' = Prelude.concatMap (\s -> [appendFilePath s "bzo/cfg/libs.cfg", appendFilePath s ".bzo/cfg/libs.cfg"]) paths
       validPaths = filterM doesFileExist paths'
   in do
     validPaths'<- validPaths
