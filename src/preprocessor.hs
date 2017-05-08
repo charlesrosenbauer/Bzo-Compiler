@@ -12,6 +12,7 @@ import Data.Either
 import Data.Tuple
 import Data.Map.Strict
 import System.Directory
+import System.FilePath
 import Control.Monad
 import System.Environment
 import Debug.Trace
@@ -285,13 +286,14 @@ loadLibsPass (Right (m, dt, [])) = return $ Right (m, dt, [])
 -- load data about libraries, call loadLibsPath
 loadFullProject :: FilePath -> CfgSyntax -> [BzoFileData] -> IO (Either [BzoErr] [BzoFileData])
 loadFullProject path (LibLines p ls) ds =
-  let libpaths = Prelude.map (\x -> (libName x, libPath x)) ls                                                         -- format list of known libraries into list of tuples
-      libdata  = mapM (\(lname, lpath) -> (lname, getDirectoryContents (appendFilePath path ("bzo/libs/" ++ lpath)))) libpaths  -- load contents of library directories
+  let path'    = (takeDirectory $ takeDirectory path) ++ "/libs"
+      libpaths = Prelude.map (\x -> (libName x, libPath x)) ls                                                         -- format list of known libraries into list of tuples
+      libdata  = mapM (\(lname, lpath) -> (lname, getDirectoryContents (appendFilePath path' ("bzo/libs/" ++ lpath)))) libpaths  -- load contents of library directories
       --libdata' = fmap (\x -> (Prelude.filter (\y -> or((isSuffixOf ".bz" y), (isSuffixOf ".lbz" y))) x)) libdata                 -- filter out contents that are not bzo source files
       --libpmap  = fmap (scanl (\m x -> Data.Map.Strict.insert (libName x) (libPath (x ++ path)) m) empty) libdata'                      -- produce Map of library names to library contents
   in do
-    --libraryData <- libpmap
-    return $ trace (show path) $ Right ds
+    --libraryData <- libdata
+    return $ Right ds
 
 loadFullProject _ _ _ = do
   return (Left [PrepErr (BzoPos 0 0 "Full Project") "Something isn't working correctly with library loading?\n"])
