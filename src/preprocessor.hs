@@ -7,10 +7,10 @@ import BzoTypes
 import BzoParameterParser
 import BzoConfigParser
 import Data.Maybe
-import Data.List hiding (map)
+import Data.List hiding (map, foldl)
 import Data.Either
 import Data.Tuple
-import Data.Map.Strict hiding (map)
+import Data.Map.Strict hiding (map, foldl)
 import System.Directory
 import System.FilePath
 import Control.Monad
@@ -292,9 +292,9 @@ loadFullProject path (LibLines p ls) ds =
       l2       = mapM (getDirectoryContents . (appendFilePath path')) l1                                       -- load library file maps
       l3       = fmap (map (Prelude.filter (\x -> or[(isSuffixOf ".lbz" x) , (isSuffixOf ".bz" x)]))) l2       -- filter out non-source files
       l4       = fmap (zip l0) l3
-      --libpmap  = fmap (scanl (\m x -> Data.Map.Strict.insert (libName x) (libPath x) m) empty) libdata                      -- produce Map of library names to library contents
+      libpmap  = fmap (foldl (\m (x, y) -> Data.Map.Strict.insert x y m) empty) l4                             -- produce Map of library names to library contents
   in do
-    libraryData <- l4
+    libraryData <- libpmap
     return $ trace (show libraryData) $ Right ds
 
 loadFullProject _ _ _ = do
