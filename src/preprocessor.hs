@@ -7,10 +7,10 @@ import BzoTypes
 import BzoParameterParser
 import BzoConfigParser
 import Data.Maybe
-import Data.List
+import Data.List hiding (map)
 import Data.Either
 import Data.Tuple
-import Data.Map.Strict
+import Data.Map.Strict hiding (map)
 import System.Directory
 import System.FilePath
 import Control.Monad
@@ -287,13 +287,15 @@ loadLibsPass (Right (m, dt, [])) = return $ Right (m, dt, [])
 loadFullProject :: FilePath -> CfgSyntax -> [BzoFileData] -> IO (Either [BzoErr] [BzoFileData])
 loadFullProject path (LibLines p ls) ds =
   let path'    = (takeDirectory $ takeDirectory path) ++ "/libs"
-      libpaths = Prelude.map (\x -> (libName x, libPath x)) ls                                                         -- format list of known libraries into list of tuples
-      libdata  = mapM (\(lname, lpath) -> (lname, getDirectoryContents (appendFilePath path' ("bzo/libs/" ++ lpath)))) libpaths  -- load contents of library directories
-      --libdata' = fmap (\x -> (Prelude.filter (\y -> or((isSuffixOf ".bz" y), (isSuffixOf ".lbz" y))) x)) libdata                 -- filter out contents that are not bzo source files
-      --libpmap  = fmap (scanl (\m x -> Data.Map.Strict.insert (libName x) (libPath (x ++ path)) m) empty) libdata'                      -- produce Map of library names to library contents
+      libpaths = map (\x -> (libName x, libPath x)) ls                                                         -- format list of known libraries into list of tuples
+      (l0, l1) = unzip libpaths
+      l2       = mapM (getDirectoryContents . (appendFilePath path')) l1                                       -- load library file maps
+      l3       = fmap (map (Prelude.filter (\x -> or[(isSuffixOf ".lbz" x) , (isSuffixOf ".bz" x)]))) l2       -- filter out non-source files
+      l4       = fmap (zip l0) l3
+      --libpmap  = fmap (scanl (\m x -> Data.Map.Strict.insert (libName x) (libPath x) m) empty) libdata                      -- produce Map of library names to library contents
   in do
-    --libraryData <- libdata
-    return $ Right ds
+    libraryData <- l4
+    return $ trace (show libraryData) $ Right ds
 
 loadFullProject _ _ _ = do
   return (Left [PrepErr (BzoPos 0 0 "Full Project") "Something isn't working correctly with library loading?\n"])
