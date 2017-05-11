@@ -279,11 +279,28 @@ processFiles s = ((applyWithErr wrappedPrepMap). (applyWithErr wrappedParserMap)
 
 --Heavy Construction Zone!!
 -- check loaded files for library dependencies, load libraries, repeat until no dependencies remain
-loadLibsPass :: Either [BzoErr] (Map String [FilePath], [BzoFileData], [String]) -> IO (Either [BzoErr] (Map String [FilePath], [BzoFileData], [String]))
-loadLibsPass (Left         errs) = return $ Left errs
-loadLibsPass (Right (m, dt, [])) = return $ Right (m, dt, [])
---loadLibsPass (Right (libpaths, files, importNext)) =
-  --let l0 =
+loadLibsPass :: Map String [FilePath] -> Map String BzoFileData -> [String] -> IO (Either [BzoErr] [BzoFileData])
+loadLibsPass libs loaded [] = return $ Right $ elems loaded
+loadLibsPass libs loaded loadme =
+  let l0 = Prelude.filter (\x -> not $ member x loaded) loadme
+      l1 = map (\x -> case (Data.Map.Strict.lookup x libs) of
+                        Just s  -> Right (x, s)
+                        Nothing -> Left $ CfgErr ("Could not locate library : " ++ x)) l0
+      l2 = lefts  l1
+      (l3, l4) = unzip $ rights l1
+      l5 = mapM (mapM readFile) l4
+      l6 = fmap (zip l3) l5
+      l7 = fmap (map (\(n, fs) -> processFiles $ zip (repeat n) fs)) l6
+      l8 = fmap lefts  l7
+      l9 = fmap rights l7
+  in do
+      l8' <- l8
+      l9' <- l9
+      return $ case (l2, l8') of
+                ([]  , []  ) -> Right $ concat l9'   -- Not recursive yet
+                (err0, []  ) -> Left  err0
+                ([]  , err1) -> Left  $ concat err1
+                (err0, err1) -> Left (err0 ++ (concat err1))
 
 
 
