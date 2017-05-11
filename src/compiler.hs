@@ -26,7 +26,7 @@ compileFilePass (BzoSettings imp lib flg opt pfx) =
   in do
       lCfg  <- getLibraryCfgContents (BzoSettings imp lib flg opt pfx)
       files <- loadSourceFiles imp
-      fdata <- (((applyWithErrM (wrappedLibLoader lCfg)). (applyWithErr wrappedPrepMap). (applyWithErr wrappedParserMap). wrappedLexerMap) $ map swap files)
+      fdata <- (((applyWithErrM (wrappedLibLoader lCfg)). processFiles) $ map swap files)
       -- TODO: Preprocessor
       -- TODO: Type Checker
       -- TODO: Static Analysis
