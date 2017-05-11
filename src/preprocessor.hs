@@ -279,8 +279,8 @@ processFiles s = ((applyWithErr wrappedPrepMap). (applyWithErr wrappedParserMap)
 
 --Heavy Construction Zone!!
 -- check loaded files for library dependencies, load libraries, repeat until no dependencies remain
-loadLibsPass :: Map String [FilePath] -> Map String BzoFileData -> [String] -> IO (Either [BzoErr] [BzoFileData])
-loadLibsPass libs loaded [] = return $ Right $ elems loaded
+loadLibsPass :: Map String [FilePath] -> Map String [BzoFileData] -> [String] -> IO (Either [BzoErr] [BzoFileData])
+loadLibsPass libs loaded [] = return $ Right $ concat $ elems loaded
 loadLibsPass libs loaded loadme =
   let l0 = Prelude.filter (\x -> not $ member x loaded) loadme
       l1 = map (\x -> case (Data.Map.Strict.lookup x libs) of
@@ -296,11 +296,11 @@ loadLibsPass libs loaded loadme =
   in do
       l8' <- l8
       l9' <- l9
-      return $ case (l2, l8') of
-                ([]  , []  ) -> Right $ concat l9'   -- Not recursive yet
-                (err0, []  ) -> Left  err0
-                ([]  , err1) -> Left  $ concat err1
-                (err0, err1) -> Left (err0 ++ (concat err1))
+      case (l2, l8') of
+        ([]  , []  ) -> loadLibsPass libs loaded loadme   -- fix!! loaded should contain new loads, loadme should contain new dependencies
+        (err0, []  ) -> return $ Left  err0
+        ([]  , err1) -> return $ Left  $ concat err1
+        (err0, err1) -> return $ Left (err0 ++ (concat err1))
 
 
 
