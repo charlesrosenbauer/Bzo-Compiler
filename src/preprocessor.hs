@@ -291,7 +291,7 @@ insertMany m xs = foldl (\mp (k, a) -> Data.Map.Strict.insert k a mp) m xs
 
 getDependencies :: BzoFileData -> [String]
 getDependencies (BzoFileData _ _ _ _ l _ la) =
-  let la' = map snd la
+  let la' = map fst la
   in l ++ la'
 
 
@@ -316,7 +316,7 @@ loadLibsPass libs loaded loadme =
       (l3, l4) = unzip $ rights l1
       l5 = mapM (mapM readFile) l4
       l6 = fmap (zip l3) l5
-      l7 = fmap (map (\(n, fs) -> processFiles $ zip (repeat n) fs)) l6
+      l7 = fmap (map (\(n, fs) -> processFiles $ zip fs (repeat n))) l6
       l8 = fmap lefts  l7
       l9 = fmap ((zip l3) . rights) l7
       lA = fmap (insertMany loaded) l9
@@ -343,16 +343,19 @@ loadLibsPass libs loaded loadme =
 -- load data about libraries, call loadLibsPath
 loadFullProject :: FilePath -> CfgSyntax -> [BzoFileData] -> IO (Either [BzoErr] [BzoFileData])
 loadFullProject path (LibLines p ls) ds =
-  let path'    = (takeDirectory $ takeDirectory path) ++ "/libs"
+  let path'    = (takeDirectory $ takeDirectory path) ++ "/libs/"
       libpaths = map (\x -> (libName x, libPath x)) ls                                                         -- format list of known libraries into list of tuples
       (l0, l1) = unzip libpaths
-      l2       = mapM (getDirectoryContents . (appendFilePath path')) l1                                       -- load library file maps
-      l3       = fmap (map (Prelude.filter (\x -> or[(isSuffixOf ".lbz" x) , (isSuffixOf ".bz" x)]))) l2       -- filter out non-source files
+      l2       = mapM (getDirectoryContents . (appendFilePath path')) l1                                       -- load library file contents (just paths)
+      l2'      = fmap (zip l1) l2
+      l2''     = fmap (map (\(p, fs) -> map (\x -> path' ++ p ++ "/" ++ x) fs)) l2'                            -- get full file paths to library files
+      l3       = fmap (map (Prelude.filter (\x -> or[(isSuffixOf ".lbz" x) , (isSuffixOf ".bz" x)]))) l2''     -- filter out non-source files
       l4       = fmap (zip l0) l3
       libpmap  = fmap (insertMany empty) l4                                                                    -- produce Map of library names to library contents
+      loaded   = Data.Map.Strict.insert "Project Files" ds empty                                               -- produce Map of main project files
   in do
     libraryData <- libpmap
-    return $ Right ds
+    loadLibsPass libraryData loaded (concatMap getDependencies ds)
 
 loadFullProject _ _ _ = do
   return (Left [PrepErr (BzoPos 0 0 "Full Project") "Something isn't working correctly with library loading?\n"])
