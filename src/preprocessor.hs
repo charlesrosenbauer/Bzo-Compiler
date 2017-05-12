@@ -277,6 +277,32 @@ processFiles s = ((applyWithErr wrappedPrepMap). (applyWithErr wrappedParserMap)
 
 
 
+insertMany :: Ord k => Map k a -> [(k, a)] -> Map k a
+insertMany m xs = foldl (\mp (k, a) -> Data.Map.Strict.insert k a mp) m xs
+
+
+
+
+
+
+
+
+
+
+getDependencies :: BzoFileData -> [String]
+getDependencies (BzoFileData _ _ _ _ l _ la) =
+  let la' = map snd la
+  in l ++ la'
+
+
+
+
+
+
+
+
+
+
 --Heavy Construction Zone!!
 -- check loaded files for library dependencies, load libraries, repeat until no dependencies remain
 loadLibsPass :: Map String [FilePath] -> Map String [BzoFileData] -> [String] -> IO (Either [BzoErr] [BzoFileData])
@@ -292,12 +318,15 @@ loadLibsPass libs loaded loadme =
       l6 = fmap (zip l3) l5
       l7 = fmap (map (\(n, fs) -> processFiles $ zip (repeat n) fs)) l6
       l8 = fmap lefts  l7
-      l9 = fmap rights l7
+      l9 = fmap ((zip l3) . rights) l7
+      lA = fmap (insertMany loaded) l9
+      lB = fmap (concatMap (\(_, fd) -> concatMap getDependencies fd)) l9
   in do
       l8' <- l8
-      l9' <- l9
+      loaded' <- lA
+      loadme' <- lB
       case (l2, l8') of
-        ([]  , []  ) -> loadLibsPass libs loaded loadme   -- fix!! loaded should contain new loads, loadme should contain new dependencies
+        ([]  , []  ) -> loadLibsPass libs loaded' loadme'   -- Now we have new dependencies. Let's load them too!
         (err0, []  ) -> return $ Left  err0
         ([]  , err1) -> return $ Left  $ concat err1
         (err0, err1) -> return $ Left (err0 ++ (concat err1))
@@ -320,7 +349,7 @@ loadFullProject path (LibLines p ls) ds =
       l2       = mapM (getDirectoryContents . (appendFilePath path')) l1                                       -- load library file maps
       l3       = fmap (map (Prelude.filter (\x -> or[(isSuffixOf ".lbz" x) , (isSuffixOf ".bz" x)]))) l2       -- filter out non-source files
       l4       = fmap (zip l0) l3
-      libpmap  = fmap (foldl (\m (x, y) -> Data.Map.Strict.insert x y m) empty) l4                             -- produce Map of library names to library contents
+      libpmap  = fmap (insertMany empty) l4                                                                    -- produce Map of library names to library contents
   in do
     libraryData <- libpmap
     return $ Right ds
