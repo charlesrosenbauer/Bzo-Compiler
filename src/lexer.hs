@@ -411,7 +411,7 @@ lexComment = do
   st <- lexChar '"'
   cm <- many $ lexExceptChar '"'
   nd <- lexChar '"'
-  nl <- many $ lexChar '\n'
+  --nl <- many $ lexChar '\n'
   return cm
 
 
@@ -837,12 +837,28 @@ tryLiterateTransform file text =
 
 
 
+removeLexerArtifacts :: BzoToken -> BzoToken -> BzoToken
+removeLexerArtifacts prev this =
+  case (prev, this) of
+    ((TkNewline _), (TkNewline _)) -> TkNil
+    (TkNil        , tk1          ) -> tk1
+    (tk0          , tk1          ) -> tk1
+
+
+
+
+
+
+
+
+
+
 fileLexer :: String -> FilePath -> Either [BzoErr] [BzoToken]
 fileLexer syms file =
   let text = tryLiterateTransform file syms
       res  = runLexer file generalLexerMany text
   in  case res of
     Left  err -> Left [err]
-    Right tks -> Right $ filter isValidToken tks
+    Right tks -> Right $ filter isValidToken $ scanl removeLexerArtifacts TkNil $ filter isValidToken tks
   where isValidToken (TkNil) = False
-        isValidToken _         = True
+        isValidToken _       = True
