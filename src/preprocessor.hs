@@ -305,6 +305,18 @@ getDependencies (BzoFileData _ _ _ _ _ l _ la) =
 
 
 
+setDomain :: String -> BzoFileData -> BzoFileData
+setDomain s (BzoFileData a b _ c d e f g) = (BzoFileData a b s c d e f g)
+
+
+
+
+
+
+
+
+
+
 --Heavy Construction Zone!!
 -- check loaded files for library dependencies, load libraries, repeat until no dependencies remain
 loadLibsPass :: Map String [FilePath] -> Map String [BzoFileData] -> [String] -> IO (Either [BzoErr] [BzoFileData])
@@ -353,7 +365,7 @@ loadFullProject path (LibLines p ls) ds =
       l2''     = fmap (map (\(p, fs) -> map (\x -> path' ++ p ++ "/" ++ x) fs)) l2'                            -- get full file paths to library files
       l3       = fmap (map (Prelude.filter (\x -> or[(isSuffixOf ".lbz" x) , (isSuffixOf ".bz" x)]))) l2''     -- filter out non-source files
       l4       = fmap (zip l0) l3
-      libpmap  = fmap (insertMany empty) l4                                                                    -- produce Map of library names to library contents
+      libpmap  = fmap (insertMany empty) l4                                                                    -- produce Map of library names to library contentsgit s
       loaded   = Data.Map.Strict.insert "Project Files" ds empty                                               -- produce Map of main project files
   in do
     libraryData <- libpmap
