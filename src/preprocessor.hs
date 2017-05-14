@@ -333,8 +333,9 @@ loadLibsPass libs loaded loadme =
       l7 = fmap (map (\(n, fs) -> processFiles $ zip fs (repeat n))) l6
       l8 = fmap lefts  l7
       l9 = fmap ((zip l3) . rights) l7
-      lA = fmap (insertMany loaded) l9
-      lB = fmap (concatMap (\(_, fd) -> concatMap getDependencies fd)) l9
+      l9'= fmap (map (\(a, bs) -> (a, map (setDomain a) bs))) l9
+      lA = fmap (insertMany loaded) l9'
+      lB = fmap (concatMap (\(_, fd) -> concatMap getDependencies fd)) l9'
   in do
       l8' <- l8
       loaded' <- lA
