@@ -3,6 +3,7 @@ import BzoSyntax
 import BzoTypes
 import BzoPreprocessor
 import GHC.Exts
+import Data.Either
 import Data.List hiding (map, foldl, insert)
 import Data.Map.Strict hiding (map, foldl)
 
@@ -92,7 +93,7 @@ containsManyMembers mp as = all (\x -> member x mp) as
 orderByImports :: Map String BzoFileData -> [BzoFileData] -> Either [BzoErr] [BzoFileData]
 orderByImports mp [] = Right $ elems mp
 orderByImports mp fs =
-  let (next, remain) = break (\x -> containsManyMembers mp $ getImportDependencies x) fs
+  let (remain, next) = break (\x -> containsManyMembers mp $ getImportDependencies x) fs
       next'          = map (\x -> (bfd_domain x, x)) next
   in case next of
     [] -> Left [CfgErr "Circular Dependencies! Compilation cannot continue."]
@@ -107,6 +108,12 @@ orderByImports mp fs =
 
 
 
---orderFileData :: [BzoFileData] -> [BzoFileData]
---orderFileData fs =
---  let f0 = groupWith bfd_domain fs
+orderFileData :: [BzoFileData] -> Either [BzoErr] [BzoFileData]
+orderFileData fs =
+  let f0 = groupWith bfd_domain fs
+      f1 = map (orderByImports empty) f0
+      f2 = concat $ lefts  f1
+      f3 = concat $ rights f1
+  in case f2 of
+      [] -> Right f3
+      er -> Left  er

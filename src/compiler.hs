@@ -10,6 +10,7 @@ import BzoSyntax
 import BzoTokens
 import BzoPreprocessor
 import BzoParameterParser
+import BzoChecker
 
 
 
@@ -26,13 +27,14 @@ compileFilePass (BzoSettings imp lib flg opt pfx) =
   in do
       lCfg  <- getLibraryCfgContents (BzoSettings imp lib flg opt pfx)
       files <- loadSourceFiles imp
+
+      -- Load, preprocess
       fdata <- (((applyWithErrM (wrappedLibLoader lCfg)). processFiles) $ map swap files)
-      -- TODO: Preprocessor
       -- TODO: Type Checker
       -- TODO: Static Analysis
       -- TODO: Code Generation
       putStrLn $ case valid of
-                  Nothing -> show fdata
+                  Nothing -> show $ applyWithErr orderFileData fdata
                   Just er -> show er
 
 
