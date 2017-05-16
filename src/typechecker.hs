@@ -94,9 +94,9 @@ orderByImports :: Map String BzoFileData -> [BzoFileData] -> Either [BzoErr] [Bz
 orderByImports mp [] = Right $ elems mp
 orderByImports mp fs =
   let (remain, next) = break (\x -> containsManyMembers mp $ getImportDependencies x) fs
-      next'          = map (\x -> (bfd_domain x, x)) next
+      next'          = map (\x -> (bfd_moduleName x, x)) next
   in case next of
-    [] -> Left [CfgErr "Circular Dependencies! Compilation cannot continue."]
+    [] -> Left [CfgErr "Circular Dependencies! Compilation cannot continue.\n"]
     nx -> orderByImports (insertMany mp next') remain
 
 
