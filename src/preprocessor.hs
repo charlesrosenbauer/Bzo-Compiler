@@ -422,7 +422,7 @@ wrappedParserMap tks =
 
 wrappedPrepMap :: [BzoSyntax] -> Either [BzoErr] [BzoFileData]
 wrappedPrepMap asts =
-  let contents = Prelude.map (\syn -> verifyAST (Right (False, syn, (BzoFileData "" (fileName $ pos syn) "" syn [] [] [] [])))) asts
+  let contents = Prelude.map (\syn -> verifyAST (Right (False, syn, (BzoFileData "" (fileName $ pos syn) "@" syn [] [] [] [])))) asts
       errors   = concat $ lefts contents
       passes   = Prelude.map (\(a, b, c) -> c) $ rights contents
   in case errors of
