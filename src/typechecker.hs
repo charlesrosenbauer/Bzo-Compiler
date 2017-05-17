@@ -91,9 +91,9 @@ containsManyMembers mp as = all (\x -> member x mp) as
 
 
 
-orderByImports :: Map String BzoFileData -> [BzoFileData] -> Either [BzoErr] [BzoFileData]
-orderByImports mp [] = Right $ elems mp
-orderByImports mp fs =
+orderByImports :: Map String BzoFileData -> [BzoFileData] -> [BzoFileData] -> Either [BzoErr] [BzoFileData]
+orderByImports mp out [] = Right out
+orderByImports mp out fs =
   let (remain, next) = break (\x -> containsManyMembers mp $ getImportDependencies x) fs
       next'          = map (\x -> (bfd_moduleName x, x)) next
       domain         = if (bfd_domain (head fs) == "@")
@@ -101,7 +101,7 @@ orderByImports mp fs =
                         else bfd_domain $ head fs
   in case next of
     [] -> Left [CfgErr ("Unsatisfiable Dependencies in " ++ domain ++ "! Compilation cannot continue.\n")]
-    nx -> orderByImports (insertMany mp next') remain
+    nx -> orderByImports (insertMany mp next') (out ++ next) remain
 
 
 
@@ -112,14 +112,14 @@ orderByImports mp fs =
 
 
 
-orderByLinks :: Map String [BzoFileData] -> [[BzoFileData]] -> Either [BzoErr] [[BzoFileData]]
-orderByLinks mp [] = Right $ elems mp
-orderByLinks mp fs =
+orderByLinks :: Map String [BzoFileData] -> [[BzoFileData]] -> [[BzoFileData]] -> Either [BzoErr] [[BzoFileData]]
+orderByLinks mp out [] = Right out
+orderByLinks mp out fs =
   let (remain, next) = break (\x -> containsManyMembers mp $ getLinkDependencies x) fs
       next'          = map (\x -> (bfd_domain $ head x, x)) next
   in case next of
     [] -> Left [CfgErr "Unsatisfiable Dependencies between libraries! Compilation cannot continue.\n"]
-    nx -> orderByLinks (insertMany mp next') remain
+    nx -> orderByLinks (insertMany mp next') (out ++ next) remain
 
 
 
@@ -132,9 +132,9 @@ orderByLinks mp fs =
 orderFileData :: [BzoFileData] -> Either [BzoErr] [BzoFileData]
 orderFileData fs =
   let f0 = groupWith bfd_domain fs
-      f1 = map (orderByImports empty) f0
+      f1 = map (orderByImports empty []) f0
       f2 = concat $ lefts  f1
-      f3 = [orderByLinks empty $ rights f1]
+      f3 = [orderByLinks empty [] $ rights f1]
       f4 = lefts  f3
       f5 = concat $ rights f3
   in case (f2, f4) of
