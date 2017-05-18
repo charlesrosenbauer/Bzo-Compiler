@@ -131,7 +131,7 @@ orderByLinks mp out fs =
 
 orderFileData :: [BzoFileData] -> Either [BzoErr] [BzoFileData]
 orderFileData fs =
-  let f0 = groupWith bfd_domain fs
+  let f0 = groupWith bfd_domain $ map appendStdDep fs
       f1 = map (orderByImports empty []) f0
       f2 = concat $ lefts  f1
       f3 = [orderByLinks empty [] $ rights f1]
@@ -141,3 +141,19 @@ orderFileData fs =
       ([], []) -> Right $ concat f5
       ([], er) -> Left  $ concat er
       (er, _ ) -> Left  er
+
+
+
+
+
+
+
+
+
+
+appendStdDep :: BzoFileData -> BzoFileData
+appendStdDep (BzoFileData mn fp "Std" ast imp lnk ima lna) = (BzoFileData mn fp "Std" ast imp lnk ima lna)
+appendStdDep (BzoFileData mn fp dmn   ast imp lnk ima lna) =
+  case (elem "Std" imp, elem "Std" $ map fst ima) of
+    (False, False) -> (BzoFileData mn fp dmn ast imp (lnk ++ ["Std"]) ima lna)
+    (_    , _    ) -> (BzoFileData mn fp dmn ast imp lnk ima lna)
