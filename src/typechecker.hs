@@ -157,3 +157,47 @@ appendStdDep (BzoFileData mn fp dmn   ast imp lnk ima lna) =
   case (elem "Std" imp, elem "Std" $ map fst ima) of
     (False, False) -> (BzoFileData mn fp dmn ast imp (lnk ++ ["Std"]) ima lna)
     (_    , _    ) -> (BzoFileData mn fp dmn ast imp lnk ima lna)
+
+
+
+
+
+
+
+
+
+
+zip3Map :: [([a], [b], [c])] -> ([a], [b], [c])
+zip3Map = ((\(x, y, z) -> (concat x, concat y, concat z)) . unzip3)
+
+
+
+
+
+
+
+
+
+
+-- | Returns (Ids/BI Ids, TyIds/BI TyIds, MIds)
+getIds :: BzoSyntax -> ([String], [String], [String])
+getIds (BzS_Expr       p xs) = zip3Map $ map getIds xs
+getIds (BzS_Block      p xs) = zip3Map $ map getIds xs
+getIds (BzS_MId        p st) = ([  ], [  ], [st])
+getIds (BzS_TyId       p st) = ([  ], [st], [  ])
+getIds (BzS_Id         p st) = ([st], [  ], [  ])
+getIds (BzS_BId        p st) = ([st], [  ], [  ])
+getIds (BzS_BTId       p st) = ([  ], [st], [  ])
+getIds (BzS_Filter     p xs) = getIds xs
+getIds (BzS_Box        p xs) = getIds xs
+getIds (BzS_ArrExprMod p xs) = getIds xs
+getIds (BzS_Cmpd       p xs) = zip3Map $ map getIds xs
+getIds (BzS_Poly       p xs) = zip3Map $ map getIds xs
+getIds (BzS_FnTy    p as bs) = zip3Map [getIds as, getIds bs]
+getIds (BzS_Calls      p xs) = zip3Map $ map getIds xs
+
+getIds (BzS_FunDef     p i f o d) = zip3Map [getIds i, getIds o, getIds d, ([f], [ ], [ ])]
+getIds (BzS_FnTypeDef  p   f   d) = zip3Map [                    getIds d, ([f], [ ], [ ])]
+getIds (BzS_TypDef     p i t   d) = zip3Map [getIds i,           getIds d, ([ ], [t], [ ])]
+
+getIds _                     = ([  ], [  ], [  ])
