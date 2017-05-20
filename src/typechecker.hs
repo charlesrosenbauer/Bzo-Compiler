@@ -4,8 +4,9 @@ import BzoTypes
 import BzoPreprocessor
 import GHC.Exts
 import Data.Either
-import Data.List hiding (map, foldl, insert)
-import Data.Map.Strict hiding (map, foldl)
+import Data.Maybe
+import Data.List hiding (map, foldl, foldr, insert)
+import Data.Map.Strict hiding (map, foldl, foldr)
 import Debug.Trace
 
 
@@ -201,3 +202,30 @@ getIds (BzS_FnTypeDef  p   f   d) = zip3Map [                    getIds d, ([f],
 getIds (BzS_TypDef     p i t   d) = zip3Map [getIds i,           getIds d, ([ ], [t], [ ])]
 
 getIds _                     = ([  ], [  ], [  ])
+
+
+
+
+
+
+
+
+
+
+extractOutVarIds :: BzoSyntax -> Maybe [String]
+extractOutVarIds (BzS_Id     p           st ) = Just [st]
+extractOutVarIds (BzS_Box    p (BzS_Id o st)) = Just [st]
+extractOutVarIds (BzS_Cmpd   p           xs ) =
+  case (concat $ catMaybes $ map extractOutVarIds xs) of
+    [] -> Nothing
+    ms -> Just ms
+extractOutVarIds (BzS_Expr   p           xs ) = fn Nothing (reverse xs)
+  where fn :: Maybe [String] -> [BzoSyntax] -> Maybe [String]
+        fn (Just xs)                       _  = Just xs
+        fn Nothing  ((BzS_Filter    p fl):xs) = fn Nothing xs
+        fn Nothing  ((BzS_Namespace p nm):xs) = fn Nothing xs
+        fn Nothing  ((BzS_Id        p x ):xs) = Just [x]
+        fn Nothing  ((BzS_BId       p x ):xs) = Just [ ]
+        fn Nothing  ((BzS_BTId      p x ):xs) = Just [ ]
+        fn Nothing  ((BzS_Wildcard  p   ):xs) = Just [ ]
+        fn Nothing                         _  = Nothing
