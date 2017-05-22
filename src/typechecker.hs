@@ -28,6 +28,7 @@ data BzoLiteral
   | LtTV  String
   | LtVr  String
   | LtArr BzoLiteral BzoLiteral
+  | LtNms BzoLiteral String
 
 
 
@@ -46,6 +47,25 @@ data BzoType
   | TyFilt  BzoType BzoType
   | TyWild
   | TyNil
+
+
+
+
+
+
+
+
+
+
+data BzoFileTypeData
+  = BzoFileTypeData {
+      bft_functions :: [(String, [BzoSyntax])],
+      bft_typedefs  :: [(String, [BzoSyntax])],
+      bft_types     :: [(String, [BzoType  ])],
+      bft_vars      :: [(String, [BzoSyntax])]
+      bft_impfuncs  :: [String],
+      bft_imptypes  :: [String],
+      bft_impvars   :: [String] }
 
 
 
@@ -168,6 +188,18 @@ appendStdDep (BzoFileData mn fp dmn   ast imp lnk ima lna) =
 
 
 
+zip2Map :: [([a], [b])] -> ([a], [b])
+zip2Map = ((\(x, y) -> (concat x, concat y)) . unzip)
+
+
+
+
+
+
+
+
+
+
 zip3Map :: [([a], [b], [c])] -> ([a], [b], [c])
 zip3Map = ((\(x, y, z) -> (concat x, concat y, concat z)) . unzip3)
 
@@ -229,3 +261,20 @@ extractOutVarIds (BzS_Expr   p           xs ) = fn Nothing (reverse xs)
         fn Nothing  ((BzS_BTId      p x ):xs) = Just [ ]
         fn Nothing  ((BzS_Wildcard  p   ):xs) = Just [ ]
         fn Nothing                         _  = Nothing
+
+
+
+
+
+
+
+
+
+
+-- | Return (Function Names, Type Names)
+getCallIds :: BzoSyntax -> ([String], [String])
+getCallIds (BzS_Calls     p      xs) = zip2Map $ map getCallIds xs
+getCallIds (BzS_TypDef    p i t   d) = ([ ], [t])
+getCallIds (BzS_FnTypeDef p   f   d) = ([f], [ ])
+getCallIds (BzS_FunDef    p i f o d) = ([f], [ ])
+getCallIds _                         = ([ ], [ ])
