@@ -34,9 +34,22 @@ compileFilePass (BzoSettings imp lib flg opt pfx) =
       -- TODO: Static Analysis
       -- TODO: Code Generation
       putStrLn $ case valid of
-                  Nothing -> show $ applyWithErr orderFileData fdata
+                  Nothing -> showOutput $ applyWithErr orderFileData fdata
                   Just er -> show er
 
+
+
+
+
+
+
+
+
+
+showOutput :: Show a => Either [BzoErr] a -> String
+showOutput (Right outs) = show outs
+showOutput (Left  errs) =
+  "Compilation Failed. Errors:\n\n" ++ concatMap show errs
 
 
 

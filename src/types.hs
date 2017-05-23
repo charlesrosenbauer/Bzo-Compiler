@@ -67,13 +67,13 @@ data BzoErr = Other
 
 
 showBzErr :: BzoErr -> String
-showBzErr (StringErr  p st) = "Bzo Error:\n" ++ (showErrPos p) ++ (show st)
-showBzErr (LexErr     p st) = "Lexer Error:\n" ++ (showErrPos p) ++ (show st)
-showBzErr (ParseErr   p st) = "Parse Error:\n" ++ (showErrPos p) ++ (show st)
-showBzErr (TypeErr    p st) = "Type Error:\n" ++ (showErrPos p) ++ (show st)
-showBzErr (ParamErr     st) = "Parameter Error:\n" ++ (show st)
-showBzErr (CfgErr       st) = "Configuration Error:\n" ++ (show st)
-showBzErr (PrepErr    p st) = "Preprocessor Error:\n" ++ (showErrPos p) ++ (show st)
+showBzErr (StringErr  p st) = "Bzo Error:\n" ++ (showErrPos p) ++ st
+showBzErr (LexErr     p st) = "Lexer Error:\n" ++ (showErrPos p) ++ st
+showBzErr (ParseErr   p st) = "Parse Error:\n" ++ (showErrPos p) ++ st
+showBzErr (TypeErr    p st) = "Type Error:\n" ++ (showErrPos p) ++ st
+showBzErr (ParamErr     st) = "Parameter Error:\n" ++ st
+showBzErr (CfgErr       st) = "Configuration Error:\n" ++ st
+showBzErr (PrepErr    p st) = "Preprocessor Error:\n" ++ (showErrPos p) ++ st
 instance Show BzoErr where show = showBzErr
 
 
