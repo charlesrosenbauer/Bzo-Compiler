@@ -62,7 +62,7 @@ data BzoFileTypeData
       bft_functions :: [(String, [BzoSyntax])],
       bft_typedefs  :: [(String, [BzoSyntax])],
       bft_types     :: [(String, [BzoType  ])],
-      bft_vars      :: [(String, [BzoSyntax])]
+      bft_vars      :: [(String, [BzoSyntax])],
       bft_impfuncs  :: [String],
       bft_imptypes  :: [String],
       bft_impvars   :: [String] }
