@@ -61,6 +61,7 @@ data BzoFileTypeData
   = BzoFileTypeData {
       bft_functions :: [(String, [BzoSyntax])],
       bft_typedefs  :: [(String, [BzoSyntax])],
+      bft_fntypes   :: [(String, [BzoSyntax])],
       bft_types     :: [(String, [BzoType  ])],
       bft_vars      :: [(String, [BzoSyntax])],
       bft_impfuncs  :: [String],
@@ -272,9 +273,24 @@ extractOutVarIds (BzS_Expr   p           xs ) = fn Nothing (reverse xs)
 
 
 -- | Return (Function Names, Type Names)
-getCallIds :: BzoSyntax -> ([String], [String])
-getCallIds (BzS_Calls     p      xs) = zip2Map $ map getCallIds xs
-getCallIds (BzS_TypDef    p i t   d) = ([ ], [t])
-getCallIds (BzS_FnTypeDef p   f   d) = ([f], [ ])
-getCallIds (BzS_FunDef    p i f o d) = ([f], [ ])
-getCallIds _                         = ([ ], [ ])
+getCallIds :: BzoSyntax -> ([(String, [BzoSyntax])], [(String, [BzoSyntax])], [(String, [BzoSyntax])])
+getCallIds (BzS_Calls     p      xs) = zip3Map $ map getCallIds xs
+getCallIds (BzS_FnTypeDef p   f   d) = ([                              ], [                           ], [(f, [BzS_FnTypeDef p   f   d])])
+getCallIds (BzS_TypDef    p i t   d) = ([                              ], [(t, [BzS_TypDef p i t   d])], [                              ])
+getCallIds (BzS_FunDef    p i f o d) = ([(f, [BzS_FunDef    p i f o d])], [                           ], [                              ])
+getCallIds _                         = ([                              ], [                           ], [                              ])
+
+
+
+
+
+
+
+
+
+
+-- Doesn't currently group
+getTypeData0 :: BzoSyntax -> BzoFileTypeData
+getTypeData0 ast =
+  let (fns, tys, fts) = getCallIds ast
+  in (BzoFileTypeData fns tys fts [] [] [] [] [])
