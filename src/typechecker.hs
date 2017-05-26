@@ -288,7 +288,39 @@ getCallIds _                         = ([                              ], [     
 
 
 
+shrinkPairs :: (Eq a, Ord a) => [(a, [b])] -> [(a, [b])]
+shrinkPairs xs =
+  let ks  = map (\(a, b) -> (a, [])) xs
+      mp  = insertMany empty ks
+      mp' = Data.List.foldl' (\m (k, a) -> adjust (\x -> x ++ a) k m) mp xs
+  in assocs mp'
+
+
+
+
+
+
+
+
+
 getTypeData0 :: BzoSyntax -> BzoFileTypeData
 getTypeData0 ast =
-  let (fns, tys, fts) = getCallIds ast
-  in (BzoFileTypeData ast fns tys fts [] [] [])
+  let (fns , tys , fts ) = getCallIds ast
+      (fns', tys', fts') = (shrinkPairs fns, shrinkPairs tys, shrinkPairs fts)
+  in (BzoFileTypeData ast fns' tys' fts' [] [] [])
+
+
+
+
+
+
+
+
+
+
+{-
+generateSymbolTables :: [BzoFileData] -> Either [BzoErr] [BzoFileTypeData]
+generateSymbolTables fd =
+  let t0 = map (getTypeData0 . bfd_fileAST) fd
+      t1 =
+-}
