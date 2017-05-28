@@ -59,13 +59,15 @@ data BzoType
 
 data BzoFileTypeData
   = BzoFileTypeData {
+      bft_module    :: String,
+      bft_domain    :: String,
       bft_ast       :: BzoSyntax,
       bft_functions :: [(String, [BzoSyntax])],
       bft_typedefs  :: [(String, [BzoSyntax])],
       bft_fntypes   :: [(String, [BzoSyntax])],
-      bft_types     :: [(String, [BzoType  ])],
       bft_impfuncs  :: [String],
-      bft_imptypes  :: [String] }
+      bft_imptypes  :: [String],
+      bft_impftypes :: [String] }
 
 
 
@@ -303,12 +305,26 @@ shrinkPairs xs =
 
 
 
+
+shrinkPairs3 :: (Eq a, Ord a) => [(a, [b], [c], [d])] -> [(a, [b], [c], [d])]
+shrinkPairs3 xs =
+  let ks  = map (\(a, b, c, d) -> (a, ([], [], []))) xs
+      mp  = insertMany empty ks
+      mp' = Data.List.foldl' (\m (k, a, b, c) -> adjust (\(x, y, z) -> (x ++ a, y ++ b, z ++ c)) k m) mp xs
+  in map (\(a, (b, c, d)) -> (a, b, c, d)) $ assocs mp'
+
+
+
+
+
+
+
+
 getTypeData0 :: BzoSyntax -> BzoFileTypeData
 getTypeData0 ast =
   let (fns , tys , fts ) = getCallIds ast
       (fns', tys', fts') = (shrinkPairs fns, shrinkPairs tys, shrinkPairs fts)
-  in (BzoFileTypeData ast fns' tys' fts' [] [] [])
-
+  in (BzoFileTypeData "" "" ast fns' tys' fts' [] [] [])
 
 
 
@@ -322,5 +338,8 @@ getTypeData0 ast =
 generateSymbolTables :: [BzoFileData] -> Either [BzoErr] [BzoFileTypeData]
 generateSymbolTables fd =
   let t0 = map (getTypeData0 . bfd_fileAST) fd
-      t1 =
+      t1 = map bfd_moduleName fd
+      t2 = map bfd_domain     fd
+      t3 = map (\(mn, dm, (BzoFileTypeData _ _ ast fns tys fts _ _ _)) -> (BzoFileTypeData mn dm ast fns tys fts [] [] []))  $ zip3 t0 t1 t2
+      t4 = insertMany empty $ shrinkPairs $ map (\(BzoFileTypeData mn dm _ fns tys fts _ _ _) -> (dm, )) fd
 -}

@@ -280,7 +280,7 @@ processFiles s = ((applyWithErr wrappedPrepMap). (applyWithErr wrappedParserMap)
 
 
 insertMany :: Ord k => Map k a -> [(k, a)] -> Map k a
-insertMany m xs = foldl (\mp (k, a) -> Data.Map.Strict.insert k a mp) m xs
+insertMany m xs = Data.List.foldl' (\mp (k, a) -> Data.Map.Strict.insert k a mp) m xs
 
 
 
