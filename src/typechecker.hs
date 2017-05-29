@@ -334,6 +334,24 @@ getTypeData0 ast =
 
 
 
+
+-- Adjust to return errors
+modelType :: BzoSyntax -> BzoType
+modelType (BzS_Cmpd ps exprs) = TyCmpd $ map modelType exprs
+modelType (BzS_Poly ps exprs) = TyPoly $ map modelType exprs
+modelType (BzS_Wildcard ps  ) = TyWild
+modelType (BzS_Nil      ps  ) = TyNil
+--modelType (BzS_Expr ps atoms) = 
+
+
+
+
+
+
+
+
+
+
 {-
 generateSymbolTables :: [BzoFileData] -> Either [BzoErr] [BzoFileTypeData]
 generateSymbolTables fd =
