@@ -2,6 +2,7 @@ module BzoParser where
 import BzoTypes
 import BzoSyntax
 import BzoTokens
+import HigherOrder
 
 
 
@@ -620,19 +621,6 @@ bracketCheckFn (t : ts) = case t of
           (TkEndDat   ps) -> (Just $ [ParseErr ps "Mismatched square brackets!"], ts)
           (TkEndDo    ps) -> (Just $ [ParseErr ps "Mismatched braces!"], ts)
           tk              -> (Just $ [ParseErr (spos tk) "This error should not occur. Please notify the developer that something is wrong in the bracketCheckFn function"], ts)
-
-
-
-
-
-
-
-
-
-
-maybeMerge :: [a] -> Maybe [a] -> [a]
-maybeMerge a (Just b) = a ++ b
-maybeMerge a _        = a
 
 
 

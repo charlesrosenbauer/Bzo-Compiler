@@ -15,6 +15,7 @@ import System.Directory
 import System.FilePath
 import Control.Monad
 import System.Environment
+import HigherOrder
 import Debug.Trace
 import System.IO hiding (try)
 
@@ -118,19 +119,6 @@ matchPattern (PatBTy i) (BzS_BTId  p i') = True
 matchPattern (PatCmp x) (BzS_Cmpd  p x') = True
 matchPattern (PatPly x) (BzS_Poly  p x') = True
 matchPattern _          _                = False
-
-
-
-
-
-
-
-
-
-
-maybeIf :: Bool -> a -> Maybe a
-maybeIf True  x = Just x
-maybeIf False x = Nothing
 
 
 
@@ -269,18 +257,6 @@ verifyAST (Right (True, (BzS_Calls p (x : xs)), (BzoFileData mn path dmn ast imp
 
 processFiles :: [(FilePath, String)] -> Either [BzoErr] [BzoFileData]
 processFiles s = ((applyWithErr wrappedPrepMap). (applyWithErr wrappedParserMap). wrappedLexerMap) s
-
-
-
-
-
-
-
-
-
-
-insertMany :: Ord k => Map k a -> [(k, a)] -> Map k a
-insertMany m xs = Data.List.foldl' (\mp (k, a) -> Data.Map.Strict.insert k a mp) m xs
 
 
 
@@ -502,54 +478,6 @@ appendFilePath p a =
 isEnvPath :: PrefixFlags -> Bool
 isEnvPath (EnvFlag s) = True
 isEnvPath _           = False
-
-
-
-
-
-
-
-
-
-
-applyWithErr :: (b -> Either a c) -> Either a b -> Either a c
-applyWithErr f x =
-  case x of
-    Left  a -> Left  a
-    Right b -> f b
-
-
-
-
-
-
-
-
-
-
-applyWithErrM :: Monad m => (b -> m (Either a c)) -> Either a b -> m (Either a c)
-applyWithErrM f x =
-  case x of
-    Left  a -> return $ Left  a
-    Right b -> f b
-
-
-
-
-
-
-
-
-
-
-applyWithErrList :: (b -> Either a c) -> Either [a] b -> Either [a] c
-applyWithErrList f x =
-  case x of
-    Left  a -> Left a
-    Right b ->
-      case f b of
-        Left  a -> Left [a]
-        Right b -> Right b
 
 
 

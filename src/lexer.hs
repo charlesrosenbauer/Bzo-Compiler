@@ -5,6 +5,7 @@ import Data.Either
 import Data.List
 import Control.Monad
 import Control.Applicative
+import HigherOrder
 import Debug.Trace
 
 
@@ -128,84 +129,6 @@ instance Applicative Lexer where
 -- | Alternative to pure for applicative lexer. Not sure if it's necessary.
 pureErr :: String -> Lexer a
 pureErr err = Lexer (\s ls -> Left $ LexErr (BzoPos (lsLine ls) (lsColumn ls) (lsFName ls)) err)
-
-
-
-
-
-
-
-
-
-
-mapEither :: Either a b -> (b -> c) -> Either a c
-mapEither e f =
-  case e of
-    Left  err -> Left err
-    Right val -> Right $ f val
-
-
-
-
-
-
-
-
-
-
-applyListFns :: [(b -> c)] -> ((b -> c) -> a -> d) -> [[a]] -> [[d]]
-applyListFns fs fn xs = map (\(f, x) -> map (fn f) x) $ zip fs xs
-
-
-
-
-
-
-
-
-
-
-sepErrs :: [Either a [b]] -> Either a [[b]]
-sepErrs xs =
-  let (ls, rs) = partitionEithers xs
-  in  if((length ls) /= 0)
-    then Left  $ ls !! 0
-    else Right $ rs
-
-
-
-
-
-
-
-
-
-
-concatMapWithErrs' :: Either a [b] -> (b -> Either a [c]) -> Either a [c]
-concatMapWithErrs' xs fn =
-  case xs of
-    Left  err -> Left err
-    Right val ->
-      let (ls, rs) = partitionEithers $ map fn val
-      in  if((length ls) /= 0)
-        then Left  $ ls !! 0
-        else Right $ concat rs
-
-
-
-
-
-
-
-
-
-
-concatMapWithErrs :: [a] -> (a -> Either b [c]) -> Either b [c]
-concatMapWithErrs xs fn =
-  let (ls, rs) = partitionEithers $ map fn xs
-  in  if((length ls) /= 0)
-    then Left  $ ls !! 0
-    else Right $ concat rs
 
 
 

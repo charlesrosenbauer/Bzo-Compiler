@@ -11,6 +11,7 @@ import BzoTokens
 import BzoPreprocessor
 import BzoParameterParser
 import BzoChecker
+import HigherOrder
 
 
 

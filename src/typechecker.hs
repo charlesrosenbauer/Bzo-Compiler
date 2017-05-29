@@ -7,6 +7,7 @@ import Data.Either
 import Data.Maybe
 import Data.List hiding (map, foldl, foldr, insert)
 import Data.Map.Strict hiding (map, foldl, foldr)
+import HigherOrder
 import Debug.Trace
 
 
@@ -102,18 +103,6 @@ getLinkDependencies fs = nub $ concatMap (\(BzoFileData mn fp dm ast im ln ia la
 
 
 
-containsManyMembers :: Ord a => Map a b -> [a] -> Bool
-containsManyMembers mp as = all (\x -> member x mp) as
-
-
-
-
-
-
-
-
-
-
 orderByImports :: Map String BzoFileData -> [BzoFileData] -> [BzoFileData] -> Either [BzoErr] [BzoFileData]
 orderByImports mp out [] = Right out
 orderByImports mp out fs =
@@ -180,30 +169,6 @@ appendStdDep (BzoFileData mn fp dmn   ast imp lnk ima lna) =
   case (elem "Std" imp, elem "Std" $ map fst ima) of
     (False, False) -> (BzoFileData mn fp dmn ast imp (lnk ++ ["Std"]) ima lna)
     (_    , _    ) -> (BzoFileData mn fp dmn ast imp lnk ima lna)
-
-
-
-
-
-
-
-
-
-
-zip2Map :: [([a], [b])] -> ([a], [b])
-zip2Map = ((\(x, y) -> (concat x, concat y)) . unzip)
-
-
-
-
-
-
-
-
-
-
-zip3Map :: [([a], [b], [c])] -> ([a], [b], [c])
-zip3Map = ((\(x, y, z) -> (concat x, concat y, concat z)) . unzip3)
 
 
 
@@ -290,36 +255,6 @@ getCallIds _                         = ([                              ], [     
 
 
 
-shrinkPairs :: (Eq a, Ord a) => [(a, [b])] -> [(a, [b])]
-shrinkPairs xs =
-  let ks  = map (\(a, b) -> (a, [])) xs
-      mp  = insertMany empty ks
-      mp' = Data.List.foldl' (\m (k, a) -> adjust (\x -> x ++ a) k m) mp xs
-  in assocs mp'
-
-
-
-
-
-
-
-
-
-
-shrinkPairs3 :: (Eq a, Ord a) => [(a, [b], [c], [d])] -> [(a, [b], [c], [d])]
-shrinkPairs3 xs =
-  let ks  = map (\(a, b, c, d) -> (a, ([], [], []))) xs
-      mp  = insertMany empty ks
-      mp' = Data.List.foldl' (\m (k, a, b, c) -> adjust (\(x, y, z) -> (x ++ a, y ++ b, z ++ c)) k m) mp xs
-  in map (\(a, (b, c, d)) -> (a, b, c, d)) $ assocs mp'
-
-
-
-
-
-
-
-
 getTypeData0 :: BzoSyntax -> BzoFileTypeData
 getTypeData0 ast =
   let (fns , tys , fts ) = getCallIds ast
@@ -341,7 +276,7 @@ modelType (BzS_Cmpd ps exprs) = TyCmpd $ map modelType exprs
 modelType (BzS_Poly ps exprs) = TyPoly $ map modelType exprs
 modelType (BzS_Wildcard ps  ) = TyWild
 modelType (BzS_Nil      ps  ) = TyNil
---modelType (BzS_Expr ps atoms) = 
+--modelType (BzS_Expr ps atoms) =
 
 
 

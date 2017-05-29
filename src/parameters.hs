@@ -2,6 +2,7 @@ module BzoParameterParser where
 import Data.List
 import BzoTypes
 import System.IO
+import HigherOrder
 
 
 
@@ -250,23 +251,6 @@ genericParameterParse str (fa, fb) settings =
   in case par of
     Nothing -> Nothing
     Just a  -> Just $ fb settings a
-
-
-
-
-
-
-
-
-
-
-
-tryMaybeList :: a -> [a -> Maybe b] -> Maybe b
-tryMaybeList a []       = Nothing
-tryMaybeList a (f : fs) =
-  case (f a) of
-    Just x  -> Just x
-    Nothing -> tryMaybeList a fs
 
 
 
