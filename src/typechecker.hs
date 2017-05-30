@@ -28,7 +28,8 @@ data BzoLiteral
   | LtTy  String
   | LtTV  String
   | LtVr  String
-  | LtArr BzoLiteral BzoLiteral
+  | LtNm  BzoLiteral String
+  | LtArr BzoLiteral BzoType
   | LtNms BzoLiteral String
 
 
@@ -46,6 +47,7 @@ data BzoType
   | TyLit   BzoLiteral
   | TyFnDf  BzoType BzoType
   | TyFilt  BzoType BzoType
+  | TyExpr  BzoType BzoType
   | TyWild
   | TyNil
 
