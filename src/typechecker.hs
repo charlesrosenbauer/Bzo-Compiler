@@ -112,6 +112,33 @@ isValidBId _            = False
 
 
 
+
+isValidBTId :: String -> Bool
+isValidBTId "$Int8"      = True
+isValidBTId "$Int16"     = True
+isValidBTId "$Int32"     = True
+isValidBTId "$Int64"     = True
+isValidBTId "$Unt8"      = True
+isValidBTId "$Unt16"     = True
+isValidBTId "$Unt32"     = True
+isValidBTId "$Unt64"     = True
+isValidBTId "$Flt16"     = True
+isValidBTId "$Flt32"     = True
+isValidBTId "$Flt64"     = True
+isValidBTId "$Unm16"     = True
+isValidBTId "$Unm32"     = True
+isValidBTId "$Unm64"     = True
+isValidBTId "$BoolTF"    = True
+isValidBTId "$BoolFT"    = True
+isValidBTId _            = False
+
+
+
+
+
+
+
+
 getImportDependencies :: BzoFileData -> [String]
 getImportDependencies fs = nub $ (\(BzoFileData mn fp dm ast im ln ia la) -> im ++ (map fst ia)) fs
 
