@@ -81,6 +81,37 @@ data BzoFileTypeData
 
 
 
+isValidBId :: String -> Bool
+isValidBId "$add-binop" = True
+isValidBId "$sub-binop" = True
+isValidBId "$mul-binop" = True
+isValidBId "$div-binop" = True
+isValidBId "$mod-binop" = True
+isValidBId "$gtr-binop" = True
+isValidBId "$lss-binop" = True
+isValidBId "$geq-binop" = True
+isValidBId "$leq-binop" = True
+isValidBId "$eql-binop" = True
+isValidBId "$neq-binop" = True
+isValidBId "$arrLength" = True
+isValidBId "$getIndex"  = True
+isValidBId "$setIndex"  = True
+isValidBId "$map"       = True
+isValidBId "$fold"      = True
+isValidBId "$reduce"    = True
+isValidBId "$scam"      = True
+isValidBId "$chain"     = True
+isValidBId "$zip"       = True
+isValidBId _            = False
+
+
+
+
+
+
+
+
+
 getImportDependencies :: BzoFileData -> [String]
 getImportDependencies fs = nub $ (\(BzoFileData mn fp dm ast im ln ia la) -> im ++ (map fst ia)) fs
 
