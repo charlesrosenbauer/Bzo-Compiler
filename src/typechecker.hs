@@ -278,6 +278,14 @@ modelType (BzS_Cmpd ps exprs) = TyCmpd $ map modelType exprs
 modelType (BzS_Poly ps exprs) = TyPoly $ map modelType exprs
 modelType (BzS_Wildcard ps  ) = TyWild
 modelType (BzS_Nil      ps  ) = TyNil
+modelType (BzS_Str  ps  str ) = LtStr str
+modelType (BzS_Int  ps  num ) = LtInt num
+modelType (BzS_Flt  ps  num ) = LtFlt num
+modelType (BzS_Id   ps  str ) = LtId  str   -- Later, check if id is a global function
+modelType (BzS_BId  ps  str ) = LtId  str   -- Later, check if id is a valid builtin
+modelType (BzS_TyId ps  str ) = LtTy  str   -- Later, make Type or TyVar depending on if str is globally defined
+modelType (BzS_BTId ps  str ) = LtTy  str   -- Later, check if id is a valid builtin
+--modelType (BzS_MId  ps  str ) = ERR
 --modelType (BzS_Expr ps atoms) =
 
 
