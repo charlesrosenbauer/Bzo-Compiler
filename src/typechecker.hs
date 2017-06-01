@@ -82,27 +82,53 @@ data BzoFileTypeData
 
 
 isValidBId :: String -> Bool
-isValidBId "$add-binop" = True
-isValidBId "$sub-binop" = True
-isValidBId "$mul-binop" = True
-isValidBId "$div-binop" = True
-isValidBId "$mod-binop" = True
-isValidBId "$gtr-binop" = True
-isValidBId "$lss-binop" = True
-isValidBId "$geq-binop" = True
-isValidBId "$leq-binop" = True
-isValidBId "$eql-binop" = True
-isValidBId "$neq-binop" = True
-isValidBId "$arrLength" = True
-isValidBId "$getIndex"  = True
-isValidBId "$setIndex"  = True
-isValidBId "$map"       = True
-isValidBId "$fold"      = True
-isValidBId "$reduce"    = True
-isValidBId "$scam"      = True
-isValidBId "$chain"     = True
-isValidBId "$zip"       = True
-isValidBId _            = False
+isValidBId "$add-binop"    = True
+isValidBId "$sub-binop"    = True
+isValidBId "$mul-binop"    = True
+isValidBId "$div-binop"    = True
+isValidBId "$mod-binop"    = True
+isValidBId "$gtr-binop"    = True
+isValidBId "$lss-binop"    = True
+isValidBId "$geq-binop"    = True
+isValidBId "$leq-binop"    = True
+isValidBId "$eql-binop"    = True
+isValidBId "$neq-binop"    = True
+isValidBId "$arrLength"    = True
+isValidBId "$getIndex"     = True
+isValidBId "$setIndex"     = True
+isValidBId "$map"          = True
+isValidBId "$fold"         = True
+isValidBId "$reduce"       = True
+isValidBId "$scam"         = True
+isValidBId "$chain"        = True
+isValidBId "$zip"          = True
+isValidBId "$exp-binop"    = True
+isValidBId "$surd-binop"   = True
+isValidBId "$log-binop"    = True
+isValidBId "$sine"         = True
+isValidBId "$cosine"       = True
+isValidBId "$tangent"      = True
+isValidBId "$arcsine"      = True
+isValidBId "$arccosine"    = True
+isValidBId "$arctangent"   = True
+isValidBId "$hsine"        = True
+isValidBId "$hcosine"      = True
+isValidBId "$htangent"     = True
+isValidBId "$arc-hsine"    = True
+isValidBId "$arc-hcosine"  = True
+isValidBId "$arc-htangent" = True
+isValidBId "$floor"        = True
+isValidBId "$ciel"         = True
+isValidBId "$round"        = True
+isValidBId "$factorial"    = True
+isValidBId "$gamma"        = True
+isValidBId "$nCr"          = True
+isValidBId "$nPr"          = True
+isValidBId "$sqrt"         = True
+isValidBId "$cbrt"         = True
+isValidBId "$log2"         = True
+isValidBId "$log10"        = True
+isValidBId _               = False
 
 
 
