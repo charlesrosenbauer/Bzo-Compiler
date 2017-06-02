@@ -128,6 +128,26 @@ isValidBId "$sqrt"         = True
 isValidBId "$cbrt"         = True
 isValidBId "$log2"         = True
 isValidBId "$log10"        = True
+isValidBId "$to-uppercase" = True
+isValidBId "$to-lowercase" = True
+isValidBId "$isPrefix"     = True
+isValidBId "$isSuffix"     = True
+isValidBId "$append-array" = True
+isValidBId "$print"        = True
+isValidBId "and-binop"     = True
+isValidBId "$or-binop"     = True
+isValidBId "$xor-binop"    = True
+isValidBId "$not-op"       = True
+isValidBId "$rshift-binop" = True
+isValidBId "$lshift-binop" = True
+isValidBId "$ctlz-op"      = True
+isValidBId "$cttz-op"      = True
+isValidBId "$popcount-op"  = True
+isValidBId "$toInt"        = True
+isValidBId "$toUnt"        = True
+isValidBId "$toUnm"        = True
+isValidBId "$toFlt"        = True
+isValidBId "$toBits"       = True
 isValidBId _               = False
 
 
@@ -156,6 +176,14 @@ isValidBTId "$Unm32"     = True
 isValidBTId "$Unm64"     = True
 isValidBTId "$BoolTF"    = True
 isValidBTId "$BoolFT"    = True
+isValidBTId "$Char"      = True
+isValidBTId "$ASCII"     = True
+isValidBTId "$Unique"    = True
+isValidBTId "$Effect"    = True
+isValidBTId "$Byte"      = True
+isValidBTId "$Half"      = True
+isValidBTId "$Word"      = True
+isValidBTId "$Dword"     = True
 isValidBTId _            = False
 
 
