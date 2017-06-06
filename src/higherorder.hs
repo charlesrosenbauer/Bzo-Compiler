@@ -145,6 +145,21 @@ insertMany m xs = Data.List.foldl' (\mp (k, a) -> Data.Map.Strict.insert k a mp)
 
 
 
+insertManyList :: Ord k => Map k [a] -> [(k, a)] -> Map k [a]
+insertManyList m xs = Data.List.foldl' (\mp (k, a) ->
+  if (member k mp)
+    then Data.Map.Strict.adjust (\as -> as ++ [a]) k mp
+    else Data.Map.Strict.insert k [a] mp
+  ) m xs
+
+
+
+
+
+
+
+
+
 applyWithErr :: (b -> Either a c) -> Either a b -> Either a c
 applyWithErr f x =
   case x of
