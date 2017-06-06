@@ -7,6 +7,7 @@ import Data.Either
 import Data.Maybe
 import Data.List hiding (map, foldl, foldr, insert)
 import Data.Map.Strict hiding (map, foldl, foldr, mapEither)
+import Data.Set hiding (map, foldl, foldr, mapEither, empty)
 import HigherOrder
 import Debug.Trace
 
@@ -302,3 +303,26 @@ getCallIds (BzS_FnTypeDef p   f   d) = ([                            ], [       
 getCallIds (BzS_TypDef    p i t   d) = ([                            ], [(t, BzS_TypDef p i t   d)], [                            ])
 getCallIds (BzS_FunDef    p i f o d) = ([(f, BzS_FunDef    p i f o d)], [                         ], [                            ])
 getCallIds _                         = ([                            ], [                         ], [                            ])
+
+
+
+
+
+
+
+
+
+
+reduceCallIds :: ([(String, BzoSyntax)], [(String, BzoSyntax)], [(String, BzoSyntax)]) -> Either [BzoErr] (Map String [BzoSyntax], Map String [BzoSyntax], Map String [BzoSyntax])
+reduceCallIds (fns, tys, fts) =
+  let fns'  = insertManyList Data.Map.Strict.empty fns
+      tys'  = insertManyList Data.Map.Strict.empty tys
+      fts'  = insertManyList Data.Map.Strict.empty fts
+      fnset = keysSet fns'
+      ftset = keysSet fts'
+      errs  = if (isSubsetOf ftset fnset)
+                then []
+                else map (\nm -> DepErr $ nm ++ " has a type definition, but no function definition.") $ Prelude.filter (\a -> Data.Set.member a ftset) $ Data.Set.elems $ Data.Set.difference ftset fnset
+  in case errs of
+      []   -> Right (fns', tys', fts')
+      errs -> Left errs
