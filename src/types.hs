@@ -33,6 +33,7 @@ data BzoToken
   | TkId           { spos :: BzoPos, valId  :: String  }
   | TkTypeId       { spos :: BzoPos, valId  :: String  }
   | TkMutId        { spos :: BzoPos, valId  :: String  }
+  | TkTyVar        { spos :: BzoPos, valId  :: String  }
   | TkNewline      { spos :: BzoPos }
   | TkBuiltin      { spos :: BzoPos, valId  :: String  }
   | TkBIType       { spos :: BzoPos, valId  :: String  }

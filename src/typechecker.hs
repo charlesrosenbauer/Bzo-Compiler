@@ -350,4 +350,4 @@ extractRecordData _ = Nothing
 
 
 --extractRecordTypes :: BzoSyntax -> [(String, BzoSyntax)]
---extractRecordTypes (BzS_Cmpd ps exprs) = 
+--extractRecordTypes (BzS_Cmpd ps exprs) =

@@ -519,6 +519,22 @@ lexTypeIdentifier = do
 
 
 
+lexTyVarIdentifier :: Lexer BzoToken
+lexTyVarIdentifier = do
+  p  <- getLexerState
+  c0 <- satisfy isUpper
+  cs <- many $ satisfy isLegalChar
+  c' <- lexChar '\''
+  return (TkTyVar (makeBzoPos p) (c0 : (cs ++ [c'])))
+
+
+
+
+
+
+
+
+
 lexBIIdentifier :: Lexer BzoToken
 lexBIIdentifier = do
   p  <- getLexerState
@@ -699,6 +715,7 @@ generalLexer =
   lexString           <|>
   lexBITypeIdentifier <|>
   lexBIIdentifier     <|>
+  lexTyVarIdentifier  <|>
   lexTypeIdentifier   <|>
   lexIdentifier       <|>
   lexFlt              <|>
