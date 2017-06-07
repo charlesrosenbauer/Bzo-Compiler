@@ -180,11 +180,24 @@ parsePrimitive10 = genericParseOp [mtk_ArrMod] (\tk ->
 
 
 
+parsePrimitive11 :: ParserOp
+parsePrimitive11 = genericParseOp [mtk_TyVar] (\tk ->
+  PI_BzSyn $ BzS_TyVar (spos $ piTok $ head tk) (valId $ piTok $ head tk))
+
+
+
+
+
+
+
+
+
+
 parsePrimitives :: Parser
 parsePrimitives = Parser (\ps ->
   let parseFn = [parsePrimitive0,  parsePrimitive1,  parsePrimitive2,  parsePrimitive3,
                  parsePrimitive4,  parsePrimitive5,  parsePrimitive6,  parsePrimitive7,
-                 parsePrimitive8,  parsePrimitive9,  parsePrimitive10]
+                 parsePrimitive8,  parsePrimitive9,  parsePrimitive10, parsePrimitive11]
   in case tryParsers ps parseFn of
     Just pst -> Right pst
     Nothing  -> Left []  )

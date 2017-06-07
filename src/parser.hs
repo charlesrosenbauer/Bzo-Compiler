@@ -70,6 +70,7 @@ data MockParseItem
   | MP_Id
   | MP_TId
   | MP_MId
+  | MP_TyVr
   | MP_BId
   | MP_BTId
   | MP_Name
@@ -149,6 +150,7 @@ mtk_TypeId    = MP_Tk $ TkTypeId    mockPos "This-is-a-Mock-Type-Identifier"
 mtk_MutId     = MP_Tk $ TkMutId     mockPos "~this-is-a-Mock-Mutable-Identifier"
 mtk_Builtin   = MP_Tk $ TkBuiltin   mockPos "$this-is-a-Mock-Builtin"
 mtk_BIType    = MP_Tk $ TkBIType    mockPos "$This-is-a-Mock-Builtin-Type"
+mtk_TyVar     = MP_Tk $ TkTyVar     mockPos "This-is-a-Mock-Type-Variable'"
 mtk_Nil       = MP_Tk $ TkNil
 
 
@@ -190,6 +192,7 @@ matchParseItem (MP_Vr  ) (PI_BzSyn (BzS_Poly       p x)) = True
 matchParseItem (MP_Vr  ) (PI_BzSyn (BzS_Box        p x)) = True
 matchParseItem (MP_Vr  ) (PI_BzSyn (BzS_Id         p i)) = True
 matchParseItem (MP_Vr  ) (PI_BzSyn (BzS_MId        p i)) = True
+matchParseItem (MP_Vr  ) (PI_BzSyn (BzS_TyVar      p i)) = True
 matchParseItem (MP_Typ ) (PI_BzSyn (BzS_Cmpd       p x)) = True
 matchParseItem (MP_Typ ) (PI_BzSyn (BzS_Poly       p x)) = True
 matchParseItem (MP_Typ ) (PI_BzSyn (BzS_Box        p x)) = True
@@ -211,6 +214,7 @@ matchParseItem (MP_Item) (PI_BzSyn (BzS_BId        p i)) = True
 matchParseItem (MP_Item) (PI_BzSyn (BzS_Flt        p i)) = True
 matchParseItem (MP_Item) (PI_BzSyn (BzS_Str        p i)) = True
 matchParseItem (MP_Item) (PI_BzSyn (BzS_Int        p i)) = True
+matchParseItem (MP_Item) (PI_BzSyn (BzS_TyVar      p i)) = True
 matchParseItem (MP_Item) (PI_MX                      x ) = True
 matchParseItem (MP_Item) (PI_BzSyn (BzS_Wildcard     p)) = True
 matchParseItem (MP_Item) (PI_BzSyn (BzS_Nil          p)) = True
@@ -265,6 +269,7 @@ matchSyntax MP_Expr   (BzS_Expr            _ _) = True
 matchSyntax MP_Calls  (BzS_Calls           _ _) = True
 matchSyntax MP_Wild   (BzS_Wildcard          _) = True
 matchSyntax MP_Undef  (BzS_Undefined          ) = True
+matchSyntax MP_TyVr   (BzS_TyVar           _ _) = True
 matchSyntax _ _ = False
 
 
@@ -305,6 +310,7 @@ matchBzoToken (TkTypeId  a b) (TkTypeId  c d) = True
 matchBzoToken (TkMutId   a b) (TkMutId   c d) = True
 matchBzoToken (TkBuiltin a b) (TkBuiltin c d) = True
 matchBzoToken (TkBIType  a b) (TkBIType  c d) = True
+matchBzoToken (TkTyVar   a b) (TkTyVar   c d) = True
 matchBzoToken (TkNil        ) (TkNil        ) = True
 matchBzoToken _               _               = False
 

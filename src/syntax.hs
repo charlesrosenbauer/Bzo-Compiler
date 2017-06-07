@@ -26,6 +26,9 @@ data BzoSyntax
     | BzS_TyId {
         pos  :: BzoPos,
         sid  :: String }
+    | BzS_TyVar {
+        pos  :: BzoPos,
+        sid  :: String }
     | BzS_MId {
         pos  :: BzoPos,
         sid  :: String }
@@ -154,5 +157,6 @@ showAST (BzS_ArrGenMod _)                  = " [] "
 showAST (BzS_ArrSzMod _ i)                 = " [ " ++ (show  i) ++ " ] "
 showAST (BzS_ArrExprMod _ ex)              = " [ " ++ (show ex) ++ " ] "
 showAST (BzS_Nil _)                        = " () "
+showAST (BzS_TyVar _ i)                    = "TyVr: " ++ (show i)
 showAST (BzS_Undefined)                    = " UNDEFINED "
 instance Show BzoSyntax where show = showAST
