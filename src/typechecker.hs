@@ -326,3 +326,28 @@ reduceCallIds (fns, tys, fts) =
   in case errs of
       []   -> Right (fns', tys', fts')
       errs -> Left errs
+
+
+
+
+
+
+
+
+
+
+-- Temporary. Will need to figure out how to actually handle records and enums.
+extractRecordData :: BzoSyntax -> Maybe (BzoPos, String, BzoSyntax)
+extractRecordData ((BzS_Id p0 i) : (BzS_Filter p1 t) : xs) = Just (p0, i, t)
+extractRecordData _ = Nothing
+
+
+
+
+
+
+
+
+
+--extractRecordTypes :: BzoSyntax -> [(String, BzoSyntax)]
+--extractRecordTypes (BzS_Cmpd ps exprs) = 
