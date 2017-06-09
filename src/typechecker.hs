@@ -82,6 +82,34 @@ data BzoFileTypeData
 
 
 
+data BzoRecord
+  = BzoRecord {
+      br_pos :: BzoPos,
+      br_nm  :: String,
+      br_ty  :: BzoSyntax }
+
+
+
+
+
+
+
+
+
+
+data BzoEnum
+  = BzoEnum {
+      be_pos :: BzoPos,
+      be_nm  :: String,
+      be_ty  :: BzoSyntax }
+
+
+
+
+
+
+
+
 isValidBId :: String -> Bool
 isValidBId "$add-binop"    = True
 isValidBId "$sub-binop"    = True
@@ -336,10 +364,34 @@ reduceCallIds (fns, tys, fts) =
 
 
 
+matchRecord :: BzoSyntax -> Maybe BzoRecord
+matchRecord (BzS_Expr p [(BzS_Id _ i), (BzS_Filter _ t)]) = Just (BzoRecord p i t)
+matchRecord _                                             = Nothing
+
+
+
+
+
+
+
+
+
+
+matchEnum :: BzoSyntax -> Maybe BzoEnum
+matchEnum (BzS_Expr p [(BzS_TyId _ i), (BzS_Filter _ t)]) = Just (BzoEnum p i t)
+matchEnum _                                               = Nothing
+
+
+
+
+
+
+
+
 -- Temporary. Will need to figure out how to actually handle records and enums.
-extractRecordData :: BzoSyntax -> Maybe (BzoPos, String, BzoSyntax)
-extractRecordData ((BzS_Id p0 i) : (BzS_Filter p1 t) : xs) = Just (p0, i, t)
-extractRecordData _ = Nothing
+--extractRecordData :: BzoSyntax -> Maybe (BzoPos, String, BzoSyntax)
+--extractRecordData ((BzS_Id p0 i) : (BzS_Filter p1 t) : xs) = Just (p0, i, t)
+--extractRecordData _ = Nothing
 
 
 
