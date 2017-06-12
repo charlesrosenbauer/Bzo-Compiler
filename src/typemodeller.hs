@@ -41,15 +41,56 @@ data FuncModel
 
 
 data TypeModel
-  = TypeExpr {
-      typeName  :: String }
+  = TM_CMPD {
+      tm_exprs :: [TypeModel] }
+  | TM_POLY {
+      tm_exprs :: [TypeModel] }
+  | TM_ATOM {
+      tm_atom  :: String }  -- Change this later
+  | TM_ENUM {
+      tm_enumName :: String,
+      tm_enumType :: TypeModel }
+  | TM_RECORD {
+      tm_recordName :: String,
+      tm_recordType :: TypeModel }
+
+
+
+
+
+
+
+
+
+
+data TypeDefModel
+  = TypeStruct {
+      typeName  :: String,
+      typeDomain:: String,
+      typepos   :: BzoPos,
+      typepars  :: [String],
+      typedef   :: TypeModel,
+      typerecs  :: [(String, TypeModel)],
+      typeenum  :: [(String, TypeModel)]}
+  | TypeContainer {
+      typeName  :: String,
+      typeDomain:: String,
+      typepos   :: BzoPos,
+      typepars  :: [String],
+      typedef   :: TypeModel,
+      typerecs  :: [(String, TypeModel)],
+      typeenum  :: [(String, TypeModel)]}
   | TypeAlias {
       typeName  :: String,
+      typeDomain:: String,
+      typepos   :: BzoPos,
       typeAlias :: String }
-  | TypeContainer {
-      typeName  :: String }
-  | TypeStruct {
-      typeName  :: String }
+  | TypeAliasContainer {
+      typeName  :: String,
+      typeDomain:: String,
+      typepos   :: BzoPos,
+      typepars  :: [String],
+      typeAlias :: String }
 
 
 
