@@ -57,6 +57,7 @@ data BzoErr = Other
   | DepErr    { errorStr::String }
   | ParamErr  { errorStr::String }
   | CfgErr    { errorStr::String }
+  | ModelErr  { position::BzoPos, errorStr::String }
   | PrepErr   { position::BzoPos, errorStr::String}
 
 
