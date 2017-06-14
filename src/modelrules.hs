@@ -184,6 +184,24 @@ data ModelTypeAtom    -- Add arrays
 
 
 
+-- | Array definitions containing variables or expressions will not be necessary
+-- | until function modeling is implemented.
+data ModelArrayType
+  = ModelTypeGenArr {
+      mat_pos  :: BzoPos }
+  | ModelTypeIntArr {
+      mat_pos  :: BzoPos,
+      mat_size :: Integer }
+
+
+
+
+
+
+
+
+
+
 data ModelFilterTy = Maybe ModelType
 
 
@@ -198,18 +216,30 @@ data ModelFilterTy = Maybe ModelType
 data ModelType
   = MT_Cmpd {
       mt_pos :: BzoPos,
+      mt_arr :: Maybe [ModelArrayType],
       mt_exp :: [ModelType] }
   | MT_Poly {
       mt_pos :: BzoPos,
+      mt_arr :: Maybe [ModelArrayType],
       mt_exp :: [ModelType] }
   | MT_Enum {
       mt_pos :: BzoPos,
+      mt_arr :: Maybe [ModelArrayType],
       mt_exp :: [ModelType],
       mt_enm :: [ModelEnum] }
   | MT_Record {
       mt_pos :: BzoPos,
+      mt_arr :: Maybe [ModelArrayType],
       mt_exp :: [ModelType],
       mt_rcd :: [ModelRecord] }
+  | MT_TyExpr {
+      mt_pos :: BzoPos,
+      mt_arr :: Maybe [ModelArrayType],
+      mt_exp :: [ModelType] }
+  | MT_TyAtom {
+      mt_pos :: BzoPos,
+      mt_arr :: Maybe [ModelArrayType],
+      mt_atm :: ModelTypeAtom }
 
 
 
