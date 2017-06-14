@@ -128,127 +128,6 @@ isValidBTId _            = False
 
 
 
-data FuncModel
-  = FuncExpr {
-      funcName  :: String }
-  | FuncAlias {
-      funcName  :: String,
-      funcAlias :: String }
-  | FuncConstant {
-      funcName  :: String }
-  | FuncGraph {
-      funcName  :: String }
-
-
-
-
-
-
-
-
-
-
-data TypeModel
-  = TM_CMPD {
-      tm_exprs :: [TypeModel] }
-  | TM_POLY {
-      tm_exprs :: [TypeModel] }
-  | TM_ATOM {
-      tm_atom  :: TypeAtom }  -- Change this later
-  | TM_ENUM {
-      tm_enumName :: String,
-      tm_enumType :: TypeModel }
-  | TM_RECORD {
-      tm_recordName :: String,
-      tm_recordType :: TypeModel }
-
-
-
-
-
-
-
-
-
-
-data TypeAtom
-  = TA_Int {
-      ta_int :: Integer }
-  | TA_Flt {
-      ta_flt :: Double }
-  | TA_Str {
-      ta_str :: String }
-  | TA_Var {
-      ta_id  :: String,
-      ta_filt:: TypeModel }
-
-
-
-
-
-
-
-
-
-data TypeDefModel
-  = TypeStruct {
-      typeName  :: String,
-      typeDomain:: String,
-      typepos   :: BzoPos,
-      typepars  :: [String],
-      typedef   :: TypeModel,
-      typerecs  :: [(String, TypeModel)],
-      typeenum  :: [(String, TypeModel)]}
-  | TypeContainer {
-      typeName  :: String,
-      typeDomain:: String,
-      typepos   :: BzoPos,
-      typepars  :: [String],
-      typedef   :: TypeModel,
-      typerecs  :: [(String, TypeModel)],
-      typeenum  :: [(String, TypeModel)]}
-  | TypeAlias {
-      typeName  :: String,
-      typeDomain:: String,
-      typepos   :: BzoPos,
-      typeAlias :: String }
-  | TypeAliasContainer {
-      typeName  :: String,
-      typeDomain:: String,
-      typepos   :: BzoPos,
-      typepars  :: [TypeAtom],
-      typeAlias :: String }
-
-
-
-
-
-
-
-
-
-
-data BzoFileTypeData
-  = BzoFileTypeData {
-      bft_module    :: String,
-      bft_domain    :: String,
-      bft_ast       :: BzoSyntax,
-      bft_functions :: [(String, [BzoSyntax])],
-      bft_typedefs  :: [(String, [BzoSyntax])],
-      bft_fntypes   :: [(String, [BzoSyntax])],
-      bft_impfuncs  :: [String],
-      bft_imptypes  :: [String],
-      bft_impftypes :: [String] }
-
-
-
-
-
-
-
-
-
-
 data BzoRecord
   = BzoRecord {
       br_pos :: BzoPos,
@@ -278,15 +157,84 @@ data BzoEnum
 
 
 
-{-
-modelType :: String -> BzoSyntax -> Either [BzoErr] TypeDefModel
-modelType dm (BzS_TypDef ps BzS_Undefined tid (BzS_Expr p [(BzS_BTId _ b)])) =
-  if(isValidBTId b)
-    then $ Right (TypeAlias tid dm ps b)
-    else $ Left  [ModelErr p (b ++ " is not a recognized built-in.")]
-modelType dm (BzS_TypDef ps pars tid (BzS_Expr p [(BzS_BTId _ b)])) =
-  case (isValidBTId b, pars) of   -- Add function to check pars for validity
-    (True , Right ps') -> Right  (TypeAliasContainer tid dm ps pars b)
-    (False, Right ps') -> Left   [ModelErr p (b ++ " is not a recognized built-in.")]
-    (False, Left errs) -> Left $ [ModelErr p (b ++ " is not a recognized built-in.")] ++ errs
--}
+
+data ModelTypeAtom    -- Add arrays
+  = MTA_Int {
+      mta_pos :: BzoPos,
+      mta_int :: Integer }
+  | MTA_Flt {
+      mta_pos :: BzoPos,
+      mta_flt :: Double }
+  | MTA_Str {
+      mta_pos :: BzoPos,
+      mta_str :: String }
+  | MTA_Var {
+      mta_pos :: BzoPos,
+      mta_id  :: String,
+      mta_filt:: ModelType }
+  | MTA_Nil {
+      mta_pos :: BzoPos }
+
+
+
+
+
+
+
+
+
+
+data ModelFilterTy = Maybe ModelType
+
+
+
+
+
+
+
+
+
+
+data ModelType
+  = MT_Cmpd {
+      mt_pos :: BzoPos,
+      mt_exp :: [ModelType] }
+  | MT_Poly {
+      mt_pos :: BzoPos,
+      mt_exp :: [ModelType] }
+  | MT_Enum {
+      mt_pos :: BzoPos,
+      mt_exp :: [ModelType],
+      mt_enm :: [ModelEnum] }
+  | MT_Record {
+      mt_pos :: BzoPos,
+      mt_exp :: [ModelType],
+      mt_rcd :: [ModelRecord] }
+
+
+
+
+
+
+
+
+
+
+data ModelRecord = ModelRecord{
+      mr_pos  :: BzoPos,
+      mr_name :: String,
+      mr_type :: ModelType }
+
+
+
+
+
+
+
+
+
+
+data ModelEnum = ModelEnum{
+    me_pos  :: BzoPos,
+    me_name :: String,
+    me_type :: ModelType }
