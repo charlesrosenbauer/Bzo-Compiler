@@ -13,6 +13,59 @@ import Data.Map.Strict hiding (foldl, map)
 
 
 
+data Either3 a b c = ChoiceA a | ChoiceB b | ChoiceC c
+
+
+
+
+
+
+
+
+
+
+aChoices :: [Either3 a b c] -> [a]
+aChoices xs = concatMap fn xs
+                where fn (ChoiceA x) = [x]
+                      fn _           = [ ]
+
+
+
+
+
+
+
+
+
+
+bChoices :: [Either3 a b c] -> [b]
+bChoices xs = concatMap fn xs
+                where fn (ChoiceB x) = [x]
+                      fn _           = [ ]
+
+
+
+
+
+
+
+
+
+
+cChoices :: [Either3 a b c] -> [c]
+cChoices xs = concatMap fn xs
+                where fn (ChoiceC x) = [x]
+                      fn _           = [ ]
+
+
+
+
+
+
+
+
+
+
 mapEither :: Either a b -> (b -> c) -> Either a c
 mapEither e f =
   case e of
