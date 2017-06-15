@@ -13,7 +13,7 @@ import Data.Map.Strict hiding (foldl, map)
 
 
 
-data Either3 a b c = ChoiceA a | ChoiceB b | ChoiceC c
+data Either3 a b c = ChoiceA a | ChoiceB b | ChoiceC c deriving (Eq, Show)
 
 
 
@@ -56,6 +56,24 @@ cChoices :: [Either3 a b c] -> [c]
 cChoices xs = concatMap fn xs
                 where fn (ChoiceC x) = [x]
                       fn _           = [ ]
+
+
+
+
+
+
+
+
+
+
+eitherFirst :: (a -> Either b c) -> (a -> Either b d) -> a -> Either3 b c d
+eitherFirst f0 f1 x =
+  let x0 = f0 x
+      x1 = f1 x
+  in case (x0, x1) of
+      (Left  a, Left  b) -> ChoiceA a
+      (Left  a, Right b) -> ChoiceC b
+      (Right a, _      ) -> ChoiceB a
 
 
 
