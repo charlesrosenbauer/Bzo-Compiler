@@ -158,7 +158,7 @@ data BzoEnum
 
 
 
-data ModelTypeAtom    -- Add arrays
+data ModelTypeAtom
   = MTA_Int {
       mta_pos :: BzoPos,
       mta_int :: Integer }
@@ -268,3 +268,65 @@ data ModelEnum = ModelEnum{
     me_pos  :: BzoPos,
     me_name :: String,
     me_type :: ModelType }
+
+
+
+
+
+
+
+
+
+
+modelRecord :: BzoSyntax -> Either [BzoErr] ModelRecord
+modelRecord (BzS_Expr p [(BzS_Id _ i), (BzS_Filter _ t)]) =
+  case (modelType t) of
+    Left errs -> Left  errs
+    Right typ -> Right (ModelRecord p i typ)
+modelRecord syn = Left [(ModelErr (pos syn) "Invalid Record")]
+
+
+
+
+
+
+
+
+
+
+modelEnum :: BzoSyntax -> Either [BzoErr] ModelEnum
+modelEnum (BzS_Expr p [(BzS_TyId _ i), (BzS_Filter _ t)]) =
+  case (modelType t) of
+    Left errs -> Left  errs
+    Right typ -> Right (ModelEnum p i typ)
+modelEnum syn = Left [(ModelErr (pos syn) "Invalid Enum")]
+
+
+
+
+
+
+
+
+
+
+modelType :: BzoSyntax -> Either [BzoErr] ModelType
+modelType (BzS_Cmpd p xs) =
+  let xs' = map (eitherFirst modelRecord modelType) xs
+      ers = aChoices xs'
+      rcs = bChoices xs'
+      tps = cChoices xs'
+  in case (ers, rcs, tps) of
+        ([], [], ts) -> Right (MT_Cmpd   p Nothing ts)
+        ([], rs, ts) -> Right (MT_Record p Nothing ts rs)
+        (er, _ , _ ) -> Left  $ concat er
+
+modelType (BzS_Poly p xs) =
+  let xs' = map (eitherFirst modelEnum modelType) xs
+      ers = aChoices xs'
+      ens = bChoices xs'
+      tps = cChoices xs'
+  in case (ers, ens, tps) of
+        ([], [], ts) -> Right (MT_Poly p Nothing ts)
+        ([], es, ts) -> Right (MT_Enum p Nothing ts es)
+        (er, _ , _ ) -> Left  $ concat er
