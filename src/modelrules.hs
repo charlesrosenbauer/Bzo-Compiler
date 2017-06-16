@@ -184,8 +184,6 @@ data ModelTypeAtom
 
 
 
--- | Array definitions containing variables or expressions will not be necessary
--- | until function modeling is implemented.
 data ModelArrayType
   = ModelTypeGenArr {
       mat_pos  :: BzoPos }
@@ -240,6 +238,11 @@ data ModelType
       mt_pos :: BzoPos,
       mt_arr :: Maybe [ModelArrayType],
       mt_atm :: ModelTypeAtom }
+  | MT_FnTy {
+      mt_pos :: BzoPos,
+      mt_arr :: Maybe [ModelArrayType],
+      mt_in  :: ModelType,
+      mt_out :: ModelType }
 
 
 
@@ -330,3 +333,13 @@ modelType (BzS_Poly p xs) =
         ([], [], ts) -> Right (MT_Poly p Nothing ts)
         ([], es, ts) -> Right (MT_Enum p Nothing ts es)
         (er, _ , _ ) -> Left  $ concat er
+
+modelType (BzS_FnTy p i e) =
+  let x   = modelType i
+      y   = modelType e
+      ers = lefts  ([x] ++ [y])
+      tx  = rights $ [x]
+      ty  = rights $ [y]
+  in case (ers, tx, ty) of
+      ([], [i'], [e']) -> Right (MT_FnTy p Nothing i' e')
+      (er, _   , _   ) -> Left  $ concat er
