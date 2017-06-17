@@ -172,6 +172,9 @@ data ModelTypeAtom
       mta_pos :: BzoPos,
       mta_id  :: String,
       mta_filt:: ModelType }
+  | MTA_Fun {
+      mta_pos :: BzoPos,
+      mta_id  :: String }
   | MTA_Nil {
       mta_pos :: BzoPos }
 
@@ -313,6 +316,12 @@ modelEnum syn = Left [(ModelErr (pos syn) "Invalid Enum")]
 
 
 
+{-
+  TODO:
+    * Atom Modeller (fnid, tyid, tyvr, int, flt, str, nil)
+    * Array Type Modeller (general, integer, list)
+    * Type Expression Modeller
+-}
 modelType :: BzoSyntax -> Either [BzoErr] ModelType
 modelType (BzS_Cmpd p xs) =
   let xs' = map (eitherFirst modelRecord modelType) xs
@@ -343,3 +352,8 @@ modelType (BzS_FnTy p i e) =
   in case (ers, tx, ty) of
       ([], [i'], [e']) -> Right (MT_FnTy p Nothing i' e')
       (er, _   , _   ) -> Left  $ concat er
+
+modelType (BzS_Int p i) = Right (MT_TyAtom p Nothing (MTA_Int p i))
+modelType (BzS_Str p s) = Right (MT_TyAtom p Nothing (MTA_Str p s))
+modelType (BzS_Flt p f) = Right (MT_TyAtom p Nothing (MTA_Flt p f))
+modelType (BzS_Nil p  ) = Right (MT_TyAtom p Nothing (MTA_Nil p  ))
