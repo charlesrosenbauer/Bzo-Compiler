@@ -175,6 +175,9 @@ data ModelTypeAtom
   | MTA_Fun {
       mta_pos :: BzoPos,
       mta_id  :: String }
+  | MTA_Type {
+      mta_pos :: BzoPos,
+      mta_id  :: String }
   | MTA_Nil {
       mta_pos :: BzoPos }
 
@@ -318,7 +321,7 @@ modelEnum syn = Left [(ModelErr (pos syn) "Invalid Enum")]
 
 {-
   TODO:
-    * Atom Modeller (fnid, tyid, tyvr, int, flt, str, nil)
+    * Atom Modeller (tyvr)
     * Array Type Modeller (general, integer, list)
     * Type Expression Modeller
 -}
@@ -353,7 +356,11 @@ modelType (BzS_FnTy p i e) =
       ([], [i'], [e']) -> Right (MT_FnTy p Nothing i' e')
       (er, _   , _   ) -> Left  $ concat er
 
-modelType (BzS_Int p i) = Right (MT_TyAtom p Nothing (MTA_Int p i))
-modelType (BzS_Str p s) = Right (MT_TyAtom p Nothing (MTA_Str p s))
-modelType (BzS_Flt p f) = Right (MT_TyAtom p Nothing (MTA_Flt p f))
-modelType (BzS_Nil p  ) = Right (MT_TyAtom p Nothing (MTA_Nil p  ))
+modelType (BzS_Int   p i) = Right (MT_TyAtom p Nothing (MTA_Int  p i))
+modelType (BzS_Str   p s) = Right (MT_TyAtom p Nothing (MTA_Str  p s))
+modelType (BzS_Flt   p f) = Right (MT_TyAtom p Nothing (MTA_Flt  p f))
+modelType (BzS_Nil   p  ) = Right (MT_TyAtom p Nothing (MTA_Nil  p  ))
+modelType (BzS_Id    p i) = Right (MT_TyAtom p Nothing (MTA_Fun  p i))
+modelType (BzS_BId   p i) = Right (MT_TyAtom p Nothing (MTA_Fun  p i))
+modelType (BzS_TyId  p i) = Right (MT_TyAtom p Nothing (MTA_Type p i))
+modelType (BzS_BTId  p i) = Right (MT_TyAtom p Nothing (MTA_Type p i))
