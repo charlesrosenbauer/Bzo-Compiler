@@ -171,13 +171,14 @@ data ModelTypeAtom
   | MTA_Var {
       mta_pos :: BzoPos,
       mta_id  :: String,
-      mta_filt:: ModelType }
+      mta_filt:: Maybe ModelType }
   | MTA_Fun {
       mta_pos :: BzoPos,
       mta_id  :: String }
   | MTA_Type {
       mta_pos :: BzoPos,
-      mta_id  :: String }
+      mta_id  :: String,
+      mta_filt:: Maybe ModelType }
   | MTA_Nil {
       mta_pos :: BzoPos }
 
@@ -321,6 +322,33 @@ modelEnum syn = Left [(ModelErr (pos syn) "Invalid Enum")]
 
 {-
   TODO:
+    * Array Modeller
+-}
+modelSimpleTypeParameter :: BzoSyntax -> Either [BzoErr] ModelType
+modelSimpleTypeParameter (BzS_Expr p0 [(BzS_Cmpd  p1 xs)]) =
+  let xs' = map modelSimpleTypeParameter xs
+      es  = lefts  xs'
+      ms  = rights xs'
+  in case (es, ms) of
+      ([], ty) -> Right (MT_Cmpd p0 Nothing ty)
+      (er, ty) -> Left $ concat er
+modelSimpleTypeParameter (BzS_Expr p0 [(BzS_TyVar p1 i)]) = Right (MT_TyAtom p0 Nothing (MTA_Var p1 i Nothing))
+modelSimpleTypeParameter (BzS_Expr p0 [(BzS_TyVar p1 i), (BzS_Filter p2 flt)]) =
+  case (modelType flt) of
+    Left errs -> Left errs
+    Right typ -> Right (MT_TyAtom p0 Nothing (MTA_Var p1 i (Just typ)))
+
+
+
+
+
+
+
+
+
+
+{-
+  TODO:
     * Atom Modeller (tyvr)
     * Array Type Modeller (general, integer, list)
     * Type Expression Modeller
@@ -362,5 +390,5 @@ modelType (BzS_Flt   p f) = Right (MT_TyAtom p Nothing (MTA_Flt  p f))
 modelType (BzS_Nil   p  ) = Right (MT_TyAtom p Nothing (MTA_Nil  p  ))
 modelType (BzS_Id    p i) = Right (MT_TyAtom p Nothing (MTA_Fun  p i))
 modelType (BzS_BId   p i) = Right (MT_TyAtom p Nothing (MTA_Fun  p i))
-modelType (BzS_TyId  p i) = Right (MT_TyAtom p Nothing (MTA_Type p i))
-modelType (BzS_BTId  p i) = Right (MT_TyAtom p Nothing (MTA_Type p i))
+modelType (BzS_TyId  p i) = Right (MT_TyAtom p Nothing (MTA_Type p i Nothing))
+modelType (BzS_BTId  p i) = Right (MT_TyAtom p Nothing (MTA_Type p i Nothing))
