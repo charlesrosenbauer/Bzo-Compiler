@@ -24,7 +24,7 @@ Math   'math/src'
 
 The Language
 
-The basic idea behind the language is that it is a functional / imperative hybrid; it allows you to write both purely functional and imperative code, all on top of a [mostly] functional core. Mutability is handled not unlike Uniqueness Types in languages like Clean, Mercury, and Idris. The language is designed to be very simple (syntactically). The syntax is somewhere between Haskell and Lisp (mostly leaning toward Haskell), but with only 16 or so special characters, and no keywords besides some built-in functions and types prefixed with "$".
+The basic idea behind the language is that it is a functional / imperative hybrid; it allows you to write both purely functional and imperative code, all on top of a [mostly] functional core. Mutability is handled not unlike Uniqueness Types in languages like Clean, Mercury, and Idris. The language is designed to be very simple (syntactically). The syntax is somewhere between Haskell and Lisp (mostly leaning toward Haskell), but with only 16 or so special characters, and no keywords besides some built-in functions and types prefixed with "$". The primary inspirations behind the language are Haskell, Lisp, Rust, and Jonathan Blow's Jai language (https://www.youtube.com/playlist?list=PLmV5I2fxaiCKfxMBrNsU1kgKJXD3PkyxO).
 
 Full implicit parallelism is probably the biggest goal, and a major focus. Ambitious as it is, I think I can pull it off. Rather than worry about the delay of individual fibers/microthreads (or tasks as I'll refer to them), the basic guiding principle is that tasks are just collections of expressions and functions, and thus, are just big functions. Loops are no different from recursion, regardless of how difficult it is to predict their latency. As a result, any sufficiently large chunk of code should be its own task. Loops are just tasks that spawn new tasks upon completion. There are still difficulties and complexities of course, and I'm very doubtful that this method will scale to systems with high latency (like distributed systems. Sorry, but you'll have to keep using Erlang and MapReduce), but it'll at least still be great for individual systems. Like PCs, Phones, IoT devices, etc.
 
@@ -127,7 +127,7 @@ Wildcard. Used for discarding a value in pattern matching, as it is in many othe
 $...
 Denote Builtin; this character is only available for use in identifiers for types and functions built in to the language. Most types and functions that use builtins will be given an alias.
 
-Identifiers beginning with uppercase letters are denoted as types. Identifiers beginning with lowercase letters or symbols are defined as functions or variables.
+Identifiers beginning with uppercase letters are denoted as types. Identifiers beginning with lowercase letters or symbols are defined as functions or variables. Identifiers starting with a capital letter and ending with a single quote (') are type variables.
 
 
 ```
@@ -150,7 +150,7 @@ Then we define main's behavior. A definition containing multiple expressions is 
 
 Hypotenuse Function:
 ```
-hypot :: (N:Num. N) ;; N
+hypot :: (N':Num. N') ;; N'
 
 (a.b) hypot (q) :: (a.b)^2..+ \2 q
 
@@ -158,13 +158,14 @@ hypot :: ^2.. + \2
 ```
 
 Explanation:
-Okay, this is a bit complicated. In fact, I've written two implementations of it here. They do the same thing, but the bottom one just omits stuff the compiler could figure out anyway. First, we define the hypot function to take in inputs of type (N. N), and produce outputs of type N. N in this case is a type variable, allowing for hypot to be used generically. The ":Num" appended to it requires N to be of type Num. But why use the type variable then? Num is actually a set of types, defined as (Int, Flt, Unt). As a result, Num works a bit like a type class. What the type signature for the function here means is that hypot will take any two inputs that are included in Num (signed and unsigned integers, and floats), however only if the two inputs are of the same type. It then returns a single value of the same type.
+Okay, this is a bit complicated. In fact, I've written two implementations of it here. They do the same thing, but the bottom one just omits stuff the compiler could figure out anyway. First, we define the hypot function to take in inputs of type (N'. N'), and produce outputs of type N'. N' in this case is a type variable, allowing for hypot to be used generically. The ":Num" appended to it requires N' to be of type Num. But why use the type variable then? Num is actually a set of types, defined as (Int, Flt, Unt, Unm). As a result, Num works a bit like a type class. What the type signature for the function here means is that hypot will take any two inputs that are included in Num (signed and unsigned integers, and floats), however only if the two inputs are of the same type. It then returns a single value of the same type.
 
 Then we define hypot's behavior. The (a.b) before hypot are the input parameters, and the (q) afterward is the output parameter. Inputs and outputs must be placed within parentheses if they are not already present. It is then defined by taking the array, and passing it into the "^2" function, which squares numbers. By adding the ".." afterward, it is transformed into an array function, and because a and b are both presumed to be of the same type, the tuple can be interpreted as an array. Thus "^2.." returns a new tuple containing the squares of a and b respectively. That gets passed into the + function, which simply returns the sum of all its inputs. That gets passed into the "\2" function, which returns the square root of its input. This gets passed into q, which is of course the output parameter.
 
 The second implementation, again, behaves the same. It just leaves the compiler to determine the inputs and outputs. In fact, without the specific type definition there (which wouldn't be mandatory anyway), the second implementation could actually be more general than the first, as the compiler could find implementations for it on arrays (and tuples) of any size.
 
 
+The main numerical types in Bzo are Int, Unt, Flt, and Unm. These are not the specific types however; just the kinds in the language. Int does not name a single type, but rather is a set of all Integer types (I8, I16, I32, I64). Unt (unsinged integer) features a similar group (U8, U16, U32, U64), and Flt (Floating point) features equivalent precisions with the exception of an 8-bit form (F16, F32, F64). Unm (N16, N32, N64) is an additional numerical type, based on John Gustafson's (https://en.wikipedia.org/wiki/John_Gustafson_(scientist)) "Unum" number format. As Bzo is a language oriented toward parallelism, it is necessary to have number formats that are parallelism-friendly. Unfortunately, floating point arithmetic is non-associative, which puts extreme limitations on parallelism-oriented optimizations. Unums do not have this downside, and also have many other advantages, and so including them in a parallelism-oriented language makes a lot of sense, despite the current lack of hardware support for them.
 
 
 More info will be added soon.
