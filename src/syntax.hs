@@ -99,6 +99,22 @@ data BzoSyntax
     | BzS_Calls {
         pos   :: BzoPos,
         calls :: [BzoSyntax] }
+    | BzS_ExternObj {
+        pos       :: BzoPos,
+        bzobj     :: BzoSyntax,
+        namespace :: String }
+    | BzS_ArrayObj {
+        pos      :: BzoPos,
+        bzobj    :: BzoSyntax,
+        arrexprs :: [BzoSyntax] }
+    | BzS_FilterObj {
+        pos     :: BzoPos,
+        bzobj   :: BzoSyntax,
+        filt    :: BzoSyntax }
+    | BzS_CurryObj {
+        pos     :: BzoPos,
+        bzobj   :: BzoSyntax,
+        crypars :: [BzoSyntax] }
     | BzS_Undefined
     deriving Eq
 
@@ -158,5 +174,9 @@ showAST (BzS_ArrSzMod _ i)                 = " [ " ++ (show  i) ++ " ] "
 showAST (BzS_ArrExprMod _ ex)              = " [ " ++ (show ex) ++ " ] "
 showAST (BzS_Nil _)                        = " () "
 showAST (BzS_TyVar _ i)                    = "TyVr: " ++ (show i)
+showAST (BzS_ExternObj _ o n)              = "<" ++ (show o) ++ " from " ++ (show n) ++ "> "
+showAST (BzS_ArrayObj  _ o a)              = "<" ++ (show o) ++ " array: " ++ (concatMap showAST a) ++ "> "
+showAST (BzS_FilterObj _ o f)              = "<" ++ (show o) ++ " of type " ++ (show f) ++ "> "
+showAST (BzS_CurryObj  _ o p)              = "<" ++ (show o) ++ " applied to " ++ (show p) ++ "> "
 showAST (BzS_Undefined)                    = " UNDEFINED "
 instance Show BzoSyntax where show = showAST

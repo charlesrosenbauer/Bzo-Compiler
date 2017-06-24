@@ -333,7 +333,7 @@ modelSimpleTypeParameter (BzS_Expr p0 [(BzS_TyVar p1 i), (BzS_Filter p2 flt)]) =
   case (modelType flt) of
     Left errs -> Left errs
     Right typ -> Right (MT_TyAtom p0 Nothing (MTA_Var p1 i (Just typ)))
-modelSimpleTypeParameter x = Left (TypeErr (pos x) "Invalid Type Parameters")
+modelSimpleTypeParameter x = Left [TypeErr (pos x) "Invalid Type Parameters"]
 
 
 
