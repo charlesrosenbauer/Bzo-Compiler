@@ -99,7 +99,11 @@ data BzoSyntax
     | BzS_Calls {
         pos   :: BzoPos,
         calls :: [BzoSyntax] }
-    | BzS_ExternObj {
+    | BzS_ExTypObj {
+        pos       :: BzoPos,
+        bzobj     :: BzoSyntax,
+        namespace :: String }
+    | BzS_ExFunObj {
         pos       :: BzoPos,
         bzobj     :: BzoSyntax,
         namespace :: String }
@@ -174,7 +178,8 @@ showAST (BzS_ArrSzMod _ i)                 = " [ " ++ (show  i) ++ " ] "
 showAST (BzS_ArrExprMod _ ex)              = " [ " ++ (show ex) ++ " ] "
 showAST (BzS_Nil _)                        = " () "
 showAST (BzS_TyVar _ i)                    = "TyVr: " ++ (show i)
-showAST (BzS_ExternObj _ o n)              = "<" ++ (show o) ++ " from " ++ (show n) ++ "> "
+showAST (BzS_ExTypObj _ o n)               = "<" ++ (show o) ++ " from " ++ (show n) ++ "> "
+showAST (BzS_ExFunObj _ o n)               = "<" ++ (show o) ++ " from " ++ (show n) ++ "> "
 showAST (BzS_ArrayObj  _ o a)              = "<" ++ (show o) ++ " array: " ++ (concatMap showAST a) ++ "> "
 showAST (BzS_FilterObj _ o f)              = "<" ++ (show o) ++ " of type " ++ (show f) ++ "> "
 showAST (BzS_CurryObj  _ o p)              = "<" ++ (show o) ++ " applied to " ++ (show p) ++ "> "
