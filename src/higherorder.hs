@@ -178,6 +178,39 @@ tryMaybeList a (f : fs) =
 
 
 
+simplifyList :: [a] -> (a -> a -> [a]) -> [a]
+simplifyList xs f = (\(a, b) -> a ++ b) $ simplifyList' ([], xs) f
+
+
+
+
+
+
+
+
+
+
+simplifyList' :: ([a], [a]) -> (a -> a -> [a]) -> ([a], [a])
+simplifyList' (l, [])         f = (l, [])
+simplifyList' (l, [x])        f = (l ++ [x], [])
+simplifyList' (l, [a, b])     f =
+  case (f a b) of
+    [a', b'] -> (l ++ [a'], [b'])
+    [x']     -> (l        , [x'])
+simplifyList' (l, (a: b: xs)) f =
+  case (f a b) of
+    [a', b'] -> simplifyList' (l ++ [a'], [b'] ++ xs) f
+    [x']     -> simplifyList' (l        , [x'] ++ xs) f
+
+
+
+
+
+
+
+
+
+
 maybeMerge :: [a] -> Maybe [a] -> [a]
 maybeMerge a (Just b) = a ++ b
 maybeMerge a _        = a
