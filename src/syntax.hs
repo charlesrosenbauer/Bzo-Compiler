@@ -101,11 +101,11 @@ data BzoSyntax
         calls :: [BzoSyntax] }
     | BzS_ExTypObj {
         pos       :: BzoPos,
-        bzobj     :: BzoSyntax,
+        sid       :: String,
         namespace :: String }
     | BzS_ExFunObj {
         pos       :: BzoPos,
-        bzobj     :: BzoSyntax,
+        sid       :: String,
         namespace :: String }
     | BzS_ArrayObj {
         pos      :: BzoPos,
@@ -119,6 +119,9 @@ data BzoSyntax
         pos     :: BzoPos,
         bzobj   :: BzoSyntax,
         crypars :: [BzoSyntax] }
+    | BzS_MapObj {
+        pos     :: BzoPos,
+        bzobj   :: BzoSyntax }
     | BzS_Undefined
     deriving Eq
 
@@ -183,5 +186,6 @@ showAST (BzS_ExFunObj _ o n)               = "<" ++ (show o) ++ " from " ++ (sho
 showAST (BzS_ArrayObj  _ o a)              = "<" ++ (show o) ++ " array: " ++ (concatMap showAST a) ++ "> "
 showAST (BzS_FilterObj _ o f)              = "<" ++ (show o) ++ " of type " ++ (show f) ++ "> "
 showAST (BzS_CurryObj  _ o p)              = "<" ++ (show o) ++ " applied to " ++ (show p) ++ "> "
+showAST (BzS_MapObj    _ o)                = "<" ++ (show o) ++ " .. >"
 showAST (BzS_Undefined)                    = " UNDEFINED "
 instance Show BzoSyntax where show = showAST
