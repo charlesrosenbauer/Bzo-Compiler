@@ -214,21 +214,48 @@ fuseMapObj a                      b               = [a, b]
 
 
 
+passHelp0 :: ([BzoSyntax] -> [BzoSyntax]) -> (BzoSyntax -> BzoSyntax -> [BzoSyntax]) -> BzoSyntax -> BzoSyntax
+passHelp0 xf f x = simplifyASTPass xf f x
+
+
+
+
+
+
+
+
+
+
+passHelp1 :: ([BzoSyntax] -> [BzoSyntax]) -> (BzoSyntax -> BzoSyntax -> [BzoSyntax]) -> [BzoSyntax] -> [BzoSyntax]
+passHelp1 xf f x = map (simplifyASTPass xf f) (simplifyList (xf x) f)
+
+
+
+
+
+
+
+
+
+
 simplifyASTPass :: ([BzoSyntax] -> [BzoSyntax]) -> (BzoSyntax -> BzoSyntax -> [BzoSyntax]) -> BzoSyntax -> BzoSyntax
-simplifyASTPass xf f (BzS_ArrayObj    p o x) = (BzS_ArrayObj   p (simplifyASTPass xf f o) (map (simplifyASTPass xf f) (simplifyList (xf x) f)))
-simplifyASTPass xf f (BzS_CurryObj    p o x) = (BzS_CurryObj   p (simplifyASTPass xf f o) (map (simplifyASTPass xf f) (simplifyList (xf x) f)))
-simplifyASTPass xf f (BzS_Calls         p x) = (BzS_Calls      p (map (simplifyASTPass xf f) (simplifyList (xf x) f)))
-simplifyASTPass xf f (BzS_Cmpd          p x) = (BzS_Cmpd       p (map (simplifyASTPass xf f) (simplifyList (xf x) f)))
-simplifyASTPass xf f (BzS_Poly          p x) = (BzS_Poly       p (map (simplifyASTPass xf f) (simplifyList (xf x) f)))
-simplifyASTPass xf f (BzS_Expr          p x) = (BzS_Expr       p (map (simplifyASTPass xf f) (simplifyList (xf x) f)))
-simplifyASTPass xf f (BzS_Block         p x) = (BzS_Block      p (map (simplifyASTPass xf f) (simplifyList (xf x) f)))
-simplifyASTPass xf f (BzS_FilterObj   p x l) = (BzS_FilterObj  p (simplifyASTPass xf f x) (simplifyASTPass xf f l))
-simplifyASTPass xf f (BzS_Lambda      p x d) = (BzS_Lambda     p (simplifyASTPass xf f x) (simplifyASTPass xf f d))
-simplifyASTPass xf f (BzS_FnTy        p i o) = (BzS_FnTy       p (simplifyASTPass xf f i) (simplifyASTPass xf f o))
-simplifyASTPass xf f (BzS_Box           p x) = (BzS_Box        p (simplifyASTPass xf f x))
-simplifyASTPass xf f (BzS_Filter        p x) = (BzS_Filter     p (simplifyASTPass xf f x))
-simplifyASTPass xf f (BzS_MapObj        p x) = (BzS_MapObj     p (simplifyASTPass xf f x))
-simplifyASTPass xf f (BzS_ArrExprMod    p x) = (BzS_ArrExprMod p (simplifyASTPass xf f x))
+simplifyASTPass xf f (BzS_ArrayObj    p o x) = (BzS_ArrayObj   p (passHelp0 xf f o) (passHelp1 xf f x))
+simplifyASTPass xf f (BzS_CurryObj    p o x) = (BzS_CurryObj   p (passHelp0 xf f o) (passHelp1 xf f x))
+simplifyASTPass xf f (BzS_Calls         p x) = (BzS_Calls      p (passHelp1 xf f x))
+simplifyASTPass xf f (BzS_FunDef  p i x e d) = (BzS_FunDef     p (passHelp0 xf f i) x (passHelp0 xf f e) (passHelp0 xf f d))
+simplifyASTPass xf f (BzS_TypDef    p i x d) = (BzS_TypDef     p (passHelp0 xf f i) x (passHelp0 xf f d))
+simplifyASTPass xf f (BzS_FnTypeDef   p x d) = (BzS_FnTypeDef  p x (passHelp0 xf f d))
+simplifyASTPass xf f (BzS_Cmpd          p x) = (BzS_Cmpd       p (passHelp1 xf f x))
+simplifyASTPass xf f (BzS_Poly          p x) = (BzS_Poly       p (passHelp1 xf f x))
+simplifyASTPass xf f (BzS_Expr          p x) = (BzS_Expr       p (passHelp1 xf f x))
+simplifyASTPass xf f (BzS_Block         p x) = (BzS_Block      p (passHelp1 xf f x))
+simplifyASTPass xf f (BzS_FilterObj   p x l) = (BzS_FilterObj  p (passHelp0 xf f x) (passHelp0 xf f l))
+simplifyASTPass xf f (BzS_Lambda      p x d) = (BzS_Lambda     p (passHelp0 xf f x) (passHelp0 xf f d))
+simplifyASTPass xf f (BzS_FnTy        p i o) = (BzS_FnTy       p (passHelp0 xf f i) (passHelp0 xf f o))
+simplifyASTPass xf f (BzS_Box           p x) = (BzS_Box        p (passHelp0 xf f x))
+simplifyASTPass xf f (BzS_Filter        p x) = (BzS_Filter     p (passHelp0 xf f x))
+simplifyASTPass xf f (BzS_MapObj        p x) = (BzS_MapObj     p (passHelp0 xf f x))
+simplifyASTPass xf f (BzS_ArrExprMod    p x) = (BzS_ArrExprMod p (passHelp0 xf f x))
 simplifyASTPass xf f sn@(BzS_ArrGenMod    _) = sn
 simplifyASTPass xf f sn@(BzS_ArrSzMod   _ _) = sn
 simplifyASTPass xf f sn@(BzS_ExTypObj _ _ _) = sn
