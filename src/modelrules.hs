@@ -128,6 +128,39 @@ isValidBTId _            = False
 
 
 
+fuseNameObj :: BzoSyntax -> BzoSyntax -> [BzoSyntax]
+fuseNameObj (BzS_TyId p0 i0) (BzS_Namespace p1 i1) = [(BzS_ExTypObj p0 i0 i1)]
+fuseNameObj (BzS_Id   p0 i0) (BzS_Namespace p1 i1) = [(BzS_ExFunObj p0 i0 i1)]
+fuseNameObj a                b                     = [a, b]
+
+
+
+
+
+
+
+
+
+
+fuseFilterObj :: BzoSyntax -> BzoSyntax -> [BzoSyntax]
+fuseFilterObj sn@(BzS_TyId  p0 x) (BzS_Filter p1 f) = [(BzS_FilterObj p0 sn f)]
+fuseFilterObj sn@(BzS_Id    p0 x) (BzS_Filter p1 f) = [(BzS_FilterObj p0 sn f)]
+fuseFilterObj sn@(BzS_Cmpd  p0 x) (BzS_Filter p1 f) = [(BzS_FilterObj p0 sn f)]
+fuseFilterObj sn@(BzS_Poly  p0 x) (BzS_Filter p1 f) = [(BzS_FilterObj p0 sn f)]
+fuseFilterObj sn@(BzS_TyVar p0 x) (BzS_Filter p1 f) = [(BzS_FilterObj p0 sn f)]
+fuseFilterObj sn@(BzS_Box   p0 x) (BzS_Filter p1 f) = [(BzS_FilterObj p0 sn f)]
+fuseFilterObj sn@(BzS_MId   p0 x) (BzS_Filter p1 f) = [(BzS_FilterObj p0 sn f)]
+fuseFilterObj a                b                     = [a, b]
+
+
+
+
+
+
+
+
+
+
 data BzoRecord
   = BzoRecord {
       br_pos :: BzoPos,
