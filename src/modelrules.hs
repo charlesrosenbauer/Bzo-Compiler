@@ -161,6 +161,59 @@ fuseFilterObj a                b                     = [a, b]
 
 
 
+-- | Assumes that the syntax stream is reversed
+fuseArrayObj :: BzoSyntax -> BzoSyntax -> [BzoSyntax]
+fuseArrayObj sn@(BzS_TyId        p0 i) ar@(BzS_ArrGenMod p1  ) = [(BzS_ArrayObj p0 sn [ar])]
+fuseArrayObj sn@(BzS_TyId        p0 i) ar@(BzS_ArrSzMod  p1 s) = [(BzS_ArrayObj p0 sn [ar])]
+fuseArrayObj sn@(BzS_Id          p0 i) ar@(BzS_ArrGenMod p1  ) = [(BzS_ArrayObj p0 sn [ar])]
+fuseArrayObj sn@(BzS_Id          p0 i) ar@(BzS_ArrSzMod  p1 s) = [(BzS_ArrayObj p0 sn [ar])]
+fuseArrayObj sn@(BzS_Cmpd        p0 x) ar@(BzS_ArrGenMod p1  ) = [(BzS_ArrayObj p0 sn [ar])]
+fuseArrayObj sn@(BzS_Cmpd        p0 x) ar@(BzS_ArrSzMod  p1 s) = [(BzS_ArrayObj p0 sn [ar])]
+fuseArrayObj sn@(BzS_Poly        p0 x) ar@(BzS_ArrGenMod p1  ) = [(BzS_ArrayObj p0 sn [ar])]
+fuseArrayObj sn@(BzS_Poly        p0 x) ar@(BzS_ArrSzMod  p1 s) = [(BzS_ArrayObj p0 sn [ar])]
+fuseArrayObj sn@(BzS_TyVar       p0 x) ar@(BzS_ArrGenMod p1  ) = [(BzS_ArrayObj p0 sn [ar])]
+fuseArrayObj sn@(BzS_TyVar       p0 x) ar@(BzS_ArrSzMod  p1 s) = [(BzS_ArrayObj p0 sn [ar])]
+fuseArrayObj sn@(BzS_Box         p0 x) ar@(BzS_ArrGenMod p1  ) = [(BzS_ArrayObj p0 sn [ar])]
+fuseArrayObj sn@(BzS_Box         p0 x) ar@(BzS_ArrSzMod  p1 s) = [(BzS_ArrayObj p0 sn [ar])]
+fuseArrayObj sn@(BzS_BTId        p0 x) ar@(BzS_ArrGenMod p1  ) = [(BzS_ArrayObj p0 sn [ar])]
+fuseArrayObj sn@(BzS_BTId        p0 x) ar@(BzS_ArrSzMod  p1 s) = [(BzS_ArrayObj p0 sn [ar])]
+fuseArrayObj sn@(BzS_ArrayObj  p0 o x) ar@(BzS_ArrGenMod p1  ) = [(BzS_ArrayObj p0 sn [ar])]
+fuseArrayObj sn@(BzS_ArrayObj  p0 o x) ar@(BzS_ArrSzMod  p1 s) = [(BzS_ArrayObj p0 sn [ar])]
+fuseArrayObj sn@(BzS_FilterObj p0 o x) ar@(BzS_ArrGenMod p1  ) = [(BzS_ArrayObj p0 sn [ar])]
+fuseArrayObj sn@(BzS_FilterObj p0 o x) ar@(BzS_ArrSzMod  p1 s) = [(BzS_ArrayObj p0 sn [ar])]
+fuseArrayObj sn@(BzS_ExTypObj  p0 o x) ar@(BzS_ArrGenMod p1  ) = [(BzS_ArrayObj p0 sn [ar])]
+fuseArrayObj sn@(BzS_ExTypObj  p0 o x) ar@(BzS_ArrSzMod  p1 s) = [(BzS_ArrayObj p0 sn [ar])]
+fuseArrayObj sn@(BzS_ExFunObj  p0 o x) ar@(BzS_ArrGenMod p1  ) = [(BzS_ArrayObj p0 sn [ar])]
+fuseArrayObj sn@(BzS_ExFunObj  p0 o x) ar@(BzS_ArrSzMod  p1 s) = [(BzS_ArrayObj p0 sn [ar])]
+fuseArrayObj a                       b                       = [a, b]
+
+
+
+
+
+
+
+
+
+
+fuseMapObj :: BzoSyntax -> BzoSyntax -> [BzoSyntax]
+fuseMapObj    (BzS_Box    p0 x  ) (BzS_MapMod p1) = [(BzS_MapObj p0  x)]
+fuseMapObj sn@(BzS_Id     p0 x  ) (BzS_MapMod p1) = [(BzS_MapObj p0 sn)]
+fuseMapObj sn@(BzS_MId    p0 x  ) (BzS_MapMod p1) = [(BzS_MapObj p0 sn)]
+fuseMapObj sn@(BzS_Lambda p0 x d) (BzS_MapMod p1) = [(BzS_MapObj p0 sn)]
+fuseMapObj sn@(BzS_Cmpd   p0 x  ) (BzS_MapMod p1) = [(BzS_MapObj p0 sn)]
+fuseMapObj sn@(BzS_Poly   p0 x  ) (BzS_MapMod p1) = [(BzS_MapObj p0 sn)]
+fuseMapObj a                      b               = [a, b]
+
+
+
+
+
+
+
+
+
+
 simplifyASTPass :: ([BzoSyntax] -> [BzoSyntax]) -> (BzoSyntax -> BzoSyntax -> [BzoSyntax]) -> BzoSyntax -> BzoSyntax
 simplifyASTPass xf f (BzS_ArrayObj    p o x) = (BzS_ArrayObj   p (simplifyASTPass xf f o) (map (simplifyASTPass xf f) (simplifyList (xf x) f)))
 simplifyASTPass xf f (BzS_CurryObj    p o x) = (BzS_CurryObj   p (simplifyASTPass xf f o) (map (simplifyASTPass xf f) (simplifyList (xf x) f)))
@@ -197,6 +250,21 @@ simplifyASTPass xf f sn@(BzS_Undefined     ) = sn
 
 
 
+
+
+
+
+
+
+
+-- Add more passes, return errs if Namespace, Filter, Array, Map, etc. objects remain
+simplifyAST :: BzoSyntax -> Either [BzoErr] BzoSyntax
+simplifyAST ast =
+  let pass0 = simplifyASTPass id fuseNameObj   ast
+      pass1 = simplifyASTPass id fuseFilterObj pass0
+      pass2 = simplifyASTPass reverse fuseArrayObj pass1
+      pass3 = simplifyASTPass id fuseMapObj pass2
+  in (Right pass1)
 
 
 
