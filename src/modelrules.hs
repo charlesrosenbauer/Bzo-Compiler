@@ -161,6 +161,52 @@ fuseFilterObj a                b                     = [a, b]
 
 
 
+simplifyASTPass :: ([BzoSyntax] -> [BzoSyntax]) -> (BzoSyntax -> BzoSyntax -> [BzoSyntax]) -> BzoSyntax -> BzoSyntax
+simplifyASTPass xf f (BzS_ArrayObj    p o x) = (BzS_ArrayObj   p (simplifyASTPass xf f o) (map (simplifyASTPass xf f) (simplifyList (xf x) f)))
+simplifyASTPass xf f (BzS_CurryObj    p o x) = (BzS_CurryObj   p (simplifyASTPass xf f o) (map (simplifyASTPass xf f) (simplifyList (xf x) f)))
+simplifyASTPass xf f (BzS_Calls         p x) = (BzS_Calls      p (map (simplifyASTPass xf f) (simplifyList (xf x) f)))
+simplifyASTPass xf f (BzS_Cmpd          p x) = (BzS_Cmpd       p (map (simplifyASTPass xf f) (simplifyList (xf x) f)))
+simplifyASTPass xf f (BzS_Poly          p x) = (BzS_Poly       p (map (simplifyASTPass xf f) (simplifyList (xf x) f)))
+simplifyASTPass xf f (BzS_Expr          p x) = (BzS_Expr       p (map (simplifyASTPass xf f) (simplifyList (xf x) f)))
+simplifyASTPass xf f (BzS_Block         p x) = (BzS_Block      p (map (simplifyASTPass xf f) (simplifyList (xf x) f)))
+simplifyASTPass xf f (BzS_FilterObj   p x l) = (BzS_FilterObj  p (simplifyASTPass xf f x) (simplifyASTPass xf f l))
+simplifyASTPass xf f (BzS_Lambda      p x d) = (BzS_Lambda     p (simplifyASTPass xf f x) (simplifyASTPass xf f d))
+simplifyASTPass xf f (BzS_FnTy        p i o) = (BzS_FnTy       p (simplifyASTPass xf f i) (simplifyASTPass xf f o))
+simplifyASTPass xf f (BzS_Box           p x) = (BzS_Box        p (simplifyASTPass xf f x))
+simplifyASTPass xf f (BzS_Filter        p x) = (BzS_Filter     p (simplifyASTPass xf f x))
+simplifyASTPass xf f (BzS_MapObj        p x) = (BzS_MapObj     p (simplifyASTPass xf f x))
+simplifyASTPass xf f (BzS_ArrExprMod    p x) = (BzS_ArrExprMod p (simplifyASTPass xf f x))
+simplifyASTPass xf f sn@(BzS_ArrGenMod    _) = sn
+simplifyASTPass xf f sn@(BzS_ArrSzMod   _ _) = sn
+simplifyASTPass xf f sn@(BzS_ExTypObj _ _ _) = sn
+simplifyASTPass xf f sn@(BzS_ExFunObj _ _ _) = sn
+simplifyASTPass xf f sn@(BzS_Flt        _ _) = sn
+simplifyASTPass xf f sn@(BzS_Str        _ _) = sn
+simplifyASTPass xf f sn@(BzS_Int        _ _) = sn
+simplifyASTPass xf f sn@(BzS_Id         _ _) = sn
+simplifyASTPass xf f sn@(BzS_BId        _ _) = sn
+simplifyASTPass xf f sn@(BzS_BTId       _ _) = sn
+simplifyASTPass xf f sn@(BzS_TyId       _ _) = sn
+simplifyASTPass xf f sn@(BzS_TyVar      _ _) = sn
+simplifyASTPass xf f sn@(BzS_MId        _ _) = sn
+simplifyASTPass xf f sn@(BzS_Wildcard     _) = sn
+simplifyASTPass xf f sn@(BzS_Nil          _) = sn
+simplifyASTPass xf f sn@(BzS_Namespace  _ _) = sn
+simplifyASTPass xf f sn@(BzS_MapMod       _) = sn
+simplifyASTPass xf f sn@(BzS_Undefined     ) = sn
+
+
+
+
+
+
+
+
+
+
+
+
+
 data BzoRecord
   = BzoRecord {
       br_pos :: BzoPos,
