@@ -13,6 +13,19 @@ import Data.Map.Strict hiding (foldl, map)
 
 
 
+applyIf :: (a -> a) -> a -> Bool -> a
+applyIf f x True  = f x
+applyIf f x False = x
+
+
+
+
+
+
+
+
+
+
 data Either3 a b c = ChoiceA a | ChoiceB b | ChoiceC c deriving (Eq, Show)
 
 
