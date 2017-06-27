@@ -26,6 +26,18 @@ applyIf f x False = x
 
 
 
+applyIfE :: (a -> b) -> (a -> b) -> a -> Bool -> b
+applyIfE f g x True  = f x
+applyIfE f g x False = g x
+
+
+
+
+
+
+
+
+
 data Either3 a b c = ChoiceA a | ChoiceB b | ChoiceC c deriving (Eq, Show)
 
 
