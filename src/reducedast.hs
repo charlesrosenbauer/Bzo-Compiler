@@ -71,25 +71,16 @@ data BzoAST
   | ASTFSqt BzoAST        OpPrecision,  -- | Flt Square Root
   | ASTFCbt BzoAST        OpPrecision,  -- | Flt Cube Root
   | ASTFRtN BzoAST BzoASt OpPrecision,  -- | Flt Nth Root
-  -- | Unsigned Integer Operations
-  | ASTUAdd BzoAST BzoAST OpPrecision,  -- | UInt Addition
-  | ASTUSub BzoAST BzoAST OpPrecision,  -- | UInt Subtraction
-  | ASTUMul BzoAST BzoAST OpPrecision,  -- | UInt Multiplication
-  | ASTUDiv BzoAST BzoAST OpPrecision,  -- | UInt Division
-  | ASTUMod BzoAST BzoAST OpPrecision,  -- | UInt Modulus
-  | ASTUCmp BzoAST BzoAST OpPrecision,  -- | UInt Compare
   -- | Bitwise Operations
-  | ASTBAND BzoAST BzoAST OpPrecision,  -- | Bitwise And
-  | ASTBOR  BzoAST BzoAST OpPrecision,  -- | Bitwise Inclusive Or
-  | ASTBXOR BzoAST BzoAST OpPrecision,  -- | Bitwise Exclusive Or
-  | ASTBNOT BzoAST        OpPrecision,  -- | Bitwise Not
-  | ASTBLSR BzoAST BzoAST OpPrecision,  -- | Bitwise Shift Right
-  | ASTBLSR BzoAST BzoAST OpPrecision,  -- | Bitwise Shift Left
-  | ASTBASR BzoAST BzoAST OpPrecision,  -- | Bitwise Arithmetic Shift Right
-  | ASTBLRR BzoAST BzoAST OpPrecision,  -- | Bitwise Rotate Right
-  | ASTBLRL BzoAST BzoAST OpPrecision,  -- | Bitwise Rotate Left
-  | ASTBARR BzoAST BzoAST OpPrecision,  -- | Bitwise Arithmetic Rotate Right
+  | ASTAND  BzoAST BzoAST OpPrecision,  -- | Bitwise And
+  | ASTOR   BzoAST BzoAST OpPrecision,  -- | Bitwise Inclusive Or
+  | ASTXOR  BzoAST BzoAST OpPrecision,  -- | Bitwise Exclusive Or
+  | ASTNOT  BzoAST        OpPrecision,  -- | Bitwise Not
+  | ASTLSR  BzoAST BzoAST OpPrecision,  -- | Bitwise Shift Right
+  | ASTLSR  BzoAST BzoAST OpPrecision,  -- | Bitwise Shift Left
   | ASTPCNT BzoAST        OpPrecision,  -- | Popcount / Hamming Weight
+  | ASTCTLZ BzoAST        OpPrecision,  -- | Count Leading Zeroes
+  | ASTCTTZ BzoAST        OpPrecision,  -- | Count Trailing Zeroes
   -- | Control Functions
   | ASTCall BzoAST BzoAST,              -- | Function Call
   | ASTTask BzoAST BzoAST,              -- |
@@ -103,9 +94,7 @@ data BzoAST
   | ASTJINZ BzoAST       ,              -- | Jump If Not Zero
   | ASTJIEq BzoAST       ,              -- | Jump If Equal
   | ASTJINE BzoAST       ,              -- | Jump If Not Equal
-  | ASTRtrn BzoAST       ,              -- | Return
-  | ASTVLet BzoAST BzoAST,              -- | Let Variable
-  | ASTALet BzoAST BzoAST BzoAST,       -- | Let Array Variable
+  | ASTRtrn ,                           -- | Return
   | ASTVSet BzoAST BzoAST,              -- | Set Variable
   | ASTVGet BzoAST BzoAST,              -- | Get Variable
   | ASTDest BzoAST       ,              -- | Delete Memory
@@ -113,9 +102,6 @@ data BzoAST
   | ASTDRef BzoAST       ,              -- | Dereference Value
   | ASTVRef BzoAST       ,              -- | Reference Value
   | ASTPADD BzoAST BzoAST,              -- | Add to Pointer
-  | ASTMkPl BzoAST BzoAST,              -- | Make Pool
-  | ASTAdPl BzoAST BzoAST,              -- | Add to Pool
-  | ASTGtPl BzoAST BzoAST,              -- | Get from Pool
   | ASTGArr BzoAST BzoAST,              -- | Get data from Array
   | ASTSArr BzoAST BzoAST,              -- | Set data in Array
   -- | High Order Functions
@@ -125,10 +111,10 @@ data BzoAST
   | ASTPScn BzoAST BzoAST,              -- | Parallel Scan Array with Fn
   | ASTSScn BzoAST BzoAST,              -- | Sequential Scan Array with Fn
   | ASTItrI BzoAST BzoAST Int,          -- | Informed Iterate Function on Data n times
-  | ASTWhil BzoAST BzoAST Int,          -- | While Loop : Fn on Data, with n estimate
-  | ASTItrU BzoAST BzoAST BzoAST,       -- | Uninformed Iterate Function on Data n times
-  -- | Data Types
-  | ASTLInt Integer,                    -- | Literal Integer
-  | ASTLFlt Float,                      -- | Literal Float
-  | ASTLStr String,                     -- | Literal String
-  | ASTVar  String                      -- | Variable
+  -- | Constant Values
+  | ASTCmpd [BzoAST]                    -- | Compound Tuple
+  | ASTPoly [BzoAST]                    -- | Polymorphic Tuple
+  | ASTInt  Integer,                    -- | Integer
+  | ASTFlt  Float,                      -- | Float
+  | ASTStr  String,                     -- | String
+  | ASTVar  Int                         -- | Variable <ID#>
