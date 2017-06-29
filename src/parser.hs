@@ -120,6 +120,8 @@ data MockParseItem
   | MP_CurryObj
   | MP_MapObj
   | MP_MapMod
+  | MP_ArrSzObj
+  | MP_ArrGnObj
 
 
 
@@ -285,6 +287,8 @@ matchSyntax MP_FilterObj (BzS_FilterObj     _ _ _) = True
 matchSyntax MP_CurryObj  (BzS_CurryObj      _ _ _) = True
 matchSyntax MP_MapObj    (BzS_MapObj          _ _) = True
 matchSyntax MP_MapMod    (BzS_MapMod            _) = True
+matchSyntax MP_ArrGnObj  (BzS_ArrGnObj          _) = True
+matchSyntax MP_ArrSzObj  (BzS_ArrSzObj        _ _) = True
 matchSyntax _ _ = False
 
 
@@ -748,28 +752,28 @@ fuseFilterObj a                b                     = [a, b]
 
 -- | Assumes that the syntax stream is reversed
 fuseArrayObj :: BzoSyntax -> BzoSyntax -> [BzoSyntax]
-fuseArrayObj sn@(BzS_TyId        p0 i) ar@(BzS_ArrGenMod p1  ) = [(BzS_ArrayObj p0 sn [ar])]
-fuseArrayObj sn@(BzS_TyId        p0 i) ar@(BzS_ArrSzMod  p1 s) = [(BzS_ArrayObj p0 sn [ar])]
-fuseArrayObj sn@(BzS_Id          p0 i) ar@(BzS_ArrGenMod p1  ) = [(BzS_ArrayObj p0 sn [ar])]
-fuseArrayObj sn@(BzS_Id          p0 i) ar@(BzS_ArrSzMod  p1 s) = [(BzS_ArrayObj p0 sn [ar])]
-fuseArrayObj sn@(BzS_Cmpd        p0 x) ar@(BzS_ArrGenMod p1  ) = [(BzS_ArrayObj p0 sn [ar])]
-fuseArrayObj sn@(BzS_Cmpd        p0 x) ar@(BzS_ArrSzMod  p1 s) = [(BzS_ArrayObj p0 sn [ar])]
-fuseArrayObj sn@(BzS_Poly        p0 x) ar@(BzS_ArrGenMod p1  ) = [(BzS_ArrayObj p0 sn [ar])]
-fuseArrayObj sn@(BzS_Poly        p0 x) ar@(BzS_ArrSzMod  p1 s) = [(BzS_ArrayObj p0 sn [ar])]
-fuseArrayObj sn@(BzS_TyVar       p0 x) ar@(BzS_ArrGenMod p1  ) = [(BzS_ArrayObj p0 sn [ar])]
-fuseArrayObj sn@(BzS_TyVar       p0 x) ar@(BzS_ArrSzMod  p1 s) = [(BzS_ArrayObj p0 sn [ar])]
-fuseArrayObj sn@(BzS_Box         p0 x) ar@(BzS_ArrGenMod p1  ) = [(BzS_ArrayObj p0 sn [ar])]
-fuseArrayObj sn@(BzS_Box         p0 x) ar@(BzS_ArrSzMod  p1 s) = [(BzS_ArrayObj p0 sn [ar])]
-fuseArrayObj sn@(BzS_BTId        p0 x) ar@(BzS_ArrGenMod p1  ) = [(BzS_ArrayObj p0 sn [ar])]
-fuseArrayObj sn@(BzS_BTId        p0 x) ar@(BzS_ArrSzMod  p1 s) = [(BzS_ArrayObj p0 sn [ar])]
-fuseArrayObj sn@(BzS_ArrayObj  p0 o x) ar@(BzS_ArrGenMod p1  ) = [(BzS_ArrayObj p0 sn [ar])]
-fuseArrayObj sn@(BzS_ArrayObj  p0 o x) ar@(BzS_ArrSzMod  p1 s) = [(BzS_ArrayObj p0 sn [ar])]
-fuseArrayObj sn@(BzS_FilterObj p0 o x) ar@(BzS_ArrGenMod p1  ) = [(BzS_ArrayObj p0 sn [ar])]
-fuseArrayObj sn@(BzS_FilterObj p0 o x) ar@(BzS_ArrSzMod  p1 s) = [(BzS_ArrayObj p0 sn [ar])]
-fuseArrayObj sn@(BzS_ExTypObj  p0 o x) ar@(BzS_ArrGenMod p1  ) = [(BzS_ArrayObj p0 sn [ar])]
-fuseArrayObj sn@(BzS_ExTypObj  p0 o x) ar@(BzS_ArrSzMod  p1 s) = [(BzS_ArrayObj p0 sn [ar])]
-fuseArrayObj sn@(BzS_ExFunObj  p0 o x) ar@(BzS_ArrGenMod p1  ) = [(BzS_ArrayObj p0 sn [ar])]
-fuseArrayObj sn@(BzS_ExFunObj  p0 o x) ar@(BzS_ArrSzMod  p1 s) = [(BzS_ArrayObj p0 sn [ar])]
+fuseArrayObj sn@(BzS_TyId        p0 i) (BzS_ArrGenMod p1  ) = [(BzS_ArrayObj p0 sn [(BzS_ArrGnObj p1  )])]
+fuseArrayObj sn@(BzS_TyId        p0 i) (BzS_ArrSzMod  p1 s) = [(BzS_ArrayObj p0 sn [(BzS_ArrSzObj p1 s)])]
+fuseArrayObj sn@(BzS_Id          p0 i) (BzS_ArrGenMod p1  ) = [(BzS_ArrayObj p0 sn [(BzS_ArrGnObj p1  )])]
+fuseArrayObj sn@(BzS_Id          p0 i) (BzS_ArrSzMod  p1 s) = [(BzS_ArrayObj p0 sn [(BzS_ArrSzObj p1 s)])]
+fuseArrayObj sn@(BzS_Cmpd        p0 x) (BzS_ArrGenMod p1  ) = [(BzS_ArrayObj p0 sn [(BzS_ArrGnObj p1  )])]
+fuseArrayObj sn@(BzS_Cmpd        p0 x) (BzS_ArrSzMod  p1 s) = [(BzS_ArrayObj p0 sn [(BzS_ArrSzObj p1 s)])]
+fuseArrayObj sn@(BzS_Poly        p0 x) (BzS_ArrGenMod p1  ) = [(BzS_ArrayObj p0 sn [(BzS_ArrGnObj p1  )])]
+fuseArrayObj sn@(BzS_Poly        p0 x) (BzS_ArrSzMod  p1 s) = [(BzS_ArrayObj p0 sn [(BzS_ArrSzObj p1 s)])]
+fuseArrayObj sn@(BzS_TyVar       p0 x) (BzS_ArrGenMod p1  ) = [(BzS_ArrayObj p0 sn [(BzS_ArrGnObj p1  )])]
+fuseArrayObj sn@(BzS_TyVar       p0 x) (BzS_ArrSzMod  p1 s) = [(BzS_ArrayObj p0 sn [(BzS_ArrSzObj p1 s)])]
+fuseArrayObj sn@(BzS_Box         p0 x) (BzS_ArrGenMod p1  ) = [(BzS_ArrayObj p0 sn [(BzS_ArrGnObj p1  )])]
+fuseArrayObj sn@(BzS_Box         p0 x) (BzS_ArrSzMod  p1 s) = [(BzS_ArrayObj p0 sn [(BzS_ArrSzObj p1 s)])]
+fuseArrayObj sn@(BzS_BTId        p0 x) (BzS_ArrGenMod p1  ) = [(BzS_ArrayObj p0 sn [(BzS_ArrGnObj p1  )])]
+fuseArrayObj sn@(BzS_BTId        p0 x) (BzS_ArrSzMod  p1 s) = [(BzS_ArrayObj p0 sn [(BzS_ArrSzObj p1 s)])]
+fuseArrayObj sn@(BzS_ArrayObj  p0 o x) (BzS_ArrGenMod p1  ) = [(BzS_ArrayObj p0 sn [(BzS_ArrGnObj p1  )])]
+fuseArrayObj sn@(BzS_ArrayObj  p0 o x) (BzS_ArrSzMod  p1 s) = [(BzS_ArrayObj p0 sn [(BzS_ArrSzObj p1 s)])]
+fuseArrayObj sn@(BzS_FilterObj p0 o x) (BzS_ArrGenMod p1  ) = [(BzS_ArrayObj p0 sn [(BzS_ArrGnObj p1  )])]
+fuseArrayObj sn@(BzS_FilterObj p0 o x) (BzS_ArrSzMod  p1 s) = [(BzS_ArrayObj p0 sn [(BzS_ArrSzObj p1 s)])]
+fuseArrayObj sn@(BzS_ExTypObj  p0 o x) (BzS_ArrGenMod p1  ) = [(BzS_ArrayObj p0 sn [(BzS_ArrGnObj p1  )])]
+fuseArrayObj sn@(BzS_ExTypObj  p0 o x) (BzS_ArrSzMod  p1 s) = [(BzS_ArrayObj p0 sn [(BzS_ArrSzObj p1 s)])]
+fuseArrayObj sn@(BzS_ExFunObj  p0 o x) (BzS_ArrGenMod p1  ) = [(BzS_ArrayObj p0 sn [(BzS_ArrGnObj p1  )])]
+fuseArrayObj sn@(BzS_ExFunObj  p0 o x) (BzS_ArrSzMod  p1 s) = [(BzS_ArrayObj p0 sn [(BzS_ArrSzObj p1 s)])]
 fuseArrayObj a                       b                       = [a, b]
 
 
@@ -789,6 +793,19 @@ fuseMapObj sn@(BzS_Lambda p0 x d) (BzS_MapMod p1) = [(BzS_MapObj p0 sn)]
 fuseMapObj sn@(BzS_Cmpd   p0 x  ) (BzS_MapMod p1) = [(BzS_MapObj p0 sn)]
 fuseMapObj sn@(BzS_Poly   p0 x  ) (BzS_MapMod p1) = [(BzS_MapObj p0 sn)]
 fuseMapObj a                      b               = [a, b]
+
+
+
+
+
+
+
+
+
+
+-- Quick Hack to fix a problem. Not efficient. Needs a better revision later.
+identityPass :: BzoSyntax -> BzoSyntax -> [BzoSyntax]
+identityPass a b = [a, b]
 
 
 
@@ -859,6 +876,8 @@ simplifyASTPass xf f sn@(BzS_Nil          _) = sn
 simplifyASTPass xf f sn@(BzS_Namespace  _ _) = sn
 simplifyASTPass xf f sn@(BzS_MapMod       _) = sn
 simplifyASTPass xf f sn@(BzS_Undefined     ) = sn
+simplifyASTPass xf f sn@(BzS_ArrSzObj   _ _) = sn
+simplifyASTPass xf f sn@(BzS_ArrGnObj     _) = sn
 
 
 
@@ -873,8 +892,8 @@ simplifyAST :: BzoSyntax -> Either [BzoErr] BzoSyntax
 simplifyAST ast =
   let pass0 = simplifyASTPass id fuseNameObj   ast
       pass1 = simplifyASTPass id fuseFilterObj pass0
-      pass2 = simplifyASTPass reverse fuseArrayObj pass1
-      pass3 = simplifyASTPass reverse fuseMapObj pass2
+      pass2 = simplifyASTPass reverse identityPass $ simplifyASTPass reverse fuseArrayObj pass1
+      pass3 = simplifyASTPass id fuseMapObj pass2
       errs0 = includesASTItem (\sn -> [ParseErr (pos sn) "Unexpected Namespace Indicator"]) MP_Name   pass3
       errs1 = includesASTItem (\sn -> [ParseErr (pos sn) "Unexpected Filter Indicator"   ]) MP_Filt   pass3
       errs2 = includesASTItem (\sn -> [ParseErr (pos sn) "Unexpected Map Indicator"      ]) MP_MapMod pass3

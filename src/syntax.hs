@@ -122,6 +122,11 @@ data BzoSyntax
     | BzS_MapObj {
         pos     :: BzoPos,
         bzobj   :: BzoSyntax }
+    | BzS_ArrSzObj {
+        pos     :: BzoPos,
+        sint    :: Integer }
+    | BzS_ArrGnObj {
+        pos     :: BzoPos }
     | BzS_Undefined
     deriving Eq
 
@@ -178,6 +183,8 @@ showAST (BzS_Wildcard _)                   = " _ "
 showAST (BzS_MapMod _)                     = " .. "
 showAST (BzS_ArrGenMod _)                  = " [] "
 showAST (BzS_ArrSzMod _ i)                 = " [ " ++ (show  i) ++ " ] "
+showAST (BzS_ArrGnObj _)                   = " [] "
+showAST (BzS_ArrSzObj _ i)                 = " [ " ++ (show  i) ++ " ] "
 showAST (BzS_ArrExprMod _ ex)              = " [ " ++ (show ex) ++ " ] "
 showAST (BzS_Nil _)                        = " () "
 showAST (BzS_TyVar _ i)                    = "TyVr: " ++ (show i)
