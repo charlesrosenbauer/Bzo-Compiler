@@ -113,6 +113,12 @@ data MockParseItem
   | MP_CallItem
   | MP_Cfg_Line
   | MP_Cfg_Lines
+  | MP_ExTypObj
+  | MP_ExFunObj
+  | MP_ArrayObj
+  | MP_FilterObj
+  | MP_CurryObj
+  | MP_MapObj
 
 
 
@@ -245,32 +251,38 @@ matchParseItem _ _ = False
 
 
 matchSyntax :: MockParseItem -> BzoSyntax -> Bool
-matchSyntax MP_FunDef (BzS_FunDef    _ _ _ _ _) = True
-matchSyntax MP_TypDef (BzS_TypDef      _ _ _ _) = True
-matchSyntax MP_FunDef (BzS_FnTypeDef     _ _ _) = True
-matchSyntax MP_Lambda (BzS_Lambda        _ _ _) = True
-matchSyntax MP_Id     (BzS_Id              _ _) = True
-matchSyntax MP_TId    (BzS_TyId            _ _) = True
-matchSyntax MP_MId    (BzS_MId             _ _) = True
-matchSyntax MP_BId    (BzS_BId             _ _) = True
-matchSyntax MP_BTId   (BzS_BTId            _ _) = True
-matchSyntax MP_Name   (BzS_Namespace       _ _) = True
-matchSyntax MP_Int    (BzS_Int             _ _) = True
-matchSyntax MP_Flt    (BzS_Flt             _ _) = True
-matchSyntax MP_Str    (BzS_Str             _ _) = True
-matchSyntax MP_Poly   (BzS_Poly            _ _) = True
-matchSyntax MP_Cmpd   (BzS_Cmpd            _ _) = True
-matchSyntax MP_Filt   (BzS_Filter          _ _) = True
-matchSyntax MP_AGMod  (BzS_ArrGenMod         _) = True
-matchSyntax MP_ASMod  (BzS_ArrSzMod        _ _) = True
-matchSyntax MP_AXMod  (BzS_ArrExprMod      _ _) = True
-matchSyntax MP_FnTy   (BzS_FnTy          _ _ _) = True
-matchSyntax MP_Blck   (BzS_Block           _ _) = True
-matchSyntax MP_Expr   (BzS_Expr            _ _) = True
-matchSyntax MP_Calls  (BzS_Calls           _ _) = True
-matchSyntax MP_Wild   (BzS_Wildcard          _) = True
-matchSyntax MP_Undef  (BzS_Undefined          ) = True
-matchSyntax MP_TyVr   (BzS_TyVar           _ _) = True
+matchSyntax MP_FunDef    (BzS_FunDef    _ _ _ _ _) = True
+matchSyntax MP_TypDef    (BzS_TypDef      _ _ _ _) = True
+matchSyntax MP_FunDef    (BzS_FnTypeDef     _ _ _) = True
+matchSyntax MP_Lambda    (BzS_Lambda        _ _ _) = True
+matchSyntax MP_Id        (BzS_Id              _ _) = True
+matchSyntax MP_TId       (BzS_TyId            _ _) = True
+matchSyntax MP_MId       (BzS_MId             _ _) = True
+matchSyntax MP_BId       (BzS_BId             _ _) = True
+matchSyntax MP_BTId      (BzS_BTId            _ _) = True
+matchSyntax MP_Name      (BzS_Namespace       _ _) = True
+matchSyntax MP_Int       (BzS_Int             _ _) = True
+matchSyntax MP_Flt       (BzS_Flt             _ _) = True
+matchSyntax MP_Str       (BzS_Str             _ _) = True
+matchSyntax MP_Poly      (BzS_Poly            _ _) = True
+matchSyntax MP_Cmpd      (BzS_Cmpd            _ _) = True
+matchSyntax MP_Filt      (BzS_Filter          _ _) = True
+matchSyntax MP_AGMod     (BzS_ArrGenMod         _) = True
+matchSyntax MP_ASMod     (BzS_ArrSzMod        _ _) = True
+matchSyntax MP_AXMod     (BzS_ArrExprMod      _ _) = True
+matchSyntax MP_FnTy      (BzS_FnTy          _ _ _) = True
+matchSyntax MP_Blck      (BzS_Block           _ _) = True
+matchSyntax MP_Expr      (BzS_Expr            _ _) = True
+matchSyntax MP_Calls     (BzS_Calls           _ _) = True
+matchSyntax MP_Wild      (BzS_Wildcard          _) = True
+matchSyntax MP_Undef     (BzS_Undefined          ) = True
+matchSyntax MP_TyVr      (BzS_TyVar           _ _) = True
+matchSyntax MP_ExFunObj  (BzS_ExFunObj      _ _ _) = True
+matchSyntax MP_ExTypObj  (BzS_ExTypObj      _ _ _) = True
+matchSyntax MP_ArrayObj  (BzS_ArrayObj      _ _ _) = True
+matchSyntax MP_FilterObj (BzS_FilterObj     _ _ _) = True
+matchSyntax MP_CurryObj  (BzS_CurryObj      _ _ _) = True
+matchSyntax MP_MapObj    (BzS_MapObj          _ _) = True
 matchSyntax _ _ = False
 
 
@@ -649,6 +661,47 @@ bracketCheck tks =
                     (Nothing, ts) -> checkIter ts f
                     (Just es, []) -> Just es
                     (Just es, ts) -> Just $ maybeMerge es (checkIter ts f)
+
+
+
+
+
+
+
+
+
+
+incASTHelp0 :: (BzoSyntax -> [BzoErr]) -> MockParseItem -> BzoSyntax -> [BzoErr]
+incASTHelp0 errFn mock sn = applyIfE errFn (\x -> []) sn (matchSyntax mock sn)
+
+
+
+
+
+
+
+
+
+includesASTItem :: (BzoSyntax -> [BzoErr]) -> MockParseItem -> BzoSyntax -> [BzoErr]
+includesASTItem errFn mock sn@(BzS_ArrayObj    p o x) = (incASTHelp0 errFn mock sn) ++ (includesASTItem errFn mock o) ++ (concatMap (includesASTItem errFn mock) x)
+includesASTItem errFn mock sn@(BzS_CurryObj    p o x) = (incASTHelp0 errFn mock sn) ++ (includesASTItem errFn mock o) ++ (concatMap (includesASTItem errFn mock) x)
+includesASTItem errFn mock sn@(BzS_Calls         p x) = (incASTHelp0 errFn mock sn) ++ (concatMap (includesASTItem errFn mock) x)
+includesASTItem errFn mock sn@(BzS_FunDef  p i x e d) = (incASTHelp0 errFn mock sn) ++ (includesASTItem errFn mock i) ++ (includesASTItem errFn mock e) ++ (includesASTItem errFn mock d)
+includesASTItem errFn mock sn@(BzS_TypDef    p i x d) = (incASTHelp0 errFn mock sn) ++ (includesASTItem errFn mock i) ++ (includesASTItem errFn mock d)
+includesASTItem errFn mock sn@(BzS_FnTypeDef   p x d) = (incASTHelp0 errFn mock sn) ++ (includesASTItem errFn mock d)
+includesASTItem errFn mock sn@(BzS_Cmpd          p x) = (incASTHelp0 errFn mock sn) ++ (concatMap (includesASTItem errFn mock) x)
+includesASTItem errFn mock sn@(BzS_Poly          p x) = (incASTHelp0 errFn mock sn) ++ (concatMap (includesASTItem errFn mock) x)
+includesASTItem errFn mock sn@(BzS_Expr          p x) = (incASTHelp0 errFn mock sn) ++ (concatMap (includesASTItem errFn mock) x)
+includesASTItem errFn mock sn@(BzS_Block         p x) = (incASTHelp0 errFn mock sn) ++ (concatMap (includesASTItem errFn mock) x)
+includesASTItem errFn mock sn@(BzS_FilterObj   p x l) = (incASTHelp0 errFn mock sn) ++ (includesASTItem errFn mock x) ++ (includesASTItem errFn mock l)
+includesASTItem errFn mock sn@(BzS_Lambda      p x d) = (incASTHelp0 errFn mock sn) ++ (includesASTItem errFn mock x) ++ (includesASTItem errFn mock d)
+includesASTItem errFn mock sn@(BzS_FnTy        p i o) = (incASTHelp0 errFn mock sn) ++ (includesASTItem errFn mock i) ++ (includesASTItem errFn mock o)
+includesASTItem errFn mock sn@(BzS_Box           p x) = (incASTHelp0 errFn mock sn) ++ (includesASTItem errFn mock x)
+includesASTItem errFn mock sn@(BzS_Filter        p x) = (incASTHelp0 errFn mock sn) ++ (includesASTItem errFn mock x)
+includesASTItem errFn mock sn@(BzS_MapObj        p x) = (incASTHelp0 errFn mock sn) ++ (includesASTItem errFn mock x)
+includesASTItem errFn mock sn@(BzS_ArrExprMod    p x) = (incASTHelp0 errFn mock sn) ++ (includesASTItem errFn mock x)
+includesASTItem errFn mock sn = (incASTHelp0 errFn mock sn)
+
 
 
 
