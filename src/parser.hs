@@ -752,6 +752,8 @@ fuseFilterObj a                b                     = [a, b]
 
 -- | Assumes that the syntax stream is reversed
 fuseArrayObj :: BzoSyntax -> BzoSyntax -> [BzoSyntax]
+fuseArrayObj sn@(BzS_ArrayObj  p0 o x) (BzS_ArrGenMod p1  ) = [(BzS_ArrayObj p0 o $ x ++ [(BzS_ArrGnObj p1  )])]
+fuseArrayObj sn@(BzS_ArrayObj  p0 o x) (BzS_ArrSzMod  p1 s) = [(BzS_ArrayObj p0 o $ x ++ [(BzS_ArrSzObj p1 s)])]
 fuseArrayObj sn@(BzS_TyId        p0 i) (BzS_ArrGenMod p1  ) = [(BzS_ArrayObj p0 sn [(BzS_ArrGnObj p1  )])]
 fuseArrayObj sn@(BzS_TyId        p0 i) (BzS_ArrSzMod  p1 s) = [(BzS_ArrayObj p0 sn [(BzS_ArrSzObj p1 s)])]
 fuseArrayObj sn@(BzS_Id          p0 i) (BzS_ArrGenMod p1  ) = [(BzS_ArrayObj p0 sn [(BzS_ArrGnObj p1  )])]
@@ -766,8 +768,6 @@ fuseArrayObj sn@(BzS_Box         p0 x) (BzS_ArrGenMod p1  ) = [(BzS_ArrayObj p0 
 fuseArrayObj sn@(BzS_Box         p0 x) (BzS_ArrSzMod  p1 s) = [(BzS_ArrayObj p0 sn [(BzS_ArrSzObj p1 s)])]
 fuseArrayObj sn@(BzS_BTId        p0 x) (BzS_ArrGenMod p1  ) = [(BzS_ArrayObj p0 sn [(BzS_ArrGnObj p1  )])]
 fuseArrayObj sn@(BzS_BTId        p0 x) (BzS_ArrSzMod  p1 s) = [(BzS_ArrayObj p0 sn [(BzS_ArrSzObj p1 s)])]
-fuseArrayObj sn@(BzS_ArrayObj  p0 o x) (BzS_ArrGenMod p1  ) = [(BzS_ArrayObj p0 sn [(BzS_ArrGnObj p1  )])]
-fuseArrayObj sn@(BzS_ArrayObj  p0 o x) (BzS_ArrSzMod  p1 s) = [(BzS_ArrayObj p0 sn [(BzS_ArrSzObj p1 s)])]
 fuseArrayObj sn@(BzS_FilterObj p0 o x) (BzS_ArrGenMod p1  ) = [(BzS_ArrayObj p0 sn [(BzS_ArrGnObj p1  )])]
 fuseArrayObj sn@(BzS_FilterObj p0 o x) (BzS_ArrSzMod  p1 s) = [(BzS_ArrayObj p0 sn [(BzS_ArrSzObj p1 s)])]
 fuseArrayObj sn@(BzS_ExTypObj  p0 o x) (BzS_ArrGenMod p1  ) = [(BzS_ArrayObj p0 sn [(BzS_ArrGnObj p1  )])]
