@@ -119,6 +119,7 @@ data MockParseItem
   | MP_FilterObj
   | MP_CurryObj
   | MP_MapObj
+  | MP_MapMod
 
 
 
@@ -283,6 +284,7 @@ matchSyntax MP_ArrayObj  (BzS_ArrayObj      _ _ _) = True
 matchSyntax MP_FilterObj (BzS_FilterObj     _ _ _) = True
 matchSyntax MP_CurryObj  (BzS_CurryObj      _ _ _) = True
 matchSyntax MP_MapObj    (BzS_MapObj          _ _) = True
+matchSyntax MP_MapMod    (BzS_MapMod            _) = True
 matchSyntax _ _ = False
 
 
@@ -867,14 +869,22 @@ simplifyASTPass xf f sn@(BzS_Undefined     ) = sn
 
 
 
--- Add more passes, return errs if Namespace, Filter, Array, Map, etc. objects remain
 simplifyAST :: BzoSyntax -> Either [BzoErr] BzoSyntax
 simplifyAST ast =
   let pass0 = simplifyASTPass id fuseNameObj   ast
       pass1 = simplifyASTPass id fuseFilterObj pass0
       pass2 = simplifyASTPass reverse fuseArrayObj pass1
-      pass3 = simplifyASTPass id fuseMapObj pass2
-  in (Right pass1)
+      pass3 = simplifyASTPass reverse fuseMapObj pass2
+      errs0 = includesASTItem (\sn -> [ParseErr (pos sn) "Unexpected Namespace Indicator"]) MP_Name   pass3
+      errs1 = includesASTItem (\sn -> [ParseErr (pos sn) "Unexpected Filter Indicator"   ]) MP_Filt   pass3
+      errs2 = includesASTItem (\sn -> [ParseErr (pos sn) "Unexpected Map Indicator"      ]) MP_MapMod pass3
+      errs3 = includesASTItem (\sn -> [ParseErr (pos sn) "Unexpected Array Indicator"    ]) MP_AGMod  pass3
+      errs4 = includesASTItem (\sn -> [ParseErr (pos sn) "Unexpected Array Indicator"    ]) MP_ASMod  pass3
+      errs5 = includesASTItem (\sn -> [ParseErr (pos sn) "Invalid Array Indicator"       ]) MP_AXMod  pass3
+      errs  = errs0 ++ errs1 ++ errs2 ++ errs3 ++ errs4 ++ errs5
+  in case errs of
+        [] -> Right pass3
+        er -> Left  er
 
 
 
@@ -891,4 +901,7 @@ parseFile f tks ps =
   in case (bracketErrs, parseIter (ParserState f (BzoPos 0 0 f) [PI_SOF] tks) ps) of
       (Just errs,        _ ) -> Left errs
       (Nothing  , Left errs) -> Left errs
-      (Nothing  , Right ast) -> Right $ piSyn ast
+      (Nothing  , Right ast) ->
+          case (simplifyAST (piSyn ast)) of
+            Left errs -> Left errs
+            Right out -> Right out
