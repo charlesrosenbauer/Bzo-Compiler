@@ -28,9 +28,6 @@ data OpPrecision
   | WORD
   | WRDX    -- | Some major architectures support 80 bit Floating Point
   | DWRD
-  | QWRD    -- | 128b SIMD
-  | OWRD    -- | 256b SIMD
-  | HWRD    -- | 512b SIMD
 
 
 
@@ -86,14 +83,7 @@ data BzoAST
   | ASTTask BzoAST BzoAST,              -- |
   | ASTJmRt BzoAST BzoAST,              -- | Jump to Function, then return to current position
   | ASTJump BzoAST BzoAST,              -- | Unconditional Jump
-  | ASTJILs BzoAST       ,              -- | Jump If Less
-  | ASTJIGt BzoAST       ,              -- | Jump If Greater
-  | ASTJILE BzoAST       ,              -- | Jump If Less or Equal
-  | ASTJIGE BzoAST       ,              -- | Jump If Greater or Equal
-  | ASTJIZr BzoAST       ,              -- | Jump If Zero
-  | ASTJINZ BzoAST       ,              -- | Jump If Not Zero
-  | ASTJIEq BzoAST       ,              -- | Jump If Equal
-  | ASTJINE BzoAST       ,              -- | Jump If Not Equal
+  | ASTJIF  BzoAST       ,              -- | Jump If
   | ASTRtrn ,                           -- | Return
   | ASTVSet BzoAST BzoAST,              -- | Set Variable
   | ASTVGet BzoAST BzoAST,              -- | Get Variable
