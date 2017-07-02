@@ -230,6 +230,19 @@ modelSimpleTypeParameter x = Left [TypeErr (pos x) "Invalid Type Parameters"]
 
 
 
+modelArrayIndicator :: BzoSyntax -> ModelArrayType
+(BzS_ArrSzObj p s) = (ModelTypeIntArr p s)
+(BzS_ArrGnObj p  ) = (ModelTypeGenArr p  )
+
+
+
+
+
+
+
+
+
+
 {-
   TODO:
     * Atom Modeller (tyvr)
