@@ -231,8 +231,8 @@ modelSimpleTypeParameter x = Left [TypeErr (pos x) "Invalid Type Parameters"]
 
 
 modelArrayIndicator :: BzoSyntax -> ModelArrayType
-(BzS_ArrSzObj p s) = (ModelTypeIntArr p s)
-(BzS_ArrGnObj p  ) = (ModelTypeGenArr p  )
+modelArrayIndicator (BzS_ArrSzObj p s) = (ModelTypeIntArr p s)
+modelArrayIndicator (BzS_ArrGnObj p  ) = (ModelTypeGenArr p  )
 
 
 
@@ -279,6 +279,9 @@ modelType (BzS_FnTy p i e) =
   in case (ers, tx, ty) of
       ([], [i'], [e']) -> Right (MT_FnTy p Nothing i' e')
       (er, _   , _   ) -> Left  $ concat er
+
+modelType (BzS_Expr  p [i]) = modelType i
+modelType (BzS_Box   p  i ) = modelType i
 
 modelType (BzS_Int   p i) = Right (MT_TyAtom p Nothing (MTA_Int  p i))
 modelType (BzS_Str   p s) = Right (MT_TyAtom p Nothing (MTA_Str  p s))
