@@ -29,6 +29,9 @@ data BzoSyntax
     | BzS_TyVar {
         pos  :: BzoPos,
         sid  :: String }
+    | BzS_Curry {
+        pos  :: BzoPos,
+        obj  :: BzoSyntax }
     | BzS_MId {
         pos  :: BzoPos,
         sid  :: String }
@@ -164,6 +167,7 @@ showAST (BzS_FnTypeDef _ fid def)          = " {FTDEF: " ++ (show fid) ++ " [ " 
 showAST (BzS_Lambda _ par def)             = " {LAMBDA: " ++ (show par) ++ " :: " ++ (show def) ++ "} "
 showAST (BzS_FnTy _ tin tex)               = " {FNTY: " ++ (show tin) ++ " ;;" ++ (show tex) ++ "} "
 showAST (BzS_Filter _ filt)                = " {FILTER: " ++ (show filt) ++ "} "
+showAST (BzS_Curry _ o)                    = " {CURRY: " ++ (show o) ++ "} "
 showAST (BzS_Id _ i)                       = " ID: " ++ (show i)
 showAST (BzS_MId _ i)                      = " MID: " ++ (show i)
 showAST (BzS_TyId _ i)                     = " TID: " ++ (show i)
