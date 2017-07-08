@@ -18,6 +18,7 @@ data BzoToken
   | TkEndDo        { spos :: BzoPos }
   | TkSepExpr      { spos :: BzoPos }
   | TkSepPoly      { spos :: BzoPos }
+  | TkCurrySym     { spos :: BzoPos }
   | TkFilterSym    { spos :: BzoPos }
   | TkLambdaSym    { spos :: BzoPos }
   | TkReference    { spos :: BzoPos }
