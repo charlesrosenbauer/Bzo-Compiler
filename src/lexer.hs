@@ -460,7 +460,7 @@ lexSymbol =
 
 
 isLegalChar :: Char -> Bool
-isLegalChar c = (isPrint c) && (not $ isSpace c) && (not $ elem c "~@_$()[]{}:;\'\",.")
+isLegalChar c = (isPrint c) && (not $ isSpace c) && (not $ elem c "~@_$()[]{}:;\'\",`.")
 
 
 
