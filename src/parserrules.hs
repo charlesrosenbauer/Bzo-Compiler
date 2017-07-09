@@ -1165,6 +1165,19 @@ parseName = genericParseOp [mtk_Reference, MP_TId] (\psi ->
 
 
 
+parseCurry :: ParserOp
+parseCurry = genericParseOp [MP_Item, mtk_CurrySym] (\psi ->
+  PI_BzSyn $ BzS_Curry (pos $ piSyn $ head psi) (piSyn $ head psi))
+
+
+
+
+
+
+
+
+
+
 parseNameErr :: ParserOp
 parseNameErr = genericParseOp [mtk_Reference, MP_Any] (\psi -> PI_Err $ ParseErr (getPIPos $ head psi) "Invalid Namespace Identifier" )
 
@@ -1179,7 +1192,7 @@ parseNameErr = genericParseOp [mtk_Reference, MP_Any] (\psi -> PI_Err $ ParseErr
 
 parseMisc :: Parser
 parseMisc = Parser (\ps ->
-  let parseFn = [parseFilter, parseName]
+  let parseFn = [parseFilter, parseName, parseCurry]
       errFn   = [parseNameErr]
   in case (tryParsers ps parseFn, tryParsers ps errFn) of
     (Just pst,      _ ) -> Right pst
