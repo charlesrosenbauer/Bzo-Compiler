@@ -447,6 +447,7 @@ lexSymbol =
   (lexStringToToken "."  (\p -> TkSepExpr   p)) <|>
   (lexStringToToken ","  (\p -> TkSepPoly   p)) <|>
   (lexStringToToken "_"  (\p -> TkWildcard  p)) <|>
+  (lexStringToToken "`"  (\p -> TkCurrySym  p)) <|>
   (lexStringToToken "@"  (\p -> TkReference p))
 
 
