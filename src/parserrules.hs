@@ -1190,10 +1190,22 @@ parseNameErr = genericParseOp [mtk_Reference, MP_Any] (\psi -> PI_Err $ ParseErr
 
 
 
+parseCurryErr :: ParserOp
+parseCurryErr = genericParseOp [mtk_CurrySym] (\psi -> PI_Err $ ParseErr (getPIPos $ head psi) "Invalid Syntax with Curry Operator")
+
+
+
+
+
+
+
+
+
+
 parseMisc :: Parser
 parseMisc = Parser (\ps ->
   let parseFn = [parseFilter, parseName, parseCurry]
-      errFn   = [parseNameErr]
+      errFn   = [parseNameErr, parseCurryErr]
   in case (tryParsers ps parseFn, tryParsers ps errFn) of
     (Just pst,      _ ) -> Right pst
     (Nothing , Nothing) -> Left []
