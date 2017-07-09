@@ -77,6 +77,7 @@ data MockParseItem
   | MP_Poly
   | MP_Cmpd
   | MP_FnTy
+  | MP_Curry
   | MP_Blck
   | MP_Expr
   | MP_Calls
@@ -141,6 +142,7 @@ mtk_StartDo   = MP_Tk $ TkStartDo   mockPos
 mtk_EndDo     = MP_Tk $ TkEndDo     mockPos
 mtk_SepExpr   = MP_Tk $ TkSepExpr   mockPos
 mtk_SepPoly   = MP_Tk $ TkSepPoly   mockPos
+mtk_CurrySym  = MP_Tk $ TkCurrySym  mockPos
 mtk_FilterSym = MP_Tk $ TkFilterSym mockPos
 mtk_LamdaSym  = MP_Tk $ TkLambdaSym mockPos
 mtk_Reference = MP_Tk $ TkReference mockPos
@@ -235,6 +237,7 @@ matchParseItem (MP_Item) (PI_BzSyn (BzS_Poly       p i)) = True
 matchParseItem (MP_Item) (PI_BzSyn (BzS_Box        p i)) = True
 matchParseItem (MP_Item) (PI_BzSyn (BzS_Lambda   p a b)) = True
 matchParseItem (MP_Item) (PI_BzSyn (BzS_Filter     p i)) = True
+matchParseItem (MP_Item) (PI_BzSyn (BzS_Curry      p o)) = True
 matchParseItem (MP_Tup ) (PI_BzSyn (BzS_Box        p x)) = True
 matchParseItem (MP_Tup ) (PI_BzSyn (BzS_Cmpd       p x)) = True
 matchParseItem (MP_Tup ) (PI_BzSyn (BzS_Poly       p x)) = True
@@ -284,6 +287,7 @@ matchSyntax MP_ExFunObj  (BzS_ExFunObj      _ _ _) = True
 matchSyntax MP_ExTypObj  (BzS_ExTypObj      _ _ _) = True
 matchSyntax MP_ArrayObj  (BzS_ArrayObj      _ _ _) = True
 matchSyntax MP_FilterObj (BzS_FilterObj     _ _ _) = True
+matchSyntax MP_Curry     (BzS_Curry           _ _) = True
 matchSyntax MP_CurryObj  (BzS_CurryObj      _ _ _) = True
 matchSyntax MP_MapObj    (BzS_MapObj          _ _) = True
 matchSyntax MP_MapMod    (BzS_MapMod            _) = True
@@ -321,6 +325,7 @@ matchBzoToken (TkTupEmpt   a) (TkTupEmpt   b) = True
 matchBzoToken (TkArrGnrl   a) (TkArrGnrl   b) = True
 matchBzoToken (TkArrMod    a) (TkArrMod    b) = True
 matchBzoToken (TkNewline   a) (TkNewline   b) = True
+matchBzoToken (TkCurrySym  a) (TkCurrySym  b) = True
 matchBzoToken (TkInt     a b) (TkInt     c d) = True
 matchBzoToken (TkFlt     a b) (TkFlt     c d) = True
 matchBzoToken (TkStr     a b) (TkStr     c d) = True
@@ -706,6 +711,7 @@ includesASTItem errFn mock sn@(BzS_Box           p x) = (incASTHelp0 errFn mock 
 includesASTItem errFn mock sn@(BzS_Filter        p x) = (incASTHelp0 errFn mock sn) ++ (includesASTItem errFn mock x)
 includesASTItem errFn mock sn@(BzS_MapObj        p x) = (incASTHelp0 errFn mock sn) ++ (includesASTItem errFn mock x)
 includesASTItem errFn mock sn@(BzS_ArrExprMod    p x) = (incASTHelp0 errFn mock sn) ++ (includesASTItem errFn mock x)
+includesASTItem errFn mock sn@(BzS_Curry         p x) = (incASTHelp0 errFn mock sn) ++ (includesASTItem errFn mock x)
 includesASTItem errFn mock sn = (incASTHelp0 errFn mock sn)
 
 
@@ -855,6 +861,7 @@ simplifyASTPass xf f (BzS_FilterObj   p x l) = (BzS_FilterObj  p (passHelp0 xf f
 simplifyASTPass xf f (BzS_Lambda      p x d) = (BzS_Lambda     p (passHelp0 xf f x) (passHelp0 xf f d))
 simplifyASTPass xf f (BzS_FnTy        p i o) = (BzS_FnTy       p (passHelp0 xf f i) (passHelp0 xf f o))
 simplifyASTPass xf f (BzS_Box           p x) = (BzS_Box        p (passHelp0 xf f x))
+simplifyASTPass xf f (BzS_Curry         p x) = (BzS_Curry      p (passHelp0 xf f x))
 simplifyASTPass xf f (BzS_Filter        p x) = (BzS_Filter     p (passHelp0 xf f x))
 simplifyASTPass xf f (BzS_MapObj        p x) = (BzS_MapObj     p (passHelp0 xf f x))
 simplifyASTPass xf f (BzS_ArrExprMod    p x) = (BzS_ArrExprMod p (passHelp0 xf f x))
