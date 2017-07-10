@@ -125,6 +125,19 @@ f..
 Map f to array
 
 
+x`f
+Partial application of f; returns a new function with x applied to the last argument of f.
+
+4 5`+
+Passing 4 into an addition function partially applied with 5. Returns 9.
+
+(a. b) 12`%+
+Here 12 is applied to %+, a modular addition function. This expression is desugared to (a. b. 12) %+.
+
+a 2`12`%+
+A variation on the previous example using multiple partially applied parameters. This desugars to (a. 2. 12) %+
+
+
 ()
 Nil Type / Empty Tuple
 
