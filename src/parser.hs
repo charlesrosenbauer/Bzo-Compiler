@@ -928,7 +928,7 @@ simplifyAST ast =
       errs4 = includesASTItem (\sn -> [ParseErr (pos sn) "Unexpected Array Indicator"    ]) MP_ASMod  pass3
       errs5 = includesASTItem (\sn -> [ParseErr (pos sn) "Invalid Array Indicator"       ]) MP_AXMod  pass3
       errs6 = includesASTItem (\sn -> [ParseErr (pos sn) "Invalid Use of Curry Operator" ]) MP_Curry  pass3
-      errs  = errs0 ++ errs1 ++ errs2 ++ errs3 ++ errs4 ++ errs5
+      errs  = errs0 ++ errs1 ++ errs2 ++ errs3 ++ errs4 ++ errs5 ++ errs6
   in case errs of
         [] -> Right pass3
         er -> Left  er
