@@ -737,6 +737,26 @@ fuseNameObj a                b                     = [a, b]
 
 
 
+fuseCurryObj :: BzoSyntax -> BzoSyntax -> [BzoSyntax]
+fuseCurryObj sn@(BzS_Curry p0 (BzS_Curry p1 o)) x          = [sn, x]
+fuseCurryObj sn@(BzS_Box        p1   x ) (BzS_Curry p0 o0) = [(BzS_CurryObj p0 sn [o0])]
+fuseCurryObj sn@(BzS_Cmpd       p1   xs) (BzS_Curry p0 o0) = [(BzS_CurryObj p0 sn [o0])]
+fuseCurryObj sn@(BzS_Poly       p1   xs) (BzS_Curry p0 o0) = [(BzS_CurryObj p0 sn [o0])]
+fuseCurryObj sn@(BzS_TyId       p1   x ) (BzS_Curry p0 o0) = [(BzS_CurryObj p0 sn [o0])]
+fuseCurryObj sn@(BzS_Id         p1   x ) (BzS_Curry p0 o0) = [(BzS_CurryObj p0 sn [o0])]
+fuseCurryObj sn@(BzS_MId        p1   x ) (BzS_Curry p0 o0) = [(BzS_CurryObj p0 sn [o0])]
+fuseCurryObj (BzS_CurryObj   p1 o os)    (BzS_Curry p0 o0) = [(BzS_CurryObj p0 o  (o0:os))]
+fuseCurryObj a                 b                           = [a, b]
+
+
+
+
+
+
+
+
+
+
 fuseFilterObj :: BzoSyntax -> BzoSyntax -> [BzoSyntax]
 fuseFilterObj sn@(BzS_TyId  p0 x) (BzS_Filter p1 f) = [(BzS_FilterObj p0 sn f)]
 fuseFilterObj sn@(BzS_Id    p0 x) (BzS_Filter p1 f) = [(BzS_FilterObj p0 sn f)]
@@ -899,7 +919,7 @@ simplifyAST :: BzoSyntax -> Either [BzoErr] BzoSyntax
 simplifyAST ast =
   let pass0 = simplifyASTPass id fuseNameObj   ast
       pass1 = simplifyASTPass id fuseFilterObj pass0
-      pass2 = simplifyASTPass reverse identityPass $ simplifyASTPass reverse fuseArrayObj pass1
+      pass2 = simplifyASTPass reverse identityPass $ simplifyASTPass id fuseCurryObj $simplifyASTPass reverse fuseArrayObj pass1
       pass3 = simplifyASTPass id fuseMapObj pass2
       errs0 = includesASTItem (\sn -> [ParseErr (pos sn) "Unexpected Namespace Indicator"]) MP_Name   pass3
       errs1 = includesASTItem (\sn -> [ParseErr (pos sn) "Unexpected Filter Indicator"   ]) MP_Filt   pass3
@@ -907,6 +927,7 @@ simplifyAST ast =
       errs3 = includesASTItem (\sn -> [ParseErr (pos sn) "Unexpected Array Indicator"    ]) MP_AGMod  pass3
       errs4 = includesASTItem (\sn -> [ParseErr (pos sn) "Unexpected Array Indicator"    ]) MP_ASMod  pass3
       errs5 = includesASTItem (\sn -> [ParseErr (pos sn) "Invalid Array Indicator"       ]) MP_AXMod  pass3
+      errs6 = includesASTItem (\sn -> [ParseErr (pos sn) "Invalid Use of Curry Operator" ]) MP_Curry  pass3
       errs  = errs0 ++ errs1 ++ errs2 ++ errs3 ++ errs4 ++ errs5
   in case errs of
         [] -> Right pass3
