@@ -800,6 +800,6 @@ fileLexer syms file =
       res  = runLexer file generalLexerMany text
   in  case res of
     Left  err -> Left [err]
-    Right tks -> Right $ filter isValidToken $ scanl removeLexerArtifacts TkNil $ filter isValidToken tks
+    Right tks -> Right $ repeatUntilFilterStops isValidToken (scanl removeLexerArtifacts TkNil) $ filter isValidToken tks
   where isValidToken (TkNil) = False
         isValidToken _       = True

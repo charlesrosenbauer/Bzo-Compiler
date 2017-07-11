@@ -13,6 +13,23 @@ import Data.Map.Strict hiding (foldl, map)
 
 
 
+repeatUntilFilterStops :: (a -> Bool) -> ([a] -> [a]) -> [a] -> [a]
+repeatUntilFilterStops filt xform xs =
+  let xs' = Data.List.filter filt $ xform xs
+  in if ((length xs') == (length xs))
+      then xs'
+      else repeatUntilFilterStops filt xform xs'
+
+
+
+
+
+
+
+
+
+
+
 applyIf :: (a -> a) -> a -> Bool -> a
 applyIf f x True  = f x
 applyIf f x False = x
