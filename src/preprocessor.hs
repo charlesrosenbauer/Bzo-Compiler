@@ -293,7 +293,6 @@ setDomain s (BzoFileData a b _ c d e f g) = (BzoFileData a b s c d e f g)
 
 
 
---Heavy Construction Zone!!
 -- check loaded files for library dependencies, load libraries, repeat until no dependencies remain
 loadLibsPass :: Map String [FilePath] -> Map String [BzoFileData] -> [String] -> IO (Either [BzoErr] [BzoFileData])
 loadLibsPass libs loaded [] = return $ Right $ concat $ elems loaded
@@ -522,3 +521,29 @@ getLibraryCfgContents settings =
   let text = getLibraryCfg settings
       tks  = fmap (applyWithErr (\(p, s) -> fileLexer s p)) text
   in fmap (applyWithErr $ parseLibCfgFile "libs.cfg") tks
+
+
+
+
+
+
+
+
+
+
+  -- Function, Type, Container, Enum, Record
+  data ObjKind = FnObj | TyObj | CtObj | EnmObj | RcdObj
+
+
+
+
+
+
+
+
+
+  data SymbolTable
+    = SymbolTable {
+        st_domain  :: String,
+        st_maximum :: Int,
+        st_table   :: Map (String, String) (Int, ObjKind) }
