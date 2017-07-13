@@ -921,13 +921,13 @@ simplifyAST ast =
       pass1 = simplifyASTPass id fuseFilterObj pass0
       pass2 = simplifyASTPass reverse identityPass $ simplifyASTPass id fuseCurryObj $simplifyASTPass reverse fuseArrayObj pass1
       pass3 = simplifyASTPass id fuseMapObj pass2
-      errs0 = includesASTItem (\sn -> [ParseErr (pos sn) "Unexpected Namespace Indicator"]) MP_Name   pass3
-      errs1 = includesASTItem (\sn -> [ParseErr (pos sn) "Unexpected Filter Indicator"   ]) MP_Filt   pass3
-      errs2 = includesASTItem (\sn -> [ParseErr (pos sn) "Unexpected Map Indicator"      ]) MP_MapMod pass3
-      errs3 = includesASTItem (\sn -> [ParseErr (pos sn) "Unexpected Array Indicator"    ]) MP_AGMod  pass3
-      errs4 = includesASTItem (\sn -> [ParseErr (pos sn) "Unexpected Array Indicator"    ]) MP_ASMod  pass3
-      errs5 = includesASTItem (\sn -> [ParseErr (pos sn) "Invalid Array Indicator"       ]) MP_AXMod  pass3
-      errs6 = includesASTItem (\sn -> [ParseErr (pos sn) "Invalid Use of Curry Operator" ]) MP_Curry  pass3
+      errs0 = includesASTItem (\sn -> [ParseErr (pos sn) "Unexpected Namespace Indicator\n"]) MP_Name   pass3
+      errs1 = includesASTItem (\sn -> [ParseErr (pos sn) "Unexpected Filter Indicator\n"   ]) MP_Filt   pass3
+      errs2 = includesASTItem (\sn -> [ParseErr (pos sn) "Unexpected Map Indicator\n"      ]) MP_MapMod pass3
+      errs3 = includesASTItem (\sn -> [ParseErr (pos sn) "Unexpected Array Indicator\n"    ]) MP_AGMod  pass3
+      errs4 = includesASTItem (\sn -> [ParseErr (pos sn) "Unexpected Array Indicator\n"    ]) MP_ASMod  pass3
+      errs5 = includesASTItem (\sn -> [ParseErr (pos sn) "Invalid Array Indicator\n"       ]) MP_AXMod  pass3
+      errs6 = includesASTItem (\sn -> [ParseErr (pos sn) "Invalid Use of Curry Operator\n" ]) MP_Curry  pass3
       errs  = errs0 ++ errs1 ++ errs2 ++ errs3 ++ errs4 ++ errs5 ++ errs6
   in case errs of
         [] -> Right pass3
