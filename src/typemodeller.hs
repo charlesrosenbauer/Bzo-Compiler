@@ -151,3 +151,47 @@ reduceCallIds (fns, tys, fts) =
   in case errs of
       []   -> Right (fns', tys', fts')
       errs -> Left errs
+
+
+
+
+
+
+
+
+
+
+-- Function, Type, Container, Enum, Record
+data ObjKind = FnObj | TyObj | CtObj | EnmObj | RcdObj
+
+
+
+
+
+
+
+
+
+
+-- | Type for storing calls and definitions
+data CallObj
+  = FnCallObj  [BzoSyntax]
+  | TyCallObj  [BzoSyntax]
+  | CtCallObj  [BzoSyntax]
+  | EnmCallObj  BzoSyntax
+  | RcdCallObj  BzoSyntax
+
+
+
+
+
+
+
+
+
+data SymbolTable
+  = SymbolTable {
+      st_domain  :: String,
+      st_maximum :: Int,
+      st_idTable :: Map (String, String) (Int, ObjKind),
+      st_objTable:: Map Int CallObj }
