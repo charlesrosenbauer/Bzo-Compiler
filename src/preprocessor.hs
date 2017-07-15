@@ -50,7 +50,7 @@ data BzoFileData
 
 showBzoFileData :: BzoFileData -> String
 showBzoFileData (BzoFileData mn pth dmn ast imp lnk impa lnka) =
-  "Module: " ++ mn ++ "\nPath: " ++ pth ++
+  "\n \nModule: " ++ mn ++ "\nPath: " ++ pth ++
     "\nDomain: "  ++ (show dmn) ++
     "\nImports: " ++ (show imp) ++ "\nAliased Imports: " ++ (show impa) ++
     "\nLinks: "   ++ (show lnk) ++ "\nAliased Links: "   ++ (show lnka) ++
