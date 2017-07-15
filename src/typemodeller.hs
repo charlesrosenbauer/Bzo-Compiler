@@ -191,7 +191,15 @@ data CallObj
 
 data SymbolTable
   = SymbolTable {
+      st_module  :: String,
       st_domain  :: String,
-      st_maximum :: Int,
+      st_path    :: String,
+      st_minId   :: Int,
+      st_maxId   :: Int,
       st_idTable :: Map (String, String) (Int, ObjKind),
-      st_objTable:: Map Int CallObj }
+      st_objTable:: Map Int CallObj,
+      st_hints   :: [BzoSyntax],
+      st_import  :: [String],
+      st_importAs:: [(String, String)],
+      st_link    :: [String],
+      st_linkAs  :: [(String, String)] }
