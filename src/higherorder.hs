@@ -1,8 +1,8 @@
 module HigherOrder where
-import Data.List hiding (foldl, map)
-import Data.Either
-import Data.Maybe
-import Data.Map.Strict hiding (foldl, map)
+import qualified Data.List as L hiding (foldl, map)
+import qualified Data.Either as E
+import qualified Data.Maybe as M
+import qualified Data.Map.Strict as Mp hiding (foldl, map)
 
 
 
@@ -15,7 +15,7 @@ import Data.Map.Strict hiding (foldl, map)
 
 repeatUntilFilterStops :: (a -> Bool) -> ([a] -> [a]) -> [a] -> [a]
 repeatUntilFilterStops filt xform xs =
-  let xs' = Data.List.filter filt $ xform xs
+  let xs' = L.filter filt $ xform xs
   in if ((length xs') == (length xs))
       then xs'
       else repeatUntilFilterStops filt xform xs'
@@ -155,7 +155,7 @@ applyListFns fs fn xs = map (\(f, x) -> map (fn f) x) $ zip fs xs
 
 sepErrs :: [Either a [b]] -> Either a [[b]]
 sepErrs xs =
-  let (ls, rs) = partitionEithers xs
+  let (ls, rs) = E.partitionEithers xs
   in  if((length ls) /= 0)
     then Left  $ ls !! 0
     else Right $ rs
@@ -174,7 +174,7 @@ concatMapWithErrs' xs fn =
   case xs of
     Left  err -> Left err
     Right val ->
-      let (ls, rs) = partitionEithers $ map fn val
+      let (ls, rs) = E.partitionEithers $ map fn val
       in  if((length ls) /= 0)
         then Left  $ ls !! 0
         else Right $ concat rs
@@ -188,9 +188,9 @@ concatMapWithErrs' xs fn =
 
 
 
-concatMapWithErrs :: [a] -> (a -> Either b [c]) -> Either b [c]
+concatMapWithErrs :: [a] -> (a -> E.Either b [c]) -> E.Either b [c]
 concatMapWithErrs xs fn =
-  let (ls, rs) = partitionEithers $ map fn xs
+  let (ls, rs) = E.partitionEithers $ map fn xs
   in  if((length ls) /= 0)
     then Left  $ ls !! 0
     else Right $ concat rs
@@ -204,7 +204,7 @@ concatMapWithErrs xs fn =
 
 
 
-tryMaybeList :: a -> [a -> Maybe b] -> Maybe b
+tryMaybeList :: a -> [a -> M.Maybe b] -> M.Maybe b
 tryMaybeList a []       = Nothing
 tryMaybeList a (f : fs) =
   case (f a) of
@@ -253,7 +253,7 @@ simplifyList' (l, (a: b: xs)) f =
 
 
 
-maybeMerge :: [a] -> Maybe [a] -> [a]
+maybeMerge :: [a] -> M.Maybe [a] -> [a]
 maybeMerge a (Just b) = a ++ b
 maybeMerge a _        = a
 
@@ -266,7 +266,7 @@ maybeMerge a _        = a
 
 
 
-maybeIf :: Bool -> a -> Maybe a
+maybeIf :: Bool -> a -> M.Maybe a
 maybeIf True  x = Just x
 maybeIf False x = Nothing
 
@@ -279,8 +279,8 @@ maybeIf False x = Nothing
 
 
 
-insertMany :: Ord k => Map k a -> [(k, a)] -> Map k a
-insertMany m xs = Data.List.foldl' (\mp (k, a) -> Data.Map.Strict.insert k a mp) m xs
+insertMany :: Ord k => Mp.Map k a -> [(k, a)] -> Mp.Map k a
+insertMany m xs = L.foldl' (\mp (k, a) -> Mp.insert k a mp) m xs
 
 
 
@@ -291,11 +291,11 @@ insertMany m xs = Data.List.foldl' (\mp (k, a) -> Data.Map.Strict.insert k a mp)
 
 
 
-insertManyList :: Ord k => Map k [a] -> [(k, a)] -> Map k [a]
-insertManyList m xs = Data.List.foldl' (\mp (k, a) ->
-  if (member k mp)
-    then Data.Map.Strict.adjust (\as -> as ++ [a]) k mp
-    else Data.Map.Strict.insert k [a] mp
+insertManyList :: Ord k => Mp.Map k [a] -> [(k, a)] -> Mp.Map k [a]
+insertManyList m xs = L.foldl' (\mp (k, a) ->
+  if (Mp.member k mp)
+    then Mp.adjust (\as -> as ++ [a]) k mp
+    else Mp.insert k [a] mp
   ) m xs
 
 
@@ -306,7 +306,7 @@ insertManyList m xs = Data.List.foldl' (\mp (k, a) ->
 
 
 
-applyWithErr :: (b -> Either a c) -> Either a b -> Either a c
+applyWithErr :: (b -> E.Either a c) -> E.Either a b -> E.Either a c
 applyWithErr f x =
   case x of
     Left  a -> Left  a
@@ -321,7 +321,7 @@ applyWithErr f x =
 
 
 
-applyWithErrM :: Monad m => (b -> m (Either a c)) -> Either a b -> m (Either a c)
+applyWithErrM :: Monad m => (b -> m (E.Either a c)) -> E.Either a b -> m (E.Either a c)
 applyWithErrM f x =
   case x of
     Left  a -> return $ Left  a
@@ -336,7 +336,7 @@ applyWithErrM f x =
 
 
 
-applyWithErrList :: (b -> Either a c) -> Either [a] b -> Either [a] c
+applyWithErrList :: (b -> E.Either a c) -> E.Either [a] b -> E.Either [a] c
 applyWithErrList f x =
   case x of
     Left  a -> Left a
@@ -354,8 +354,8 @@ applyWithErrList f x =
 
 
 
-containsManyMembers :: Ord a => Map a b -> [a] -> Bool
-containsManyMembers mp as = all (\x -> member x mp) as
+containsManyMembers :: Ord a => Mp.Map a b -> [a] -> Bool
+containsManyMembers mp as = all (\x -> Mp.member x mp) as
 
 
 
@@ -394,9 +394,9 @@ zip3Map = ((\(x, y, z) -> (concat x, concat y, concat z)) . unzip3)
 shrinkPairs :: (Eq a, Ord a) => [(a, [b])] -> [(a, [b])]
 shrinkPairs xs =
   let ks  = map (\(a, b) -> (a, [])) xs
-      mp  = insertMany empty ks
-      mp' = Data.List.foldl' (\m (k, a) -> adjust (\x -> x ++ a) k m) mp xs
-  in assocs mp'
+      mp  = insertMany Mp.empty ks
+      mp' = L.foldl' (\m (k, a) -> Mp.adjust (\x -> x ++ a) k m) mp xs
+  in Mp.assocs mp'
 
 
 
@@ -410,6 +410,6 @@ shrinkPairs xs =
 shrinkPairs3 :: (Eq a, Ord a) => [(a, [b], [c], [d])] -> [(a, [b], [c], [d])]
 shrinkPairs3 xs =
   let ks  = map (\(a, b, c, d) -> (a, ([], [], []))) xs
-      mp  = insertMany empty ks
-      mp' = Data.List.foldl' (\m (k, a, b, c) -> adjust (\(x, y, z) -> (x ++ a, y ++ b, z ++ c)) k m) mp xs
-  in map (\(a, (b, c, d)) -> (a, b, c, d)) $ assocs mp'
+      mp  = insertMany Mp.empty ks
+      mp' = L.foldl' (\m (k, a, b, c) -> Mp.adjust (\(x, y, z) -> (x ++ a, y ++ b, z ++ c)) k m) mp xs
+  in map (\(a, (b, c, d)) -> (a, b, c, d)) $ Mp.assocs mp'
