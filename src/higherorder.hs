@@ -13,6 +13,38 @@ import qualified Data.Map.Strict as Mp hiding (foldl, map)
 
 
 
+doubleSearch :: Ord k0 => Ord k1 => (k0, k1) -> Mp.Map k0 (Mp.Map k1 a) -> M.Maybe a
+doubleSearch (k0, k1) m =
+  case (Mp.lookup k0 m) of
+    Nothing -> Nothing
+    Just a  -> Mp.lookup k1 a
+
+
+
+
+
+
+
+
+
+
+doubleInsert :: Ord k0 => Ord k1 => (k0, k1, a) -> Mp.Map k0 (Mp.Map k1 a) -> M.Maybe (Mp.Map k0 (Mp.Map k1 a))
+doubleInsert (k0, k1, x) m =
+  case (Mp.lookup k0 m) of
+    Nothing -> Just $ Mp.insert k0 (Mp.insert k1 x Mp.empty) m
+    Just a  ->
+      case (Mp.lookup k1 a) of
+        Just b  -> Nothing
+        Nothing -> Just $ Mp.adjust (Mp.insert k1 x) k0 m
+
+
+
+
+
+
+
+
+
 repeatUntilFilterStops :: (a -> Bool) -> ([a] -> [a]) -> [a] -> [a]
 repeatUntilFilterStops filt xform xs =
   let xs' = L.filter filt $ xform xs
