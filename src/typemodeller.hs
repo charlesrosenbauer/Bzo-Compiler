@@ -1,6 +1,7 @@
 module BzoTypeModeller where
 import BzoSyntax
 import BzoTypes
+import BzoParser
 import BzoPreprocessor
 import GHC.Exts
 import Data.Either
@@ -189,17 +190,55 @@ data CallObj
 
 
 
+-- Different Symbol Tables will contain data for different steps
 data SymbolTable
-  = SymbolTable {
+  = SymbolTable0 {
       st_module  :: String,
       st_domain  :: String,
       st_path    :: String,
-      st_minId   :: Int,
-      st_maxId   :: Int,
-      st_idTable :: Map (String, String) (Int, ObjKind),
-      st_objTable:: Map Int CallObj,
+      st_fndefs  :: Map String [BzoSyntax],
+      st_ftdefs  :: Map String [BzoSyntax],
+      st_tydefs  :: Map String [BzoSyntax],
       st_hints   :: [BzoSyntax],
       st_import  :: [String],
       st_importAs:: [(String, String)],
       st_link    :: [String],
       st_linkAs  :: [(String, String)] }
+
+
+
+
+
+
+
+
+
+
+filedataToSymbolTable :: BzoFileData -> SymbolTable
+filedataToSymbolTable (BzoFileData mn fp dm (BzS_Calls p ast) imp lnk is ls) =
+  let (fndefs, else0) = Data.List.partition (matchSyntax MP_FunDef   ) ast
+      (ftdefs, else1) = Data.List.partition (matchSyntax MP_FnTypeDef) else0
+      (tydefs, hints) = Data.List.partition (matchSyntax MP_TypDef   ) else1
+      fndefs'         = map (\xs -> (fnid $ head xs, xs)) $ groupBy (\a b -> (fnid a) == (fnid b)) fndefs
+      ftdefs'         = map (\xs -> (fnid $ head xs, xs)) $ groupBy (\a b -> (fnid a) == (fnid b)) ftdefs
+      tydefs'         = map (\xs -> (tyid $ head xs, xs)) $ groupBy (\a b -> (tyid a) == (tyid b)) tydefs
+      fndefs''        = insertMany Data.Map.Strict.empty fndefs'
+      ftdefs''        = insertMany Data.Map.Strict.empty ftdefs'
+      tydefs''        = insertMany Data.Map.Strict.empty tydefs'
+  in (SymbolTable0 mn dm fp fndefs'' ftdefs'' tydefs'' hints imp is lnk ls)
+
+
+
+
+
+
+
+
+{-
+getSymbolTable :: [BzoFileData] -> Either [BzoErr] (Map String (Map String SymbolTable))
+getSymbolTable fs =
+  let order = map (\x -> (bfd_moduleName x, bfd_domain x, x)) fs
+      fileTable = doubleInsertMany order Data.Map.Strict.empty
+
+  in Left []
+-}
