@@ -259,7 +259,7 @@ matchParseItem _ _ = False
 matchSyntax :: MockParseItem -> BzoSyntax -> Bool
 matchSyntax MP_FunDef    (BzS_FunDef    _ _ _ _ _) = True
 matchSyntax MP_TypDef    (BzS_TypDef      _ _ _ _) = True
-matchSyntax MP_FunDef    (BzS_FnTypeDef     _ _ _) = True
+matchSyntax MP_FnTypeDef (BzS_FnTypeDef     _ _ _) = True
 matchSyntax MP_Lambda    (BzS_Lambda        _ _ _) = True
 matchSyntax MP_Id        (BzS_Id              _ _) = True
 matchSyntax MP_TId       (BzS_TyId            _ _) = True
