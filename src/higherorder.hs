@@ -13,6 +13,22 @@ import qualified Data.Map.Strict as Mp hiding (foldl, map)
 
 
 
+doubleInsertMany :: Ord k0 => Ord k1 => [(k0, k1, a)] -> Mp.Map k0 (Mp.Map k1 a) -> M.Maybe (Mp.Map k0 (Mp.Map k1 a))
+doubleInsertMany []     m = Just m
+doubleInsertMany (x:xs) m =
+  case (doubleInsert x m) of
+    Just m' -> doubleInsertMany xs m'
+    Nothing -> Nothing
+
+
+
+
+
+
+
+
+
+
 doubleSearch :: Ord k0 => Ord k1 => (k0, k1) -> Mp.Map k0 (Mp.Map k1 a) -> M.Maybe a
 doubleSearch (k0, k1) m =
   case (Mp.lookup k0 m) of
