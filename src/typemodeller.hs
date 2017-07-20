@@ -204,6 +204,17 @@ data SymbolTable
       st_importAs:: [(String, String)],
       st_link    :: [String],
       st_linkAs  :: [(String, String)] }
+  | SymbolTable1 {
+      st_module  :: String,
+      st_domain  :: String,
+      st_path    :: String,
+      st_nmTable :: Map String Int,
+      st_idTable :: Map Int CallObj,
+      st_hints   :: [BzoSyntax],
+      st_import  :: [String],
+      st_importAs:: [(String, String)],
+      st_link    :: [String],
+      st_linkAs  :: [(String, String)] }
 
 
 
