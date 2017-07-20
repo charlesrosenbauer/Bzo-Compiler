@@ -13,6 +13,21 @@ import qualified Data.Map.Strict as Mp hiding (foldl, map)
 
 
 
+makeIntMap :: Int -> [k] -> (Mp.Map Int k, Int)
+makeIntMap i ks =
+  let xs   = zip (map (+i) [0..]) ks
+      reti = i + length xs
+  in (insertMany Mp.empty xs, reti)
+
+
+
+
+
+
+
+
+
+
 doubleInsertMany :: Ord k0 => Ord k1 => [(k0, k1, a)] -> Mp.Map k0 (Mp.Map k1 a) -> M.Maybe (Mp.Map k0 (Mp.Map k1 a))
 doubleInsertMany []     m = Just m
 doubleInsertMany (x:xs) m =
