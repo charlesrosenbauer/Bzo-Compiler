@@ -130,6 +130,16 @@ data BzoSyntax
         sint    :: Integer }
     | BzS_ArrGnObj {
         pos     :: BzoPos }
+    | Bzs_RecordData{
+        pos     :: BzoPos,
+        parent  :: String,
+        sid     :: String,
+        def     :: BzoSyntax }
+    | Bzs_EnumData{
+        pos     :: BzoPos,
+        parent  :: String,
+        sid     :: String,
+        def     :: BzoSyntax }
     | BzS_Undefined
     deriving Eq
 
