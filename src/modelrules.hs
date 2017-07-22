@@ -245,8 +245,7 @@ modelArrayIndicator (BzS_ArrGnObj p  ) = (ModelTypeGenArr p  )
 
 {-
   TODO:
-    * Atom Modeller (tyvr)
-    * Array Type Modeller (general, integer, list)
+    * Filter, Curry, Map, Array Object Modelling
     * Type Expression Modeller
 -}
 modelType :: BzoSyntax -> Either [BzoErr] ModelType
@@ -283,6 +282,7 @@ modelType (BzS_FnTy p i e) =
 modelType (BzS_Expr  p [i]) = modelType i
 modelType (BzS_Box   p  i ) = modelType i
 
+modelType (BzS_TyVar p i) = Right (MT_TyAtom p Nothing (MTA_Var  p i))
 modelType (BzS_Int   p i) = Right (MT_TyAtom p Nothing (MTA_Int  p i))
 modelType (BzS_Str   p s) = Right (MT_TyAtom p Nothing (MTA_Str  p s))
 modelType (BzS_Flt   p f) = Right (MT_TyAtom p Nothing (MTA_Flt  p f))
