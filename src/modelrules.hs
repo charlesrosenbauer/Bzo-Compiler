@@ -125,8 +125,8 @@ data ModelType
       mt_rcd :: [ModelRecord] }
   | MT_TyExpr {
       mt_pos :: BzoPos,
-      mt_arr :: Maybe [ModelArrayType],
-      mt_exp :: [ModelType] }
+      mt_ths :: ModelTypeAtom,
+      mt_nxt :: ModelType }
   | MT_TyAtom {
       mt_pos :: BzoPos,
       mt_arr :: Maybe [ModelArrayType],
@@ -245,7 +245,7 @@ modelArrayIndicator (BzS_ArrGnObj p  ) = (ModelTypeGenArr p  )
 
 {-
   TODO:
-    * Filter, Curry, Map, Array Object Modelling
+    * Filter, Curry, Array Object Modelling
     * Type Expression Modeller
 -}
 modelType :: BzoSyntax -> Either [BzoErr] ModelType
@@ -281,6 +281,8 @@ modelType (BzS_FnTy p i e) =
 
 modelType (BzS_Expr  p [i]) = modelType i
 modelType (BzS_Box   p  i ) = modelType i
+
+-- General BzS_Expr modeller should probably make a linked-list-like model from MT_TyExpr. Will have to do that after vacation.
 
 modelType (BzS_TyVar p i) = Right (MT_TyAtom p Nothing (MTA_Var  p i))
 modelType (BzS_Int   p i) = Right (MT_TyAtom p Nothing (MTA_Int  p i))
