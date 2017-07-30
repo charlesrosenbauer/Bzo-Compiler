@@ -116,6 +116,11 @@ modelBasicType :: BzoSyntax -> Either [BzoErr] TypeAST
 modelBasicType (BzS_Int  p i)  = Right (TA_IntLit p i)
 modelBasicType (BzS_Flt  p f)  = Right (TA_FltLit p f)
 modelBasicType (BzS_Str  p s)  = Right (TA_StrLit p s)
+modelBasicType (BzS_Id   p x)  = Right (TA_FnLit  p x)
+modelBasicType (BzS_TyId p x)  = Right (TA_TyLit  p x)
+modelBasicType (BzS_BId  p x)  = Right (TA_BFnLit p x)
+modelBasicType (BzS_BTId p x)  = Right (TA_BTyLit p x)
+modelBasicType (BzS_Nil  p  )  = Right (TA_Nil    p  )
 
 modelBasicType (BzS_FnTy p i e) =
   let i'  = [modelBasicType i]
