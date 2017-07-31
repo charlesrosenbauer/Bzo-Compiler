@@ -155,3 +155,13 @@ modelBasicType (BzS_Box p x) =
   in case ers of
       [] -> Right $ head vls
       er -> Left $ concat er
+
+modelBasicType (BzS_FilterObj p o f) =
+  let o'  = [modelBasicType o]
+      f'  = [modelBasicType f]
+      ers = (lefts o') ++ (lefts f')
+      vlo = head $ rights o'
+      vlf = head $ rights f'
+  in case ers of
+      [] -> Right (TA_Filt p vlf vlo)
+      er -> Left $ concat er
