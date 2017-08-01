@@ -114,10 +114,10 @@ data ModelEnum = ModelEnum{
 
 
 
-modelRecord :: String -> BzoSyntax -> Maybe ModelRecord
-modelRecord parent (BzS_FilterObj p0 (BzS_Id  p1 i) ty) = Just (ModelRecord p0 i parent ty)
-modelRecord parent (BzS_FilterObj p0 (BzS_BId p1 i) ty) = Just (ModelRecord p0 i parent ty)
-modelRecord _      _                                    = Nothing
+checkRecord :: BzoSyntax -> Maybe (BzoPos, String, BzoSyntax)
+checkRecord (BzS_FilterObj p0 (BzS_Id  p1 i) ty) = Just (p0, i, ty)
+checkRecord (BzS_FilterObj p0 (BzS_BId p1 i) ty) = Just (p0, i, ty)
+checkRecord _                                    = Nothing
 
 
 
@@ -128,10 +128,10 @@ modelRecord _      _                                    = Nothing
 
 
 
-modelEnum :: String -> BzoSyntax -> Maybe ModelRecord
-modelEnum parent (BzS_FilterObj p0 (BzS_TyId p1 i) ty) = Just (ModelEnum p0 i parent ty)
-modelEnum parent (BzS_FilterObj p0 (BzS_BTId p1 i) ty) = Just (ModelEnum p0 i parent ty)
-modelEnum _      _                                     = Nothing
+checkEnum :: BzoSyntax -> Maybe (BzoPos, String, BzoSyntax)
+checkEnum (BzS_FilterObj p0 (BzS_TyId p1 i) ty) = Just (p0, i, ty)
+checkEnum (BzS_FilterObj p0 (BzS_BTId p1 i) ty) = Just (p0, i, ty)
+checkEnum _                                     = Nothing
 
 
 
@@ -165,19 +165,21 @@ modelBasicType (BzS_FnTy p i e) =
 
 modelBasicType (BzS_Cmpd p xs) =
   let xs' = [map modelBasicType xs]
+      rcs = catMaybes $ map checkRecord xs
       ers = concatMap lefts  xs'
       vls = concatMap rights xs'
-  in case ers of
-      [] -> Right (TA_Cmpd p vls)
-      er -> Left $ concat er
+  in case (ers, rcs) of
+      ([], []) -> Right (TA_Cmpd p vls)
+      (er, rs) -> Left $ (concat er) ++ (map (\(p, n, t) -> (SntxErr p $ "Unexpected Record Syntax: " ++ n ++ "\n")) rs)
 
 modelBasicType (BzS_Poly p xs) =
   let xs' = [map modelBasicType xs]
+      ens = catMaybes $ map checkRecord xs
       ers = concatMap lefts  xs'
       vls = concatMap rights xs'
-  in case ers of
-      [] -> Right (TA_Poly p vls)
-      er -> Left $ concat er
+  in case (ers, ens) of
+      ([], []) -> Right (TA_Poly p vls)
+      (er, es) -> Left $ concat er ++ (map (\(p, n, t) -> (SntxErr p $ "Unexpected Enum Syntax: " ++ n ++ "\n")) es)
 
 modelBasicType (BzS_Box p x) =
   let xs' = [[modelBasicType x]]

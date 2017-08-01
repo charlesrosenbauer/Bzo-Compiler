@@ -55,6 +55,7 @@ data BzoErr = Other
   | LexErr    { position::BzoPos, errorStr::String }
   | ParseErr  { position::BzoPos, errorStr::String }
   | TypeErr   { position::BzoPos, errorStr::String }
+  | SntxErr   { position::BzoPos, errorStr::String }
   | DepErr    { errorStr::String }
   | ParamErr  { errorStr::String }
   | CfgErr    { errorStr::String }
@@ -75,6 +76,7 @@ showBzErr (StringErr  p st) = "Bzo Error:\n" ++ (showErrPos p) ++ st
 showBzErr (LexErr     p st) = "Lexer Error:\n" ++ (showErrPos p) ++ st
 showBzErr (ParseErr   p st) = "Parse Error:\n" ++ (showErrPos p) ++ st
 showBzErr (TypeErr    p st) = "Type Error:\n" ++ (showErrPos p) ++ st
+showBzErr (SntxErr    p st) = "Syntax Error:\n " ++ (showErrPos p) ++ st
 showBzErr (DepErr       st) = "Dependency Error:\n" ++ st
 showBzErr (ParamErr     st) = "Parameter Error:\n" ++ st
 showBzErr (CfgErr       st) = "Configuration Error:\n" ++ st
