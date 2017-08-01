@@ -71,6 +71,7 @@ data TypeAST
           ta_ty   :: String }
       | TA_Nil{
           ta_pos :: BzoPos }
+      deriving Show
 
 
 
@@ -86,6 +87,7 @@ data ModelRecord = ModelRecord{
     mr_name   :: String,
     mr_parent :: String,
     mr_type   :: TypeAST }
+    deriving Show
 
 
 
@@ -101,6 +103,35 @@ data ModelEnum = ModelEnum{
     me_name   :: String,
     me_parent :: String,
     me_type   :: TypeAST }
+    deriving Show
+
+
+
+
+
+
+
+
+
+
+modelRecord :: String -> BzoSyntax -> Maybe ModelRecord
+modelRecord parent (BzS_FilterObj p0 (BzS_Id  p1 i) ty) = Just (ModelRecord p0 i parent ty)
+modelRecord parent (BzS_FilterObj p0 (BzS_BId p1 i) ty) = Just (ModelRecord p0 i parent ty)
+modelRecord _      _                                    = Nothing
+
+
+
+
+
+
+
+
+
+
+modelEnum :: String -> BzoSyntax -> Maybe ModelRecord
+modelEnum parent (BzS_FilterObj p0 (BzS_TyId p1 i) ty) = Just (ModelEnum p0 i parent ty)
+modelEnum parent (BzS_FilterObj p0 (BzS_BTId p1 i) ty) = Just (ModelEnum p0 i parent ty)
+modelEnum _      _                                     = Nothing
 
 
 
@@ -165,3 +196,15 @@ modelBasicType (BzS_FilterObj p o f) =
   in case ers of
       [] -> Right (TA_Filt p vlf vlo)
       er -> Left $ concat er
+
+
+
+
+
+
+
+
+
+
+-- Should be changed to not use modelBasicType.
+--modelTypeDef :: BzoSyntax -> Either [BzoErr] TypeDef
