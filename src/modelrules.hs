@@ -27,48 +27,48 @@ data TypeAST
       | TA_Filt {
           ta_pos :: BzoPos,
           ta_filt :: TypeAST,
-          ta_exp  :: TypeAST }
+          ta_exp :: TypeAST }
       | TA_FnTy {
           ta_pos :: BzoPos,
-          ta_in   :: TypeAST,
-          ta_out  :: TypeAST }
+          ta_in  :: TypeAST,
+          ta_out :: TypeAST }
       | TA_Enum {
           ta_pos :: BzoPos,
-          ta_id   :: String,
-          ta_exp  :: TypeAST }
+          ta_id  :: String,
+          ta_exp :: TypeAST }
       | TA_Record {
           ta_pos :: BzoPos,
-          ta_id   :: String,
-          ta_exp  :: TypeAST }
+          ta_id  :: String,
+          ta_exp :: TypeAST }
       | TA_Curry {
           ta_pos :: BzoPos,
-          ta_crs  :: [TypeAST],
-          ta_exp  :: TypeAST }
+          ta_crs :: [TypeAST],
+          ta_exp :: TypeAST }
       | TA_Arr {
           ta_pos :: BzoPos,
-          ta_szs  :: [Int],
-          ta_exp  :: TypeAST }
+          ta_szs :: [Integer], -- | Size of Zero is General Array
+          ta_exp :: TypeAST }
       | TA_IntLit {
           ta_pos :: BzoPos,
-          ta_int  :: Integer }
+          ta_int :: Integer }
       | TA_FltLit {
           ta_pos :: BzoPos,
           ta_flt  :: Double }
       | TA_StrLit {
           ta_pos :: BzoPos,
-          ta_str  :: String }
+          ta_str :: String }
       | TA_FnLit  {
           ta_pos :: BzoPos,
-          ta_fn   :: String }
+          ta_fn  :: String }
       | TA_TyLit  {
           ta_pos :: BzoPos,
-          ta_ty   :: String }
+          ta_ty  :: String }
       | TA_BFnLit {
           ta_pos :: BzoPos,
-          ta_fn   :: String }
+          ta_fn  :: String }
       | TA_BTyLit {
           ta_pos :: BzoPos,
-          ta_ty   :: String }
+          ta_ty  :: String }
       | TA_Nil{
           ta_pos :: BzoPos }
       deriving Show
@@ -142,6 +142,20 @@ checkEnum _                                     = Nothing
 
 
 
+modelArrayObj :: BzoSyntax -> Either [BzoErr] Integer
+modelArrayObj (BzS_ArrGnObj p  ) = Right 0
+modelArrayObj (BzS_ArrSzObj p s) = Right s
+modelArrayObj s                  = Left [(SntxErr (pos s) "No idea what happened here. Something's not right in the Array Syntax.")]
+
+
+
+
+
+
+
+
+
+
 -- | Basic Type Expression. No Records or Enums. Used for filters, etc.
 modelBasicType :: BzoSyntax -> Either [BzoErr] TypeAST
 modelBasicType (BzS_Int  p i)  = Right (TA_IntLit p i)
@@ -198,6 +212,19 @@ modelBasicType (BzS_FilterObj p o f) =
   in case ers of
       [] -> Right (TA_Filt p vlf vlo)
       er -> Left $ concat er
+
+modelBasicType (BzS_MapObj p o) = Left [SntxErr p "Unexpected Map Syntax in Type Expression"]
+
+modelBasicType (BzS_ArrayObj p o a) =
+  let o'  = [modelBasicType o]
+      ers = lefts  o'
+      vls = head $ rights o'
+      szs = map modelArrayObj a
+      szx = rights szs
+      sze = lefts szs
+  in case (ers ++ sze) of
+      [] -> Right $ (TA_Arr p szx vls)
+      er -> Left  $ concat er
 
 
 
