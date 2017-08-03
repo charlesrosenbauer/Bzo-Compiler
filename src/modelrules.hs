@@ -203,6 +203,8 @@ modelBasicType (BzS_Box p x) =
       [] -> Right $ head vls
       er -> Left $ concat er
 
+modelBasicType (BzS_Expr p [x]) = modelBasicType x
+
 modelBasicType (BzS_FilterObj p o f) =
   let o'  = [modelBasicType o]
       f'  = [modelBasicType f]
