@@ -195,13 +195,7 @@ modelBasicType (BzS_Poly p xs) =
       ([], []) -> Right (TA_Poly p vls)
       (er, es) -> Left $ concat er ++ (map (\(p, n, t) -> (SntxErr p $ "Unexpected Enum Syntax: " ++ n ++ "\n")) es)
 
-modelBasicType (BzS_Box p x) =
-  let xs' = [[modelBasicType x]]
-      ers = concatMap lefts  xs'
-      vls = concatMap rights xs'
-  in case ers of
-      [] -> Right $ head vls
-      er -> Left $ concat er
+modelBasicType (BzS_Box p x) = modelBasicType x
 
 modelBasicType (BzS_Expr p [x]) = modelBasicType x
 
