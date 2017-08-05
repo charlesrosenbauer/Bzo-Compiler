@@ -23,7 +23,8 @@ data TypeAST
           ta_exs :: [TypeAST] }
       | TA_Expr {
           ta_pos :: BzoPos,
-          ta_exp :: TypeAST }
+          ta_exp :: TypeAST,
+          ta_nxt :: TypeAST }
       | TA_Filt {
           ta_pos :: BzoPos,
           ta_filt :: TypeAST,
@@ -221,6 +222,16 @@ modelBasicType (BzS_ArrayObj p o a) =
   in case (ers ++ sze) of
       [] -> Right $ (TA_Arr p szx vls)
       er -> Left  $ concat er
+
+modelBasicType (BzS_Expr p (x:xs)) =
+  let x'  = [modelBasicType x]
+      xs' = [modelBasicType (BzS_Expr (pos $ head xs) xs)]
+      ers = (lefts x') ++ (lefts xs')
+      vlx = head $ rights x'
+      vly = head $ rights x'
+  in case (ers) of
+      [] -> Right (TA_Expr p vlx vly)
+      er -> Left $ concat er
 
 
 
