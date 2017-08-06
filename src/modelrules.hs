@@ -233,6 +233,7 @@ modelBasicType (BzS_Expr p (x:xs)) =
       [] -> Right (TA_Expr p vlx vly)
       er -> Left $ concat er
 
+modelBasicType (BzS_CurryObj p o x) = Left [Sntx p "Currying in type expressions is currently not permitted."]
 
 
 
