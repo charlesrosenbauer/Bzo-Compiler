@@ -169,29 +169,29 @@ modelBasicType (BzS_BTId p x)  = Right (TA_BTyLit p x)
 modelBasicType (BzS_Nil  p  )  = Right (TA_Nil    p  )
 
 modelBasicType (BzS_FnTy p i e) =
-  let i'  = [modelBasicType i]
-      e'  = [modelBasicType e]
-      ers = (lefts  i') ++ (lefts e')
-      vli = head $ rights i'
-      vle = head $ rights e'
+  let !i'  = [modelBasicType i]
+      !e'  = [modelBasicType e]
+      ers  = (lefts  i') ++ (lefts e')
+      vli  = head $ rights i'
+      vle  = head $ rights e'
   in case ers of
       [] -> Right (TA_FnTy p vli vle)
       er -> Left $ concat er
 
 modelBasicType (BzS_Cmpd p xs) =
-  let xs' = [map modelBasicType xs]
-      rcs = catMaybes $ map checkRecord xs
-      ers = concatMap lefts  xs'
-      vls = concatMap rights xs'
+  let !xs' = [map modelBasicType xs]
+      rcs  = catMaybes $ map checkRecord xs
+      ers  = concatMap lefts  xs'
+      vls  = concatMap rights xs'
   in case (ers, rcs) of
       ([], []) -> Right (TA_Cmpd p vls)
       (er, rs) -> Left $ (concat er) ++ (map (\(p, n, t) -> (SntxErr p $ "Unexpected Record Syntax: " ++ n ++ "\n")) rs)
 
 modelBasicType (BzS_Poly p xs) =
-  let xs' = [map modelBasicType xs]
-      ens = catMaybes $ map checkRecord xs
-      ers = concatMap lefts  xs'
-      vls = concatMap rights xs'
+  let !xs' = [map modelBasicType xs]
+      ens  = catMaybes $ map checkRecord xs
+      ers  = concatMap lefts  xs'
+      vls  = concatMap rights xs'
   in case (ers, ens) of
       ([], []) -> Right (TA_Poly p vls)
       (er, es) -> Left $ concat er ++ (map (\(p, n, t) -> (SntxErr p $ "Unexpected Enum Syntax: " ++ n ++ "\n")) es)
@@ -201,11 +201,11 @@ modelBasicType (BzS_Box p x) = modelBasicType x
 modelBasicType (BzS_Expr p [x]) = modelBasicType x
 
 modelBasicType (BzS_FilterObj p o f) =
-  let o'  = [modelBasicType o]
-      f'  = [modelBasicType f]
-      ers = (lefts o') ++ (lefts f')
-      vlo = head $ rights o'
-      vlf = head $ rights f'
+  let !o'  = [modelBasicType o]
+      !f'  = [modelBasicType f]
+      ers  = (lefts o') ++ (lefts f')
+      vlo  = head $ rights o'
+      vlf  = head $ rights f'
   in case ers of
       [] -> Right (TA_Filt p vlf vlo)
       er -> Left $ concat er
@@ -213,27 +213,29 @@ modelBasicType (BzS_FilterObj p o f) =
 modelBasicType (BzS_MapObj p o) = Left [SntxErr p "Unexpected Map Syntax in Type Expression"]
 
 modelBasicType (BzS_ArrayObj p o a) =
-  let o'  = [modelBasicType o]
-      ers = lefts  o'
-      vls = head $ rights o'
-      szs = map modelArrayObj a
-      szx = rights szs
-      sze = lefts szs
+  let !o'  = [modelBasicType o]
+      ers  = lefts  o'
+      vls  = head $ rights o'
+      szs  = map modelArrayObj a
+      szx  = rights szs
+      sze  = lefts szs
   in case (ers ++ sze) of
       [] -> Right $ (TA_Arr p szx vls)
       er -> Left  $ concat er
 
 modelBasicType (BzS_Expr p (x:xs)) =
-  let x'  = [modelBasicType x]
-      xs' = [modelBasicType (BzS_Expr (pos $ head xs) xs)]
-      ers = (lefts x') ++ (lefts xs')
-      vlx = head $ rights x'
-      vly = head $ rights x'
+  let !x'  = [modelBasicType x]
+      !xs' = [modelBasicType (BzS_Expr (pos $ head xs) xs)]
+      ers  = (lefts x') ++ (lefts xs')
+      vlx  = head $ rights x'
+      vly  = head $ rights x'
   in case (ers) of
       [] -> Right (TA_Expr p vlx vly)
       er -> Left $ concat er
 
-modelBasicType (BzS_CurryObj p o x) = Left [Sntx p "Currying in type expressions is currently not permitted."]
+modelBasicType (BzS_CurryObj p o x) = Left [SntxErr p "Currying in type expressions is currently not permitted."]
+
+modelBasicType s = Left [SntxErr (pos s) "Unexpected Component of Type Expression."]
 
 
 
