@@ -117,7 +117,7 @@ data BzoSyntax
     | BzS_FilterObj {
         pos     :: BzoPos,
         bzobj   :: BzoSyntax,
-        filt    :: BzoSyntax }
+        filt     :: BzoSyntax }
     | BzS_CurryObj {
         pos     :: BzoPos,
         bzobj   :: BzoSyntax,
@@ -161,9 +161,9 @@ data CfgSyntax
 
 
 showAST :: BzoSyntax -> String
-showAST (BzS_FunDef _ inpar fid expar def) = " {FNDEF: " ++ (show inpar) ++ " -> " ++ (show fid) ++ " -> " ++ (show expar) ++ " :: " ++ (show def) ++ "}"
-showAST (BzS_TypDef _ par tid def)         = " {TYDEF: " ++ (show tid) ++ " [ " ++ (show par) ++ " ] :: " ++ (show def) ++ "}"
-showAST (BzS_FnTypeDef _ fid def)          = " {FTDEF: " ++ (show fid) ++ " [ " ++ (show def) ++ " ]}"
+showAST (BzS_FunDef _ inpar fid expar def) = " {FNDEF: " ++ (show inpar) ++ " -> " ++ (show fid) ++ " -> " ++ (show expar) ++ " :: " ++ (show def) ++ "} "
+showAST (BzS_TypDef _ par tid def)         = " {TYDEF: " ++ (show tid) ++ " [ " ++ (show par) ++ " ] :: " ++ (show def) ++ "} "
+showAST (BzS_FnTypeDef _ fid def)          = " {FTDEF: " ++ (show fid) ++ " [ " ++ (show def) ++ " ]} "
 showAST (BzS_Lambda _ par def)             = " {LAMBDA: " ++ (show par) ++ " :: " ++ (show def) ++ "} "
 showAST (BzS_FnTy _ tin tex)               = " {FNTY: " ++ (show tin) ++ " ;;" ++ (show tex) ++ "} "
 showAST (BzS_Filter _ filt)                = " {FILTER: " ++ (show filt) ++ "} "
@@ -191,12 +191,12 @@ showAST (BzS_ArrGnObj _)                   = " [] "
 showAST (BzS_ArrSzObj _ i)                 = " [ " ++ (show  i) ++ " ] "
 showAST (BzS_ArrExprMod _ ex)              = " [ " ++ (show ex) ++ " ] "
 showAST (BzS_Nil _)                        = " () "
-showAST (BzS_TyVar _ i)                    = "TyVr: " ++ (show i)
-showAST (BzS_ExTypObj _ o n)               = "<" ++ (show o) ++ " from " ++ (show n) ++ "> "
-showAST (BzS_ExFunObj _ o n)               = "<" ++ (show o) ++ " from " ++ (show n) ++ "> "
-showAST (BzS_ArrayObj  _ o a)              = "<" ++ (show o) ++ " array: " ++ (concatMap showAST a) ++ "> "
-showAST (BzS_FilterObj _ o f)              = "<" ++ (show o) ++ " of type " ++ (show f) ++ "> "
-showAST (BzS_CurryObj  _ o p)              = "<" ++ (show p) ++ " applied to " ++ (show o) ++ "> "
-showAST (BzS_MapObj    _ o)                = "<" ++ (show o) ++ " .. >"
-showAST (BzS_Undefined)                    = " UNDEFINED "
+showAST (BzS_TyVar _ i)                    = " TyVr: " ++ (show i)
+showAST (BzS_ExTypObj _ o n)               = " <" ++ (show o) ++ " from " ++ (show n) ++ "> "
+showAST (BzS_ExFunObj _ o n)               = " <" ++ (show o) ++ " from " ++ (show n) ++ "> "
+showAST (BzS_ArrayObj  _ o a)              = " <" ++ (show o) ++ " array: " ++ (concatMap showAST a) ++ "> "
+showAST (BzS_FilterObj _ o f)              = " <" ++ (show o) ++ " of type " ++ (show f) ++ "> "
+showAST (BzS_CurryObj  _ o p)              = " <" ++ (show p) ++ " applied to " ++ (show o) ++ "> "
+showAST (BzS_MapObj    _ o)                = " <" ++ (show o) ++ " .. > "
+showAST (BzS_Undefined)                     = " UNDEFINED "
 instance Show BzoSyntax where show = showAST
