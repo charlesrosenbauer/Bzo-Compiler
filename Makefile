@@ -3,3 +3,5 @@ all:
 	mv src/bzo bin/bzo
 clean:
 	cd src; rm *.o *.hi
+core:
+	ghc -XBangPatterns -O2 -ddump-simpl -dynamic src/bzo.hs src/compiler.hs src/types.hs src/lexer.hs src/parser.hs src/tokens.hs src/syntax.hs src/parserrules.hs src/parameters.hs src/configparser.hs src/preprocessor.hs src/typechecker.hs src/higherorder.hs src/typemodeller.hs src/modelrules.hs
