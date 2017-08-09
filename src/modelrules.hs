@@ -115,6 +115,24 @@ data ModelEnum = ModelEnum{
 
 
 
+-- ! Add More Cases for other calls
+data CallAST
+    = CA_TyDefCall {
+        ca_pos     :: BzoPos,
+        ca_id      :: String,
+        ca_records :: [ModelRecord],
+        ca_enums   :: [ModelEnum],
+        ca_tydef   :: TypeAST }
+
+
+
+
+
+
+
+
+
+
 checkRecord :: BzoSyntax -> Maybe (BzoPos, String, BzoSyntax)
 checkRecord (BzS_FilterObj p0 (BzS_Id  p1 i) ty) = Just (p0, i, ty)
 checkRecord (BzS_FilterObj p0 (BzS_BId p1 i) ty) = Just (p0, i, ty)
@@ -245,5 +263,5 @@ modelBasicType s = Left [SntxErr (pos s) "Unexpected Component of Type Expressio
 
 
 
--- Should be changed to not use modelBasicType.
---modelTypeDef :: BzoSyntax -> Either [BzoErr] TypeDef
+modelCalls :: BzoSyntax -> Either [BzoErr] CallAST
+modelCalls (BzS_TypDef p prs t df) = Right (CA_TyDefCall p t [] [] (TA_Nil p))  -- For now
