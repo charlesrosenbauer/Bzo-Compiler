@@ -126,7 +126,7 @@ Map f to array
 
 
 x`f
-Partial application of f; returns a new function with x applied to the last argument of f.
+Partial application of f; behaves like a new function with x applied to the last argument of f.
 
 4 5`+
 Passing 4 into an addition function partially applied with 5. Returns 9.
@@ -136,6 +136,9 @@ Here 12 is applied to %+, a modular addition function. This expression is desuga
 
 a 2`12`%+
 A variation on the previous example using multiple partially applied parameters. This desugars to (a. 2. 12) %+
+
+4`+
+This code is not valid however. Bzo does not allow *true* partial application. The resulting function cannot be returned. All inputs must be provided inline. This restriction is due to function overloading / polymorphic tuples.
 
 
 ()
