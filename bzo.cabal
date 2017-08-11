@@ -1,0 +1,21 @@
+name: bzo-compiler
+version: 0.4
+description:  A Compiler for the Implicitly Parallel Bzo Programming Language
+author: Charles Rosenbauer
+license: GPL
+license-file: LICENSE
+cabal-version: >=1.2
+build-type: Simple
+
+executable main
+    default-language: Haskell2010
+    main-is: bzo.hs
+    ghc-options: -dynamic -O2 -XBangPatterns
+    hs-source-dirs: src
+    build-depends:
+        base >= 4.7
+      , haskeline >= 0.7
+      , text >= 1.2
+      , containers >= 0.5.7
+      , directory >= 1.3
+      , filepath >= 1.4
