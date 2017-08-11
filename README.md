@@ -16,7 +16,7 @@ This compiler is still under VERY heavy development. Not all planned features ar
 
 *Running the Compiler*
 
-Currently, the compiler can be run by calling the bzo executable in the /bin directory.
+Currently, the compiler can be run by calling the bzo executable in the /dist/build/main directory.
 ```
 bzo main.bz
 ```
