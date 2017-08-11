@@ -1,7 +1,7 @@
 Test $Module
 
-'A bunch of potential Bzo expressions for use in testing expression parsing'
-'Many of these may show up in the standard library'
+"A bunch of potential Bzo expressions for use in testing expression parsing"
+"Many of these may show up in the standard library"
 
 (n) +1  :: (n.  1)+
 (n) +2  :: (n.  2)+
