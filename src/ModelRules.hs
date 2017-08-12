@@ -123,6 +123,7 @@ data CallAST
         ca_records :: [ModelRecord],
         ca_enums   :: [ModelEnum],
         ca_tydef   :: TypeAST }
+        deriving Show
 
 
 
@@ -351,5 +352,30 @@ modelType s = Left [SntxErr (pos s) "Unexpected Component of Type Expression."]
 
 
 
-modelCalls :: BzoSyntax -> Either [BzoErr] CallAST
-modelCalls (BzS_TypDef p prs t df) = Right (CA_TyDefCall p t [] [] (TA_Nil p))  -- For now
+modelCalls :: BzoSyntax -> Either [BzoErr] [CallAST]
+modelCalls (BzS_Calls  p xs) =
+  let cs = map modelCalls xs
+      er = concat $ lefts cs
+      vs = concat $ rights cs
+  in case er of
+      []  -> Right vs
+      ers -> Left ers
+modelCalls (BzS_TypDef p prs t df) = Right [(CA_TyDefCall p t [] [] (TA_Nil p))]  -- For now
+
+
+
+
+
+
+
+
+
+-- Add alternate version for normal compilation later. For that, take [BzoFileData] as input.
+wrappedModellerMapREPL :: [BzoSyntax] -> Either [BzoErr] [[CallAST]]
+wrappedModellerMapREPL ss =
+  let xs = map modelCalls ss
+      er = concat $ lefts  xs
+      vs = rights xs
+  in case er of
+      []  -> Right vs
+      ers -> Left ers

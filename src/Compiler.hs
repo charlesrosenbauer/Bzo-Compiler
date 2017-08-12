@@ -12,6 +12,7 @@ import BzoPreprocessor
 import BzoParameterParser
 import BzoChecker
 import BzoTypeModeller
+import ModelRules
 import HigherOrder
 
 
@@ -62,4 +63,28 @@ showOutput (Left  errs) =
 
 
 compileExpression :: (FilePath, String) -> String
-compileExpression s = show (((applyWithErr wrappedParserMap). wrappedLexerMap) [swap s])
+compileExpression s = show (((applyWithErr wrappedModellerMapREPL). (applyWithErr wrappedParserMap). wrappedLexerMap) [swap s])
+
+
+
+
+
+
+
+
+
+
+parseExpression :: (FilePath, String) -> String
+parseExpression s = show (((applyWithErr wrappedParserMap). wrappedLexerMap) [swap s])
+
+
+
+
+
+
+
+
+
+
+lexExpression :: (FilePath, String) -> String
+lexExpression s = show (wrappedLexerMap [swap s])
