@@ -88,7 +88,6 @@ data ModelRecord = ModelRecord{
     mr_name   :: String,
     mr_parent :: String,
     mr_type   :: TypeAST }
-    deriving Show
 
 
 
@@ -104,7 +103,6 @@ data ModelEnum = ModelEnum{
     me_name   :: String,
     me_parent :: String,
     me_type   :: TypeAST }
-    deriving Show
 
 
 
@@ -379,3 +377,29 @@ wrappedModellerMapREPL ss =
   in case er of
       []  -> Right vs
       ers -> Left ers
+
+
+
+
+
+
+
+
+
+
+showEnum :: ModelEnum -> String
+showEnum (ModelEnum p n r t) = " {Enum : " ++ n ++ ", inside " ++ r ++ ", of type " ++ (show t) ++ " } "
+instance Show ModelEnum where show = showEnum
+
+
+
+
+
+
+
+
+
+
+showRecord :: ModelRecord -> String
+showRecord (ModelRecord p n r t) = " {Record : " ++ n ++ ", inside " ++ r ++ ", of type " ++ (show t) ++ " } "
+instance Show ModelRecord where show = showRecord
