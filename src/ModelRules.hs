@@ -244,7 +244,7 @@ modelBasicType (BzS_Expr p (x:xs)) =
       !xs' = [modelBasicType (BzS_Expr (pos $ head xs) xs)]
       ers  = (lefts x') ++ (lefts xs')
       vlx  = head $ rights x'
-      vly  = head $ rights x'
+      vly  = head $ rights xs'
   in case (ers) of
       [] -> Right (TA_Expr p vlx vly)
       er -> Left $ concat er
@@ -332,7 +332,7 @@ modelType (BzS_Expr p (x:xs)) =
       !xs' = [modelType (BzS_Expr (pos $ head xs) xs)]
       ers  = (lefts x') ++ (lefts xs')
       vlx  = head $ rights x'
-      vly  = head $ rights x'
+      vly  = head $ rights xs'
   in case (ers) of
       [] -> Right (TA_Expr p vlx vly)
       er -> Left $ concat er
@@ -359,7 +359,7 @@ modelCalls (BzS_Calls  p xs) =
       ers -> Left ers
 
 modelCalls (BzS_TypDef p prs t df) =
-  let df' = [modelType df]
+  let df' = [modelBasicType df]
       er  = concat $ lefts  df'
       xs  = rights df'
   in case er of
@@ -437,8 +437,8 @@ instance Show CallAST where show = showCallAST
 
 
 showTypeAST :: TypeAST -> String
-showTypeAST (TA_Cmpd   p xs)   = " (Cmpd:\n" ++ (concatMap (\x -> (show x) ++ " .\n") xs) ++ ")\n"
-showTypeAST (TA_Poly   p xs)   = " (Poly:\n" ++ (concatMap (\x -> (show x) ++ " ,\n") xs) ++ ")\n"
+showTypeAST (TA_Cmpd   p xs)   = " (Cmpd:\n" ++ (concatMap (\x -> (show x) ++ " .\n") xs) ++ ") "
+showTypeAST (TA_Poly   p xs)   = " (Poly:\n" ++ (concatMap (\x -> (show x) ++ " ,\n") xs) ++ ") "
 showTypeAST (TA_Expr   p x n)  = (show x) ++ " -> " ++ (show n)
 showTypeAST (TA_Filt   p f x)  = " {" ++ (show f) ++ " : " ++ (show x) ++ "} "
 showTypeAST (TA_FnTy   p i o)  = " {" ++ (show i) ++ " ;; " ++ (show o) ++ "} "
