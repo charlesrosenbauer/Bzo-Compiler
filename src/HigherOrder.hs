@@ -13,6 +13,20 @@ import qualified Data.Map.Strict as Mp hiding (foldl, map)
 
 
 
+-- An If/Else can sometimes be inconvenient
+ife :: Bool -> a -> a -> a
+ife True  x y = x
+ife False x y = y
+
+
+
+
+
+
+
+
+
+
 makeIntMap :: Int -> [k] -> (Mp.Map Int k, Int)
 makeIntMap i ks =
   let xs   = zip (map (+i) [0..]) ks

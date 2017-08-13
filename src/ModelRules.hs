@@ -72,7 +72,6 @@ data TypeAST
           ta_ty  :: String }
       | TA_Nil{
           ta_pos :: BzoPos }
-      deriving Show
 
 
 
@@ -420,3 +419,32 @@ showCallAST (CA_TyDefCall p i s r e t) = " {TyDef: " ++ i ++
                                             "\n   ENMS: " ++ (concatMap (\x -> (show x) ++ ", ") e) ++
                                             "\n   DEF : " ++ (show t) ++ " }\n"
 instance Show CallAST where show = showCallAST
+
+
+
+
+
+
+
+
+
+
+showTypeAST :: TypeAST -> String
+showTypeAST (TA_Cmpd   p xs)   = " (Cmpd:\n" ++ (concatMap (\x -> (show x) ++ " .\n") xs) ++ ")\n"
+showTypeAST (TA_Poly   p xs)   = " (Poly:\n" ++ (concatMap (\x -> (show x) ++ " ,\n") xs) ++ ")\n"
+showTypeAST (TA_Expr   p x n)  = (show x) ++ " -> " ++ (show n)
+showTypeAST (TA_Filt   p f x)  = " {" ++ (show f) ++ " : " ++ (show x) ++ "} "
+showTypeAST (TA_FnTy   p i o)  = " {" ++ (show i) ++ " ;; " ++ (show o) ++ "} "
+showTypeAST (TA_Enum   p i x)  = " {Enm: " ++ i ++ " of Type " ++ (show x) ++ "} "
+showTypeAST (TA_Record p i x)  = " {Rcd: " ++ i ++ " of Type " ++ (show x) ++ "} "
+showTypeAST (TA_Curry  p cs x) = " {Cur: " ++ (concatMap (\y -> (show y) ++ "`") cs) ++ " -> " ++ (show x) ++ "} "
+showTypeAST (TA_Arr    p ss x) = " {Arr: " ++ (show x) ++ (concatMap (\n -> ife (n /= 0) ("["++(show n)++"]") ("[?]")) ss) ++ "} "
+showTypeAST (TA_IntLit p i)    = " <Int: " ++ (show i) ++ "> "
+showTypeAST (TA_FltLit p f)    = " <Flt: " ++ (show f) ++ "> "
+showTypeAST (TA_StrLit p s)    = " <Str: " ++ s ++ "> "
+showTypeAST (TA_TyLit  p x)    = " <Ty: "  ++ x ++ "> "
+showTypeAST (TA_FnLit  p x)    = " <Fn: "  ++ x ++ "> "
+showTypeAST (TA_BFnLit p x)    = " <BFn: " ++ x ++ "> "
+showTypeAST (TA_BTyLit p x)    = " <BTy: " ++ x ++ "> "
+showTypeAST (TA_Nil    p)      = " <NIL ()> "
+instance Show TypeAST where show = showTypeAST
