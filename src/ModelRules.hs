@@ -118,10 +118,10 @@ data CallAST
     = CA_TyDefCall {
         ca_pos     :: BzoPos,
         ca_id      :: String,
+        ca_pars    :: [TypeAST],
         ca_records :: [ModelRecord],
         ca_enums   :: [ModelEnum],
         ca_tydef   :: TypeAST }
-        deriving Show
 
 
 
@@ -358,7 +358,7 @@ modelCalls (BzS_Calls  p xs) =
   in case er of
       []  -> Right vs
       ers -> Left ers
-modelCalls (BzS_TypDef p prs t df) = Right [(CA_TyDefCall p t [] [] (TA_Nil p))]  -- For now
+modelCalls (BzS_TypDef p prs t df) = Right [(CA_TyDefCall p t [] [] [] (TA_Nil p))]  -- For now
 
 
 
@@ -403,3 +403,20 @@ instance Show ModelEnum where show = showEnum
 showRecord :: ModelRecord -> String
 showRecord (ModelRecord p n r t) = " {Record : " ++ n ++ ", inside " ++ r ++ ", of type " ++ (show t) ++ " } "
 instance Show ModelRecord where show = showRecord
+
+
+
+
+
+
+
+
+
+
+showCallAST :: CallAST -> String
+showCallAST (CA_TyDefCall p i s r e t) = " {TyDef: " ++ i ++
+                                            "\n   PARS: " ++ (concatMap (\x -> (show x) ++ ", ") s) ++
+                                            "\n   RECS: " ++ (concatMap (\x -> (show x) ++ ", ") r) ++
+                                            "\n   ENMS: " ++ (concatMap (\x -> (show x) ++ ", ") e) ++
+                                            "\n   DEF : " ++ (show t) ++ " }\n"
+instance Show CallAST where show = showCallAST
