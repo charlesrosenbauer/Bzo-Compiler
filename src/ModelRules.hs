@@ -357,7 +357,14 @@ modelCalls (BzS_Calls  p xs) =
   in case er of
       []  -> Right vs
       ers -> Left ers
-modelCalls (BzS_TypDef p prs t df) = Right [(CA_TyDefCall p t [] [] [] (TA_Nil p))]  -- For now
+
+modelCalls (BzS_TypDef p prs t df) =
+  let df' = [modelType df]
+      er  = concat $ lefts  df'
+      xs  = rights df'
+  in case er of
+      []  -> Right [(CA_TyDefCall p t [] [] [] (head xs))]  -- For now
+      ers -> Left ers
 
 
 
