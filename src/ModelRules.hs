@@ -159,6 +159,30 @@ checkEnum _                                     = Nothing
 
 
 
+toRecordModel :: String -> (BzoPos, String, TypeAST) -> ModelRecord
+toRecordModel r (p, i, t) = (ModelRecord p i r t)
+
+
+
+
+
+
+
+
+
+
+toEnumModel ::  String -> (BzoPos, String, TypeAST) -> ModelEnum
+toEnumModel r (p, i, t) = (ModelEnum p i r t)
+
+
+
+
+
+
+
+
+
+
 modelArrayObj :: BzoSyntax -> Either [BzoErr] Integer
 modelArrayObj (BzS_ArrGnObj p  ) = Right 0
 modelArrayObj (BzS_ArrSzObj p s) = Right s
@@ -205,7 +229,7 @@ modelBasicType (BzS_Cmpd p xs) =
 
 modelBasicType (BzS_Poly p xs) =
   let !xs' = [map modelBasicType xs]
-      ens  = catMaybes $ map checkRecord xs
+      ens  = catMaybes $ map checkEnum xs
       ers  = concatMap lefts  xs'
       vls  = concatMap rights xs'
   in case (ers, ens) of
@@ -262,43 +286,45 @@ modelBasicType s = Left [SntxErr (pos s) "Unexpected Component of Type Expressio
 
 
 
-modelType :: BzoSyntax -> Either [BzoErr] TypeAST
-modelType (BzS_Int  p i)  = Right (TA_IntLit p i)
-modelType (BzS_Flt  p f)  = Right (TA_FltLit p f)
-modelType (BzS_Str  p s)  = Right (TA_StrLit p s)
-modelType (BzS_Id   p x)  = Right (TA_FnLit  p x)
-modelType (BzS_TyId p x)  = Right (TA_TyLit  p x)
-modelType (BzS_BId  p x)  = Right (TA_BFnLit p x)
-modelType (BzS_BTId p x)  = Right (TA_BTyLit p x)
-modelType (BzS_Nil  p  )  = Right (TA_Nil    p  )
+modelType :: BzoSyntax -> Either [BzoErr] (TypeAST, [ModelRecord], [ModelEnum])
+modelType (BzS_Int  p i)  = Right ((TA_IntLit p i), [], [])
+modelType (BzS_Flt  p f)  = Right ((TA_FltLit p f), [], [])
+modelType (BzS_Str  p s)  = Right ((TA_StrLit p s), [], [])
+modelType (BzS_Id   p x)  = Right ((TA_FnLit  p x), [], [])
+modelType (BzS_TyId p x)  = Right ((TA_TyLit  p x), [], [])
+modelType (BzS_BId  p x)  = Right ((TA_BFnLit p x), [], [])
+modelType (BzS_BTId p x)  = Right ((TA_BTyLit p x), [], [])
+modelType (BzS_Nil  p  )  = Right ((TA_Nil    p  ), [], [])
 
 modelType (BzS_FnTy p i e) =
   let !i'  = [modelType i]
       !e'  = [modelType e]
       ers  = (lefts  i') ++ (lefts e')
-      vli  = head $ rights i'
-      vle  = head $ rights e'
+      (vli, rs0, es0) = head $ rights i'
+      (vle, rs1, es1) = head $ rights e'
   in case ers of
-      [] -> Right (TA_FnTy p vli vle)
+      [] -> Right ((TA_FnTy p vli vle), (rs0 ++ rs1), (es0 ++ es1))
       er -> Left $ concat er
 
 modelType (BzS_Cmpd p xs) =
-  let !xs' = [map modelType xs]
-      rcs  = catMaybes $ map checkRecord xs
-      ers  = concatMap lefts  xs'
-      vls  = concatMap rights xs'
-  in case (ers, rcs) of
-      ([], []) -> Right (TA_Cmpd p vls)
-      (er, rs) -> Left $ (concat er) ++ (map (\(p, n, t) -> (SntxErr p $ "Unexpected Record Syntax: " ++ n ++ "\n")) rs)
+  let !xs' = map modelType xs
+      (as, bs, rcs) = unzip3 $ map (\(a, b, c) -> (a, b, modelBasicType c)) $ catMaybes $ map checkRecord xs
+      rcs0 = map (toRecordModel "") $ zip3 as bs (rights rcs)
+      ers  = (concat $ lefts xs') ++ (concat $ lefts rcs)
+      (vls, rcs1, ens) = unzip3 $ rights xs'
+  in case ers of
+      [] -> Right ((TA_Cmpd p vls), (rcs0 ++ (concat rcs1)), (concat ens))
+      er -> Left er
 
 modelType (BzS_Poly p xs) =
-  let !xs' = [map modelType xs]
-      ens  = catMaybes $ map checkRecord xs
-      ers  = concatMap lefts  xs'
-      vls  = concatMap rights xs'
-  in case (ers, ens) of
-      ([], []) -> Right (TA_Poly p vls)
-      (er, es) -> Left $ concat er ++ (map (\(p, n, t) -> (SntxErr p $ "Unexpected Enum Syntax: " ++ n ++ "\n")) es)
+  let !xs' = map modelType xs
+      (as, bs, ens) = unzip3 $ map (\(a, b, c) -> (a, b, modelBasicType c)) $ catMaybes $ map checkEnum xs
+      ens0 = map (toEnumModel "") $ zip3 as bs $ rights ens
+      ers  = (concat $ lefts xs') ++ (concat $ lefts ens)
+      (vls, rcs, ens1) = unzip3 $ rights xs'
+  in case ers of
+      [] -> Right ((TA_Poly p vls), (concat rcs), (ens0 ++ (concat ens1)))
+      er -> Left er
 
 modelType (BzS_Box p x) = modelType x
 
@@ -306,35 +332,35 @@ modelType (BzS_Expr p [x]) = modelType x
 
 modelType (BzS_FilterObj p o f) =
   let !o'  = [modelType o]
-      !f'  = [modelType f]
+      !f'  = [modelBasicType f]
       ers  = (lefts o') ++ (lefts f')
-      vlo  = head $ rights o'
       vlf  = head $ rights f'
+      (vlo, rs, es) = head $ rights o'
   in case ers of
-      [] -> Right (TA_Filt p vlf vlo)
+      [] -> Right ((TA_Filt p vlf vlo), rs, es)
       er -> Left $ concat er
 
 modelType (BzS_MapObj p o) = Left [SntxErr p "Unexpected Map Syntax in Type Expression"]
 
 modelType (BzS_ArrayObj p o a) =
-  let !o'  = [modelType o]
-      ers  = lefts  o'
-      vls  = head $ rights o'
-      szs  = map modelArrayObj a
-      szx  = rights szs
-      sze  = lefts szs
+  let !o' = [modelType o]
+      ers = lefts  o'
+      (vls, rs, es) = head $ rights o'
+      szs = map modelArrayObj a
+      sze = lefts szs
+      szx = rights szs
   in case (ers ++ sze) of
-      [] -> Right $ (TA_Arr p szx vls)
+      [] -> Right $ ((TA_Arr p szx vls), rs, es)
       er -> Left  $ concat er
 
 modelType (BzS_Expr p (x:xs)) =
   let !x'  = [modelType x]
       !xs' = [modelType (BzS_Expr (pos $ head xs) xs)]
       ers  = (lefts x') ++ (lefts xs')
-      vlx  = head $ rights x'
-      vly  = head $ rights xs'
+      (vlx, rs0, es0) = head $ rights x'
+      (vly, rs1, es1) = head $ rights xs'
   in case (ers) of
-      [] -> Right (TA_Expr p vlx vly)
+      [] -> Right ((TA_Expr p vlx vly), (rs0 ++ rs1), (es0 ++ es1))
       er -> Left $ concat er
 
 modelType (BzS_CurryObj p o x) = Left [SntxErr p "Currying in type expressions is currently not permitted."]
@@ -359,11 +385,11 @@ modelCalls (BzS_Calls  p xs) =
       ers -> Left ers
 
 modelCalls (BzS_TypDef p prs t df) =
-  let df' = [modelBasicType df]
+  let df' = [modelType df]
       er  = concat $ lefts  df'
-      xs  = rights df'
+      (xs, rs, es) = unzip3 $ rights df'
   in case er of
-      []  -> Right [(CA_TyDefCall p t [] [] [] (head xs))]  -- For now
+      []  -> Right [(CA_TyDefCall p t [] (concat rs) (concat es) (head xs))]  -- For now
       ers -> Left ers
 
 
