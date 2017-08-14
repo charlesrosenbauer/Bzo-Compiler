@@ -70,6 +70,9 @@ data TypeAST
       | TA_BTyLit {
           ta_pos :: BzoPos,
           ta_ty  :: String }
+      | TA_TyVar {
+          ta_pos :: BzoPos,
+          ta_id  :: String }
       | TA_Nil{
           ta_pos :: BzoPos }
 
@@ -199,14 +202,15 @@ modelArrayObj s                  = Left [(SntxErr (pos s) "No idea what happened
 
 -- | Basic Type Expression. No Records or Enums. Used for filters, etc.
 modelBasicType :: BzoSyntax -> Either [BzoErr] TypeAST
-modelBasicType (BzS_Int  p i)  = Right (TA_IntLit p i)
-modelBasicType (BzS_Flt  p f)  = Right (TA_FltLit p f)
-modelBasicType (BzS_Str  p s)  = Right (TA_StrLit p s)
-modelBasicType (BzS_Id   p x)  = Right (TA_FnLit  p x)
-modelBasicType (BzS_TyId p x)  = Right (TA_TyLit  p x)
-modelBasicType (BzS_BId  p x)  = Right (TA_BFnLit p x)
-modelBasicType (BzS_BTId p x)  = Right (TA_BTyLit p x)
-modelBasicType (BzS_Nil  p  )  = Right (TA_Nil    p  )
+modelBasicType (BzS_Int   p i)  = Right (TA_IntLit p i)
+modelBasicType (BzS_Flt   p f)  = Right (TA_FltLit p f)
+modelBasicType (BzS_Str   p s)  = Right (TA_StrLit p s)
+modelBasicType (BzS_Id    p x)  = Right (TA_FnLit  p x)
+modelBasicType (BzS_TyId  p x)  = Right (TA_TyLit  p x)
+modelBasicType (BzS_BId   p x)  = Right (TA_BFnLit p x)
+modelBasicType (BzS_BTId  p x)  = Right (TA_BTyLit p x)
+modelBasicType (BzS_Nil   p  )  = Right (TA_Nil    p  )
+modelBasicType (BzS_TyVar p x)  = Right (TA_TyVar  p x)
 
 modelBasicType (BzS_FnTy p i e) =
   let !i'  = [modelBasicType i]
@@ -287,14 +291,15 @@ modelBasicType s = Left [SntxErr (pos s) "Unexpected Component of Type Expressio
 
 
 modelType :: BzoSyntax -> Either [BzoErr] (TypeAST, [ModelRecord], [ModelEnum])
-modelType (BzS_Int  p i)  = Right ((TA_IntLit p i), [], [])
-modelType (BzS_Flt  p f)  = Right ((TA_FltLit p f), [], [])
-modelType (BzS_Str  p s)  = Right ((TA_StrLit p s), [], [])
-modelType (BzS_Id   p x)  = Right ((TA_FnLit  p x), [], [])
-modelType (BzS_TyId p x)  = Right ((TA_TyLit  p x), [], [])
-modelType (BzS_BId  p x)  = Right ((TA_BFnLit p x), [], [])
-modelType (BzS_BTId p x)  = Right ((TA_BTyLit p x), [], [])
-modelType (BzS_Nil  p  )  = Right ((TA_Nil    p  ), [], [])
+modelType (BzS_Int   p i)  = Right ((TA_IntLit p i), [], [])
+modelType (BzS_Flt   p f)  = Right ((TA_FltLit p f), [], [])
+modelType (BzS_Str   p s)  = Right ((TA_StrLit p s), [], [])
+modelType (BzS_Id    p x)  = Right ((TA_FnLit  p x), [], [])
+modelType (BzS_TyId  p x)  = Right ((TA_TyLit  p x), [], [])
+modelType (BzS_BId   p x)  = Right ((TA_BFnLit p x), [], [])
+modelType (BzS_BTId  p x)  = Right ((TA_BTyLit p x), [], [])
+modelType (BzS_Nil   p  )  = Right ((TA_Nil    p  ), [], [])
+modelType (BzS_TyVar p x)  = Right ((TA_TyVar  p x), [], [])
 
 modelType (BzS_FnTy p i e) =
   let !i'  = [modelType i]
@@ -466,7 +471,7 @@ showTypeAST :: TypeAST -> String
 showTypeAST (TA_Cmpd   p xs)   = " (Cmpd:\n" ++ (concatMap (\x -> (show x) ++ " .\n") xs) ++ ") "
 showTypeAST (TA_Poly   p xs)   = " (Poly:\n" ++ (concatMap (\x -> (show x) ++ " ,\n") xs) ++ ") "
 showTypeAST (TA_Expr   p x n)  = (show x) ++ " -> " ++ (show n)
-showTypeAST (TA_Filt   p f x)  = " {" ++ (show f) ++ " : " ++ (show x) ++ "} "
+showTypeAST (TA_Filt   p f x)  = " {" ++ (show x) ++ " : " ++ (show f) ++ "} "
 showTypeAST (TA_FnTy   p i o)  = " {" ++ (show i) ++ " ;; " ++ (show o) ++ "} "
 showTypeAST (TA_Enum   p i x)  = " {Enm: " ++ i ++ " of Type " ++ (show x) ++ "} "
 showTypeAST (TA_Record p i x)  = " {Rcd: " ++ i ++ " of Type " ++ (show x) ++ "} "
@@ -479,5 +484,6 @@ showTypeAST (TA_TyLit  p x)    = " <Ty: "  ++ x ++ "> "
 showTypeAST (TA_FnLit  p x)    = " <Fn: "  ++ x ++ "> "
 showTypeAST (TA_BFnLit p x)    = " <BFn: " ++ x ++ "> "
 showTypeAST (TA_BTyLit p x)    = " <BTy: " ++ x ++ "> "
+showTypeAST (TA_TyVar  p x)    = " <TVr: " ++ x ++ "> "
 showTypeAST (TA_Nil    p)      = " <NIL ()> "
 instance Show TypeAST where show = showTypeAST
