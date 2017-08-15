@@ -163,8 +163,8 @@ checkEnum _                                     = Nothing
 
 
 separateRecords :: BzoSyntax -> Either BzoSyntax (String, BzoSyntax)
-separateRecords (BzS_FilterObj p0 (BzS_Id  p1 i) ty) = Right (p0, i, ty)
-separateRecords (BzS_FilterObj p0 (BzS_BId p1 i) ty) = Right (p0, i, ty)
+separateRecords (BzS_FilterObj p0 (BzS_Id  p1 i) ty) = Right (i, ty)
+separateRecords (BzS_FilterObj p0 (BzS_BId p1 i) ty) = Right (i, ty)
 separateRecords x                                    = Left  x
 
 
@@ -177,9 +177,47 @@ separateRecords x                                    = Left  x
 
 
 separateEnums :: BzoSyntax -> Either BzoSyntax (String, BzoSyntax)
-separateEnums (BzS_FilterObj p0 (BzS_TyId p1 i) ty) = Right (p0, i, ty)
-separateEnums (BzS_FilterObj p0 (BzS_BTId p1 i) ty) = Right (p0, i, ty)
+separateEnums (BzS_FilterObj p0 (BzS_TyId p1 i) ty) = Right (i, ty)
+separateEnums (BzS_FilterObj p0 (BzS_BTId p1 i) ty) = Right (i, ty)
 separateEnums x                                     = Left  x
+
+
+
+
+
+
+
+
+
+
+getCompoundContents :: Either BzoSyntax (String, BzoSyntax) -> Either [BzoErr] TypeAST
+getCompoundContents (Left       syn ) = modelBasicType syn
+getCompoundContents (Right (str, syn)) =
+  let x  = [modelBasicType syn]
+      ls = lefts  x
+      rs = rights x
+  in case ls of
+      []  -> Right (TA_Record (pos syn) str (head rs))
+      ers -> Left $ concat ers
+
+
+
+
+
+
+
+
+
+
+getPolymorphContents :: Either BzoSyntax (String, BzoSyntax) -> Either [BzoErr] TypeAST
+getPolymorphContents (Left        syn ) = modelBasicType syn
+getPolymorphContents (Right (str, syn)) =
+  let x  = [modelBasicType syn]
+      ls = lefts  x
+      rs = rights x
+  in case ls of
+      []  -> Right (TA_Enum (pos syn) str (head rs))
+      ers -> Left $ concat ers
 
 
 
