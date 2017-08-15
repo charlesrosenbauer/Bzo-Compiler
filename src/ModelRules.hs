@@ -162,6 +162,34 @@ checkEnum _                                     = Nothing
 
 
 
+separateRecords :: BzoSyntax -> Either BzoSyntax (String, BzoSyntax)
+separateRecords (BzS_FilterObj p0 (BzS_Id  p1 i) ty) = Right (p0, i, ty)
+separateRecords (BzS_FilterObj p0 (BzS_BId p1 i) ty) = Right (p0, i, ty)
+separateRecords x                                    = Left  x
+
+
+
+
+
+
+
+
+
+
+separateEnums :: BzoSyntax -> Either BzoSyntax (String, BzoSyntax)
+separateEnums (BzS_FilterObj p0 (BzS_TyId p1 i) ty) = Right (p0, i, ty)
+separateEnums (BzS_FilterObj p0 (BzS_BTId p1 i) ty) = Right (p0, i, ty)
+separateEnums x                                     = Left  x
+
+
+
+
+
+
+
+
+
+
 toRecordModel :: String -> (BzoPos, String, TypeAST) -> ModelRecord
 toRecordModel r (p, i, t) = (ModelRecord p i r t)
 
