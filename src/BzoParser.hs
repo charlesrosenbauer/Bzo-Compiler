@@ -13,21 +13,21 @@ import HigherOrder
 
 
 data ParseItem
-  = PI_Token{ piTok :: BzoToken  }
-  | PI_BzSyn{ piSyn :: BzoSyntax }
-  | PI_CPXS { piSyns:: [BzoSyntax] }
-  | PI_CPX  { piSyn :: BzoSyntax }
-  | PI_PLXS { piSyns:: [BzoSyntax] }
-  | PI_PLX  { piSyn :: BzoSyntax }
-  | PI_TX   { piSyn :: BzoSyntax }
-  | PI_RX   { piSyn :: BzoSyntax }
-  | PI_MS   { piSyn :: BzoSyntax }
-  | PI_MX   { piSyn :: BzoSyntax }
-  | PI_BKX  { piSyn :: BzoSyntax }
-  | PI_Exs  { piSyns:: [BzoSyntax] }
-  | PI_Err  { piErr :: BzoErr }
+  = PI_Token{ piTok :: !BzoToken  }
+  | PI_BzSyn{ piSyn :: !BzoSyntax }
+  | PI_CPXS { piSyns:: ![BzoSyntax] }
+  | PI_CPX  { piSyn :: !BzoSyntax }
+  | PI_PLXS { piSyns:: ![BzoSyntax] }
+  | PI_PLX  { piSyn :: !BzoSyntax }
+  | PI_TX   { piSyn :: !BzoSyntax }
+  | PI_RX   { piSyn :: !BzoSyntax }
+  | PI_MS   { piSyn :: !BzoSyntax }
+  | PI_MX   { piSyn :: !BzoSyntax }
+  | PI_BKX  { piSyn :: !BzoSyntax }
+  | PI_Exs  { piSyns:: ![BzoSyntax] }
+  | PI_Err  { piErr :: !BzoErr }
   | PI_SOF
-  | PI_Cfg  { piCfg :: CfgSyntax }
+  | PI_Cfg  { piCfg :: !CfgSyntax }
   deriving Show
 
 
