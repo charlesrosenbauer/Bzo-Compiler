@@ -82,7 +82,7 @@ data MockParseItem
   | MP_Calls
   | MP_Wild
   | MP_Undef
-  | MP_Tk BzoToken
+  | MP_Tk !BzoToken
   | MP_Tkn
   | MP_Box
   | MP_Cpxs
@@ -363,9 +363,9 @@ genericParseOp mpi xform = ParserOp (\ps ->
 
 data ParserState = ParserState{
   fname     :: String,
-  lastPos   :: BzoPos,
-  stack     :: [ParseItem],
-  input     :: [BzoToken] }
+  lastPos   :: !BzoPos,
+  stack     :: ![ParseItem],
+  input     :: ![BzoToken] }
 
 
 
