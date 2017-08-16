@@ -10,34 +10,34 @@ module BzoTypes where
 
 
 data BzoToken
-  = TkStartTup     { spos :: BzoPos }
-  | TkEndTup       { spos :: BzoPos }
-  | TkStartDat     { spos :: BzoPos }
-  | TkEndDat       { spos :: BzoPos }
-  | TkStartDo      { spos :: BzoPos }
-  | TkEndDo        { spos :: BzoPos }
-  | TkSepExpr      { spos :: BzoPos }
-  | TkSepPoly      { spos :: BzoPos }
-  | TkCurrySym     { spos :: BzoPos }
-  | TkFilterSym    { spos :: BzoPos }
-  | TkLambdaSym    { spos :: BzoPos }
-  | TkReference    { spos :: BzoPos }
-  | TkWildcard     { spos :: BzoPos }
-  | TkDefine       { spos :: BzoPos }
-  | TkFnSym        { spos :: BzoPos }
-  | TkTupEmpt      { spos :: BzoPos }
-  | TkArrGnrl      { spos :: BzoPos }
-  | TkArrMod       { spos :: BzoPos }
-  | TkInt          { spos :: BzoPos, valInt :: Integer }
-  | TkFlt          { spos :: BzoPos, valFlt :: Double  }
-  | TkStr          { spos :: BzoPos, valStr :: String  }
-  | TkId           { spos :: BzoPos, valId  :: String  }
-  | TkTypeId       { spos :: BzoPos, valId  :: String  }
-  | TkMutId        { spos :: BzoPos, valId  :: String  }
-  | TkTyVar        { spos :: BzoPos, valId  :: String  }
-  | TkNewline      { spos :: BzoPos }
-  | TkBuiltin      { spos :: BzoPos, valId  :: String  }
-  | TkBIType       { spos :: BzoPos, valId  :: String  }
+  = TkStartTup     { spos :: !BzoPos }
+  | TkEndTup       { spos :: !BzoPos }
+  | TkStartDat     { spos :: !BzoPos }
+  | TkEndDat       { spos :: !BzoPos }
+  | TkStartDo      { spos :: !BzoPos }
+  | TkEndDo        { spos :: !BzoPos }
+  | TkSepExpr      { spos :: !BzoPos }
+  | TkSepPoly      { spos :: !BzoPos }
+  | TkCurrySym     { spos :: !BzoPos }
+  | TkFilterSym    { spos :: !BzoPos }
+  | TkLambdaSym    { spos :: !BzoPos }
+  | TkReference    { spos :: !BzoPos }
+  | TkWildcard     { spos :: !BzoPos }
+  | TkDefine       { spos :: !BzoPos }
+  | TkFnSym        { spos :: !BzoPos }
+  | TkTupEmpt      { spos :: !BzoPos }
+  | TkArrGnrl      { spos :: !BzoPos }
+  | TkArrMod       { spos :: !BzoPos }
+  | TkInt          { spos :: !BzoPos, valInt :: !Integer }
+  | TkFlt          { spos :: !BzoPos, valFlt :: !Double  }
+  | TkStr          { spos :: !BzoPos, valStr :: !String  }
+  | TkId           { spos :: !BzoPos, valId  :: !String  }
+  | TkTypeId       { spos :: !BzoPos, valId  :: !String  }
+  | TkMutId        { spos :: !BzoPos, valId  :: !String  }
+  | TkTyVar        { spos :: !BzoPos, valId  :: !String  }
+  | TkNewline      { spos :: !BzoPos }
+  | TkBuiltin      { spos :: !BzoPos, valId  :: !String  }
+  | TkBIType       { spos :: !BzoPos, valId  :: !String  }
   | TkNil
   deriving Eq
 
@@ -105,7 +105,7 @@ showErrPos p = "In file \"" ++ (fileName p) ++ "\", at " ++ (show $ line p) ++ "
 
 
 data BzoPos = BzoPos {
-  line     :: Int,
-  column   :: Int,
-  fileName :: String }
+  line     :: !Int,
+  column   :: !Int,
+  fileName :: !String }
   deriving (Eq, Show)
