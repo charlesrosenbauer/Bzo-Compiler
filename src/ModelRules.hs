@@ -176,8 +176,8 @@ checkEnum _                                     = Nothing
 
 
 separateRecords :: BzoSyntax -> Either BzoSyntax (String, BzoSyntax)
-separateRecords (BzS_FilterObj p0 (BzS_Id  p1 i) ty) = Right (i, ty)
-separateRecords (BzS_FilterObj p0 (BzS_BId p1 i) ty) = Right (i, ty)
+separateRecords (BzS_Expr _ [(BzS_FilterObj p0 (BzS_Id  p1 i) ty)]) = Right (i, ty)
+separateRecords (BzS_Expr _ [(BzS_FilterObj p0 (BzS_BId p1 i) ty)]) = Right (i, ty)
 separateRecords x                                    = Left  x
 
 
@@ -190,8 +190,8 @@ separateRecords x                                    = Left  x
 
 
 separateEnums :: BzoSyntax -> Either BzoSyntax (String, BzoSyntax)
-separateEnums (BzS_FilterObj p0 (BzS_TyId p1 i) ty) = Right (i, ty)
-separateEnums (BzS_FilterObj p0 (BzS_BTId p1 i) ty) = Right (i, ty)
+separateEnums (BzS_Expr _ [(BzS_FilterObj p0 (BzS_TyId p1 i) ty)]) = Right (i, ty)
+separateEnums (BzS_Expr _ [(BzS_FilterObj p0 (BzS_BTId p1 i) ty)]) = Right (i, ty)
 separateEnums x                                     = Left  x
 
 
@@ -203,14 +203,14 @@ separateEnums x                                     = Left  x
 
 
 
-getCompoundContents :: Either BzoSyntax (String, BzoSyntax) -> Either [BzoErr] TypeAST
-getCompoundContents (Left       syn ) = modelBasicType syn
+getCompoundContents :: Either BzoSyntax (String, BzoSyntax) -> Either [BzoErr] (TypeAST, [ModelRecord], [ModelEnum])
+getCompoundContents (Left       syn ) = modelType syn
 getCompoundContents (Right (str, syn)) =
-  let x  = [modelBasicType syn]
+  let x  = [modelType syn]
       ls = lefts  x
-      rs = rights x
+      (rs, mrs, mes) = head $ rights x
   in case ls of
-      []  -> Right (TA_Record (pos syn) str (head rs))
+      []  -> Right ((TA_Record (pos syn) str rs), mrs, mes)
       ers -> Left $ concat ers
 
 
@@ -222,14 +222,14 @@ getCompoundContents (Right (str, syn)) =
 
 
 
-getPolymorphContents :: Either BzoSyntax (String, BzoSyntax) -> Either [BzoErr] TypeAST
-getPolymorphContents (Left        syn ) = modelBasicType syn
+getPolymorphContents :: Either BzoSyntax (String, BzoSyntax) -> Either [BzoErr] (TypeAST, [ModelRecord], [ModelEnum])
+getPolymorphContents (Left        syn ) = modelType syn
 getPolymorphContents (Right (str, syn)) =
-  let x  = [modelBasicType syn]
+  let x  = [modelType syn]
       ls = lefts  x
-      rs = rights x
+      (es, mrs, mes) = head $ rights x
   in case ls of
-      []  -> Right (TA_Enum (pos syn) str (head rs))
+      []  -> Right ((TA_Enum (pos syn) str es), mrs, mes)
       ers -> Left $ concat ers
 
 
@@ -395,7 +395,7 @@ modelType (BzS_FnTy p i e) =
       er -> Left $ concat er
 
 modelType (BzS_Cmpd p xs) =
-  let !xs' = map modelType xs
+  let !xs' = map (getCompoundContents . separateRecords) xs
       (as, bs, rcs) = unzip3 $ map (\(a, b, c) -> (a, b, modelBasicType c)) $ catMaybes $ map checkRecord xs
       rcs0 = map (toRecordModel "") $ zip3 as bs (rights rcs)
       ers  = (concat $ lefts xs') ++ (concat $ lefts rcs)
@@ -405,7 +405,7 @@ modelType (BzS_Cmpd p xs) =
       er -> Left er
 
 modelType (BzS_Poly p xs) =
-  let !xs' = map modelType xs
+  let !xs' = map (getPolymorphContents . separateEnums) xs
       (as, bs, ens) = unzip3 $ map (\(a, b, c) -> (a, b, modelBasicType c)) $ catMaybes $ map checkEnum xs
       ens0 = map (toEnumModel "") $ zip3 as bs $ rights ens
       ers  = (concat $ lefts xs') ++ (concat $ lefts ens)
