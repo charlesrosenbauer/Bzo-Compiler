@@ -16,73 +16,73 @@ import Data.Maybe
 
 data TypeAST
       = TA_Cmpd {
-          ta_pos :: BzoPos,
-          ta_exs :: [TypeAST] }
+          ta_pos :: !BzoPos,
+          ta_exs :: ![TypeAST] }
       | TA_Poly {
-          ta_pos :: BzoPos,
-          ta_exs :: [TypeAST] }
+          ta_pos :: !BzoPos,
+          ta_exs :: ![TypeAST] }
       | TA_Expr {
-          ta_pos :: BzoPos,
-          ta_exp :: TypeAST,
-          ta_nxt :: TypeAST }
+          ta_pos :: !BzoPos,
+          ta_exp :: !TypeAST,
+          ta_nxt :: !TypeAST }
       | TA_Filt {
-          ta_pos :: BzoPos,
-          ta_filt :: TypeAST,
-          ta_exp :: TypeAST }
+          ta_pos :: !BzoPos,
+          ta_filt :: !TypeAST,
+          ta_exp :: !TypeAST }
       | TA_FnTy {
-          ta_pos :: BzoPos,
-          ta_in  :: TypeAST,
-          ta_out :: TypeAST }
+          ta_pos :: !BzoPos,
+          ta_in  :: !TypeAST,
+          ta_out :: !TypeAST }
       | TA_Enum {
-          ta_pos :: BzoPos,
-          ta_id  :: String,
-          ta_exp :: TypeAST }
+          ta_pos :: !BzoPos,
+          ta_id  :: !String,
+          ta_exp :: !TypeAST }
       | TA_Record {
-          ta_pos :: BzoPos,
-          ta_id  :: String,
-          ta_exp :: TypeAST }
+          ta_pos :: !BzoPos,
+          ta_id  :: !String,
+          ta_exp :: !TypeAST }
       | TA_Curry {
-          ta_pos :: BzoPos,
-          ta_crs :: [TypeAST],
-          ta_exp :: TypeAST }
+          ta_pos :: !BzoPos,
+          ta_crs :: ![TypeAST],
+          ta_exp :: !TypeAST }
       | TA_Arr {
-          ta_pos :: BzoPos,
-          ta_szs :: [Integer], -- | Size of Zero is General Array
-          ta_exp :: TypeAST }
+          ta_pos :: !BzoPos,
+          ta_szs :: ![Integer], -- | Size of Zero is General Array
+          ta_exp :: !TypeAST }
       | TA_IntLit {
-          ta_pos :: BzoPos,
-          ta_int :: Integer }
+          ta_pos :: !BzoPos,
+          ta_int :: !Integer }
       | TA_FltLit {
-          ta_pos :: BzoPos,
-          ta_flt  :: Double }
+          ta_pos :: !BzoPos,
+          ta_flt  :: !Double }
       | TA_StrLit {
-          ta_pos :: BzoPos,
-          ta_str :: String }
+          ta_pos :: !BzoPos,
+          ta_str :: !String }
       | TA_FnLit  {
-          ta_pos :: BzoPos,
-          ta_fn  :: String }
+          ta_pos :: !BzoPos,
+          ta_fn  :: !String }
       | TA_TyLit  {
-          ta_pos :: BzoPos,
-          ta_ty  :: String }
+          ta_pos :: !BzoPos,
+          ta_ty  :: !String }
       | TA_ExFnLit  {
-          ta_pos :: BzoPos,
-          ta_fn  :: String,
-          ta_loc :: String }
+          ta_pos :: !BzoPos,
+          ta_fn  :: !String,
+          ta_loc :: !String }
       | TA_ExTyLit  {
-          ta_pos :: BzoPos,
-          ta_ty  :: String,
-          ta_loc :: String }
+          ta_pos :: !BzoPos,
+          ta_ty  :: !String,
+          ta_loc :: !String }
       | TA_BFnLit {
-          ta_pos :: BzoPos,
-          ta_fn  :: String }
+          ta_pos :: !BzoPos,
+          ta_fn  :: !String }
       | TA_BTyLit {
-          ta_pos :: BzoPos,
-          ta_ty  :: String }
+          ta_pos :: !BzoPos,
+          ta_ty  :: !String }
       | TA_TyVar {
-          ta_pos :: BzoPos,
-          ta_id  :: String }
+          ta_pos :: !BzoPos,
+          ta_id  :: !String }
       | TA_Nil{
-          ta_pos :: BzoPos }
+          ta_pos :: !BzoPos }
 
 
 
