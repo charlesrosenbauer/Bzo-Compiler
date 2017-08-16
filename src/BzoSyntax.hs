@@ -12,124 +12,124 @@ import BzoTypes
 
 data BzoSyntax
     = BzS_Int {
-        pos  :: BzoPos,
-        sint :: Integer }
+        pos  :: !BzoPos,
+        sint :: !Integer }
     | BzS_Flt {
-        pos  :: BzoPos,
-        sflt :: Double }
+        pos  :: !BzoPos,
+        sflt :: !Double }
     | BzS_Str {
-        pos  :: BzoPos,
-        sstr :: String }
+        pos  :: !BzoPos,
+        sstr :: !String }
     | BzS_Id {
-        pos  :: BzoPos,
-        sid  :: String }
+        pos  :: !BzoPos,
+        sid  :: !String }
     | BzS_TyId {
-        pos  :: BzoPos,
-        sid  :: String }
+        pos  :: !BzoPos,
+        sid  :: !String }
     | BzS_TyVar {
-        pos  :: BzoPos,
-        sid  :: String }
+        pos  :: !BzoPos,
+        sid  :: !String }
     | BzS_Curry {
-        pos  :: BzoPos,
-        obj  :: BzoSyntax }
+        pos  :: !BzoPos,
+        obj  :: !BzoSyntax }
     | BzS_MId {
-        pos  :: BzoPos,
-        sid  :: String }
+        pos  :: !BzoPos,
+        sid  :: !String }
     | BzS_BId {
-        pos  :: BzoPos,
-        sid  :: String }
+        pos  :: !BzoPos,
+        sid  :: !String }
     | BzS_BTId {
-        pos  :: BzoPos,
-        sid  :: String }
+        pos  :: !BzoPos,
+        sid  :: !String }
     | BzS_Namespace{
-        pos  :: BzoPos,
-        sid  :: String }
+        pos  :: !BzoPos,
+        sid  :: !String }
     | BzS_MapMod {
-        pos  :: BzoPos }
+        pos  :: !BzoPos }
     | BzS_Wildcard {
-        pos   :: BzoPos }
+        pos   :: !BzoPos }
     | BzS_Filter {
-        pos   :: BzoPos,
-        filt  :: BzoSyntax }
+        pos   :: !BzoPos,
+        filt  :: !BzoSyntax }
     | BzS_ArrGenMod{
-        pos   :: BzoPos }
+        pos   :: !BzoPos }
     | BzS_ArrSzMod{
-        pos   :: BzoPos,
-        sint  :: Integer }
+        pos   :: !BzoPos,
+        sint  :: !Integer }
     | BzS_ArrExprMod{
-        pos   :: BzoPos,
-        def   :: BzoSyntax }
+        pos   :: !BzoPos,
+        def   :: !BzoSyntax }
     | BzS_Nil {
-        pos   :: BzoPos }
+        pos   :: !BzoPos }
     | BzS_Lambda {
-        pos  :: BzoPos,
-        pars :: BzoSyntax,
-        def  :: BzoSyntax }
+        pos  :: !BzoPos,
+        pars :: !BzoSyntax,
+        def  :: !BzoSyntax }
     | BzS_Expr {
-        pos   :: BzoPos,
-        exprs :: [BzoSyntax] }
+        pos   :: !BzoPos,
+        exprs :: ![BzoSyntax] }
     | BzS_Box {
-        pos   :: BzoPos,
-        expr  :: BzoSyntax }
+        pos   :: !BzoPos,
+        expr  :: !BzoSyntax }
     | BzS_Poly {
-        pos   :: BzoPos,
-        exprs :: [BzoSyntax] }
+        pos   :: !BzoPos,
+        exprs :: ![BzoSyntax] }
     | BzS_Cmpd {
-        pos   :: BzoPos,
-        exprs :: [BzoSyntax] }
+        pos   :: !BzoPos,
+        exprs :: ![BzoSyntax] }
     | BzS_FnTy {
-        pos   :: BzoPos,
-        tyIn  :: BzoSyntax,
-        tyEx  :: BzoSyntax }
+        pos   :: !BzoPos,
+        tyIn  :: !BzoSyntax,
+        tyEx  :: !BzoSyntax }
     | BzS_Block {
-        pos   :: BzoPos,
-        exprs :: [BzoSyntax] }
+        pos   :: !BzoPos,
+        exprs :: ![BzoSyntax] }
     | BzS_FunDef {
-        pos    :: BzoPos,
-        inpars :: BzoSyntax,
-        fnid   :: String,
-        expars :: BzoSyntax,
-        def    :: BzoSyntax }
+        pos    :: !BzoPos,
+        inpars :: !BzoSyntax,
+        fnid   :: !String,
+        expars :: !BzoSyntax,
+        def    :: !BzoSyntax }
     | BzS_TypDef {
-        pos  :: BzoPos,
-        pars :: BzoSyntax,
-        tyid :: String,
-        typ  :: BzoSyntax }
+        pos  :: !BzoPos,
+        pars :: !BzoSyntax,
+        tyid :: !String,
+        typ  :: !BzoSyntax }
     | BzS_FnTypeDef {
-        pos  :: BzoPos,
-        fnid :: String,
-        def  :: BzoSyntax }
+        pos  :: !BzoPos,
+        fnid :: !String,
+        def  :: !BzoSyntax }
     | BzS_Calls {
-        pos   :: BzoPos,
-        calls :: [BzoSyntax] }
+        pos   :: !BzoPos,
+        calls :: ![BzoSyntax] }
     | BzS_ExTypObj {
-        pos       :: BzoPos,
-        sid       :: String,
-        namespace :: String }
+        pos       :: !BzoPos,
+        sid       :: !String,
+        namespace :: !String }
     | BzS_ExFunObj {
-        pos       :: BzoPos,
-        sid       :: String,
-        namespace :: String }
+        pos       :: !BzoPos,
+        sid       :: !String,
+        namespace :: !String }
     | BzS_ArrayObj {
-        pos      :: BzoPos,
-        bzobj    :: BzoSyntax,
-        arrexprs :: [BzoSyntax] }
+        pos      :: !BzoPos,
+        bzobj    :: !BzoSyntax,
+        arrexprs :: ![BzoSyntax] }
     | BzS_FilterObj {
-        pos     :: BzoPos,
-        bzobj   :: BzoSyntax,
-        filt     :: BzoSyntax }
+        pos     :: !BzoPos,
+        bzobj   :: !BzoSyntax,
+        filt     :: !BzoSyntax }
     | BzS_CurryObj {
-        pos     :: BzoPos,
-        bzobj   :: BzoSyntax,
-        crypars :: [BzoSyntax] }
+        pos     :: !BzoPos,
+        bzobj   :: !BzoSyntax,
+        crypars :: ![BzoSyntax] }
     | BzS_MapObj {
-        pos     :: BzoPos,
-        bzobj   :: BzoSyntax }
+        pos     :: !BzoPos,
+        bzobj   :: !BzoSyntax }
     | BzS_ArrSzObj {
-        pos     :: BzoPos,
-        sint    :: Integer }
+        pos     :: !BzoPos,
+        sint    :: !Integer }
     | BzS_ArrGnObj {
-        pos     :: BzoPos }
+        pos     :: !BzoPos }
     | BzS_Undefined
     deriving Eq
 
