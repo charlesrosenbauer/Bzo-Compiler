@@ -64,6 +64,14 @@ data TypeAST
       | TA_TyLit  {
           ta_pos :: BzoPos,
           ta_ty  :: String }
+      | TA_ExFnLit  {
+          ta_pos :: BzoPos,
+          ta_fn  :: String,
+          ta_loc :: String }
+      | TA_ExTyLit  {
+          ta_pos :: BzoPos,
+          ta_ty  :: String,
+          ta_loc :: String }
       | TA_BFnLit {
           ta_pos :: BzoPos,
           ta_fn  :: String }
@@ -282,6 +290,8 @@ modelBasicType (BzS_BId   p x)  = Right (TA_BFnLit p x)
 modelBasicType (BzS_BTId  p x)  = Right (TA_BTyLit p x)
 modelBasicType (BzS_Nil   p  )  = Right (TA_Nil    p  )
 modelBasicType (BzS_TyVar p x)  = Right (TA_TyVar  p x)
+modelBasicType (BzS_ExFunObj p x n) = Right (TA_ExFnLit  p x n)
+modelBasicType (BzS_ExTypObj p x n) = Right (TA_ExTyLit  p x n)
 
 modelBasicType (BzS_FnTy p i e) =
   let !i'  = [modelBasicType i]
@@ -371,6 +381,8 @@ modelType (BzS_BId   p x)  = Right ((TA_BFnLit p x), [], [])
 modelType (BzS_BTId  p x)  = Right ((TA_BTyLit p x), [], [])
 modelType (BzS_Nil   p  )  = Right ((TA_Nil    p  ), [], [])
 modelType (BzS_TyVar p x)  = Right ((TA_TyVar  p x), [], [])
+modelType (BzS_ExFunObj p x n) = Right ((TA_ExFnLit  p x n), [], [])
+modelType (BzS_ExTypObj p x n) = Right ((TA_ExTyLit  p x n), [], [])
 
 modelType (BzS_FnTy p i e) =
   let !i'  = [modelType i]
@@ -569,5 +581,7 @@ showTypeAST (TA_FnLit  p x)    = " <Fn: "  ++ x ++ "> "
 showTypeAST (TA_BFnLit p x)    = " <BFn: " ++ x ++ "> "
 showTypeAST (TA_BTyLit p x)    = " <BTy: " ++ x ++ "> "
 showTypeAST (TA_TyVar  p x)    = " <TVr: " ++ x ++ "> "
+showTypeAST (TA_ExTyLit p x l) = " <Ty: "  ++ x ++ ", from " ++ l ++ "> "
+showTypeAST (TA_ExFnLit p x l) = " <Fn: "  ++ x ++ ", from " ++ l ++ "> "
 showTypeAST (TA_Nil    p)      = " <NIL ()> "
 instance Show TypeAST where show = showTypeAST
