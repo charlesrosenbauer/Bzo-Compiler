@@ -7,7 +7,6 @@ import BzoParser
 import BzoTypes
 import BzoLexer
 import BzoSyntax
-import BzoTokens
 import BzoPreprocessor
 import BzoParameterParser
 import BzoChecker

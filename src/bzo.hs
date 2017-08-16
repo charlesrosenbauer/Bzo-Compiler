@@ -4,7 +4,6 @@ import System.Environment
 import System.IO
 import BzoLexer
 import BzoTypes
-import BzoTokens
 import Compiler
 import BzoParameterParser
 --import BzoError
