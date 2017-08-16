@@ -124,6 +124,11 @@ data CallAST
         ca_records :: [ModelRecord],
         ca_enums   :: [ModelEnum],
         ca_tydef   :: TypeAST }
+    | CA_FTDefCall {
+        ca_pos     :: BzoPos,
+        ca_id      :: String,
+        ca_intype  :: TypeAST,
+        ca_extype  :: TypeAST }
 
 
 
@@ -463,6 +468,16 @@ modelCalls (BzS_TypDef p prs t df) =
       []  -> Right [(CA_TyDefCall p t [] (concat rs) (concat es) (head xs))]  -- For now
       ers -> Left ers
 
+modelCalls (BzS_FnTypeDef p t (BzS_FnTy _ i o)) =
+  let i'  = [modelBasicType i]
+      o'  = [modelBasicType o]
+      er  = concat $ lefts (i' ++ o')
+      ity = head $ rights i'    -- Laziness prevents errors here
+      oty = head $ rights i'    --
+  in case er of
+      []  -> Right [(CA_FTDefCall p t ity oty)]
+      ers -> Left ers
+
 
 
 
@@ -522,6 +537,9 @@ showCallAST (CA_TyDefCall p i s r e t) = " {TyDef: " ++ i ++
                                             "\n   RECS: " ++ (concatMap (\x -> (show x) ++ ", ") r) ++
                                             "\n   ENMS: " ++ (concatMap (\x -> (show x) ++ ", ") e) ++
                                             "\n   DEF : " ++ (show t) ++ " }\n"
+showCallAST (CA_FTDefCall p x i o)   = " {FnTyDef: " ++ x ++
+                                            "\n   INPUT : " ++ (show i) ++
+                                            "\n   OUTPUT: " ++ (show o)
 instance Show CallAST where show = showCallAST
 
 
