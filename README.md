@@ -14,6 +14,9 @@ Bzo's main priorities are parallelism, performance, portability, and correctness
 This compiler is still under VERY heavy development. Not all planned features are currently implemented. Currently, Linux is the only platform that is supported, though it may be runnable on other platforms as well.
 
 
+Also, if you have any knowledge of Haskell and are interested in contributing, take a look in info/contributing.txt. I'll try to keep that up to date.
+
+
 *Running the Compiler*
 
 Currently, the compiler can be run by calling the bzo executable in the /dist/build/main directory.
