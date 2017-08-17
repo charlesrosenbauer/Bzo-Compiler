@@ -130,7 +130,7 @@ parsePrimitive6 = genericParseOp [mtk_Builtin] (\tk ->
 
 parsePrimitive7 :: ParserOp
 parsePrimitive7 = genericParseOp [mtk_BIType] (\tk ->
-  PI_BzSyn $ BzS_BId (spos $ piTok $ head tk) (valId $ piTok $ head tk))
+  PI_BzSyn $ BzS_BTId (spos $ piTok $ head tk) (valId $ piTok $ head tk))
 
 
 
