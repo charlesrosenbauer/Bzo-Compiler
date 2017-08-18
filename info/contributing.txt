@@ -4,7 +4,7 @@ This file is a quick explanation of how the code is organized and what work curr
 
 High Priority Goals:
     * Get Compound and Enum modelling in ModelRules.hs working properly.
-    * Add error reporting for improper usage of Record and Enum syntax
+    * Get Tuple Parameters involving Records and Enums printing in the correct order.
     * Get Function Modelling in ModelRules.hs working.
         * Expression Modelling
         * Pattern Modelling
@@ -53,7 +53,7 @@ Source Files:
 
   BzoParser.hs
     Control logic for the Self-Contained Parser
-  
+
   BzoParserRules.hs
     Set of Parsing Rules
 
@@ -79,4 +79,3 @@ Source Files:
     Mostly unused right now. Contains code for generating a faster symbol table.
 
   reducedast.hs and codegen.hs are also currently unused and are mostly placeholders with vague outlines for future code. They eventually will be used in code generation.
-

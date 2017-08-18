@@ -150,6 +150,8 @@ data CallAST
 checkRecord :: BzoSyntax -> Maybe (BzoPos, String, BzoSyntax)
 checkRecord (BzS_FilterObj p0 (BzS_Id  p1 i) ty) = Just (p0, i, ty)
 checkRecord (BzS_FilterObj p0 (BzS_BId p1 i) ty) = Just (p0, i, ty)
+checkRecord (BzS_Expr _ [(BzS_FilterObj p0 (BzS_Id  p1 i) ty)]) = Just (p0, i, ty)
+checkRecord (BzS_Expr _ [(BzS_FilterObj p0 (BzS_BId p1 i) ty)]) = Just (p0, i, ty)
 checkRecord _                                    = Nothing
 
 
@@ -164,6 +166,8 @@ checkRecord _                                    = Nothing
 checkEnum :: BzoSyntax -> Maybe (BzoPos, String, BzoSyntax)
 checkEnum (BzS_FilterObj p0 (BzS_TyId p1 i) ty) = Just (p0, i, ty)
 checkEnum (BzS_FilterObj p0 (BzS_BTId p1 i) ty) = Just (p0, i, ty)
+checkEnum (BzS_Expr _ [(BzS_FilterObj p0 (BzS_TyId p1 i) ty)]) = Just (p0, i, ty)
+checkEnum (BzS_Expr _ [(BzS_FilterObj p0 (BzS_BTId p1 i) ty)]) = Just (p0, i, ty)
 checkEnum _                                     = Nothing
 
 
@@ -396,9 +400,10 @@ modelType (BzS_FnTy p i e) =
 
 modelType (BzS_Cmpd p xs) =
   let !xs' = map (getCompoundContents . separateRecords) xs
+      exs' = map (\(p, n, _) -> SntxErr p (n ++ " is an Enum defined in a Compound Tuple. This is not valid.")) $ catMaybes $ map checkEnum xs
       (as, bs, rcs) = unzip3 $ map (\(a, b, c) -> (a, b, modelBasicType c)) $ catMaybes $ map checkRecord xs
       rcs0 = map (toRecordModel "") $ zip3 as bs (rights rcs)
-      ers  = (concat $ lefts xs') ++ (concat $ lefts rcs)
+      ers  = (concat $ lefts xs') ++ (concat $ lefts rcs) ++ exs'
       (vls, rcs1, ens) = unzip3 $ rights xs'
   in case ers of
       [] -> Right ((TA_Cmpd p vls), (rcs0 ++ (concat rcs1)), (concat ens))
@@ -406,9 +411,10 @@ modelType (BzS_Cmpd p xs) =
 
 modelType (BzS_Poly p xs) =
   let !xs' = map (getPolymorphContents . separateEnums) xs
+      rxs' = map (\(p, n, _) -> SntxErr p (n ++ " is an Record defined in a Polymorphic Tuple. This is not valid.")) $ catMaybes $ map checkRecord xs
       (as, bs, ens) = unzip3 $ map (\(a, b, c) -> (a, b, modelBasicType c)) $ catMaybes $ map checkEnum xs
       ens0 = map (toEnumModel "") $ zip3 as bs $ rights ens
-      ers  = (concat $ lefts xs') ++ (concat $ lefts ens)
+      ers  = (concat $ lefts xs') ++ (concat $ lefts ens) ++ rxs'
       (vls, rcs, ens1) = unzip3 $ rights xs'
   in case ers of
       [] -> Right ((TA_Poly p vls), (concat rcs), (ens0 ++ (concat ens1)))
