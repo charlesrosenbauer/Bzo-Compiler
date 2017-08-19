@@ -401,23 +401,19 @@ modelType (BzS_FnTy p i e) =
 modelType (BzS_Cmpd p xs) =
   let !xs' = map (getCompoundContents . separateRecords) xs
       exs' = map (\(p, n, _) -> SntxErr p (n ++ " is an Enum defined in a Compound Tuple. This is not valid.")) $ catMaybes $ map checkEnum xs
-      (as, bs, rcs) = unzip3 $ map (\(a, b, c) -> (a, b, modelBasicType c)) $ catMaybes $ map checkRecord xs
-      rcs0 = map (toRecordModel "") $ zip3 as bs (rights rcs)
-      ers  = (concat $ lefts xs') ++ (concat $ lefts rcs) ++ exs'
-      (vls, rcs1, ens) = unzip3 $ rights xs'
-  in case ers of
-      [] -> Right ((TA_Cmpd p vls), (rcs0 ++ (concat rcs1)), (concat ens))
+      errs = (concat $ lefts xs') ++ exs'
+      (as, rs, es) = (\(a, b, c) -> (a, concat b, concat c)) $ unzip3 $ rights xs'
+  in case errs of
+      [] -> Right ((TA_Cmpd p as), rs, es)
       er -> Left er
 
 modelType (BzS_Poly p xs) =
   let !xs' = map (getPolymorphContents . separateEnums) xs
       rxs' = map (\(p, n, _) -> SntxErr p (n ++ " is an Record defined in a Polymorphic Tuple. This is not valid.")) $ catMaybes $ map checkRecord xs
-      (as, bs, ens) = unzip3 $ map (\(a, b, c) -> (a, b, modelBasicType c)) $ catMaybes $ map checkEnum xs
-      ens0 = map (toEnumModel "") $ zip3 as bs $ rights ens
-      ers  = (concat $ lefts xs') ++ (concat $ lefts ens) ++ rxs'
-      (vls, rcs, ens1) = unzip3 $ rights xs'
-  in case ers of
-      [] -> Right ((TA_Poly p vls), (concat rcs), (ens0 ++ (concat ens1)))
+      errs = (concat $ lefts xs') ++ rxs'
+      (as, rs, es) = (\(a, b, c) -> (a, concat b, concat c)) $ unzip3 $ rights xs'
+  in case errs of
+      [] -> Right ((TA_Poly p as), rs, es)
       er -> Left er
 
 modelType (BzS_Box p x) = modelType x
