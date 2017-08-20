@@ -402,18 +402,22 @@ modelType (BzS_Cmpd p xs) =
   let !xs' = map (getCompoundContents . separateRecords) xs
       exs' = map (\(p, n, _) -> SntxErr p (n ++ " is an Enum defined in a Compound Tuple. This is not valid.")) $ catMaybes $ map checkEnum xs
       errs = (concat $ lefts xs') ++ exs'
-      (as, rs, es) = (\(a, b, c) -> (a, concat b, concat c)) $ unzip3 $ rights xs'
+      (as, rs, es) = (app_3_23 concat concat) $ unzip3 $ rights xs'
+      (p', s, sn0) = unzip3 $ catMaybes $ map checkRecord xs
+      sn1  = zip3 p' s $ map fst3 $ rights $ map modelType sn0    -- Should only work properly when no errs. Lazy evaluation kicks in then and this only runs if it's guaranteed to work.
+      sn2  = map (toRecordModel "") sn1
   in case errs of
-      [] -> Right ((TA_Cmpd p as), rs, es)
+      [] -> Right ((TA_Cmpd p as), (rs ++ sn2), es)
       er -> Left er
 
 modelType (BzS_Poly p xs) =
   let !xs' = map (getPolymorphContents . separateEnums) xs
       rxs' = map (\(p, n, _) -> SntxErr p (n ++ " is an Record defined in a Polymorphic Tuple. This is not valid.")) $ catMaybes $ map checkRecord xs
       errs = (concat $ lefts xs') ++ rxs'
-      (as, rs, es) = (\(a, b, c) -> (a, concat b, concat c)) $ unzip3 $ rights xs'
+      (as, rs, es) = (app_3_23 concat concat) $ unzip3 $ rights xs'
+
   in case errs of
-      [] -> Right ((TA_Poly p as), rs, es)
+      [] -> Right ((TA_Poly p as), rs, (es))
       er -> Left er
 
 modelType (BzS_Box p x) = modelType x

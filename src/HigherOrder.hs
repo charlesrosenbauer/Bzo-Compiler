@@ -10,6 +10,39 @@ import qualified Data.Map.Strict as Mp hiding (foldl, map)
 
 
 
+fst3 :: (a, b, c) -> a
+fst3 (a, b, c) = a
+
+
+
+
+
+
+
+
+
+
+snd3 :: (a, b, c) -> b
+snd3 (a, b, c) = b
+
+
+
+
+
+
+
+
+
+
+trd3 :: (a, b, c) -> c
+trd3 (a, b, c) = c
+
+
+
+
+
+
+
 
 
 
@@ -86,7 +119,7 @@ app_3_12 f g (a, b, c) = (f a, g b, c)
 
 
 app_3_13 :: (a -> d) -> (c -> e) -> (a, b, c) -> (d, b, e)
-app_3_13 f g (a, b, c) = (a, f b, g c)
+app_3_13 f g (a, b, c) = (f a, b, g c)
 
 
 
