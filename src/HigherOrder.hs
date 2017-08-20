@@ -73,6 +73,42 @@ app_3_3 f (a, b, c) = (a, b, f c)
 
 
 
+app_3_12 :: (a -> d) -> (b -> e) -> (a, b, c) -> (d, e, c)
+app_3_12 f g (a, b, c) = (f a, g b, c)
+
+
+
+
+
+
+
+
+
+
+app_3_13 :: (a -> d) -> (c -> e) -> (a, b, c) -> (d, b, e)
+app_3_13 f g (a, b, c) = (a, f b, g c)
+
+
+
+
+
+
+
+
+
+
+app_3_23 :: (b -> d) -> (c -> e) -> (a, b, c) -> (a, d, e)
+app_3_23 f g (a, b, c) = (a, f b, g c)
+
+
+
+
+
+
+
+
+
+
 -- An If/Else can sometimes be inconvenient
 ife :: Bool -> a -> a -> a
 ife True  x y = x
