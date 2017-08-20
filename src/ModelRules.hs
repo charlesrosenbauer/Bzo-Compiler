@@ -415,9 +415,11 @@ modelType (BzS_Poly p xs) =
       rxs' = map (\(p, n, _) -> SntxErr p (n ++ " is an Record defined in a Polymorphic Tuple. This is not valid.")) $ catMaybes $ map checkRecord xs
       errs = (concat $ lefts xs') ++ rxs'
       (as, rs, es) = (app_3_23 concat concat) $ unzip3 $ rights xs'
-
+      (p', s, sn0) = unzip3 $ catMaybes $ map checkEnum xs
+      sn1  = zip3 p' s $ map fst3 $ rights $ map modelType sn0    -- Should only work properly when no errs. Lazy evaluation kicks in then and this only runs if it's guaranteed to work.
+      sn2  = map (toEnumModel "") sn1
   in case errs of
-      [] -> Right ((TA_Poly p as), rs, (es))
+      [] -> Right ((TA_Poly p as), rs, (es ++ sn2))
       er -> Left er
 
 modelType (BzS_Box p x) = modelType x
