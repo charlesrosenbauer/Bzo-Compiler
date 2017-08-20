@@ -426,6 +426,14 @@ modelType (BzS_Box p x) = modelType x
 
 modelType (BzS_Expr p [x]) = modelType x
 
+modelType (BzS_FilterObj p (BzS_Id _ x) _) = Left [SntxErr p "Unexpected Record"]
+
+modelType (BzS_FilterObj p (BzS_BId _ x) _) = Left [SntxErr p "Unexpected Record"]
+
+modelType (BzS_FilterObj p (BzS_BTId _ x) _) = Left [SntxErr p "Unexpected Enum"]
+
+modelType (BzS_FilterObj p (BzS_TyId _ x) _) = Left [SntxErr p "Unexpected Enum"]
+
 modelType (BzS_FilterObj p o f) =
   let !o'  = [modelType o]
       !f'  = [modelBasicType f]
