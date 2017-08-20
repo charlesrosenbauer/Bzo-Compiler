@@ -13,6 +13,66 @@ import qualified Data.Map.Strict as Mp hiding (foldl, map)
 
 
 
+app_1_2 :: (a, b) -> (a -> c) -> (c, b)
+app_1_2 (a, b) f = (f a, b)
+
+
+
+
+
+
+
+
+
+
+app_2_2 :: (a, b) -> (b -> c) -> (a, c)
+app_2_2 (a, b) f = (a, f b)
+
+
+
+
+
+
+
+
+
+
+app_1_3 :: (a, b, c) -> (a -> d) -> (d, b, c)
+app_1_3 (a, b, c) f = (f a, b, c)
+
+
+
+
+
+
+
+
+
+
+app_2_3 :: (a, b, c) -> (b -> d) -> (a, d, c)
+app_2_3 (a, b, c) f = (a, f b, c)
+
+
+
+
+
+
+
+
+
+
+app_3_3 :: (a, b, c) -> (c -> d) -> (a, b, d)
+app_3_3 (a, b, c) f = (a, b, f c)
+
+
+
+
+
+
+
+
+
+
 -- An If/Else can sometimes be inconvenient
 ife :: Bool -> a -> a -> a
 ife True  x y = x
