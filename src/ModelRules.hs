@@ -269,6 +269,20 @@ toEnumModel r (p, i, t) = (ModelEnum p i r t)
 
 
 
+stripSyntax :: BzoSyntax -> BzoSyntax
+stripSyntax (BzS_Expr p [x]) = stripSyntax x
+stripSyntax (BzS_Box  p  x ) = stripSyntax x
+stripSyntax x                = x
+
+
+
+
+
+
+
+
+
+
 modelArrayObj :: BzoSyntax -> Either [BzoErr] Integer
 modelArrayObj (BzS_ArrGnObj p  ) = Right 0
 modelArrayObj (BzS_ArrSzObj p s) = Right s
