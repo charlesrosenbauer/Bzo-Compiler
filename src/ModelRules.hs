@@ -147,11 +147,29 @@ data CallAST
 
 
 
+stripSyntax :: BzoSyntax -> BzoSyntax
+stripSyntax (BzS_Expr p [x]) = stripSyntax x
+stripSyntax (BzS_Box  p  x ) = stripSyntax x
+stripSyntax x                = x
+
+
+
+
+
+
+
+
+
+
 checkRecord :: BzoSyntax -> Maybe (BzoPos, String, BzoSyntax)
 checkRecord (BzS_FilterObj p0 (BzS_Id  p1 i) ty) = Just (p0, i, ty)
 checkRecord (BzS_FilterObj p0 (BzS_BId p1 i) ty) = Just (p0, i, ty)
 checkRecord (BzS_Expr _ [(BzS_FilterObj p0 (BzS_Id  p1 i) ty)]) = Just (p0, i, ty)
 checkRecord (BzS_Expr _ [(BzS_FilterObj p0 (BzS_BId p1 i) ty)]) = Just (p0, i, ty)
+checkRecord (BzS_FilterObj p0 x@(BzS_Expr _ _) t) = checkRecord (BzS_FilterObj p0 (stripSyntax x) t)
+checkRecord (BzS_FilterObj p0 x@(BzS_Box  _ _) t) = checkRecord (BzS_FilterObj p0 (stripSyntax x) t)
+checkRecord (BzS_Expr _ [(BzS_FilterObj p0 x@(BzS_Expr _ _) t)]) = checkRecord (BzS_FilterObj p0 (stripSyntax x) t)
+checkRecord (BzS_Expr _ [(BzS_FilterObj p0 x@(BzS_Box  _ _) t)]) = checkRecord (BzS_FilterObj p0 (stripSyntax x) t)
 checkRecord _                                    = Nothing
 
 
@@ -168,6 +186,10 @@ checkEnum (BzS_FilterObj p0 (BzS_TyId p1 i) ty) = Just (p0, i, ty)
 checkEnum (BzS_FilterObj p0 (BzS_BTId p1 i) ty) = Just (p0, i, ty)
 checkEnum (BzS_Expr _ [(BzS_FilterObj p0 (BzS_TyId p1 i) ty)]) = Just (p0, i, ty)
 checkEnum (BzS_Expr _ [(BzS_FilterObj p0 (BzS_BTId p1 i) ty)]) = Just (p0, i, ty)
+checkEnum (BzS_FilterObj p0 x@(BzS_Expr _ _) t) = checkEnum (BzS_FilterObj p0 (stripSyntax x) t)
+checkEnum (BzS_FilterObj p0 x@(BzS_Box  _ _) t) = checkEnum (BzS_FilterObj p0 (stripSyntax x) t)
+checkEnum (BzS_Expr _ [(BzS_FilterObj p0 x@(BzS_Expr _ _) t)]) = checkEnum (BzS_FilterObj p0 (stripSyntax x) t)
+checkEnum (BzS_Expr _ [(BzS_FilterObj p0 x@(BzS_Box  _ _) t)]) = checkEnum (BzS_FilterObj p0 (stripSyntax x) t)
 checkEnum _                                     = Nothing
 
 
@@ -259,20 +281,6 @@ toRecordModel r (p, i, t) = (ModelRecord p i r t)
 
 toEnumModel ::  String -> (BzoPos, String, TypeAST) -> ModelEnum
 toEnumModel r (p, i, t) = (ModelEnum p i r t)
-
-
-
-
-
-
-
-
-
-
-stripSyntax :: BzoSyntax -> BzoSyntax
-stripSyntax (BzS_Expr p [x]) = stripSyntax x
-stripSyntax (BzS_Box  p  x ) = stripSyntax x
-stripSyntax x                = x
 
 
 
