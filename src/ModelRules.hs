@@ -324,24 +324,38 @@ modelBasicType (BzS_FnTy p i e) =
 modelBasicType (BzS_Cmpd p xs) =
   let !xs' = [map modelBasicType xs]
       rcs  = catMaybes $ map checkRecord xs
-      ers  = concatMap lefts  xs'
-      vls  = concatMap rights xs'
-  in case (ers, rcs) of
-      ([], []) -> Right (TA_Cmpd p vls)
-      (er, rs) -> Left $ (concat er) ++ (map (\(p, n, t) -> (SntxErr p $ "Unexpected Record Syntax: " ++ n ++ "\n")) rs)
-
-modelBasicType (BzS_Poly p xs) =
-  let !xs' = [map modelBasicType xs]
       ens  = catMaybes $ map checkEnum xs
       ers  = concatMap lefts  xs'
       vls  = concatMap rights xs'
-  in case (ers, ens) of
-      ([], []) -> Right (TA_Poly p vls)
-      (er, es) -> Left $ concat er ++ (map (\(p, n, t) -> (SntxErr p $ "Unexpected Enum Syntax: " ++ n ++ "\n")) es)
+  in case (ers, rcs, ens) of
+      ([], [], []) -> Right (TA_Cmpd p vls)
+      (er, rs, es) -> Left $ (concat er)
+        ++ (map (\(p, n, t) -> (SntxErr p $ "Unexpected Record Syntax: " ++ n ++ "\n")) rs)
+        ++ (map (\(p, n, t) -> (SntxErr p $ "Unexpected Enum Syntax: "   ++ n ++ "\n")) es)
+
+modelBasicType (BzS_Poly p xs) =
+  let !xs' = [map modelBasicType xs]
+      rcs  = catMaybes $ map checkRecord xs
+      ens  = catMaybes $ map checkEnum xs
+      ers  = concatMap lefts  xs'
+      vls  = concatMap rights xs'
+  in case (ers, rcs, ens) of
+      ([], [], []) -> Right (TA_Poly p vls)
+      (er, rs, es) -> Left $ concat er
+        ++ (map (\(p, n, t) -> (SntxErr p $ "Unexpected Record Syntax: " ++ n ++ "\n")) rs)
+        ++ (map (\(p, n, t) -> (SntxErr p $ "Unexpected Enum Syntax: "   ++ n ++ "\n")) es)
 
 modelBasicType (BzS_Box p x) = modelBasicType x
 
 modelBasicType (BzS_Expr p [x]) = modelBasicType x
+
+modelBasicType (BzS_FilterObj p (BzS_Id _ x) _) = Left [SntxErr p "Unexpected Record"]
+
+modelBasicType (BzS_FilterObj p (BzS_BId _ x) _) = Left [SntxErr p "Unexpected Record"]
+
+modelBasicType (BzS_FilterObj p (BzS_BTId _ x) _) = Left [SntxErr p "Unexpected Enum"]
+
+modelBasicType (BzS_FilterObj p (BzS_TyId _ x) _) = Left [SntxErr p "Unexpected Enum"]
 
 modelBasicType (BzS_FilterObj p o f) =
   let !o'  = [modelBasicType o]
