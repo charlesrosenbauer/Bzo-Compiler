@@ -616,15 +616,15 @@ instance Show CallAST where show = showCallAST
 
 
 showTypeAST :: TypeAST -> String
-showTypeAST (TA_Cmpd   p xs)   = " (Cmpd:\n" ++ (concatMap (\x -> (show x) ++ " .\n") xs) ++ ") "
-showTypeAST (TA_Poly   p xs)   = " (Poly:\n" ++ (concatMap (\x -> (show x) ++ " ,\n") xs) ++ ") "
+showTypeAST (TA_Cmpd   p xs)   = " ( Cmpd:\n" ++ (concatMap (\x -> "    " ++ (show x) ++ " .\n") xs) ++ ") "
+showTypeAST (TA_Poly   p xs)   = " ( Poly:\n" ++ (concatMap (\x -> "    " ++ (show x) ++ " ,\n") xs) ++ ") "
 showTypeAST (TA_Expr   p x n)  = (show x) ++ " -> " ++ (show n)
 showTypeAST (TA_Filt   p f x)  = " {" ++ (show x) ++ " : " ++ (show f) ++ "} "
 showTypeAST (TA_FnTy   p i o)  = " {" ++ (show i) ++ " ;; " ++ (show o) ++ "} "
-showTypeAST (TA_Enum   p i x)  = " {Enm: " ++ i ++ " of Type " ++ (show x) ++ "} "
-showTypeAST (TA_Record p i x)  = " {Rcd: " ++ i ++ " of Type " ++ (show x) ++ "} "
-showTypeAST (TA_Curry  p cs x) = " {Cur: " ++ (concatMap (\y -> (show y) ++ "`") cs) ++ " -> " ++ (show x) ++ "} "
-showTypeAST (TA_Arr    p ss x) = " {Arr: " ++ (show x) ++ (concatMap (\n -> ife (n /= 0) ("["++(show n)++"]") ("[?]")) ss) ++ "} "
+showTypeAST (TA_Enum   p i x)  = " { Enm: " ++ i ++ " of Type " ++ (show x) ++ "} "
+showTypeAST (TA_Record p i x)  = " { Rcd: " ++ i ++ " of Type " ++ (show x) ++ "} "
+showTypeAST (TA_Curry  p cs x) = " { Cur: " ++ (concatMap (\y -> (show y) ++ "`") cs) ++ " -> " ++ (show x) ++ "} "
+showTypeAST (TA_Arr    p ss x) = " { Arr: " ++ (show x) ++ (concatMap (\n -> ife (n /= 0) ("["++(show n)++"]") ("[?]")) ss) ++ "} "
 showTypeAST (TA_IntLit p i)    = " <Int: " ++ (show i) ++ "> "
 showTypeAST (TA_FltLit p f)    = " <Flt: " ++ (show f) ++ "> "
 showTypeAST (TA_StrLit p s)    = " <Str: " ++ s ++ "> "
