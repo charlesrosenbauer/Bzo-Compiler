@@ -2,6 +2,7 @@ module BzoParserRules where
 import BzoParser
 import BzoSyntax
 import BzoTypes
+import Debug.Trace
 
 
 
@@ -252,7 +253,7 @@ parseCompound2 = genericParseOp [MP_Cpx, MP_Cpx] (\psi ->
 
 parseCompound3 :: ParserOp
 parseCompound3 = genericParseOp [MP_Cpxs, MP_Cpx] (\psi ->
-  PI_CPXS $ [piSyn $ psi !! 1] ++ (piSyns $ (head psi)) )
+  PI_CPXS $ (piSyns $ (head psi)) ++ [piSyn $ psi !! 1] )
 
 
 
@@ -580,7 +581,7 @@ parsePolymorph2 = genericParseOp [MP_Plx, MP_Plx] (\psi ->
 
 parsePolymorph3 :: ParserOp
 parsePolymorph3 = genericParseOp [MP_Plxs, MP_Plx] (\psi ->
-  PI_PLXS $ [piSyn $ psi !! 1] ++ (piSyns $ (head psi)) )
+  PI_PLXS $ (piSyns $ (head psi)) ++ [piSyn $ psi !! 1] )
 
 
 
