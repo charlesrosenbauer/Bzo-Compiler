@@ -4,6 +4,7 @@ import BzoTypes
 import HigherOrder
 import Data.Either
 import Data.Maybe
+import Debug.Trace
 
 
 
@@ -528,8 +529,10 @@ modelCalls (BzS_TypDef p prs t df) =
   let df' = [modelType df]
       er  = concat $ lefts  df'
       (xs, rs, es) = unzip3 $ rights df'
+      rs' = map (\(ModelRecord rp ri _ rt) -> (ModelRecord rp ri t rt)) $ concat rs
+      es' = map (\(ModelEnum   ep ei _ et) -> (ModelEnum   ep ei t et)) $ concat es
   in case er of
-      []  -> Right [(CA_TyDefCall p t [] (concat rs) (concat es) (head xs))]  -- For now
+      []  -> Right [(CA_TyDefCall p t [] rs' es' (head xs))]
       ers -> Left ers
 
 modelCalls (BzS_FnTypeDef p t (BzS_FnTy _ i o)) =
