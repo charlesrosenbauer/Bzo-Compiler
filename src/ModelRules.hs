@@ -124,6 +124,17 @@ data ModelEnum = ModelEnum{
 
 
 
+data TParModel = TParModel { tp_pos :: BzoPos, tp_pars :: [TypeAST] }
+
+
+
+
+
+
+
+
+
+
 -- ! Add More Cases for other calls
 data CallAST
     = CA_TyDefCall {
@@ -507,6 +518,27 @@ modelType (BzS_Expr p (x:xs)) =
 modelType (BzS_CurryObj p o x) = Left [SntxErr p "Currying in type expressions is currently not permitted."]
 
 modelType s = Left [SntxErr (pos s) "Unexpected Component of Type Expression."]
+
+
+
+
+
+
+
+
+
+
+modelTPars :: BzoSyntax -> Either [BzoErr] TParModel
+modelTPars (BzS_Box   p x ) = modelTPars x
+modelTPars (BzS_Poly  p _ ) = Left [SntxErr p "Unexpected Polymorphic Expression as Type Parameters"]
+modelTPars (BzS_Cmpd  p xs) =
+  let xs' = map modelTPars xs
+      xrs = rights xs'
+      xls = lefts  xs'
+  in case xls of
+      [] -> Right (TParModel p []) -- for now
+      er -> Left  $ concat er
+
 
 
 
