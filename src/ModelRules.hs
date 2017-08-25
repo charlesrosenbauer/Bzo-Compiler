@@ -124,7 +124,14 @@ data ModelEnum = ModelEnum{
 
 
 
-data TParModel = TParModel { tp_pos :: BzoPos, tp_pars :: [TypeAST] }
+data TParModel
+  = TParModel {
+      tp_pos :: BzoPos,
+      tp_pars :: [TParModel] }
+  | TParVar   {
+      tp_pos :: BzoPos,
+      tp_id   :: String,
+      tp_filt :: TypeAST }
 
 
 
@@ -529,15 +536,26 @@ modelType s = Left [SntxErr (pos s) "Unexpected Component of Type Expression."]
 
 
 modelTPars :: BzoSyntax -> Either [BzoErr] TParModel
-modelTPars (BzS_Box   p x ) = modelTPars x
-modelTPars (BzS_Poly  p _ ) = Left [SntxErr p "Unexpected Polymorphic Expression as Type Parameters"]
-modelTPars (BzS_Cmpd  p xs) =
+modelTPars (BzS_TyVar     p x   ) = Right (TParVar p x (TA_Nil p))
+modelTPars (BzS_FilterObj p (BzS_TyVar _ x) f ) =
+  let f' = [modelBasicType f]
+      fl = lefts f'
+      fr = rights f'
+  in case fl of
+      [] -> Right (TParVar p x (head fr))
+      er -> Left $ concat fl
+
+modelTPars (BzS_Box       p x   ) = modelTPars x
+modelTPars (BzS_Poly      p _   ) = Left [SntxErr p "Unexpected Polymorphic Expression as Type Parameters"]
+modelTPars (BzS_Cmpd      p xs  ) =
   let xs' = map modelTPars xs
       xrs = rights xs'
       xls = lefts  xs'
   in case xls of
       [] -> Right (TParModel p []) -- for now
       er -> Left  $ concat er
+
+modelTPars x                      = Left [SntxErr (pos x) "Invalid Definition of Type Parameter"]
 
 
 
