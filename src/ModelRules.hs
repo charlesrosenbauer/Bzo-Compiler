@@ -145,17 +145,17 @@ data TParModel
 -- ! Add More Cases for other calls
 data CallAST
     = CA_TyDefCall {
-        ca_pos     :: BzoPos,
-        ca_id      :: String,
-        ca_pars    :: [TypeAST],
-        ca_records :: [ModelRecord],
-        ca_enums   :: [ModelEnum],
-        ca_tydef   :: TypeAST }
+        ca_pos     :: !BzoPos,
+        ca_id      :: !String,
+        ca_pars    :: !TParModel,
+        ca_records :: ![ModelRecord],
+        ca_enums   :: ![ModelEnum],
+        ca_tydef   :: !TypeAST }
     | CA_FTDefCall {
-        ca_pos     :: BzoPos,
-        ca_id      :: String,
-        ca_intype  :: TypeAST,
-        ca_extype  :: TypeAST }
+        ca_pos     :: !BzoPos,
+        ca_id      :: !String,
+        ca_intype  :: !TypeAST,
+        ca_extype  :: !TypeAST }
 
 
 
@@ -577,12 +577,14 @@ modelCalls (BzS_Calls  p xs) =
 
 modelCalls (BzS_TypDef p prs t df) =
   let df' = [modelType df]
-      er  = concat $ lefts  df'
+      ps' = [modelTPars prs]
+      psr = head $ rights ps'
+      er  = (concat $ lefts  df') ++ (concat $ lefts ps')
       (xs, rs, es) = unzip3 $ rights df'
       rs' = map (\(ModelRecord rp ri _ rt) -> (ModelRecord rp ri t rt)) $ concat rs
       es' = map (\(ModelEnum   ep ei _ et) -> (ModelEnum   ep ei t et)) $ concat es
   in case er of
-      []  -> Right [(CA_TyDefCall p t [] rs' es' (head xs))]
+      []  -> Right [(CA_TyDefCall p t psr rs' es' (head xs))]
       ers -> Left ers
 
 modelCalls (BzS_FnTypeDef p t (BzS_FnTy _ i o)) =
@@ -650,7 +652,7 @@ instance Show ModelRecord where show = showRecord
 
 showCallAST :: CallAST -> String
 showCallAST (CA_TyDefCall p i s r e t) = " {TyDef: " ++ i ++
-                                            "\n   PARS: " ++ (concatMap (\x -> (show x) ++ ", ") s) ++
+                                            "\n   PARS: " ++ (show s) ++
                                             "\n   RECS: " ++ (concatMap (\x -> (show x) ++ ", ") r) ++
                                             "\n   ENMS: " ++ (concatMap (\x -> (show x) ++ ", ") e) ++
                                             "\n   DEF : " ++ (show t) ++ " }\n"
@@ -658,6 +660,20 @@ showCallAST (CA_FTDefCall p x i o)   = " {FnTyDef: " ++ x ++
                                             "\n   INPUT : " ++ (show i) ++
                                             "\n   OUTPUT: " ++ (show o)
 instance Show CallAST where show = showCallAST
+
+
+
+
+
+
+
+
+
+
+showTParModel :: TParModel -> String
+showTParModel (TParModel p ps  ) = " ( " ++ (concatMap show ps) ++ " ) "
+showTParModel (TParVar   p x  f) = " { " ++ x ++ " : " ++ (show f) ++ " }, "
+instance Show TParModel where show = showTParModel
 
 
 
