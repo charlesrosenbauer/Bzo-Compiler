@@ -553,7 +553,7 @@ modelTPars (BzS_Cmpd      p xs  ) =
       xrs = rights xs'
       xls = lefts  xs'
   in case xls of
-      [] -> Right (TParModel p []) -- for now
+      [] -> Right (TParModel p xrs) -- for now
       er -> Left  $ concat er
 
 modelTPars x                      = Left [SntxErr (pos x) "Invalid Definition of Type Parameter"]
