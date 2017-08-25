@@ -545,6 +545,7 @@ modelTPars (BzS_FilterObj p (BzS_TyVar _ x) f ) =
       [] -> Right (TParVar p x (head fr))
       er -> Left $ concat fl
 
+modelTPars (BzS_Expr      p [x] ) = modelTPars x
 modelTPars (BzS_Box       p x   ) = modelTPars x
 modelTPars (BzS_Poly      p _   ) = Left [SntxErr p "Unexpected Polymorphic Expression as Type Parameters"]
 modelTPars (BzS_Cmpd      p xs  ) =
