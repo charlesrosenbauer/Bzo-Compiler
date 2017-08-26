@@ -3,7 +3,6 @@ This file is a quick explanation of how the code is organized and what work curr
 
 
 High Priority Goals:
-    * Get Compound and Enum modelling in ModelRules.hs working properly.
     * Get Function Modelling in ModelRules.hs working.
         * Expression Modelling
         * Pattern Modelling
@@ -11,6 +10,8 @@ High Priority Goals:
     * Get External Hint and REPL Modelling in ModelRules.hs working.
 
 Medium Priority Goals:
+    * Add functionality for multiple type filters ( i.e, T':A:B:C )
+    * Get "curry" operator modelling working properly
     * Strictness Optimizations
     * Transition from using String to Text types
     * Paralellism Optimizations
