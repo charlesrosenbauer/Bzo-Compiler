@@ -595,7 +595,7 @@ modelCalls (BzS_FnTypeDef p t (BzS_FnTy _ i o)) =
       o'  = [modelBasicType o]
       er  = concat $ lefts (i' ++ o')
       ity = head $ rights i'    -- Laziness prevents errors here
-      oty = head $ rights i'    --
+      oty = head $ rights o'    --
   in case er of
       []  -> Right [(CA_FTDefCall p t ity oty)]
       ers -> Left ers
