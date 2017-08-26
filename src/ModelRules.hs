@@ -132,6 +132,7 @@ data TParModel
       tp_pos :: BzoPos,
       tp_id   :: String,
       tp_filt :: TypeAST }
+  | TParNil
 
 
 
@@ -553,9 +554,10 @@ modelTPars (BzS_Cmpd      p xs  ) =
       xrs = rights xs'
       xls = lefts  xs'
   in case xls of
-      [] -> Right (TParModel p xrs) -- for now
+      [] -> Right (TParModel p xrs)
       er -> Left  $ concat er
 
+modelTPars (BzS_Undefined)        = Right TParNil
 modelTPars x                      = Left [SntxErr (pos x) "Invalid Definition of Type Parameter"]
 
 
@@ -674,6 +676,7 @@ instance Show CallAST where show = showCallAST
 showTParModel :: TParModel -> String
 showTParModel (TParModel p ps  ) = " ( " ++ (concatMap show ps) ++ " ) "
 showTParModel (TParVar   p x  f) = " { " ++ x ++ " : " ++ (show f) ++ " }, "
+showTParModel (TParNil)          = " N/A "
 instance Show TParModel where show = showTParModel
 
 
