@@ -50,8 +50,10 @@ compileFilePass (BzoSettings imp lib flg opt pfx) =
 
 showOutput :: Show a => Either [BzoErr] a -> String
 showOutput (Right outs) = show outs
+showOutput (Left [err]) =
+  "Compilation Failed. Errors:\n\n" ++ show err ++ "\n\n1 error total."
 showOutput (Left  errs) =
-  "Compilation Failed. Errors:\n\n" ++ concatMap show errs
+  "Compilation Failed. Errors:\n\n" ++ concatMap (\x -> show x ++ "\n\n") errs ++ "\n\n" ++ (show $ length errs) ++ " errors total."
 
 
 
@@ -62,7 +64,7 @@ showOutput (Left  errs) =
 
 
 compileExpression :: (FilePath, String) -> String
-compileExpression s = show (((applyWithErr wrappedModellerMapREPL). (applyWithErr wrappedParserMap). wrappedLexerMap) [swap s])
+compileExpression s = showOutput (((applyWithErr wrappedModellerMapREPL). (applyWithErr wrappedParserMap). wrappedLexerMap) [swap s])
 
 
 
@@ -74,7 +76,7 @@ compileExpression s = show (((applyWithErr wrappedModellerMapREPL). (applyWithEr
 
 
 parseExpression :: (FilePath, String) -> String
-parseExpression s = show (((applyWithErr wrappedParserMap). wrappedLexerMap) [swap s])
+parseExpression s = showOutput (((applyWithErr wrappedParserMap). wrappedLexerMap) [swap s])
 
 
 
@@ -86,4 +88,4 @@ parseExpression s = show (((applyWithErr wrappedParserMap). wrappedLexerMap) [sw
 
 
 lexExpression :: (FilePath, String) -> String
-lexExpression s = show (wrappedLexerMap [swap s])
+lexExpression s = showOutput (wrappedLexerMap [swap s])
