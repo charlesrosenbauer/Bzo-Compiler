@@ -610,7 +610,30 @@ modelTPars x                      = Left [SntxErr (pos x) "Invalid Definition of
 
 
 
---modelExpr :: BzoSyntax -> Either [BzoErr] ExprModel
+modelExpr :: BzoSyntax -> Either [BzoErr] ExprModel
+modelExpr (BzS_Id     p i ) = Right $ EM_Id     p i
+modelExpr (BzS_TyId   p i ) = Right $ EM_TyId   p i
+modelExpr (BzS_BId    p i ) = Right $ EM_BId    p i
+modelExpr (BzS_BTId   p i ) = Right $ EM_BTyId  p i
+modelExpr (BzS_Int    p i ) = Right $ EM_LitInt p i
+modelExpr (BzS_Flt    p f ) = Right $ EM_LitFlt p f
+modelExpr (BzS_Str    p s ) = Right $ EM_LitStr p s
+
+modelExpr (BzS_Cmpd   p xs) =
+  let xs' = map modelExpr xs
+      xsl = lefts  xs'
+      xsr = rights xs'
+  in case xsl of
+      [] -> Right $ EM_Cmpd p xsr
+      er -> Left $ concat er
+
+modelExpr (BzS_Poly   p xs) =
+  let xs' = map modelExpr xs
+      xsl = lefts  xs'
+      xsr = rights xs'
+  in case xsl of
+      [] -> Right $ EM_Poly p xsr
+      er -> Left $ concat er
 
 
 
