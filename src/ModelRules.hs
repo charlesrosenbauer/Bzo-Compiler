@@ -143,6 +143,47 @@ data TParModel
 
 
 
+data ExprModel
+  = EM_Expr {
+      em_pos :: !BzoPos,
+      em_exp :: !ExprModel,
+      em_nxt :: !ExprModel }
+  | EM_Cmpd {
+      em_pos :: !BzoPos,
+      em_xs  :: ![ExprModel] }
+  | EM_Poly {
+      em_pos :: !BzoPos,
+      em_xs  :: ![ExprModel] }
+  | EM_LitInt {
+      em_pos :: !BzoPos,
+      em_int :: !Integer }
+  | EM_LitFlt {
+      em_pos :: !BzoPos,
+      em_flt :: !Double }
+  | EM_LitStr {
+      em_pos :: !BzoPos,
+      em_str :: !String }
+  | EM_Id {
+      em_pos :: !BzoPos,
+      em_id  :: !String }
+  | EM_TyId {
+      em_pos :: !BzoPos,
+      em_id  :: !String }
+  | EM_BId {
+      em_pos :: !BzoPos,
+      em_id  :: !String }
+  | EM_BTyId {
+      em_pos :: !BzoPos,
+      em_id  :: !String }
+
+
+
+
+
+
+
+
+
 -- ! Add More Cases for other calls
 data CallAST
     = CA_TyDefCall {
@@ -559,6 +600,17 @@ modelTPars (BzS_Cmpd      p xs  ) =
 
 modelTPars (BzS_Undefined)        = Right TParNil
 modelTPars x                      = Left [SntxErr (pos x) "Invalid Definition of Type Parameter"]
+
+
+
+
+
+
+
+
+
+
+--modelExpr :: BzoSyntax -> Either [BzoErr] ExprModel
 
 
 
