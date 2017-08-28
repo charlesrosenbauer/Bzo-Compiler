@@ -1,15 +1,8 @@
 module Compiler where
-import System.IO
-import System.Directory
-import Control.Monad
 import Data.Tuple
-import BzoParser
 import BzoTypes
-import BzoLexer
-import BzoSyntax
 import BzoPreprocessor
 import BzoParameterParser
-import BzoChecker
 import BzoTypeModeller
 import ModelRules
 import HigherOrder

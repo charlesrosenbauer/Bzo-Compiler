@@ -1,12 +1,9 @@
 module Main where
-import Control.Monad
 import System.Environment
 import System.IO
-import BzoLexer
 import BzoTypes
 import Compiler
 import BzoParameterParser
---import BzoError
 
 
 
@@ -24,6 +21,7 @@ main = do
       Left  (ParamErr                         err) -> putStrLn err
       Right (BzoSettings  []  []  [] Opt_None  []) -> mainLoop_ (== "$quit") (readPrompt "\nBzo>>> ") (\s -> (putStrLn $ compileExpression ("REPL", (s ++ "\n"))))
       Right settings                               -> compileFilePass settings
+      _                                            -> putStrLn "This shouldn't happen, but it stops a compiler warning."
 
 
 
@@ -35,11 +33,11 @@ main = do
 
 
 mainLoop_ :: Monad m => (a -> Bool) -> m a -> (a -> m()) -> m()
-mainLoop_ until prompt action = do
+mainLoop_ endCond prompt action = do
     result <- prompt
-    if until result
+    if endCond result
         then return ()
-        else action result >> mainLoop_ until prompt action
+        else action result >> mainLoop_ endCond prompt action
 
 
 

@@ -1,12 +1,11 @@
 module BzoLexer where
 import BzoTypes
 import Data.Char
-import Data.Either
 import Data.List
 import Control.Monad
 import Control.Applicative
 import HigherOrder
-import Debug.Trace
+
 
 
 
@@ -34,7 +33,7 @@ data LexerState = LexerState{
 
 
 makeBzoPos :: LexerState -> BzoPos
-makeBzoPos (LexerState l c o n) = BzoPos l c n
+makeBzoPos (LexerState l c _ n) = BzoPos l c n
 
 
 
@@ -76,9 +75,10 @@ makeLexErr ls =
 runLexer :: String -> Lexer a -> String -> Either BzoErr a
 runLexer fname lx s =
   case (BzoLexer.lex lx s (LexerState 1 1 0 fname)) of
-    Right [(ret, _, [] )] -> Right  ret
-    Right [(_  , s, rem)] -> Left $ LexErr (BzoPos (lsLine s) (lsColumn s) (lsFName s)) "Failed to consume entire input."
-    Left  err             -> Left err
+    Right [(ret,  _, [] )] -> Right  ret
+    Right [(_  , st, _  )] -> Left $ LexErr (BzoPos (lsLine st) (lsColumn st) (lsFName st)) "Failed to consume entire input."
+    Left  err              -> Left err
+    _                      -> Left $ LexErr (BzoPos 0 0 fname) "Bug detected in runLexer in BzoLexer.hs"
 
 
 
@@ -128,7 +128,7 @@ instance Applicative Lexer where
 
 -- | Alternative to pure for applicative lexer. Not sure if it's necessary.
 pureErr :: String -> Lexer a
-pureErr err = Lexer (\s ls -> Left $ LexErr (BzoPos (lsLine ls) (lsColumn ls) (lsFName ls)) err)
+pureErr err = Lexer (\_ ls -> Left $ LexErr (BzoPos (lsLine ls) (lsColumn ls) (lsFName ls)) err)
 
 
 
@@ -158,7 +158,7 @@ instance Monad Lexer where
 
 
 instance MonadPlus Lexer where
-  mzero = Lexer (\s ls -> Left $ makeLexErr ls)
+  mzero = Lexer (\_ ls -> Left $ makeLexErr ls)
   mplus p q = Lexer (\s ls ->
     let ps = (BzoLexer.lex p s ls)
         qs = (BzoLexer.lex q s ls)
@@ -180,7 +180,7 @@ instance Alternative Lexer where
   empty = mzero
   (<|>) p q = Lexer (\s ls ->
     case (BzoLexer.lex p s ls) of
-      Left  err -> (BzoLexer.lex q) s ls
+      Left  _   -> (BzoLexer.lex q) s ls
       Right []  -> (BzoLexer.lex q) s ls
       x         -> x )
 
@@ -317,7 +317,7 @@ toLstLexer lx = Lexer (\s ls ->
 
 lexGenString :: String -> Lexer String
 lexGenString [] = return []
-lexGenString (c:cs) = do { lexChar c; lexGenString cs; return (c:cs)}
+lexGenString (c:cs) = do { _ <- lexChar c; _ <- lexGenString cs; return (c:cs)}
 
 
 
@@ -331,10 +331,9 @@ lexGenString (c:cs) = do { lexChar c; lexGenString cs; return (c:cs)}
 
 lexComment :: Lexer String
 lexComment = do
-  st <- lexChar '"'
+  _  <- lexChar '"'
   cm <- many $ lexExceptChar '"'
-  nd <- lexChar '"'
-  --nl <- many $ lexChar '\n'
+  _  <- lexChar '"'
   return cm
 
 
@@ -348,8 +347,8 @@ lexComment = do
 
 lexGenEscape :: Char -> Char -> Lexer Char
 lexGenEscape ch ret = do
-  a <- lexChar '\\'
-  b <- lexChar ch
+  _ <- lexChar '\\'
+  _ <- lexChar ch
   return ret
 
 
@@ -386,9 +385,9 @@ lexEscape =
 lexString :: Lexer BzoToken
 lexString = do
   pos <- getLexerState
-  st  <- lexChar '\''
+  _   <- lexChar '\''
   sr  <- many (lexEscape <|> (lexExceptChar '\''))
-  nd  <- lexChar '\''
+  _   <- lexChar '\''
   return $ TkStr (makeBzoPos pos) sr
 
 
@@ -402,7 +401,7 @@ lexString = do
 
 lexWhiteSpace :: Lexer BzoToken
 lexWhiteSpace = do
-  a <- lexComment <|> (toLstLexer $ satisfy isSpace)
+  _  <- lexComment <|> (toLstLexer $ satisfy isSpace)
   return TkNil
 
 
@@ -417,7 +416,7 @@ lexWhiteSpace = do
 lexStringToToken :: String -> (BzoPos -> BzoToken) -> Lexer BzoToken
 lexStringToToken st f = do
   p <- getLexerState
-  s <- lexGenString st
+  _ <- lexGenString st
   return $ f (makeBzoPos p)
 
 
@@ -574,8 +573,8 @@ readIntWithBase :: String -> Integer -> Integer
 readIntWithBase sr b =
   let rs = reverse sr
   in  (readDgt rs b)
-    where readDgt [] b = 0
-          readDgt st b =
+    where readDgt [] _ = 0
+          readDgt st base =
             let (s0 : ss) = st
                 n = case s0 of
                   '0' -> 0
@@ -601,7 +600,7 @@ readIntWithBase sr b =
                   'f' -> 15
                   'F' -> 15
                   _   -> -1
-            in (n + (b * (readDgt ss b)))
+            in (n + (base * (readDgt ss base)))
 
 
 
@@ -615,7 +614,7 @@ readIntWithBase sr b =
 lexBinInt :: Lexer BzoToken
 lexBinInt = do
   p  <- getLexerState
-  c0 <- ((lexGenString "0b") <|> (lexGenString "0B"))
+  _  <- ((lexGenString "0b") <|> (lexGenString "0B"))   --c0
   c1 <- some $ satisfy (\c -> elem c "01")
   return (TkInt (makeBzoPos p) (readIntWithBase c1 2))
 
@@ -631,7 +630,7 @@ lexBinInt = do
 lexOctInt :: Lexer BzoToken
 lexOctInt = do
   p  <- getLexerState
-  c0 <- lexGenString "0"
+  _  <- lexGenString "0"    -- c0
   c1 <- some $ satisfy isOctDigit
   return (TkInt (makeBzoPos p) (readIntWithBase c1 8))
 
@@ -662,7 +661,7 @@ lexDecInt = do
 lexHexInt :: Lexer BzoToken
 lexHexInt = do
   p  <- getLexerState
-  c0 <- ((lexGenString "0x") <|> (lexGenString "0X"))
+  _  <- ((lexGenString "0x") <|> (lexGenString "0X"))   -- c0
   c1 <- some $ satisfy isHexDigit
   return (TkInt (makeBzoPos p) (readIntWithBase c1 16))
 
@@ -679,7 +678,7 @@ lexFlt :: Lexer BzoToken
 lexFlt = do
   p  <- getLexerState
   c0 <- some $ satisfy isDigit
-  c1 <- lexGenString "."
+  _  <- lexGenString "."      -- c1
   c2 <- some $ satisfy isDigit
   return (TkFlt (makeBzoPos p) ((fromIntegral $ readIntWithBase c0 10) +
     ((fromIntegral $ readIntWithBase c2 10) / (10 ^ (length c2))) ) )
@@ -696,7 +695,7 @@ lexFlt = do
 lexNewline :: Lexer BzoToken
 lexNewline = do
   p <- getLexerState
-  c <- some $ lexChar '\n'
+  _ <- some $ lexChar '\n'
   return (TkNewline (makeBzoPos p))
 
 
@@ -783,7 +782,7 @@ removeLexerArtifacts prev this =
   case (prev, this) of
     ((TkNewline _), (TkNewline _)) -> TkNil
     (TkNil        , tk1          ) -> tk1
-    (tk0          , tk1          ) -> tk1
+    (_ {- tk0 -}  , tk1          ) -> tk1
 
 
 
