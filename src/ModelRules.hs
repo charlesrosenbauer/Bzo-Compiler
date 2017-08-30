@@ -143,7 +143,7 @@ data TParModel
 
 
 
-data ExprModel
+data ExprModel  -- Not complete yet. More should be added for lambdas, etc.
   = EM_Expr {
       em_pos :: !BzoPos,
       em_exp :: !ExprModel,
@@ -785,3 +785,25 @@ showTypeAST (TA_ExTyLit p x l) = " <Ty: "  ++ x ++ ", from " ++ l ++ "> "
 showTypeAST (TA_ExFnLit p x l) = " <Fn: "  ++ x ++ ", from " ++ l ++ "> "
 showTypeAST (TA_Nil    p)      = " <NIL ()> "
 instance Show TypeAST where show = showTypeAST
+
+
+
+
+
+
+
+
+
+
+showExprModel :: ExprModel -> String
+showExprModel (EM_Expr   _ ex nx) = (show ex) ++ " -> " ++ (show nx)
+showExprModel (EM_Cmpd   _ xs   ) = " ( Cmpd:\n" ++ (concatMap (\x -> "    " ++ (show x) ++ " .\n") xs) ++ ") "
+showExprModel (EM_Poly   _ xs   ) = " ( Poly:\n" ++ (concatMap (\x -> "    " ++ (show x) ++ " ,\n") xs) ++ ") "
+showExprModel (EM_LitInt _ i    ) = " <Int: "  ++ (show i) ++ "> "
+showExprModel (EM_LitFlt _ f    ) = " <Flt: "  ++ (show i) ++ "> "
+showExprModel (EM_LitStr _ s    ) = " <Str: "  ++ (show i) ++ "> "
+showExprModel (EM_Id     _ i    ) = " <Id: "   ++ (show i) ++ "> "
+showExprModel (EM_TyId   _ i    ) = " <Ty: "   ++ (show i) ++ "> "
+showExprModel (EM_BId    _ i    ) = " <BId: "  ++ (show i) ++ "> "
+showExprModel (EM_BTyId  _ i    ) = " <BTy: "  ++ (show i) ++ "> "
+instance Show ExprModel where show = showExprModel
