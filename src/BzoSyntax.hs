@@ -117,7 +117,7 @@ data BzoSyntax
     | BzS_FilterObj {
         pos     :: !BzoPos,
         bzobj   :: !BzoSyntax,
-        filt     :: !BzoSyntax }
+        filt    :: !BzoSyntax }
     | BzS_CurryObj {
         pos     :: !BzoPos,
         bzobj   :: !BzoSyntax,

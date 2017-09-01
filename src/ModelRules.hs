@@ -186,12 +186,31 @@ data ExprModel  -- Not complete yet. More should be added for lambdas, etc.
 
 -- ! Add More Cases for other calls
 data CallAST
-    = CA_TyDefCall {
+    = CA_ContainerCall {
         ca_pos     :: !BzoPos,
         ca_id      :: !String,
         ca_pars    :: !TParModel,
         ca_records :: ![ModelRecord],
         ca_enums   :: ![ModelEnum],
+        ca_tydef   :: !TypeAST }
+    | CA_TypeSetCall {
+        ca_pos     :: !BzoPos,
+        ca_id      :: !String,
+        ca_tydef   :: !TypeAST }
+    | CA_TyDefCall {
+        ca_pos     :: !BzoPos,
+        ca_id      :: !String,
+        ca_records :: ![ModelRecord],
+        ca_enums   :: ![ModelEnum],
+        ca_tydef   :: !TypeAST }
+    | CA_StructCall {
+        ca_pos     :: !BzoPos,
+        ca_id      :: !String,
+        ca_tydef   :: !TypeAST }
+    | CA_ContainerStructCall {
+        ca_pos     :: !BzoPos,
+        ca_id      :: !String,
+        ca_pars    :: !TParModel,
         ca_tydef   :: !TypeAST }
     | CA_FTDefCall {
         ca_pos     :: !BzoPos,
@@ -662,7 +681,7 @@ modelCalls (BzS_TypDef p prs t df) =
       rs' = map (\(ModelRecord rp ri _ rt) -> (ModelRecord rp ri t rt)) $ concat rs
       es' = map (\(ModelEnum   ep ei _ et) -> (ModelEnum   ep ei t et)) $ concat es
   in case er of
-      []  -> Right [(CA_TyDefCall p t psr rs' es' (head xs))]
+      []  -> Right [(CA_ContainerCall p t psr rs' es' (head xs))]
       ers -> Left ers
 
 modelCalls (BzS_FnTypeDef p t (BzS_FnTy _ i o)) =
@@ -729,12 +748,23 @@ instance Show ModelRecord where show = showRecord
 
 
 showCallAST :: CallAST -> String
-showCallAST (CA_TyDefCall p i s r e t) = " {TyDef: " ++ i ++
+showCallAST (CA_ContainerCall        p i s r e t) = " {TyDef: " ++ i ++
                                             "\n   PARS: " ++ (show s) ++
                                             "\n   RECS: " ++ (concatMap (\x -> (show x) ++ ", ") r) ++
                                             "\n   ENMS: " ++ (concatMap (\x -> (show x) ++ ", ") e) ++
                                             "\n   DEF : " ++ (show t) ++ " }\n"
-showCallAST (CA_FTDefCall p x i o)   = " {FnTyDef: " ++ x ++
+showCallAST (CA_TyDefCall            p i   r e t) = " {TyDef: " ++ i ++
+                                            "\n   RECS: " ++ (concatMap (\x -> (show x) ++ ", ") r) ++
+                                            "\n   ENMS: " ++ (concatMap (\x -> (show x) ++ ", ") e) ++
+                                            "\n   DEF : " ++ (show t) ++ " }\n"
+showCallAST (CA_TypeSetCall          p i       t) = " {TyDef: " ++ i ++
+                                            "\n   DEF : " ++ (show t) ++ " }\n"
+showCallAST (CA_StructCall           p i       t) = " {TyDef: " ++ i ++
+                                            "\n   DEF : " ++ (show t) ++ " }\n"
+showCallAST (CA_ContainerStructCall  p i s     t) = " {TyDef: " ++ i ++
+                                            "\n   PARS: " ++ (show s) ++
+                                            "\n   DEF : " ++ (show t) ++ " }\n"
+showCallAST (CA_FTDefCall            p x i o)   = " {FnTyDef: " ++ x ++
                                             "\n   INPUT : " ++ (show i) ++
                                             "\n   OUTPUT: " ++ (show o)
 instance Show CallAST where show = showCallAST
@@ -800,8 +830,8 @@ showExprModel (EM_Expr   _ ex nx) = (show ex) ++ " -> " ++ (show nx)
 showExprModel (EM_Cmpd   _ xs   ) = " ( Cmpd:\n" ++ (concatMap (\x -> "    " ++ (show x) ++ " .\n") xs) ++ ") "
 showExprModel (EM_Poly   _ xs   ) = " ( Poly:\n" ++ (concatMap (\x -> "    " ++ (show x) ++ " ,\n") xs) ++ ") "
 showExprModel (EM_LitInt _ i    ) = " <Int: "  ++ (show i) ++ "> "
-showExprModel (EM_LitFlt _ f    ) = " <Flt: "  ++ (show i) ++ "> "
-showExprModel (EM_LitStr _ s    ) = " <Str: "  ++ (show i) ++ "> "
+showExprModel (EM_LitFlt _ f    ) = " <Flt: "  ++ (show f) ++ "> "
+showExprModel (EM_LitStr _ s    ) = " <Str: "  ++ (show s) ++ "> "
 showExprModel (EM_Id     _ i    ) = " <Id: "   ++ (show i) ++ "> "
 showExprModel (EM_TyId   _ i    ) = " <Ty: "   ++ (show i) ++ "> "
 showExprModel (EM_BId    _ i    ) = " <BId: "  ++ (show i) ++ "> "
