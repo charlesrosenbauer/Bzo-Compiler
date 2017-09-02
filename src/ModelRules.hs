@@ -680,9 +680,17 @@ modelCalls (BzS_TypDef p prs t df) =
       (xs, rs, es) = unzip3 $ rights df'
       rs' = map (\(ModelRecord rp ri _ rt) -> (ModelRecord rp ri t rt)) $ concat rs
       es' = map (\(ModelEnum   ep ei _ et) -> (ModelEnum   ep ei t et)) $ concat es
-  in case er of
-      []  -> Right [(CA_ContainerCall p t psr rs' es' (head xs))]
-      ers -> Left ers
+      isTSet = istypeset $ head xs
+  in case (er, rs', es', psr, isTSet) of
+      ([], [], [], TParNil, False) -> Right [(CA_StructCall          p t          (head xs))]
+      ([], [], [], TParNil, True ) -> Right [(CA_TypeSetCall         p t          (head xs))]
+      ([], [], [], psr'   , _    ) -> Right [(CA_ContainerStructCall p t psr'     (head xs))]
+      ([], r , e , TParNil, _    ) -> Right [(CA_TyDefCall           p t      r e (head xs))]
+      ([], r , e , psr'   , _    ) -> Right [(CA_ContainerCall       p t psr' r e (head xs))]
+      (ers, _,  _, _      , _    ) -> Left ers
+  where istypeset (TA_Poly _ _  ) = True
+        istypeset (TA_Filt _ _ _) = True
+        istypeset _               = False
 
 modelCalls (BzS_FnTypeDef p t (BzS_FnTy _ i o)) =
   let i'  = [modelBasicType i]
@@ -748,7 +756,7 @@ instance Show ModelRecord where show = showRecord
 
 
 showCallAST :: CallAST -> String
-showCallAST (CA_ContainerCall        p i s r e t) = " {TyDef: " ++ i ++
+showCallAST (CA_ContainerCall        p i s r e t) = " {TyContainerDef: " ++ i ++
                                             "\n   PARS: " ++ (show s) ++
                                             "\n   RECS: " ++ (concatMap (\x -> (show x) ++ ", ") r) ++
                                             "\n   ENMS: " ++ (concatMap (\x -> (show x) ++ ", ") e) ++
@@ -757,11 +765,11 @@ showCallAST (CA_TyDefCall            p i   r e t) = " {TyDef: " ++ i ++
                                             "\n   RECS: " ++ (concatMap (\x -> (show x) ++ ", ") r) ++
                                             "\n   ENMS: " ++ (concatMap (\x -> (show x) ++ ", ") e) ++
                                             "\n   DEF : " ++ (show t) ++ " }\n"
-showCallAST (CA_TypeSetCall          p i       t) = " {TyDef: " ++ i ++
+showCallAST (CA_TypeSetCall          p i       t) = " {TySetDef: " ++ i ++
                                             "\n   DEF : " ++ (show t) ++ " }\n"
-showCallAST (CA_StructCall           p i       t) = " {TyDef: " ++ i ++
+showCallAST (CA_StructCall           p i       t) = " {TyStructDef: " ++ i ++
                                             "\n   DEF : " ++ (show t) ++ " }\n"
-showCallAST (CA_ContainerStructCall  p i s     t) = " {TyDef: " ++ i ++
+showCallAST (CA_ContainerStructCall  p i s     t) = " {TyContainerStructDef: " ++ i ++
                                             "\n   PARS: " ++ (show s) ++
                                             "\n   DEF : " ++ (show t) ++ " }\n"
 showCallAST (CA_FTDefCall            p x i o)   = " {FnTyDef: " ++ x ++
