@@ -217,6 +217,30 @@ data CallAST
         ca_id      :: !String,
         ca_intype  :: !TypeAST,
         ca_extype  :: !TypeAST }
+    | CA_TacitCall {
+        ca_pos     :: !BzoPos,
+        ca_id      :: !String,
+        ca_fndef   :: !ExprModel }
+    | CA_AliasCall {
+        ca_pos     :: !BzoPos,
+        ca_id      :: !String,
+        ca_fndef   :: !ExprModel }
+    | CA_TacitInCall {
+        ca_pos     :: !BzoPos,
+        ca_id      :: !String,
+        --ca_in      :: !FParModel,
+        ca_fndef   :: !ExprModel }
+    | CA_TacitOutCall {
+        ca_pos     :: !BzoPos,
+        ca_id      :: !String,
+        --ca_ex      :: !FParModel,
+        ca_fndef   :: !ExprModel }
+    | CA_FunctionCall {
+        ca_pos     :: !BzoPos,
+        ca_id      :: !String,
+        --ca_in      :: !FParModel,
+        --ca_ex      :: !FParModel,
+        ca_fndef   :: !ExprModel }
 
 
 
@@ -700,6 +724,15 @@ modelCalls (BzS_FnTypeDef p t (BzS_FnTy _ i o)) =
       oty = head $ rights o'    --
   in case er of
       []  -> Right [(CA_FTDefCall p t ity oty)]
+      ers -> Left ers
+
+modelCalls (BzS_FunDef p i f e x) =
+  let x' = [modelExpr x]
+      -- model inpars (i)
+      -- model expars (e)
+      er = concat $ lefts x'
+  in case er of
+      []  -> Right [(CA_TacitCall p f (head $ rights x'))]
       ers -> Left ers
 
 
