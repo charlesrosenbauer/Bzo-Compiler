@@ -662,6 +662,8 @@ modelExpr (BzS_Int    p i ) = Right $ EM_LitInt p i
 modelExpr (BzS_Flt    p f ) = Right $ EM_LitFlt p f
 modelExpr (BzS_Str    p s ) = Right $ EM_LitStr p s
 
+modelExpr (BzS_Expr   p [x]) = modelExpr x
+
 modelExpr (BzS_Cmpd   p xs) =
   let xs' = map modelExpr xs
       xsl = lefts  xs'
@@ -677,6 +679,14 @@ modelExpr (BzS_Poly   p xs) =
   in case xsl of
       [] -> Right $ EM_Poly p xsr
       er -> Left $ concat er
+
+modelExpr (BzS_Expr   p (x:xs)) =
+  let x'  = [modelExpr x ]
+      xs' = [modelExpr (BzS_Expr (pos $ head xs) xs)]
+      ers = concat $ lefts (x' ++ xs')
+  in case ers of
+      [] -> Right $ EM_Expr p (head $ rights x') (head $ rights xs')
+      er -> Left er
 
 
 
@@ -807,7 +817,9 @@ showCallAST (CA_ContainerStructCall  p i s     t) = " {TyContainerStructDef: " +
                                             "\n   DEF : " ++ (show t) ++ " }\n"
 showCallAST (CA_FTDefCall            p x i o)   = " {FnTyDef: " ++ x ++
                                             "\n   INPUT : " ++ (show i) ++
-                                            "\n   OUTPUT: " ++ (show o)
+                                            "\n   OUTPUT: " ++ (show o) ++ " }\n"
+showCallAST (CA_TacitCall            p f d)     = " {TacitFunDef: " ++ f ++
+                                            "\n   DEF : " ++ (show d) ++ " }\n"
 instance Show CallAST where show = showCallAST
 
 
