@@ -144,7 +144,10 @@ data TParModel
 
 
 data ExprModel  -- Not complete yet. More should be added for lambdas, etc.
-  = EM_Expr {
+  = EM_Block {
+      em_pos :: !BzoPos,
+      em_exs :: ![ExprModel] }
+  | EM_Expr {
       em_pos :: !BzoPos,
       em_exp :: !ExprModel,
       em_nxt :: !ExprModel }
@@ -664,6 +667,14 @@ modelExpr (BzS_Str    p s ) = Right $ EM_LitStr p s
 
 modelExpr (BzS_Expr   p [x]) = modelExpr x
 
+modelExpr (BzS_Block  p xs ) =
+  let xs' = map modelExpr xs
+      xsl = lefts  xs'
+      xsr = rights xs'
+  in case xsl of
+      [] -> Right $ EM_Block p xsr
+      er -> Left  $ concat er
+
 modelExpr (BzS_Cmpd   p xs) =
   let xs' = map modelExpr xs
       xsl = lefts  xs'
@@ -879,6 +890,7 @@ instance Show TypeAST where show = showTypeAST
 
 
 showExprModel :: ExprModel -> String
+showExprModel (EM_Block  _ xs   ) = " { Block:\n" ++ (concatMap (\x -> "  " ++ (show x) ++ "\n") xs) ++ "} "
 showExprModel (EM_Expr   _ ex nx) = (show ex) ++ " -> " ++ (show nx)
 showExprModel (EM_Cmpd   _ xs   ) = " ( Cmpd:\n" ++ (concatMap (\x -> "    " ++ (show x) ++ " .\n") xs) ++ ") "
 showExprModel (EM_Poly   _ xs   ) = " ( Poly:\n" ++ (concatMap (\x -> "    " ++ (show x) ++ " ,\n") xs) ++ ") "
