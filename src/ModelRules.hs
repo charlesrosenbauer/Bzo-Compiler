@@ -151,6 +151,9 @@ data ExprModel  -- Not complete yet. More should be added for lambdas, etc.
       em_pos :: !BzoPos,
       em_exp :: !ExprModel,
       em_nxt :: !ExprModel }
+  | EM_Map {
+      em_pos :: !BzoPos,
+      em_exp :: !ExprModel }
   | EM_Cmpd {
       em_pos :: !BzoPos,
       em_xs  :: ![ExprModel] }
@@ -166,6 +169,9 @@ data ExprModel  -- Not complete yet. More should be added for lambdas, etc.
   | EM_LitStr {
       em_pos :: !BzoPos,
       em_str :: !String }
+  | EM_MId {
+      em_pos :: !BzoPos,
+      em_id  :: !String }
   | EM_Id {
       em_pos :: !BzoPos,
       em_id  :: !String }
@@ -178,6 +184,18 @@ data ExprModel  -- Not complete yet. More should be added for lambdas, etc.
   | EM_BTyId {
       em_pos :: !BzoPos,
       em_id  :: !String }
+  | EM_Wildcard {
+      em_pos :: !BzoPos }
+  | EM_Nil {
+      em_pos :: !BzoPos }
+  | EM_ExFun {
+      em_pos :: !BzoPos,
+      em_id  :: !String,
+      em_loc :: !String }
+  | EM_ExTyp {
+      em_pos :: !BzoPos,
+      em_id  :: !String,
+      em_loc :: !String }
 
 
 
@@ -657,15 +675,25 @@ modelTPars x                      = Left [SntxErr (pos x) "Invalid Definition of
 
 
 modelExpr :: BzoSyntax -> Either [BzoErr] ExprModel
-modelExpr (BzS_Id     p i ) = Right $ EM_Id     p i
-modelExpr (BzS_TyId   p i ) = Right $ EM_TyId   p i
-modelExpr (BzS_BId    p i ) = Right $ EM_BId    p i
-modelExpr (BzS_BTId   p i ) = Right $ EM_BTyId  p i
-modelExpr (BzS_Int    p i ) = Right $ EM_LitInt p i
-modelExpr (BzS_Flt    p f ) = Right $ EM_LitFlt p f
-modelExpr (BzS_Str    p s ) = Right $ EM_LitStr p s
+modelExpr (BzS_Id       p i  ) = Right $ EM_Id       p i
+modelExpr (BzS_TyId     p i  ) = Right $ EM_TyId     p i
+modelExpr (BzS_BId      p i  ) = Right $ EM_BId      p i
+modelExpr (BzS_BTId     p i  ) = Right $ EM_BTyId    p i
+modelExpr (BzS_Int      p i  ) = Right $ EM_LitInt   p i
+modelExpr (BzS_Flt      p f  ) = Right $ EM_LitFlt   p f
+modelExpr (BzS_Str      p s  ) = Right $ EM_LitStr   p s
+modelExpr (BzS_ExFunObj p i l) = Right $ EM_ExFun    p i l
+modelExpr (BzS_ExTypObj p i l) = Right $ EM_ExTyp    p i l
+modelExpr (BzS_Wildcard p    ) = Right $ EM_Wildcard p
+modelExpr (BzS_Nil      p    ) = Right $ EM_Nil      p
 
 modelExpr (BzS_Expr   p [x]) = modelExpr x
+
+modelExpr (BzS_MapObj p x ) =
+  let x' = modelExpr x
+  in case (lefts [x']) of
+      [] -> Right $ EM_Map p $ head $ rights [x']
+      er -> Left  $ concat er
 
 modelExpr (BzS_Block  p xs ) =
   let xs' = map modelExpr xs
@@ -892,13 +920,18 @@ instance Show TypeAST where show = showTypeAST
 showExprModel :: ExprModel -> String
 showExprModel (EM_Block  _ xs   ) = " { Block:\n" ++ (concatMap (\x -> "  " ++ (show x) ++ "\n") xs) ++ "} "
 showExprModel (EM_Expr   _ ex nx) = (show ex) ++ " -> " ++ (show nx)
+showExprModel (EM_Map    _ ex   ) = " <Map: " ++ (show ex) ++ " .. > "
 showExprModel (EM_Cmpd   _ xs   ) = " ( Cmpd:\n" ++ (concatMap (\x -> "    " ++ (show x) ++ " .\n") xs) ++ ") "
 showExprModel (EM_Poly   _ xs   ) = " ( Poly:\n" ++ (concatMap (\x -> "    " ++ (show x) ++ " ,\n") xs) ++ ") "
 showExprModel (EM_LitInt _ i    ) = " <Int: "  ++ (show i) ++ "> "
 showExprModel (EM_LitFlt _ f    ) = " <Flt: "  ++ (show f) ++ "> "
-showExprModel (EM_LitStr _ s    ) = " <Str: "  ++ (show s) ++ "> "
-showExprModel (EM_Id     _ i    ) = " <Id: "   ++ (show i) ++ "> "
-showExprModel (EM_TyId   _ i    ) = " <Ty: "   ++ (show i) ++ "> "
-showExprModel (EM_BId    _ i    ) = " <BId: "  ++ (show i) ++ "> "
-showExprModel (EM_BTyId  _ i    ) = " <BTy: "  ++ (show i) ++ "> "
+showExprModel (EM_LitStr _ s    ) = " <Str: "  ++ s ++ "> "
+showExprModel (EM_Id     _ i    ) = " <Id: "   ++ i ++ "> "
+showExprModel (EM_TyId   _ i    ) = " <Ty: "   ++ i ++ "> "
+showExprModel (EM_BId    _ i    ) = " <BId: "  ++ i ++ "> "
+showExprModel (EM_BTyId  _ i    ) = " <BTy: "  ++ i ++ "> "
+showExprModel (EM_ExFun  _ i  l ) = " <ExFn: " ++ i ++ " from " ++ l ++ "> "
+showExprModel (EM_ExTyp  _ i  l ) = " <ExTy: " ++ i ++ " from " ++ l ++ "> "
+showExprModel (EM_Wildcard _    ) = " _ "
+showExprModel (EM_Nil      _    ) = " () "
 instance Show ExprModel where show = showExprModel
