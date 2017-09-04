@@ -95,10 +95,10 @@ data TypeAST
 
 
 data ModelRecord = ModelRecord{
-    mr_pos    :: BzoPos,
-    mr_name   :: String,
-    mr_parent :: String,
-    mr_type   :: TypeAST }
+    mr_pos    :: !BzoPos,
+    mr_name   :: !String,
+    mr_parent :: !String,
+    mr_type   :: !TypeAST }
 
 
 
@@ -110,10 +110,10 @@ data ModelRecord = ModelRecord{
 
 
 data ModelEnum = ModelEnum{
-    me_pos    :: BzoPos,
-    me_name   :: String,
-    me_parent :: String,
-    me_type   :: TypeAST }
+    me_pos    :: !BzoPos,
+    me_name   :: !String,
+    me_parent :: !String,
+    me_type   :: !TypeAST }
 
 
 
@@ -126,13 +126,32 @@ data ModelEnum = ModelEnum{
 
 data TParModel
   = TParModel {
-      tp_pos :: BzoPos,
-      tp_pars :: [TParModel] }
+      tp_pos  :: !BzoPos,
+      tp_pars :: ![TParModel] }
   | TParVar   {
-      tp_pos :: BzoPos,
-      tp_id   :: String,
-      tp_filt :: TypeAST }
+      tp_pos  :: !BzoPos,
+      tp_id   :: !String,
+      tp_filt :: !TypeAST }
   | TParNil
+
+
+
+
+
+
+
+
+
+
+data FParModel
+  = FParModel {
+      fp_pos  :: !BzoPos,
+      fp_pars :: ![FParModel] }
+  | FParVar {
+      fp_pos  :: !BzoPos,
+      fp_id   :: !String,
+      fp_filt :: !TypeAST }
+  | FParNil
 
 
 
@@ -160,7 +179,7 @@ data ExprModel
       em_typ :: !TypeAST }
   | EM_Lambda {
       em_pos :: !BzoPos,
-      --em_par :: !FParModel,
+      em_par :: !FParModel,
       em_def :: !ExprModel }
   | EM_Curry {
       em_pos :: !BzoPos,
@@ -261,18 +280,18 @@ data CallAST
     | CA_TacitInCall {
         ca_pos     :: !BzoPos,
         ca_id      :: !String,
-        --ca_in      :: !FParModel,
+        ca_in      :: !FParModel,
         ca_fndef   :: !ExprModel }
     | CA_TacitOutCall {
         ca_pos     :: !BzoPos,
         ca_id      :: !String,
-        --ca_ex      :: !FParModel,
+        ca_ex      :: !FParModel,
         ca_fndef   :: !ExprModel }
     | CA_FunctionCall {
         ca_pos     :: !BzoPos,
         ca_id      :: !String,
-        --ca_in      :: !FParModel,
-        --ca_ex      :: !FParModel,
+        ca_in      :: !FParModel,
+        ca_ex      :: !FParModel,
         ca_fndef   :: !ExprModel }
 
 
@@ -708,7 +727,7 @@ modelExpr (BzS_Lambda p prs df) =
       --prs' = [modelFPars prs]
       ers  = (lefts df') -- ++ (lefts prs')
   in case ers of
-      [] -> Right $ EM_Lambda p (head $ rights df')
+      [] -> Right $ EM_Lambda p FParNil (head $ rights df')
       er -> Left  $ concat er
 
 modelExpr (BzS_FilterObj p x filt) =
@@ -915,6 +934,21 @@ instance Show TParModel where show = showTParModel
 
 
 
+showFParModel :: FParModel -> String
+showFParModel (FParModel p ps  ) = " ( " ++ (concatMap show ps) ++ " ) "
+showFParModel (FParVar   p x  f) = " { " ++ x ++ " : " ++ (show f) ++ " }, "
+showFParModel (FParNil)          = " N/A "
+instance Show FParModel where show = showFParModel
+
+
+
+
+
+
+
+
+
+
 showTypeAST :: TypeAST -> String
 showTypeAST (TA_Cmpd   p xs)   = " ( Cmpd:\n" ++ (concatMap (\x -> "    " ++ (show x) ++ " .\n") xs) ++ ") "
 showTypeAST (TA_Poly   p xs)   = " ( Poly:\n" ++ (concatMap (\x -> "    " ++ (show x) ++ " ,\n") xs) ++ ") "
@@ -951,7 +985,7 @@ showExprModel :: ExprModel -> String
 showExprModel (EM_Block  _ xs   ) = " { Block:\n" ++ (concatMap (\x -> "  " ++ (show x) ++ "\n") xs) ++ "} "
 showExprModel (EM_Expr   _ ex nx) = (show ex) ++ " -> " ++ (show nx)
 showExprModel (EM_Map    _ ex   ) = " <Map: " ++ (show ex) ++ " .. > "
-showExprModel (EM_Lambda _ df   ) = " ( λ : " ++  (show df) ++ ") " -- Add parameters later
+showExprModel (EM_Lambda _ ps df) = " ( λ " ++ (show ps) ++ " . " ++  (show df) ++ ") " -- Add parameters later
 showExprModel (EM_Filt   _ ex tp) = " ( Filt: " ++ (show ex) ++ " ∪ " ++ (show tp) ++ ") "
 showExprModel (EM_Curry  _ is ex) = " ( " ++ (concatMap (\x -> (show x) ++ " → ") is) ++ " ⇒ " ++ (show ex) ++ ") "
 showExprModel (EM_Cmpd   _ xs   ) = " ( Cmpd:\n" ++ (concatMap (\x -> "    " ++ (show x) ++ " .\n") xs) ++ ") "
