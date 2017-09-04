@@ -143,7 +143,7 @@ data TParModel
 
 
 
-data ExprModel  -- Not complete yet. More should be added for lambdas, etc.
+data ExprModel
   = EM_Block {
       em_pos :: !BzoPos,
       em_exs :: ![ExprModel] }
@@ -153,6 +153,18 @@ data ExprModel  -- Not complete yet. More should be added for lambdas, etc.
       em_nxt :: !ExprModel }
   | EM_Map {
       em_pos :: !BzoPos,
+      em_exp :: !ExprModel }
+  | EM_Filt {
+      em_pos :: !BzoPos,
+      em_exp :: !ExprModel,
+      em_typ :: !TypeAST }
+  | EM_Lambda {
+      em_pos :: !BzoPos,
+      --em_par :: !FParModel,
+      em_def :: !ExprModel }
+  | EM_Curry {
+      em_pos :: !BzoPos,
+      em_ins :: ![ExprModel],
       em_exp :: !ExprModel }
   | EM_Cmpd {
       em_pos :: !BzoPos,
@@ -675,6 +687,7 @@ modelTPars x                      = Left [SntxErr (pos x) "Invalid Definition of
 
 
 modelExpr :: BzoSyntax -> Either [BzoErr] ExprModel
+modelExpr (BzS_MId      p i  ) = Right $ EM_MId      p i
 modelExpr (BzS_Id       p i  ) = Right $ EM_Id       p i
 modelExpr (BzS_TyId     p i  ) = Right $ EM_TyId     p i
 modelExpr (BzS_BId      p i  ) = Right $ EM_BId      p i
@@ -686,8 +699,25 @@ modelExpr (BzS_ExFunObj p i l) = Right $ EM_ExFun    p i l
 modelExpr (BzS_ExTypObj p i l) = Right $ EM_ExTyp    p i l
 modelExpr (BzS_Wildcard p    ) = Right $ EM_Wildcard p
 modelExpr (BzS_Nil      p    ) = Right $ EM_Nil      p
+modelExpr (BzS_Box      p   x) = modelExpr x
 
 modelExpr (BzS_Expr   p [x]) = modelExpr x
+
+modelExpr (BzS_Lambda p prs df) =
+  let df'  = [modelExpr df]
+      --prs' = [modelFPars prs]
+      ers  = (lefts df') -- ++ (lefts prs')
+  in case ers of
+      [] -> Right $ EM_Lambda p (head $ rights df')
+      er -> Left  $ concat er
+
+modelExpr (BzS_FilterObj p x filt) =
+  let x'   = [modelExpr x]
+      flt' = [modelBasicType filt]
+      ers  = (lefts x') ++ (lefts flt')
+  in case ers of
+      [] -> Right $ EM_Filt p (head $ rights x') (head $ rights flt')
+      er -> Left  $ concat er
 
 modelExpr (BzS_MapObj p x ) =
   let x' = modelExpr x
@@ -921,11 +951,15 @@ showExprModel :: ExprModel -> String
 showExprModel (EM_Block  _ xs   ) = " { Block:\n" ++ (concatMap (\x -> "  " ++ (show x) ++ "\n") xs) ++ "} "
 showExprModel (EM_Expr   _ ex nx) = (show ex) ++ " -> " ++ (show nx)
 showExprModel (EM_Map    _ ex   ) = " <Map: " ++ (show ex) ++ " .. > "
+showExprModel (EM_Lambda _ df   ) = " ( λ : " ++  (show df) ++ ") " -- Add parameters later
+showExprModel (EM_Filt   _ ex tp) = " ( Filt: " ++ (show ex) ++ " ∪ " ++ (show tp) ++ ") "
+showExprModel (EM_Curry  _ is ex) = " ( " ++ (concatMap (\x -> (show x) ++ " → ") is) ++ " ⇒ " ++ (show ex) ++ ") "
 showExprModel (EM_Cmpd   _ xs   ) = " ( Cmpd:\n" ++ (concatMap (\x -> "    " ++ (show x) ++ " .\n") xs) ++ ") "
 showExprModel (EM_Poly   _ xs   ) = " ( Poly:\n" ++ (concatMap (\x -> "    " ++ (show x) ++ " ,\n") xs) ++ ") "
 showExprModel (EM_LitInt _ i    ) = " <Int: "  ++ (show i) ++ "> "
 showExprModel (EM_LitFlt _ f    ) = " <Flt: "  ++ (show f) ++ "> "
 showExprModel (EM_LitStr _ s    ) = " <Str: "  ++ s ++ "> "
+showExprModel (EM_MId    _ i    ) = " <MId: "  ++ i ++ "> "
 showExprModel (EM_Id     _ i    ) = " <Id: "   ++ i ++ "> "
 showExprModel (EM_TyId   _ i    ) = " <Ty: "   ++ i ++ "> "
 showExprModel (EM_BId    _ i    ) = " <BId: "  ++ i ++ "> "
