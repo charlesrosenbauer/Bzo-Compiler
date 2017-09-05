@@ -705,6 +705,39 @@ modelTPars x                      = Left [SntxErr (pos x) "Invalid Definition of
 
 
 
+modelFPars :: BzoSyntax -> Either [BzoErr] FParModel
+modelFPars (BzS_Id p x   ) = Right (FParVar p x (TA_Nil p))
+modelFPars (BzS_FilterObj p (BzS_Id _ x) f ) =
+  let f' = [modelBasicType f]
+      fl = lefts f'
+      fr = rights f'
+  in case fl of
+      [] -> Right (FParVar p x (head fr))
+      er -> Left $ concat fl
+
+modelFPars (BzS_Expr      p [x] ) = modelFPars x
+modelFPars (BzS_Box       p x   ) = modelFPars x
+modelFPars (BzS_Poly      p _   ) = Left [SntxErr p "Unexpected Polymorphic Expression as Function Parameters"]
+modelFPars (BzS_Cmpd      p xs  ) =
+  let xs' = map modelFPars xs
+      xrs = rights xs'
+      xls = lefts  xs'
+  in case xls of
+      [] -> Right (FParModel p xrs)
+      er -> Left  $ concat er
+
+modelFPars (BzS_Undefined)        = Right FParNil
+modelFPars x                      = Left [SntxErr (pos x) "Invalid Definition of Function Parameter"]
+
+
+
+
+
+
+
+
+
+
 modelExpr :: BzoSyntax -> Either [BzoErr] ExprModel
 modelExpr (BzS_MId      p i  ) = Right $ EM_MId      p i
 modelExpr (BzS_Id       p i  ) = Right $ EM_Id       p i
@@ -724,10 +757,10 @@ modelExpr (BzS_Expr   p [x]) = modelExpr x
 
 modelExpr (BzS_Lambda p prs df) =
   let df'  = [modelExpr df]
-      --prs' = [modelFPars prs]
-      ers  = (lefts df') -- ++ (lefts prs')
+      prs' = [modelFPars prs]
+      ers  = (lefts df') ++ (lefts prs')
   in case ers of
-      [] -> Right $ EM_Lambda p FParNil (head $ rights df')
+      [] -> Right $ EM_Lambda p (head $ rights prs') (head $ rights df')
       er -> Left  $ concat er
 
 modelExpr (BzS_FilterObj p x filt) =
@@ -826,12 +859,17 @@ modelCalls (BzS_FnTypeDef p t (BzS_FnTy _ i o)) =
 
 modelCalls (BzS_FunDef p i f e x) =
   let x' = [modelExpr x]
-      -- model inpars (i)
-      -- model expars (e)
-      er = concat $ lefts x'
-  in case er of
-      []  -> Right [(CA_TacitCall p f (head $ rights x'))]
-      ers -> Left ers
+      i' = [modelFPars i]
+      e' = [modelFPars e]
+      er = (lefts x') ++ (lefts i') ++ (lefts e')
+      ri = head $ rights i'
+      re = head $ rights e'
+  in case (er, ri, re) of
+      ([] , FParNil, FParNil) -> Right [(CA_TacitCall    p f               (head $ rights x'))]
+      ([] , inpars , FParNil) -> Right [(CA_TacitOutCall p f inpars        (head $ rights x'))]
+      ([] , FParNil, expars ) -> Right [(CA_TacitInCall  p f        expars (head $ rights x'))]
+      ([] , inpars , expars ) -> Right [(CA_FunctionCall p f inpars expars (head $ rights x'))]
+      (ers, _,       _      ) -> Left $ concat ers
 
 
 
@@ -908,6 +946,18 @@ showCallAST (CA_FTDefCall            p x i o)   = " {FnTyDef: " ++ x ++
                                             "\n   OUTPUT: " ++ (show o) ++ " }\n"
 showCallAST (CA_TacitCall            p f d)     = " {TacitFunDef: " ++ f ++
                                             "\n   DEF : " ++ (show d) ++ " }\n"
+showCallAST (CA_AliasCall            p f d)     = " {AliasFunDef: " ++ f ++
+                                            "\n   DEF : " ++ (show d) ++ " }\n"
+showCallAST (CA_TacitInCall          p f i d)   = " {TacitInCall: " ++ f ++
+                                            "\n   IN PARS : " ++ (show i) ++
+                                            "\n   DEF     : " ++ (show d) ++ " }\n"
+showCallAST (CA_TacitOutCall         p f e d)   = " {TacitInCall: " ++ f ++
+                                            "\n   OUT PARS : " ++ (show e) ++
+                                            "\n   DEF      : " ++ (show d) ++ " }\n"
+showCallAST (CA_FunctionCall         p f i e d) = " {FunctionCall: " ++ f ++
+                                            "\n   IN  PARS : " ++ (show i) ++
+                                            "\n   OUT PARS : " ++ (show e) ++
+                                            "\n   DEF      : " ++ (show d) ++ " }\n"
 instance Show CallAST where show = showCallAST
 
 
