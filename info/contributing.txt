@@ -3,10 +3,7 @@ This file is a quick explanation of how the code is organized and what work curr
 
 
 High Priority Goals:
-    * Get Function Modelling in ModelRules.hs working.
-        * Expression Modelling
-        * Pattern Modelling
-        * Variable Hint Modelling
+    * Implement Variable Hint Modelling
     * Get External Hint and REPL Modelling in ModelRules.hs working.
 
 Medium Priority Goals:
