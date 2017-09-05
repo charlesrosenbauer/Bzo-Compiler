@@ -554,7 +554,15 @@ modelBasicType (BzS_Expr p (x:xs)) =
       [] -> Right (TA_Expr p vlx vly)
       er -> Left $ concat er
 
-modelBasicType (BzS_CurryObj p o x) = Left [SntxErr p "Currying in type expressions is currently not permitted."]
+modelBasicType (BzS_CurryObj p o x) =
+  let o'  = [modelBasicType o]
+      x'  = map modelBasicType x
+      ers = concat $ (lefts o') ++ (lefts x')
+      vlo = head $ rights o'
+      vlx = rights x'
+  in case ers of
+      [] -> Right $ TA_Curry p vlx vlo
+      er -> Left  er
 
 modelBasicType s = Left [SntxErr (pos s) "Unexpected Component of Type Expression."]
 
@@ -650,16 +658,24 @@ modelType (BzS_ArrayObj p o a) =
       er -> Left  $ concat er
 
 modelType (BzS_Expr p (x:xs)) =
-  let !x'  = [modelType x]
-      !xs' = [modelType (BzS_Expr (pos $ head xs) xs)]
+  let !x'  = [modelBasicType x]
+      !xs' = [modelBasicType (BzS_Expr (pos $ head xs) xs)]
       ers  = (lefts x') ++ (lefts xs')
-      (vlx, rs0, es0) = head $ rights x'
-      (vly, rs1, es1) = head $ rights xs'
+      vlx = head $ rights x'
+      vly = head $ rights xs'
   in case (ers) of
-      [] -> Right ((TA_Expr p vlx vly), (rs0 ++ rs1), (es0 ++ es1))
+      [] -> Right ((TA_Expr p vlx vly), [], [])
       er -> Left $ concat er
 
-modelType (BzS_CurryObj p o x) = Left [SntxErr p "Currying in type expressions is currently not permitted."]
+modelType (BzS_CurryObj p o x) =
+  let o'  = [modelBasicType o]
+      x'  = map modelBasicType x
+      ers = concat $ (lefts o') ++ (lefts x')
+      vlo = head $ rights o'
+      vlx = rights x'
+  in case ers of
+      [] -> Right $ ((TA_Curry p vlx vlo), [], [])
+      er -> Left  er
 
 modelType s = Left [SntxErr (pos s) "Unexpected Component of Type Expression."]
 
@@ -754,6 +770,14 @@ modelExpr (BzS_Nil      p    ) = Right $ EM_Nil      p
 modelExpr (BzS_Box      p   x) = modelExpr x
 
 modelExpr (BzS_Expr   p [x]) = modelExpr x
+
+modelExpr (BzS_CurryObj p x crs) =
+  let x'   = [modelExpr x]
+      crs' = map modelExpr crs
+      ers = concat $ (lefts x') ++ (lefts crs')
+  in case ers of
+      [] -> Right $ EM_Curry p (rights crs') (head $ rights x')
+      er -> Left  er
 
 modelExpr (BzS_Lambda p prs df) =
   let df'  = [modelExpr df]
@@ -1003,11 +1027,11 @@ showTypeAST :: TypeAST -> String
 showTypeAST (TA_Cmpd   p xs)   = " ( Cmpd:\n" ++ (concatMap (\x -> "    " ++ (show x) ++ " .\n") xs) ++ ") "
 showTypeAST (TA_Poly   p xs)   = " ( Poly:\n" ++ (concatMap (\x -> "    " ++ (show x) ++ " ,\n") xs) ++ ") "
 showTypeAST (TA_Expr   p x n)  = (show x) ++ " -> " ++ (show n)
-showTypeAST (TA_Filt   p f x)  = " {" ++ (show x) ++ " : " ++ (show f) ++ "} "
+showTypeAST (TA_Filt   p f x)  = " {" ++ (show x) ++ " ∪ " ++ (show f) ++ "} "
 showTypeAST (TA_FnTy   p i o)  = " {" ++ (show i) ++ " ;; " ++ (show o) ++ "} "
-showTypeAST (TA_Enum   p i x)  = " { Enm: " ++ i ++ " of Type " ++ (show x) ++ "} "
-showTypeAST (TA_Record p i x)  = " { Rcd: " ++ i ++ " of Type " ++ (show x) ++ "} "
-showTypeAST (TA_Curry  p cs x) = " { Cur: " ++ (concatMap (\y -> (show y) ++ "`") cs) ++ " -> " ++ (show x) ++ "} "
+showTypeAST (TA_Enum   p i x)  = " { Enm: " ++ i ++ " ∪ " ++ (show x) ++ "} "
+showTypeAST (TA_Record p i x)  = " { Rcd: " ++ i ++ " ∪ " ++ (show x) ++ "} "
+showTypeAST (TA_Curry  p cs x) = " { Cur: " ++ (concatMap (\y -> (show y) ++ " → ") cs) ++ " ⇒ " ++ (show x) ++ "} "
 showTypeAST (TA_Arr    p ss x) = " { Arr: " ++ (show x) ++ (concatMap (\n -> ife (n /= 0) ("["++(show n)++"]") ("[?]")) ss) ++ "} "
 showTypeAST (TA_IntLit p i)    = " <Int: " ++ (show i) ++ "> "
 showTypeAST (TA_FltLit p f)    = " <Flt: " ++ (show f) ++ "> "
