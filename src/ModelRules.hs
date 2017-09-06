@@ -264,6 +264,10 @@ data CallAST
         ca_id      :: !String,
         ca_pars    :: !TParModel,
         ca_tydef   :: !TypeAST }
+    | CA_TypeAliasCall {
+        ca_pos     :: !BzoPos,
+        ca_id      :: !String,
+        ca_tydef   :: !TypeAST }
     | CA_FTDefCall {
         ca_pos     :: !BzoPos,
         ca_id      :: !String,
@@ -860,16 +864,29 @@ modelCalls (BzS_TypDef p prs t df) =
       rs' = map (\(ModelRecord rp ri _ rt) -> (ModelRecord rp ri t rt)) $ concat rs
       es' = map (\(ModelEnum   ep ei _ et) -> (ModelEnum   ep ei t et)) $ concat es
       isTSet = istypeset $ head xs
-  in case (er, rs', es', psr, isTSet) of
-      ([], [], [], TParNil, False) -> Right [(CA_StructCall          p t          (head xs))]
-      ([], [], [], TParNil, True ) -> Right [(CA_TypeSetCall         p t          (head xs))]
-      ([], [], [], psr'   , _    ) -> Right [(CA_ContainerStructCall p t psr'     (head xs))]
-      ([], r , e , TParNil, _    ) -> Right [(CA_TyDefCall           p t      r e (head xs))]
-      ([], r , e , psr'   , _    ) -> Right [(CA_ContainerCall       p t psr' r e (head xs))]
-      (ers, _,  _, _      , _    ) -> Left ers
-  where istypeset (TA_Poly _ _  ) = True
+      isAlias = isTyAlias $ head xs
+  in case (er, rs', es', psr, isTSet, isAlias) of
+      ([], [], [], TParNil, _    , True) -> Right [(CA_TypeAliasCall       p t          (head xs))]
+      ([], [], [], TParNil, False, _   ) -> Right [(CA_StructCall          p t          (head xs))]
+      ([], [], [], TParNil, True , _   ) -> Right [(CA_TypeSetCall         p t          (head xs))]
+      ([], [], [], psr'   , _    , _   ) -> Right [(CA_ContainerStructCall p t psr'     (head xs))]
+      ([], r , e , TParNil, _    , _   ) -> Right [(CA_TyDefCall           p t      r e (head xs))]
+      ([], r , e , psr'   , _    , _   ) -> Right [(CA_ContainerCall       p t psr' r e (head xs))]
+      (ers, _,  _, _      , _    , _   ) -> Left ers
+  where istypeset :: TypeAST -> Bool
+        istypeset (TA_Poly _ _  ) = True
         istypeset (TA_Filt _ _ _) = True
         istypeset _               = False
+
+        isTyAlias :: TypeAST -> Bool
+        isTyAlias (TA_FnLit  _ _) = True
+        isTyAlias (TA_TyLit  _ _) = True
+        isTyAlias (TA_BTyLit _ _) = True
+        isTyAlias (TA_IntLit _ _) = True
+        isTyAlias (TA_FltLit _ _) = True
+        isTyAlias (TA_StrLit _ _) = True
+        isTyAlias (TA_Nil    _  ) = True
+        isTyAlias _               = False
 
 modelCalls (BzS_FnTypeDef p t (BzS_FnTy _ i o)) =
   let i'  = [modelBasicType i]
@@ -888,12 +905,23 @@ modelCalls (BzS_FunDef p i f e x) =
       er = (lefts x') ++ (lefts i') ++ (lefts e')
       ri = head $ rights i'
       re = head $ rights e'
-  in case (er, ri, re) of
-      ([] , FParNil, FParNil) -> Right [(CA_TacitCall    p f               (head $ rights x'))]
-      ([] , inpars , FParNil) -> Right [(CA_TacitOutCall p f inpars        (head $ rights x'))]
-      ([] , FParNil, expars ) -> Right [(CA_TacitInCall  p f        expars (head $ rights x'))]
-      ([] , inpars , expars ) -> Right [(CA_FunctionCall p f inpars expars (head $ rights x'))]
-      (ers, _,       _      ) -> Left $ concat ers
+      isAlias = isFnAlias $ head $ rights x'
+  in case (er, ri, re, isAlias) of
+      ([] , FParNil, FParNil, True ) -> Right [(CA_AliasCall    p f               (head $ rights x'))]
+      ([] , FParNil, FParNil, False) -> Right [(CA_TacitCall    p f               (head $ rights x'))]
+      ([] , inpars , FParNil, _    ) -> Right [(CA_TacitOutCall p f inpars        (head $ rights x'))]
+      ([] , FParNil, expars , _    ) -> Right [(CA_TacitInCall  p f        expars (head $ rights x'))]
+      ([] , inpars , expars , _    ) -> Right [(CA_FunctionCall p f inpars expars (head $ rights x'))]
+      (ers, _,       _      , _    ) -> Left $ concat ers
+  where isFnAlias :: ExprModel -> Bool
+        isFnAlias (EM_TyId   _ _) = True
+        isFnAlias (EM_Id     _ _) = True
+        isFnAlias (EM_BId    _ _) = True
+        isFnAlias (EM_LitInt _ _) = True
+        isFnAlias (EM_LitFlt _ _) = True
+        isFnAlias (EM_LitStr _ _) = True
+        isFnAlias (EM_Nil    _  ) = True
+        isFnAlias _               = False
 
 
 
@@ -965,6 +993,8 @@ showCallAST (CA_StructCall           p i       t) = " {TyStructDef: " ++ i ++
 showCallAST (CA_ContainerStructCall  p i s     t) = " {TyContainerStructDef: " ++ i ++
                                             "\n   PARS: " ++ (show s) ++
                                             "\n   DEF : " ++ (show t) ++ " }\n"
+showCallAST (CA_TypeAliasCall        p i       t) = " {TyAliasDef: " ++ i ++
+                                            "\n   ALIAS OF: " ++ (show t) ++ " }\n"
 showCallAST (CA_FTDefCall            p x i o)   = " {FnTyDef: " ++ x ++
                                             "\n   INPUT : " ++ (show i) ++
                                             "\n   OUTPUT: " ++ (show o) ++ " }\n"
