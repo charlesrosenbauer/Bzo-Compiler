@@ -872,6 +872,18 @@ modelExpr (BzS_Expr p [(BzS_Cmpd _ xs), (BzS_BTId _ hint)]) =
       [] -> Right $ EM_Hint p hint (rights xs')
       er -> Left  er
 
+modelExpr (BzS_Expr p [x, (BzS_BId _ hint)]) =
+  let xs' = [isValidHintPar x]
+  in case (lefts xs') of
+      [] -> Right $ EM_Hint p hint (rights xs')
+      er -> Left  er
+
+modelExpr (BzS_Expr p [x, (BzS_BTId _ hint)]) =
+  let xs' = [isValidHintPar x]
+  in case (lefts xs') of
+      [] -> Right $ EM_Hint p hint (rights xs')
+      er -> Left  er
+
 modelExpr (BzS_Expr   p (x:xs)) =
   let x'  = [modelExpr x ]
       xs' = [modelExpr (BzS_Expr (pos $ head xs) xs)]
@@ -978,6 +990,11 @@ modelCalls (BzS_Expr p [(BzS_Cmpd _ xs), (BzS_BTId _ hint)]) =
       [] -> Right [CA_HintCall p hint (rights xs')]
       er -> Left  er
 
+modelCalls (BzS_Expr p [x, (BzS_BId _ hint)]) =
+  let xs' = [isValidHintPar x]
+  in case (lefts xs') of
+      [] -> Right [CA_HintCall p hint (rights xs')]
+      er -> Left  er
 
 
 
