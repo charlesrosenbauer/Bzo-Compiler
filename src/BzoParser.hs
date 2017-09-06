@@ -1,6 +1,5 @@
 module BzoParser where
 import BzoTypes
-import BzoSyntax
 import HigherOrder
 
 

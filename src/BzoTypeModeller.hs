@@ -1,5 +1,4 @@
 module BzoTypeModeller where
-import BzoSyntax
 import BzoTypes
 import BzoParser
 import BzoPreprocessor

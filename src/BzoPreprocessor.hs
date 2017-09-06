@@ -2,7 +2,6 @@ module BzoPreprocessor where
 import BzoLexer
 import BzoParser
 import BzoParserRules
-import BzoSyntax
 import BzoTypes
 import BzoParameterParser
 import BzoConfigParser
@@ -18,44 +17,6 @@ import System.Environment
 import HigherOrder
 import Debug.Trace
 import System.IO hiding (try)
-
-
-
-
-
-
-
-
-
-
-data BzoFileData
-  = BzoFileData{
-      bfd_moduleName    :: String,
-      bfd_filepath      :: FilePath,
-      bfd_domain        :: String,
-      bfd_fileAST       :: BzoSyntax,
-      bfd_fileImports   :: [String],
-      bfd_fileLinks     :: [String],
-      bfd_fileImporsAs  :: [(String, String)],
-      bfd_fileLinksAs   :: [(String, String)]}
-
-
-
-
-
-
-
-
-
-
-showBzoFileData :: BzoFileData -> String
-showBzoFileData (BzoFileData mn pth dmn ast imp lnk impa lnka) =
-  "\n \nModule: " ++ mn ++ "\nPath: " ++ pth ++
-    "\nDomain: "  ++ (show dmn) ++
-    "\nImports: " ++ (show imp) ++ "\nAliased Imports: " ++ (show impa) ++
-    "\nLinks: "   ++ (show lnk) ++ "\nAliased Links: "   ++ (show lnka) ++
-    "\nAST:\n"     ++ (show ast)
-instance Show BzoFileData where show = showBzoFileData
 
 
 

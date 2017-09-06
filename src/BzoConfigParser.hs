@@ -1,7 +1,6 @@
 module BzoConfigParser where
 import BzoParser
 import BzoTypes
-import BzoSyntax
 
 
 

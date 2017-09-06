@@ -1,6 +1,5 @@
 module BzoParserRules where
 import BzoParser
-import BzoSyntax
 import BzoTypes
 import Debug.Trace
 

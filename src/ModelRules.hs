@@ -1,313 +1,9 @@
 module ModelRules where
-import BzoSyntax
 import BzoTypes
 import HigherOrder
 import Data.Either
 import Data.Maybe
 import Debug.Trace
-
-
-
-
-
-
-
-
-
-
-data TypeAST
-      = TA_Cmpd {
-          ta_pos :: !BzoPos,
-          ta_exs :: ![TypeAST] }
-      | TA_Poly {
-          ta_pos :: !BzoPos,
-          ta_exs :: ![TypeAST] }
-      | TA_Expr {
-          ta_pos :: !BzoPos,
-          ta_exp :: !TypeAST,
-          ta_nxt :: !TypeAST }
-      | TA_Filt {
-          ta_pos :: !BzoPos,
-          ta_filt :: !TypeAST,
-          ta_exp :: !TypeAST }
-      | TA_FnTy {
-          ta_pos :: !BzoPos,
-          ta_in  :: !TypeAST,
-          ta_out :: !TypeAST }
-      | TA_Enum {
-          ta_pos :: !BzoPos,
-          ta_id  :: !String,
-          ta_exp :: !TypeAST }
-      | TA_Record {
-          ta_pos :: !BzoPos,
-          ta_id  :: !String,
-          ta_exp :: !TypeAST }
-      | TA_Curry {
-          ta_pos :: !BzoPos,
-          ta_crs :: ![TypeAST],
-          ta_exp :: !TypeAST }
-      | TA_Arr {
-          ta_pos :: !BzoPos,
-          ta_szs :: ![Integer], -- | Size of Zero is General Array
-          ta_exp :: !TypeAST }
-      | TA_IntLit {
-          ta_pos :: !BzoPos,
-          ta_int :: !Integer }
-      | TA_FltLit {
-          ta_pos :: !BzoPos,
-          ta_flt  :: !Double }
-      | TA_StrLit {
-          ta_pos :: !BzoPos,
-          ta_str :: !String }
-      | TA_FnLit  {
-          ta_pos :: !BzoPos,
-          ta_fn  :: !String }
-      | TA_TyLit  {
-          ta_pos :: !BzoPos,
-          ta_ty  :: !String }
-      | TA_ExFnLit  {
-          ta_pos :: !BzoPos,
-          ta_fn  :: !String,
-          ta_loc :: !String }
-      | TA_ExTyLit  {
-          ta_pos :: !BzoPos,
-          ta_ty  :: !String,
-          ta_loc :: !String }
-      | TA_BFnLit {
-          ta_pos :: !BzoPos,
-          ta_fn  :: !String }
-      | TA_BTyLit {
-          ta_pos :: !BzoPos,
-          ta_ty  :: !String }
-      | TA_TyVar {
-          ta_pos :: !BzoPos,
-          ta_id  :: !String }
-      | TA_Nil{
-          ta_pos :: !BzoPos }
-
-
-
-
-
-
-
-
-
-
-data ModelRecord = ModelRecord{
-    mr_pos    :: !BzoPos,
-    mr_name   :: !String,
-    mr_parent :: !String,
-    mr_type   :: !TypeAST }
-
-
-
-
-
-
-
-
-
-
-data ModelEnum = ModelEnum{
-    me_pos    :: !BzoPos,
-    me_name   :: !String,
-    me_parent :: !String,
-    me_type   :: !TypeAST }
-
-
-
-
-
-
-
-
-
-
-data TParModel
-  = TParModel {
-      tp_pos  :: !BzoPos,
-      tp_pars :: ![TParModel] }
-  | TParVar   {
-      tp_pos  :: !BzoPos,
-      tp_id   :: !String,
-      tp_filt :: !TypeAST }
-  | TParNil
-
-
-
-
-
-
-
-
-
-
-data FParModel
-  = FParModel {
-      fp_pos  :: !BzoPos,
-      fp_pars :: ![FParModel] }
-  | FParVar {
-      fp_pos  :: !BzoPos,
-      fp_id   :: !String,
-      fp_filt :: !TypeAST }
-  | FParNil
-
-
-
-
-
-
-
-
-
-
-data ExprModel
-  = EM_Block {
-      em_pos :: !BzoPos,
-      em_exs :: ![ExprModel] }
-  | EM_Expr {
-      em_pos :: !BzoPos,
-      em_exp :: !ExprModel,
-      em_nxt :: !ExprModel }
-  | EM_Map {
-      em_pos :: !BzoPos,
-      em_exp :: !ExprModel }
-  | EM_Filt {
-      em_pos :: !BzoPos,
-      em_exp :: !ExprModel,
-      em_typ :: !TypeAST }
-  | EM_Lambda {
-      em_pos :: !BzoPos,
-      em_par :: !FParModel,
-      em_def :: !ExprModel }
-  | EM_Curry {
-      em_pos :: !BzoPos,
-      em_ins :: ![ExprModel],
-      em_exp :: !ExprModel }
-  | EM_Cmpd {
-      em_pos :: !BzoPos,
-      em_xs  :: ![ExprModel] }
-  | EM_Poly {
-      em_pos :: !BzoPos,
-      em_xs  :: ![ExprModel] }
-  | EM_LitInt {
-      em_pos :: !BzoPos,
-      em_int :: !Integer }
-  | EM_LitFlt {
-      em_pos :: !BzoPos,
-      em_flt :: !Double }
-  | EM_LitStr {
-      em_pos :: !BzoPos,
-      em_str :: !String }
-  | EM_MId {
-      em_pos :: !BzoPos,
-      em_id  :: !String }
-  | EM_Id {
-      em_pos :: !BzoPos,
-      em_id  :: !String }
-  | EM_TyId {
-      em_pos :: !BzoPos,
-      em_id  :: !String }
-  | EM_BId {
-      em_pos :: !BzoPos,
-      em_id  :: !String }
-  | EM_BTyId {
-      em_pos :: !BzoPos,
-      em_id  :: !String }
-  | EM_Wildcard {
-      em_pos :: !BzoPos }
-  | EM_Nil {
-      em_pos :: !BzoPos }
-  | EM_ExFun {
-      em_pos :: !BzoPos,
-      em_id  :: !String,
-      em_loc :: !String }
-  | EM_ExTyp {
-      em_pos :: !BzoPos,
-      em_id  :: !String,
-      em_loc :: !String }
-  | EM_Hint {
-      em_pos :: !BzoPos,
-      em_hint:: !String,
-      em_vars:: ![ExprModel] }
-
-
-
-
-
-
-
-
-
--- ! Add More Cases for other calls
-data CallAST
-    = CA_ContainerCall {
-        ca_pos     :: !BzoPos,
-        ca_id      :: !String,
-        ca_pars    :: !TParModel,
-        ca_records :: ![ModelRecord],
-        ca_enums   :: ![ModelEnum],
-        ca_tydef   :: !TypeAST }
-    | CA_TypeSetCall {
-        ca_pos     :: !BzoPos,
-        ca_id      :: !String,
-        ca_tydef   :: !TypeAST }
-    | CA_TyDefCall {
-        ca_pos     :: !BzoPos,
-        ca_id      :: !String,
-        ca_records :: ![ModelRecord],
-        ca_enums   :: ![ModelEnum],
-        ca_tydef   :: !TypeAST }
-    | CA_StructCall {
-        ca_pos     :: !BzoPos,
-        ca_id      :: !String,
-        ca_tydef   :: !TypeAST }
-    | CA_ContainerStructCall {
-        ca_pos     :: !BzoPos,
-        ca_id      :: !String,
-        ca_pars    :: !TParModel,
-        ca_tydef   :: !TypeAST }
-    | CA_TypeAliasCall {
-        ca_pos     :: !BzoPos,
-        ca_id      :: !String,
-        ca_tydef   :: !TypeAST }
-    | CA_FTDefCall {
-        ca_pos     :: !BzoPos,
-        ca_id      :: !String,
-        ca_intype  :: !TypeAST,
-        ca_extype  :: !TypeAST }
-    | CA_TacitCall {
-        ca_pos     :: !BzoPos,
-        ca_id      :: !String,
-        ca_fndef   :: !ExprModel }
-    | CA_AliasCall {
-        ca_pos     :: !BzoPos,
-        ca_id      :: !String,
-        ca_fndef   :: !ExprModel }
-    | CA_TacitInCall {
-        ca_pos     :: !BzoPos,
-        ca_id      :: !String,
-        ca_in      :: !FParModel,
-        ca_fndef   :: !ExprModel }
-    | CA_TacitOutCall {
-        ca_pos     :: !BzoPos,
-        ca_id      :: !String,
-        ca_ex      :: !FParModel,
-        ca_fndef   :: !ExprModel }
-    | CA_FunctionCall {
-        ca_pos     :: !BzoPos,
-        ca_id      :: !String,
-        ca_in      :: !FParModel,
-        ca_ex      :: !FParModel,
-        ca_fndef   :: !ExprModel }
-    | CA_HintCall {
-        ca_pos     :: !BzoPos,
-        ca_hint    :: !String,
-        ca_hpars   :: ![ExprModel] }
-    | CA_REPLCall {
-        ca_pos     :: !BzoPos,
-        ca_exdef   :: !ExprModel }
 
 
 
@@ -996,6 +692,7 @@ modelCalls (BzS_Expr p [x, (BzS_BId _ hint)]) =
       [] -> Right [CA_HintCall p hint (rights xs')]
       er -> Left  er
 
+modelCalls x = Left [SntxErr (pos x) $ "Unexpected Expression Call: " ++ (show x)]
 
 
 
@@ -1004,10 +701,31 @@ modelCalls (BzS_Expr p [x, (BzS_BId _ hint)]) =
 
 
 
--- Add alternate version for normal compilation later. For that, take [BzoFileData] as input.
+
+
+modelREPLCalls :: BzoSyntax -> Either [BzoErr] [CallAST]
+modelREPLCalls sntx =
+  let sntx' = [modelCalls sntx]
+      errs  = lefts sntx'
+  in case (errs, sntx) of
+      ([], _ ) -> Right $ head $ rights sntx'
+      (er, (BzS_Calls _ [sn@(BzS_Expr p _)])) ->
+        case (modelExpr sn) of
+          Left er -> Left er
+          Right x -> Right [CA_REPLCall p x]
+      (er, _ ) -> Left $ concat er
+
+
+
+
+
+
+
+
+
 wrappedModellerMapREPL :: [BzoSyntax] -> Either [BzoErr] [[CallAST]]
 wrappedModellerMapREPL ss =
-  let xs = map modelCalls ss
+  let xs = map modelREPLCalls ss
       er = concat $ lefts  xs
       vs = rights xs
   in case er of
@@ -1023,162 +741,11 @@ wrappedModellerMapREPL ss =
 
 
 
-showEnum :: ModelEnum -> String
-showEnum (ModelEnum p n r t) = " {Enum : " ++ n ++ ", inside " ++ r ++ ", of type " ++ (show t) ++ " } "
-instance Show ModelEnum where show = showEnum
-
-
-
-
-
-
-
-
-
-
-showRecord :: ModelRecord -> String
-showRecord (ModelRecord p n r t) = " {Record : " ++ n ++ ", inside " ++ r ++ ", of type " ++ (show t) ++ " } "
-instance Show ModelRecord where show = showRecord
-
-
-
-
-
-
-
-
-
-
-showCallAST :: CallAST -> String
-showCallAST (CA_ContainerCall        p i s r e t) = " {TyContainerDef: " ++ i ++
-                                            "\n   PARS: " ++ (show s) ++
-                                            "\n   RECS: " ++ (concatMap (\x -> (show x) ++ ", ") r) ++
-                                            "\n   ENMS: " ++ (concatMap (\x -> (show x) ++ ", ") e) ++
-                                            "\n   DEF : " ++ (show t) ++ " }\n"
-showCallAST (CA_TyDefCall            p i   r e t) = " {TyDef: " ++ i ++
-                                            "\n   RECS: " ++ (concatMap (\x -> (show x) ++ ", ") r) ++
-                                            "\n   ENMS: " ++ (concatMap (\x -> (show x) ++ ", ") e) ++
-                                            "\n   DEF : " ++ (show t) ++ " }\n"
-showCallAST (CA_TypeSetCall          p i       t) = " {TySetDef: " ++ i ++
-                                            "\n   DEF : " ++ (show t) ++ " }\n"
-showCallAST (CA_StructCall           p i       t) = " {TyStructDef: " ++ i ++
-                                            "\n   DEF : " ++ (show t) ++ " }\n"
-showCallAST (CA_ContainerStructCall  p i s     t) = " {TyContainerStructDef: " ++ i ++
-                                            "\n   PARS: " ++ (show s) ++
-                                            "\n   DEF : " ++ (show t) ++ " }\n"
-showCallAST (CA_TypeAliasCall        p i       t) = " {TyAliasDef: " ++ i ++
-                                            "\n   ALIAS OF: " ++ (show t) ++ " }\n"
-showCallAST (CA_FTDefCall            p x i o)   = " {FnTyDef: " ++ x ++
-                                            "\n   INPUT : " ++ (show i) ++
-                                            "\n   OUTPUT: " ++ (show o) ++ " }\n"
-showCallAST (CA_TacitCall            p f d)     = " {TacitFunDef: " ++ f ++
-                                            "\n   DEF : " ++ (show d) ++ " }\n"
-showCallAST (CA_AliasCall            p f d)     = " {AliasFunDef: " ++ f ++
-                                            "\n   DEF : " ++ (show d) ++ " }\n"
-showCallAST (CA_TacitInCall          p f i d)   = " {TacitInCall: " ++ f ++
-                                            "\n   IN PARS : " ++ (show i) ++
-                                            "\n   DEF     : " ++ (show d) ++ " }\n"
-showCallAST (CA_TacitOutCall         p f e d)   = " {TacitInCall: " ++ f ++
-                                            "\n   OUT PARS : " ++ (show e) ++
-                                            "\n   DEF      : " ++ (show d) ++ " }\n"
-showCallAST (CA_FunctionCall         p f i e d) = " {FunctionCall: " ++ f ++
-                                            "\n   IN  PARS : " ++ (show i) ++
-                                            "\n   OUT PARS : " ++ (show e) ++
-                                            "\n   DEF      : " ++ (show d) ++ " }\n"
-showCallAST (CA_HintCall             p h xs) = " {HintCall: " ++ h ++ "\n" ++
-                                            "\n   PARS     : " ++ (show xs) ++ " }\n"
-instance Show CallAST where show = showCallAST
-
-
-
-
-
-
-
-
-
-
-showTParModel :: TParModel -> String
-showTParModel (TParModel p ps  ) = " ( " ++ (concatMap show ps) ++ " ) "
-showTParModel (TParVar   p x  f) = " { " ++ x ++ " : " ++ (show f) ++ " }, "
-showTParModel (TParNil)          = " N/A "
-instance Show TParModel where show = showTParModel
-
-
-
-
-
-
-
-
-
-
-showFParModel :: FParModel -> String
-showFParModel (FParModel p ps  ) = " ( " ++ (concatMap show ps) ++ " ) "
-showFParModel (FParVar   p x  f) = " { " ++ x ++ " : " ++ (show f) ++ " }, "
-showFParModel (FParNil)          = " N/A "
-instance Show FParModel where show = showFParModel
-
-
-
-
-
-
-
-
-
-
-showTypeAST :: TypeAST -> String
-showTypeAST (TA_Cmpd   p xs)   = " ( Cmpd:\n" ++ (concatMap (\x -> "    " ++ (show x) ++ " .\n") xs) ++ ") "
-showTypeAST (TA_Poly   p xs)   = " ( Poly:\n" ++ (concatMap (\x -> "    " ++ (show x) ++ " ,\n") xs) ++ ") "
-showTypeAST (TA_Expr   p x n)  = (show x) ++ " -> " ++ (show n)
-showTypeAST (TA_Filt   p f x)  = " {" ++ (show x) ++ " ∪ " ++ (show f) ++ "} "
-showTypeAST (TA_FnTy   p i o)  = " {" ++ (show i) ++ " ;; " ++ (show o) ++ "} "
-showTypeAST (TA_Enum   p i x)  = " { Enm: " ++ i ++ " ∪ " ++ (show x) ++ "} "
-showTypeAST (TA_Record p i x)  = " { Rcd: " ++ i ++ " ∪ " ++ (show x) ++ "} "
-showTypeAST (TA_Curry  p cs x) = " { Cur: " ++ (concatMap (\y -> (show y) ++ " → ") cs) ++ " ⇒ " ++ (show x) ++ "} "
-showTypeAST (TA_Arr    p ss x) = " { Arr: " ++ (show x) ++ (concatMap (\n -> ife (n /= 0) ("["++(show n)++"]") ("[?]")) ss) ++ "} "
-showTypeAST (TA_IntLit p i)    = " <Int: " ++ (show i) ++ "> "
-showTypeAST (TA_FltLit p f)    = " <Flt: " ++ (show f) ++ "> "
-showTypeAST (TA_StrLit p s)    = " <Str: " ++ s ++ "> "
-showTypeAST (TA_TyLit  p x)    = " <Ty: "  ++ x ++ "> "
-showTypeAST (TA_FnLit  p x)    = " <Fn: "  ++ x ++ "> "
-showTypeAST (TA_BFnLit p x)    = " <BFn: " ++ x ++ "> "
-showTypeAST (TA_BTyLit p x)    = " <BTy: " ++ x ++ "> "
-showTypeAST (TA_TyVar  p x)    = " <TVr: " ++ x ++ "> "
-showTypeAST (TA_ExTyLit p x l) = " <Ty: "  ++ x ++ ", from " ++ l ++ "> "
-showTypeAST (TA_ExFnLit p x l) = " <Fn: "  ++ x ++ ", from " ++ l ++ "> "
-showTypeAST (TA_Nil    p)      = " <NIL ()> "
-instance Show TypeAST where show = showTypeAST
-
-
-
-
-
-
-
-
-
-
-showExprModel :: ExprModel -> String
-showExprModel (EM_Block  _ xs   ) = " { Block:\n" ++ (concatMap (\x -> "  " ++ (show x) ++ "\n") xs) ++ "} "
-showExprModel (EM_Expr   _ ex nx) = (show ex) ++ " -> " ++ (show nx)
-showExprModel (EM_Map    _ ex   ) = " <Map: " ++ (show ex) ++ " .. > "
-showExprModel (EM_Lambda _ ps df) = " ( λ " ++ (show ps) ++ " . " ++  (show df) ++ ") " -- Add parameters later
-showExprModel (EM_Filt   _ ex tp) = " ( Filt: " ++ (show ex) ++ " ∪ " ++ (show tp) ++ ") "
-showExprModel (EM_Curry  _ is ex) = " ( " ++ (concatMap (\x -> (show x) ++ " → ") is) ++ " ⇒ " ++ (show ex) ++ ") "
-showExprModel (EM_Cmpd   _ xs   ) = " ( Cmpd:\n" ++ (concatMap (\x -> "    " ++ (show x) ++ " .\n") xs) ++ ") "
-showExprModel (EM_Poly   _ xs   ) = " ( Poly:\n" ++ (concatMap (\x -> "    " ++ (show x) ++ " ,\n") xs) ++ ") "
-showExprModel (EM_LitInt _ i    ) = " <Int: "  ++ (show i) ++ "> "
-showExprModel (EM_LitFlt _ f    ) = " <Flt: "  ++ (show f) ++ "> "
-showExprModel (EM_LitStr _ s    ) = " <Str: "  ++ s ++ "> "
-showExprModel (EM_MId    _ i    ) = " <MId: "  ++ i ++ "> "
-showExprModel (EM_Id     _ i    ) = " <Id: "   ++ i ++ "> "
-showExprModel (EM_TyId   _ i    ) = " <Ty: "   ++ i ++ "> "
-showExprModel (EM_BId    _ i    ) = " <BId: "  ++ i ++ "> "
-showExprModel (EM_BTyId  _ i    ) = " <BTy: "  ++ i ++ "> "
-showExprModel (EM_ExFun  _ i  l ) = " <ExFn: " ++ i ++ " from " ++ l ++ "> "
-showExprModel (EM_ExTyp  _ i  l ) = " <ExTy: " ++ i ++ " from " ++ l ++ "> "
-showExprModel (EM_Wildcard _    ) = " _ "
-showExprModel (EM_Nil      _    ) = " () "
-instance Show ExprModel where show = showExprModel
+wrappedModellerMap :: [BzoFileData] -> Either [BzoErr] [[CallAST]]
+wrappedModellerMap ss =
+  let xs = map (modelCalls . bfd_fileAST) ss
+      er = concat $ lefts  xs
+      vs = rights xs
+  in case er of
+      []  -> Right vs
+      ers -> Left ers

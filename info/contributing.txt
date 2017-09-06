@@ -3,18 +3,16 @@ This file is a quick explanation of how the code is organized and what work curr
 
 
 High Priority Goals:
-    * Get REPL Modelling in ModelRules.hs working.
+    * Generate Symbol Table for Program, storing Strings as Text.
 
 Medium Priority Goals:
     * Add functionality for multiple type filters ( i.e, T':A:B:C )
-    * Get "curry" operator modelling working properly
     * Strictness Optimizations
     * Transition from using String to Text types
     * Paralellism Optimizations
     * Improve Error Messages (especially parsing errors!)
 
 Long-Term Goals:
-    * Finish AST Modelling Pass
     * Type Checker
     * Static Analysis Passes for Memory Management
     * Code Generator / LLVM Backend
@@ -53,11 +51,8 @@ Source Files:
   BzoParserRules.hs
     Set of Parsing Rules
 
-  BzoSyntax.hs
-    Functions and definitions for the abstract syntax tree and related types.
-
   BzoTypes.hs
-    Definitions and functions relating to the BzoPos, BzoErr, and BzoToken types.
+    Definitions and functions relating to the various types passed between stages of the compiler
 
   HigherOrder.hs
     Contains custom higher order functions
