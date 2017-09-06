@@ -227,6 +227,10 @@ data ExprModel
       em_pos :: !BzoPos,
       em_id  :: !String,
       em_loc :: !String }
+  | EM_Hint {
+      em_pos :: !BzoPos,
+      em_hint:: !String,
+      em_vars:: ![ExprModel] }
 
 
 
@@ -297,6 +301,13 @@ data CallAST
         ca_in      :: !FParModel,
         ca_ex      :: !FParModel,
         ca_fndef   :: !ExprModel }
+    | CA_HintCall {
+        ca_pos     :: !BzoPos,
+        ca_hint    :: !String,
+        ca_hpars   :: ![ExprModel] }
+    | CA_REPLCall {
+        ca_pos     :: !BzoPos,
+        ca_exdef   :: !ExprModel }
 
 
 
@@ -758,6 +769,26 @@ modelFPars x                      = Left [SntxErr (pos x) "Invalid Definition of
 
 
 
+isValidHintPar :: BzoSyntax -> Either BzoErr ExprModel
+isValidHintPar (BzS_Id   p i) = Right $ EM_Id     p i
+isValidHintPar (BzS_BId  p i) = Right $ EM_BId    p i
+isValidHintPar (BzS_TyId p i) = Right $ EM_TyId   p i
+isValidHintPar (BzS_BTId p i) = Right $ EM_BTyId  p i
+isValidHintPar (BzS_Int  p i) = Right $ EM_LitInt p i
+isValidHintPar (BzS_Flt  p f) = Right $ EM_LitFlt p f
+isValidHintPar (BzS_Str  p s) = Right $ EM_LitStr p s
+isValidHintPar (BzS_Expr p [x]) = isValidHintPar x
+isValidHintPar (BzS_Box  p   x) = isValidHintPar x
+isValidHintPar bzs            = Left  $ SntxErr (pos bzs) "Invalid Hint Parameter"
+
+
+
+
+
+
+
+
+
 modelExpr :: BzoSyntax -> Either [BzoErr] ExprModel
 modelExpr (BzS_MId      p i  ) = Right $ EM_MId      p i
 modelExpr (BzS_Id       p i  ) = Right $ EM_Id       p i
@@ -828,6 +859,18 @@ modelExpr (BzS_Poly   p xs) =
   in case xsl of
       [] -> Right $ EM_Poly p xsr
       er -> Left $ concat er
+
+modelExpr (BzS_Expr p [(BzS_Cmpd _ xs), (BzS_BId _ hint)]) =
+  let xs' = map isValidHintPar xs
+  in case (lefts xs') of
+      [] -> Right $ EM_Hint p hint (rights xs')
+      er -> Left  er
+
+modelExpr (BzS_Expr p [(BzS_Cmpd _ xs), (BzS_BTId _ hint)]) =
+  let xs' = map isValidHintPar xs
+  in case (lefts xs') of
+      [] -> Right $ EM_Hint p hint (rights xs')
+      er -> Left  er
 
 modelExpr (BzS_Expr   p (x:xs)) =
   let x'  = [modelExpr x ]
@@ -923,6 +966,19 @@ modelCalls (BzS_FunDef p i f e x) =
         isFnAlias (EM_Nil    _  ) = True
         isFnAlias _               = False
 
+modelCalls (BzS_Expr p [(BzS_Cmpd _ xs), (BzS_BId _ hint)]) =
+  let xs' = map isValidHintPar xs
+  in case (lefts xs') of
+      [] -> Right [CA_HintCall p hint (rights xs')]
+      er -> Left  er
+
+modelCalls (BzS_Expr p [(BzS_Cmpd _ xs), (BzS_BTId _ hint)]) =
+  let xs' = map isValidHintPar xs
+  in case (lefts xs') of
+      [] -> Right [CA_HintCall p hint (rights xs')]
+      er -> Left  er
+
+
 
 
 
@@ -1012,6 +1068,8 @@ showCallAST (CA_FunctionCall         p f i e d) = " {FunctionCall: " ++ f ++
                                             "\n   IN  PARS : " ++ (show i) ++
                                             "\n   OUT PARS : " ++ (show e) ++
                                             "\n   DEF      : " ++ (show d) ++ " }\n"
+showCallAST (CA_HintCall             p h xs) = " {HintCall: " ++ h ++ "\n" ++
+                                            "\n   PARS     : " ++ (show xs) ++ " }\n"
 instance Show CallAST where show = showCallAST
 
 
