@@ -755,7 +755,7 @@ wrappedModellerMap ss =
   let xs = map (modelCalls . bfd_fileAST) ss
       er = concat $ lefts  xs
       vs = rights xs
-      rets = map adjustAST $ zip ss $ head vs
+      rets = map adjustAST $ zip ss $ map (\xs -> CA_Calls (ca_pos $ head xs) xs) vs
   in case er of
       []  -> Right rets
       ers -> Left ers
