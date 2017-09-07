@@ -24,7 +24,7 @@ compileFilePass (BzoSettings imp lib flg opt pfx) =
       files <- loadSourceFiles imp
 
       -- Load, preprocess
-      fdata <- (((applyWithErrM (wrappedLibLoader lCfg)). processFiles) $ map swap files)
+      fdata <- (((fmap $ applyWithErr wrappedModellerMap). (applyWithErrM (wrappedLibLoader lCfg)). processFiles) $ map swap files)
       -- TODO: Type Checker
       -- TODO: Static Analysis
       -- TODO: Code Generation
@@ -56,8 +56,20 @@ showOutput (Left  errs) =
 
 
 
-compileExpression :: (FilePath, String) -> String
-compileExpression s = showOutput (((applyWithErr wrappedModellerMapREPL). (applyWithErr wrappedParserMap). wrappedLexerMap) [swap s])
+
+--compileExpression :: (FilePath, String) -> Either [BzoErr] [BzoFileModel]
+--compileExpression lCfg s = (((applyWithErrM (wrappedLibLoader lCfg)). (applyWithErr wrappedModellerMap). (applyWithErr wrappedParserMap). wrappedLexerMap) [swap s])
+
+
+
+
+
+
+
+
+
+replExpression :: (FilePath, String) -> String
+replExpression s = showOutput (((applyWithErr wrappedModellerMapREPL). (applyWithErr wrappedParserMap). wrappedLexerMap) [swap s])
 
 
 

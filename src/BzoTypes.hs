@@ -742,6 +742,9 @@ data CallAST
     | CA_REPLCall {
         ca_pos     :: !BzoPos,
         ca_exdef   :: !ExprModel }
+    | CA_Calls {
+        ca_pos     :: !BzoPos,
+        ca_calls   :: ![CallAST] }
 
 
 
@@ -816,6 +819,7 @@ showCallAST (CA_FunctionCall         p f i e d) = " {FunctionCall: " ++ f ++
 showCallAST (CA_HintCall             p h xs) = " {HintCall: " ++ h ++ "\n" ++
                                             "\n   PARS     : " ++ (show xs) ++ " }\n"
 showCallAST (CA_REPLCall             p   xs) = " {REPL CALL:\n" ++ (show xs) ++ "\n}\n"
+showCallAST (CA_Calls                p   xs) = " Modelled Calls: " ++ (concatMap (\x -> (show x) ++ "\n") xs) ++ "\n"
 instance Show CallAST where show = showCallAST
 
 

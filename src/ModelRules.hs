@@ -703,16 +703,17 @@ modelCalls x = Left [SntxErr (pos x) $ "Unexpected Expression Call: " ++ (show x
 
 
 
-modelREPLCalls :: BzoSyntax -> Either [BzoErr] [CallAST]
+modelREPLCalls :: BzoSyntax -> Either [BzoErr] CallAST
 modelREPLCalls sntx =
   let sntx' = [modelCalls sntx]
       errs  = lefts sntx'
+      snxrs = head $ rights sntx'
   in case (errs, sntx) of
-      ([], _ ) -> Right $ head $ rights sntx'
+      ([], _ ) -> Right $ CA_Calls (ca_pos $ head $ snxrs) snxrs
       (er, (BzS_Calls _ [sn@(BzS_Expr p _)])) ->
         case (modelExpr sn) of
           Left er -> Left er
-          Right x -> Right [CA_REPLCall p x]
+          Right x -> Right $ CA_REPLCall p x
       (er, _ ) -> Left $ concat er
 
 
@@ -723,7 +724,7 @@ modelREPLCalls sntx =
 
 
 
-wrappedModellerMapREPL :: [BzoSyntax] -> Either [BzoErr] [[CallAST]]
+wrappedModellerMapREPL :: [BzoSyntax] -> Either [BzoErr] [CallAST]
 wrappedModellerMapREPL ss =
   let xs = map modelREPLCalls ss
       er = concat $ lefts  xs
@@ -741,11 +742,14 @@ wrappedModellerMapREPL ss =
 
 
 
-wrappedModellerMap :: [BzoFileData] -> Either [BzoErr] [[CallAST]]
+wrappedModellerMap :: [BzoFileData] -> Either [BzoErr] [BzoFileModel]
 wrappedModellerMap ss =
   let xs = map (modelCalls . bfd_fileAST) ss
       er = concat $ lefts  xs
       vs = rights xs
+      rets = map adjustAST $ zip ss $ head vs
   in case er of
-      []  -> Right vs
+      []  -> Right rets
       ers -> Left ers
+  where adjustAST :: (BzoFileData, CallAST) -> BzoFileModel
+        adjustAST ((BzoFileData mn fp dm _ fi fl fia fla), ast) = (BzoFileModel mn fp dm ast fi fl fia fla)

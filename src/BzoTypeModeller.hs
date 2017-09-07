@@ -21,8 +21,8 @@ import Debug.Trace
 
 
 
-getImportDependencies :: BzoFileData -> [String]
-getImportDependencies fs = nub $ (\(BzoFileData mn fp dm ast im ln ia la) -> im ++ (map fst ia)) fs
+getImportDependencies :: BzoFileModel -> [String]
+getImportDependencies fs = nub $ (\(BzoFileModel mn fp dm ast im ln ia la) -> im ++ (map fst ia)) fs
 
 
 
@@ -33,8 +33,8 @@ getImportDependencies fs = nub $ (\(BzoFileData mn fp dm ast im ln ia la) -> im 
 
 
 
-getLinkDependencies :: [BzoFileData] -> [String]
-getLinkDependencies fs = nub $ concatMap (\(BzoFileData mn fp dm ast im ln ia la) -> ln ++ (map fst la)) fs
+getLinkDependencies :: [BzoFileModel] -> [String]
+getLinkDependencies fs = nub $ concatMap (\(BzoFileModel mn fp dm ast im ln ia la) -> ln ++ (map fst la)) fs
 
 
 
@@ -45,14 +45,14 @@ getLinkDependencies fs = nub $ concatMap (\(BzoFileData mn fp dm ast im ln ia la
 
 
 
-orderByImports :: Map String BzoFileData -> [BzoFileData] -> [BzoFileData] -> Either [BzoErr] [BzoFileData]
+orderByImports :: Map String BzoFileModel -> [BzoFileModel] -> [BzoFileModel] -> Either [BzoErr] [BzoFileModel]
 orderByImports mp out [] = Right out
 orderByImports mp out fs =
   let (remain, next) = break (\x -> containsManyMembers mp $ getImportDependencies x) fs
-      next'          = map (\x -> (bfd_moduleName x, x)) next
-      domain         = if (bfd_domain (head fs) == "@")
+      next'          = map (\x -> (bfm_moduleName x, x)) next
+      domain         = if (bfm_domain (head fs) == "@")
                         then "Project Files"
-                        else bfd_domain $ head fs
+                        else bfm_domain $ head fs
   in case next of
     [] -> Left [CfgErr ("Unsatisfiable Dependencies in " ++ domain ++ "! Compilation cannot continue.\n")]
     nx -> orderByImports (insertMany mp next') (out ++ next) remain
@@ -66,11 +66,11 @@ orderByImports mp out fs =
 
 
 
-orderByLinks :: Map String [BzoFileData] -> [[BzoFileData]] -> [[BzoFileData]] -> Either [BzoErr] [[BzoFileData]]
+orderByLinks :: Map String [BzoFileModel] -> [[BzoFileModel]] -> [[BzoFileModel]] -> Either [BzoErr] [[BzoFileModel]]
 orderByLinks mp out [] = Right out
 orderByLinks mp out fs =
   let (remain, next) = break (\x -> containsManyMembers mp $ getLinkDependencies x) fs
-      next'          = map (\x -> (bfd_domain $ head x, x)) next
+      next'          = map (\x -> (bfm_domain $ head x, x)) next
   in case next of
     [] -> Left [CfgErr "Unsatisfiable Dependencies between libraries! Compilation cannot continue.\n"]
     nx -> orderByLinks (insertMany mp next') (out ++ next) remain
@@ -83,9 +83,9 @@ orderByLinks mp out fs =
 
 
 
-orderFileData :: [BzoFileData] -> Either [BzoErr] [BzoFileData]
+orderFileData :: [BzoFileModel] -> Either [BzoErr] [BzoFileModel]
 orderFileData fs =
-  let f0 = groupWith bfd_domain $ map appendStdDep fs
+  let f0 = groupWith bfm_domain $ map appendStdDep fs
       f1 = map (orderByImports empty []) f0
       f2 = concat $ lefts  f1
       f3 = [orderByLinks empty [] $ rights f1]
@@ -105,12 +105,12 @@ orderFileData fs =
 
 
 
-appendStdDep :: BzoFileData -> BzoFileData
-appendStdDep (BzoFileData mn fp "Std" ast imp lnk ima lna) = (BzoFileData mn fp "Std" ast imp lnk ima lna)
-appendStdDep (BzoFileData mn fp dmn   ast imp lnk ima lna) =
+appendStdDep :: BzoFileModel -> BzoFileModel
+appendStdDep (BzoFileModel mn fp "Std" ast imp lnk ima lna) = (BzoFileModel mn fp "Std" ast imp lnk ima lna)
+appendStdDep (BzoFileModel mn fp dmn   ast imp lnk ima lna) =
   case (elem "Std" imp, elem "Std" $ map fst ima) of
-    (False, False) -> (BzoFileData mn fp dmn ast imp (lnk ++ ["Std"]) ima lna)
-    (_    , _    ) -> (BzoFileData mn fp dmn ast imp lnk ima lna)
+    (False, False) -> (BzoFileModel mn fp dmn ast imp (lnk ++ ["Std"]) ima lna)
+    (_    , _    ) -> (BzoFileModel mn fp dmn ast imp lnk ima lna)
 
 
 
@@ -223,9 +223,9 @@ data SymbolTable
 
 
 
-
-filedataToSymbolTable :: BzoFileData -> SymbolTable
-filedataToSymbolTable (BzoFileData mn fp dm (BzS_Calls p ast) imp lnk is ls) =
+{-
+filedataToSymbolTable :: BzoFileModel -> SymbolTable
+filedataToSymbolTable (BzoFileModel mn fp dm (BzS_Calls p ast) imp lnk is ls) =
   let (fndefs, else0) = Data.List.partition (matchSyntax MP_FunDef   ) ast
       (ftdefs, else1) = Data.List.partition (matchSyntax MP_FnTypeDef) else0
       (tydefs, hints) = Data.List.partition (matchSyntax MP_TypDef   ) else1
@@ -236,7 +236,7 @@ filedataToSymbolTable (BzoFileData mn fp dm (BzS_Calls p ast) imp lnk is ls) =
       ftdefs''        = insertMany Data.Map.Strict.empty ftdefs'
       tydefs''        = insertMany Data.Map.Strict.empty tydefs'
   in (SymbolTable0 mn dm fp fndefs'' ftdefs'' tydefs'' hints imp is lnk ls)
-
+-}
 
 
 
@@ -245,7 +245,7 @@ filedataToSymbolTable (BzoFileData mn fp dm (BzS_Calls p ast) imp lnk is ls) =
 
 
 {-
-getSymbolTable :: [BzoFileData] -> Either [BzoErr] (Map String (Map String SymbolTable))
+getSymbolTable :: [BzoFileModel] -> Either [BzoErr] (Map String (Map String SymbolTable))
 getSymbolTable fs =
   let order = map (\x -> (bfd_moduleName x, bfd_domain x, x)) fs
       fileTable = doubleInsertMany order Data.Map.Strict.empty

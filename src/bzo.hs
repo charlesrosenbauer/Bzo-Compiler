@@ -19,7 +19,7 @@ main = do
     args <- getArgs
     case parseParameters args of
       Left  (ParamErr                         err) -> putStrLn err
-      Right (BzoSettings  []  []  [] Opt_None  []) -> mainLoop_ (== "$quit") (readPrompt "\nBzo>>> ") (\s -> (putStrLn $ compileExpression ("REPL", (s ++ "\n"))))
+      Right (BzoSettings  []  []  [] Opt_None  []) -> mainLoop_ (== "$quit") (readPrompt "\nBzo>>> ") (\s -> (putStrLn $ replExpression ("REPL", (s ++ "\n"))))
       Right settings                               -> compileFilePass settings
       _                                            -> putStrLn "This shouldn't happen, but it stops a compiler warning."
 
