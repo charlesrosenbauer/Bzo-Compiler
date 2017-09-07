@@ -586,6 +586,19 @@ data FParModel
       fp_pos  :: !BzoPos,
       fp_id   :: !String,
       fp_filt :: !TypeAST }
+  | FParInt {
+      fp_pos  :: !BzoPos,
+      fp_int  :: !Integer }
+  | FParFlt {
+      fp_pos  :: !BzoPos,
+      fp_flt  :: !Double }
+  | FParStr {
+      fp_pos  :: !BzoPos,
+      fp_str  :: !String }
+  | FParWild {
+      fp_pos  :: !BzoPos }
+  | FParNilVal {
+      fp_pos  :: !BzoPos }
   | FParNil
 
 
@@ -847,8 +860,13 @@ instance Show TParModel where show = showTParModel
 
 
 showFParModel :: FParModel -> String
-showFParModel (FParModel p ps  ) = " ( " ++ (concatMap show ps) ++ " ) "
-showFParModel (FParVar   p x  f) = " { " ++ x ++ " : " ++ (show f) ++ " }, "
+showFParModel (FParModel  p ps  ) = " ( " ++ (concatMap show ps) ++ " ) "
+showFParModel (FParVar    p x  f) = " { " ++ x ++ " : " ++ (show f) ++ " }, "
+showFParModel (FParInt    p    i) = " { " ++ (show i) ++ " }, "
+showFParModel (FParFlt    p    f) = " { " ++ (show f) ++ " }, "
+showFParModel (FParStr    p    s) = " { " ++ s ++ " }, "
+showFParModel (FParWild   p     ) = " { _ }, "
+showFParModel (FParNilVal p     ) = " { () }, "
 showFParModel (FParNil)          = " N/A "
 instance Show FParModel where show = showFParModel
 

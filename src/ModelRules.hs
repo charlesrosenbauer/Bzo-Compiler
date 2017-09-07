@@ -433,7 +433,12 @@ modelTPars x                      = Left [SntxErr (pos x) "Invalid Definition of
 
 
 modelFPars :: BzoSyntax -> Either [BzoErr] FParModel
-modelFPars (BzS_Id p x   ) = Right (FParVar p x (TA_Nil p))
+modelFPars (BzS_Id        p x   ) = Right (FParVar p x (TA_Nil p))
+modelFPars (BzS_Int       p i   ) = Right (FParInt p i  )
+modelFPars (BzS_Flt       p f   ) = Right (FParFlt p f  )
+modelFPars (BzS_Str       p s   ) = Right (FParStr p s  )
+modelFPars (BzS_Nil       p     ) = Right (FParNilVal p )
+modelFPars (BzS_Wildcard  p     ) = Right (FParWild   p )
 modelFPars (BzS_FilterObj p (BzS_Id _ x) f ) =
   let f' = [modelBasicType f]
       fl = lefts f'
