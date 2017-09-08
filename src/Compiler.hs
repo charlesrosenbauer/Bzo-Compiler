@@ -3,7 +3,7 @@ import Data.Tuple
 import BzoTypes
 import BzoPreprocessor
 import BzoParameterParser
-import BzoTypeModeller
+import BzoFileSorter
 import ModelRules
 import HigherOrder
 
