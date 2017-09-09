@@ -828,7 +828,7 @@ showCallAST (CA_AliasCall            p f d)     = " {AliasFunDef: " ++ f ++
 showCallAST (CA_TacitInCall          p f i d)   = " {TacitInCall: " ++ f ++
                                             "\n   IN PARS : " ++ (show i) ++
                                             "\n   DEF     : " ++ (show d) ++ " }\n"
-showCallAST (CA_TacitOutCall         p f e d)   = " {TacitInCall: " ++ f ++
+showCallAST (CA_TacitOutCall         p f e d)   = " {TacitOutCall: " ++ f ++
                                             "\n   OUT PARS : " ++ (show e) ++
                                             "\n   DEF      : " ++ (show d) ++ " }\n"
 showCallAST (CA_FunctionCall         p f i e d) = " {FunctionCall: " ++ f ++
