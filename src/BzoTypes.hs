@@ -1,4 +1,6 @@
 module BzoTypes where
+import qualified Data.Text as T
+import Data.Map hiding (map)
 import HigherOrder
 
 
@@ -162,7 +164,7 @@ instance Show BzoToken where show = showTk
 
 
 showTokens :: [BzoToken] -> String
-showTokens tk = unwords $ map showTk tk
+showTokens tk = Prelude.unwords $ Prelude.map showTk tk
 
 
 
@@ -340,12 +342,12 @@ showAST (BzS_Namespace _ i)                = " {@ " ++ (show i) ++ "} "
 showAST (BzS_Int _ i)                      = " INT: " ++ (show i)
 showAST (BzS_Flt _ f)                      = " FLT: " ++ (show f)
 showAST (BzS_Str _ s)                      = " STR: " ++ (show s)
-showAST (BzS_Poly _ p)                     = " {POLY: " ++ (concatMap showAST p) ++ "} "
-showAST (BzS_Cmpd _ c)                     = " {CMPD: " ++ (concatMap showAST c) ++ "} "
-showAST (BzS_Block _ ex)                   = " {BK: " ++ (concatMap showAST ex) ++ " } "
-showAST (BzS_Expr _ ex)                    = " (EX: " ++ (concatMap showAST ex) ++ " ) "
+showAST (BzS_Poly _ p)                     = " {POLY: " ++ (Prelude.concatMap showAST p) ++ "} "
+showAST (BzS_Cmpd _ c)                     = " {CMPD: " ++ (Prelude.concatMap showAST c) ++ "} "
+showAST (BzS_Block _ ex)                   = " {BK: " ++ (Prelude.concatMap showAST ex) ++ " } "
+showAST (BzS_Expr _ ex)                    = " (EX: " ++ (Prelude.concatMap showAST ex) ++ " ) "
 showAST (BzS_Box  _ ex)                    = " (BX: " ++ (showAST ex) ++ ") "
-showAST (BzS_Calls _ c)                    = concatMap (\s -> " CALL:: " ++ (show s) ++ "\n") c
+showAST (BzS_Calls _ c)                    = Prelude.concatMap (\s -> " CALL:: " ++ (show s) ++ "\n") c
 showAST (BzS_Wildcard _)                   = " _ "
 showAST (BzS_MapMod _)                     = " .. "
 showAST (BzS_ArrGenMod _)                  = " [] "
@@ -357,7 +359,7 @@ showAST (BzS_Nil _)                        = " () "
 showAST (BzS_TyVar _ i)                    = " TyVr: " ++ (show i)
 showAST (BzS_ExTypObj _ o n)               = " <" ++ (show o) ++ " from " ++ (show n) ++ "> "
 showAST (BzS_ExFunObj _ o n)               = " <" ++ (show o) ++ " from " ++ (show n) ++ "> "
-showAST (BzS_ArrayObj  _ o a)              = " <" ++ (show o) ++ " array: " ++ (concatMap showAST a) ++ "> "
+showAST (BzS_ArrayObj  _ o a)              = " <" ++ (show o) ++ " array: " ++ (Prelude.concatMap showAST a) ++ "> "
 showAST (BzS_FilterObj _ o f)              = " <" ++ (show o) ++ " of type " ++ (show f) ++ "> "
 showAST (BzS_CurryObj  _ o p)              = " <" ++ (show p) ++ " applied to " ++ (show o) ++ "> "
 showAST (BzS_MapObj    _ o)                = " <" ++ (show o) ++ " .. > "
@@ -763,12 +765,12 @@ instance Show ModelRecord where show = showRecord
 showCallAST :: CallAST -> String
 showCallAST (CA_ContainerCall        p i s r e t) = " {TyContainerDef: " ++ i ++
                                             "\n   PARS: " ++ (show s) ++
-                                            "\n   RECS: " ++ (concatMap (\x -> (show x) ++ ", ") r) ++
-                                            "\n   ENMS: " ++ (concatMap (\x -> (show x) ++ ", ") e) ++
+                                            "\n   RECS: " ++ (Prelude.concatMap (\x -> (show x) ++ ", ") r) ++
+                                            "\n   ENMS: " ++ (Prelude.concatMap (\x -> (show x) ++ ", ") e) ++
                                             "\n   DEF : " ++ (show t) ++ " }\n"
 showCallAST (CA_TyDefCall            p i   r e t) = " {TyDef: " ++ i ++
-                                            "\n   RECS: " ++ (concatMap (\x -> (show x) ++ ", ") r) ++
-                                            "\n   ENMS: " ++ (concatMap (\x -> (show x) ++ ", ") e) ++
+                                            "\n   RECS: " ++ (Prelude.concatMap (\x -> (show x) ++ ", ") r) ++
+                                            "\n   ENMS: " ++ (Prelude.concatMap (\x -> (show x) ++ ", ") e) ++
                                             "\n   DEF : " ++ (show t) ++ " }\n"
 showCallAST (CA_TypeSetCall          p i       t) = " {TySetDef: " ++ i ++
                                             "\n   DEF : " ++ (show t) ++ " }\n"
@@ -799,7 +801,7 @@ showCallAST (CA_FunctionCall         p f i e d) = " {FunctionCall: " ++ f ++
 showCallAST (CA_HintCall             p h xs) = " {HintCall: " ++ h ++ "\n" ++
                                             "\n   PARS     : " ++ (show xs) ++ " }\n"
 showCallAST (CA_REPLCall             p   xs) = " {REPL CALL:\n" ++ (show xs) ++ "\n}\n"
-showCallAST (CA_Calls                p   xs) = " Modelled Calls:\n" ++ (concatMap (\x -> (show x) ++ "\n") xs) ++ "\n"
+showCallAST (CA_Calls                p   xs) = " Modelled Calls:\n" ++ (Prelude.concatMap (\x -> (show x) ++ "\n") xs) ++ "\n"
 instance Show CallAST where show = showCallAST
 
 
@@ -812,7 +814,7 @@ instance Show CallAST where show = showCallAST
 
 
 showTParModel :: TParModel -> String
-showTParModel (TParModel p ps  ) = " ( " ++ (concatMap show ps) ++ " ) "
+showTParModel (TParModel p ps  ) = " ( " ++ (Prelude.concatMap show ps) ++ " ) "
 showTParModel (TParVar   p x  f) = " { " ++ x ++ " : " ++ (show f) ++ " }, "
 showTParModel (TParNil)          = " N/A "
 instance Show TParModel where show = showTParModel
@@ -827,7 +829,7 @@ instance Show TParModel where show = showTParModel
 
 
 showFParModel :: FParModel -> String
-showFParModel (FParModel  p ps  ) = " ( " ++ (concatMap show ps) ++ " ) "
+showFParModel (FParModel  p ps  ) = " ( " ++ (Prelude.concatMap show ps) ++ " ) "
 showFParModel (FParFilt   p x  f) = " { " ++ (show x) ++ " : " ++ (show f) ++ " }, "
 showFParModel (FParVar    p x   ) = " { " ++ x ++ " }, "
 showFParModel (FParTyp    p x   ) = " { " ++ x ++ " }, "
@@ -849,15 +851,15 @@ instance Show FParModel where show = showFParModel
 
 
 showTypeAST :: TypeAST -> String
-showTypeAST (TA_Cmpd   p xs)   = " ( Cmpd:\n" ++ (concatMap (\x -> "    " ++ (show x) ++ " .\n") xs) ++ ") "
-showTypeAST (TA_Poly   p xs)   = " ( Poly:\n" ++ (concatMap (\x -> "    " ++ (show x) ++ " ,\n") xs) ++ ") "
+showTypeAST (TA_Cmpd   p xs)   = " ( Cmpd:\n" ++ (Prelude.concatMap (\x -> "    " ++ (show x) ++ " .\n") xs) ++ ") "
+showTypeAST (TA_Poly   p xs)   = " ( Poly:\n" ++ (Prelude.concatMap (\x -> "    " ++ (show x) ++ " ,\n") xs) ++ ") "
 showTypeAST (TA_Expr   p x n)  = (show x) ++ " -> " ++ (show n)
 showTypeAST (TA_Filt   p f x)  = " {" ++ (show x) ++ " ∪ " ++ (show f) ++ "} "
 showTypeAST (TA_FnTy   p i o)  = " {" ++ (show i) ++ " ;; " ++ (show o) ++ "} "
 showTypeAST (TA_Enum   p i x)  = " { Enm: " ++ i ++ " ∪ " ++ (show x) ++ "} "
 showTypeAST (TA_Record p i x)  = " { Rcd: " ++ i ++ " ∪ " ++ (show x) ++ "} "
-showTypeAST (TA_Curry  p cs x) = " { Cur: " ++ (concatMap (\y -> (show y) ++ " → ") cs) ++ " ⇒ " ++ (show x) ++ "} "
-showTypeAST (TA_Arr    p ss x) = " { Arr: " ++ (show x) ++ (concatMap (\n -> ife (n /= 0) ("["++(show n)++"]") ("[?]")) ss) ++ "} "
+showTypeAST (TA_Curry  p cs x) = " { Cur: " ++ (Prelude.concatMap (\y -> (show y) ++ " → ") cs) ++ " ⇒ " ++ (show x) ++ "} "
+showTypeAST (TA_Arr    p ss x) = " { Arr: " ++ (show x) ++ (Prelude.concatMap (\n -> ife (n /= 0) ("["++(show n)++"]") ("[?]")) ss) ++ "} "
 showTypeAST (TA_IntLit p i)    = " <Int: " ++ (show i) ++ "> "
 showTypeAST (TA_FltLit p f)    = " <Flt: " ++ (show f) ++ "> "
 showTypeAST (TA_StrLit p s)    = " <Str: " ++ s ++ "> "
@@ -881,14 +883,14 @@ instance Show TypeAST where show = showTypeAST
 
 
 showExprModel :: ExprModel -> String
-showExprModel (EM_Block  _ xs   ) = " { Block:\n" ++ (concatMap (\x -> "  " ++ (show x) ++ "\n") xs) ++ "} "
+showExprModel (EM_Block  _ xs   ) = " { Block:\n" ++ (Prelude.concatMap (\x -> "  " ++ (show x) ++ "\n") xs) ++ "} "
 showExprModel (EM_Expr   _ ex nx) = (show ex) ++ " -> " ++ (show nx)
 showExprModel (EM_Map    _ ex   ) = " <Map: " ++ (show ex) ++ " .. > "
 showExprModel (EM_Lambda _ ps df) = " ( λ " ++ (show ps) ++ " . " ++  (show df) ++ ") " -- Add parameters later
 showExprModel (EM_Filt   _ ex tp) = " ( Filt: " ++ (show ex) ++ " ∪ " ++ (show tp) ++ ") "
-showExprModel (EM_Curry  _ is ex) = " ( " ++ (concatMap (\x -> (show x) ++ " → ") is) ++ " ⇒ " ++ (show ex) ++ ") "
-showExprModel (EM_Cmpd   _ xs   ) = " ( Cmpd:\n" ++ (concatMap (\x -> "    " ++ (show x) ++ " .\n") xs) ++ ") "
-showExprModel (EM_Poly   _ xs   ) = " ( Poly:\n" ++ (concatMap (\x -> "    " ++ (show x) ++ " ,\n") xs) ++ ") "
+showExprModel (EM_Curry  _ is ex) = " ( " ++ (Prelude.concatMap (\x -> (show x) ++ " → ") is) ++ " ⇒ " ++ (show ex) ++ ") "
+showExprModel (EM_Cmpd   _ xs   ) = " ( Cmpd:\n" ++ (Prelude.concatMap (\x -> "    " ++ (show x) ++ " .\n") xs) ++ ") "
+showExprModel (EM_Poly   _ xs   ) = " ( Poly:\n" ++ (Prelude.concatMap (\x -> "    " ++ (show x) ++ " ,\n") xs) ++ ") "
 showExprModel (EM_LitInt _ i    ) = " <Int: "  ++ (show i) ++ "> "
 showExprModel (EM_LitFlt _ f    ) = " <Flt: "  ++ (show f) ++ "> "
 showExprModel (EM_LitStr _ s    ) = " <Str: "  ++ s ++ "> "
@@ -902,3 +904,22 @@ showExprModel (EM_ExTyp  _ i  l ) = " <ExTy: " ++ i ++ " from " ++ l ++ "> "
 showExprModel (EM_Wildcard _    ) = " _ "
 showExprModel (EM_Nil      _    ) = " () "
 instance Show ExprModel where show = showExprModel
+
+
+
+
+
+
+
+
+
+
+data SymbolTable
+  = SymbolTable {
+      st_iids   :: Map T.Text [(Integer, Integer)],   -- To look up if an Identifier exists, and if so, what are the Table Indices(snd) and Files(fst)?
+      st_fids   :: Map T.Text Integer,                -- To look up if a File Identifier exists, and if so, what is the Table Index?
+      st_itable :: Map Integer (T.Text, Integer),     -- For a given Table Index, what is the associated Identifier, and the file where it's defined?
+      st_ftable :: Map Integer T.Text,                -- For a given Table Index, what is the associated File Identifier?
+      st_itop   :: Integer,                           -- What is the highest used Identifier Table Index?
+      st_ftop   :: Integer }                          -- What is the highest used File Table Index?
+  deriving Show

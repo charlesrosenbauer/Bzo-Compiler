@@ -5,6 +5,7 @@ import BzoPreprocessor
 import BzoParameterParser
 import BzoFileSorter
 import ModelRules
+import SymbolTable
 import HigherOrder
 
 
