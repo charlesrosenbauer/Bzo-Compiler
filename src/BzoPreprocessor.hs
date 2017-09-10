@@ -154,43 +154,43 @@ matchBCall3 s p0 expr p1 =
 
 
 
-verifyAST :: Either [BzoErr] (Bool, BzoSyntax, BzoFileData) -> Either [BzoErr] (Bool, BzoSyntax, BzoFileData)
+verifyAST :: Either [BzoErr] (Bool, BzoSyntax, BzoFileModel BzoSyntax) -> Either [BzoErr] (Bool, BzoSyntax, BzoFileModel BzoSyntax)
 verifyAST (Left errs) = Left errs
 
 
 
 
-verifyAST (Right (b,     (BzS_Calls p []),     (BzoFileData mn path dmn ast imp lnk impa lnka))) = Right (b, ast, (BzoFileData mn path dmn ast imp lnk impa lnka))
+verifyAST (Right (b,     (BzS_Calls p []),     (BzoFileModel mn path dmn ast imp lnk impa lnka))) = Right (b, ast, (BzoFileModel mn path dmn ast imp lnk impa lnka))
 
 
 
 
-verifyAST (Right (False, ast, (BzoFileData "" path dmn (BzS_Calls p (x:xs)) [] [] [] []))) =
+verifyAST (Right (False, ast, (BzoFileModel "" path dmn (BzS_Calls p (x:xs)) [] [] [] []))) =
       case (matchBCall1 "$Module" mkPat_TId x) of
-        Just syn -> verifyAST $ Right (False, (BzS_Calls p xs), (BzoFileData (sid syn) path dmn (BzS_Calls p xs) [] [] [] []))
+        Just syn -> verifyAST $ Right (False, (BzS_Calls p xs), (BzoFileModel (sid syn) path dmn (BzS_Calls p xs) [] [] [] []))
         _        -> Left [PrepErr p "Illegal formatting. $Module must be defined at beginning of file.\n"]
 
 
 
 
-verifyAST (Right (False, ast, (BzoFileData mn path dmn (BzS_Calls p (x : xs)) imp lnk impa lnka))) =
+verifyAST (Right (False, ast, (BzoFileModel mn path dmn (BzS_Calls p (x : xs)) imp lnk impa lnka))) =
       case (matchBCall1 "$import" mkPat_TId x) of
-        Just syn -> verifyAST $ Right (False, (BzS_Calls p xs), (BzoFileData mn path dmn (BzS_Calls p xs) ([sid syn] ++ imp) lnk impa lnka))
+        Just syn -> verifyAST $ Right (False, (BzS_Calls p xs), (BzoFileModel mn path dmn (BzS_Calls p xs) ([sid syn] ++ imp) lnk impa lnka))
         _        ->
           case (matchBCall1 "$link" mkPat_TId x) of
-            Just syn -> verifyAST $ Right (False, (BzS_Calls p xs), (BzoFileData mn path dmn (BzS_Calls p xs) imp ([sid syn] ++ lnk) impa lnka))
+            Just syn -> verifyAST $ Right (False, (BzS_Calls p xs), (BzoFileModel mn path dmn (BzS_Calls p xs) imp ([sid syn] ++ lnk) impa lnka))
             _        ->
               case (matchBCall3 "$importAs" mkPat_TId x mkPat_TId) of
-                Just (a, b) -> verifyAST $ Right (False, (BzS_Calls p xs), (BzoFileData mn path dmn (BzS_Calls p xs) imp lnk ([(sid a, sid b)] ++ impa) lnka))
+                Just (a, b) -> verifyAST $ Right (False, (BzS_Calls p xs), (BzoFileModel mn path dmn (BzS_Calls p xs) imp lnk ([(sid a, sid b)] ++ impa) lnka))
                 _           ->
                   case (matchBCall3 "$linkAs" mkPat_TId x mkPat_TId) of
-                    Just (a, b) -> verifyAST $ Right (False, (BzS_Calls p xs), (BzoFileData mn path dmn (BzS_Calls p xs) imp lnk impa ([(sid a, sid b)] ++ lnka)))
-                    _           -> verifyAST $ Right (True,  ast,              (BzoFileData mn path dmn (BzS_Calls p (x : xs)) imp lnk impa lnka))
+                    Just (a, b) -> verifyAST $ Right (False, (BzS_Calls p xs), (BzoFileModel mn path dmn (BzS_Calls p xs) imp lnk impa ([(sid a, sid b)] ++ lnka)))
+                    _           -> verifyAST $ Right (True,  ast,              (BzoFileModel mn path dmn (BzS_Calls p (x : xs)) imp lnk impa lnka))
 
 
 
 
-verifyAST (Right (True, (BzS_Calls p (x : xs)), (BzoFileData mn path dmn ast imp lnk impa lnka))) =
+verifyAST (Right (True, (BzS_Calls p (x : xs)), (BzoFileModel mn path dmn ast imp lnk impa lnka))) =
       case (matchBCall1 "$import" mkPat_TId x) of
         Just syn -> Left [PrepErr (pos x) "Illegal formatting. All instances of $import must be at the beginning of file.\n"]
         _        ->
@@ -205,7 +205,7 @@ verifyAST (Right (True, (BzS_Calls p (x : xs)), (BzoFileData mn path dmn ast imp
                     _        ->
                       case (matchBCall1 "$Module" mkPat_TId x) of
                         Just syn -> Left [PrepErr (pos x) "Illegal formatting. Only one instance of $Module per file.\n"]
-                        _        -> verifyAST $ Right (True, (BzS_Calls p xs), (BzoFileData mn path dmn ast imp lnk impa lnka))
+                        _        -> verifyAST $ Right (True, (BzS_Calls p xs), (BzoFileModel mn path dmn ast imp lnk impa lnka))
 
 
 
@@ -216,7 +216,7 @@ verifyAST (Right (True, (BzS_Calls p (x : xs)), (BzoFileData mn path dmn ast imp
 
 
 
-processFiles :: [(FilePath, String)] -> Either [BzoErr] [BzoFileData]
+processFiles :: [(FilePath, String)] -> Either [BzoErr] [BzoFileModel BzoSyntax]
 processFiles s = ((applyWithErr wrappedPrepMap). (applyWithErr wrappedParserMap). wrappedLexerMap) s
 
 
@@ -228,8 +228,8 @@ processFiles s = ((applyWithErr wrappedPrepMap). (applyWithErr wrappedParserMap)
 
 
 
-getDependencies :: BzoFileData -> [String]
-getDependencies (BzoFileData _ _ _ _ _ l _ la) =
+getDependencies :: BzoFileModel BzoSyntax -> [String]
+getDependencies (BzoFileModel _ _ _ _ _ l _ la) =
   let la' = map fst la
   in l ++ la'
 
@@ -242,8 +242,8 @@ getDependencies (BzoFileData _ _ _ _ _ l _ la) =
 
 
 
-setDomain :: String -> BzoFileData -> BzoFileData
-setDomain s (BzoFileData a b _ c d e f g) = (BzoFileData a b s c d e f g)
+setDomain :: String -> BzoFileModel BzoSyntax -> BzoFileModel BzoSyntax
+setDomain s (BzoFileModel a b _ c d e f g) = (BzoFileModel a b s c d e f g)
 
 
 
@@ -255,7 +255,7 @@ setDomain s (BzoFileData a b _ c d e f g) = (BzoFileData a b s c d e f g)
 
 
 -- check loaded files for library dependencies, load libraries, repeat until no dependencies remain
-loadLibsPass :: Map String [FilePath] -> Map String [BzoFileData] -> [String] -> IO (Either [BzoErr] [BzoFileData])
+loadLibsPass :: Map String [FilePath] -> Map String [BzoFileModel BzoSyntax] -> [String] -> IO (Either [BzoErr] [BzoFileModel BzoSyntax])
 loadLibsPass libs loaded [] = return $ Right $ concat $ elems loaded
 loadLibsPass libs loaded loadme =
   let l0 = Prelude.filter (\x -> not $ member x loaded) loadme
@@ -292,7 +292,7 @@ loadLibsPass libs loaded loadme =
 
 
 -- load data about libraries, call loadLibsPath
-loadFullProject :: FilePath -> CfgSyntax -> [BzoFileData] -> IO (Either [BzoErr] [BzoFileData])
+loadFullProject :: FilePath -> CfgSyntax -> [BzoFileModel BzoSyntax] -> IO (Either [BzoErr] [BzoFileModel BzoSyntax])
 loadFullProject path (LibLines p ls) ds =
   let path'    = (takeDirectory $ takeDirectory path) ++ "/libs/"
       libpaths = map (\x -> (libName x, libPath x)) ls                                                         -- format list of known libraries into list of tuples
@@ -356,9 +356,9 @@ wrappedParserMap tks =
 
 
 
-wrappedPrepMap :: [BzoSyntax] -> Either [BzoErr] [BzoFileData]
+wrappedPrepMap :: [BzoSyntax] -> Either [BzoErr] [BzoFileModel BzoSyntax]
 wrappedPrepMap asts =
-  let contents = Prelude.map (\syn -> verifyAST (Right (False, syn, (BzoFileData "" (fileName $ pos syn) "@" syn [] [] [] [])))) asts
+  let contents = Prelude.map (\syn -> verifyAST (Right (False, syn, (BzoFileModel "" (fileName $ pos syn) "@" syn [] [] [] [])))) asts
       errors   = concat $ lefts contents
       passes   = Prelude.map (\(a, b, c) -> c) $ rights contents
   in case errors of
@@ -374,7 +374,7 @@ wrappedPrepMap asts =
 
 
 
-wrappedLibLoader :: Either [BzoErr] CfgSyntax ->[BzoFileData] -> IO (Either [BzoErr] [BzoFileData])
+wrappedLibLoader :: Either [BzoErr] CfgSyntax ->[BzoFileModel BzoSyntax] -> IO (Either [BzoErr] [BzoFileModel BzoSyntax])
 wrappedLibLoader (Right cfg) ds = loadFullProject (fileName $ cpos cfg) cfg ds
 wrappedLibLoader (Left  err) _  = return $ Left err
 

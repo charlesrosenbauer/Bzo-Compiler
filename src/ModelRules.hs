@@ -750,14 +750,14 @@ wrappedModellerMapREPL ss =
 
 
 
-wrappedModellerMap :: [BzoFileData] -> Either [BzoErr] [BzoFileModel]
+wrappedModellerMap :: [BzoFileModel BzoSyntax] -> Either [BzoErr] [BzoFileModel CallAST]
 wrappedModellerMap ss =
-  let xs = map (modelCalls . bfd_fileAST) ss
+  let xs = map (modelCalls . bfm_fileModel) ss
       er = concat $ lefts  xs
       vs = rights xs
       rets = map adjustAST $ zip ss $ map (\xs -> CA_Calls (ca_pos $ head xs) xs) vs
   in case er of
       []  -> Right rets
       ers -> Left ers
-  where adjustAST :: (BzoFileData, CallAST) -> BzoFileModel
-        adjustAST ((BzoFileData mn fp dm _ fi fl fia fla), ast) = (BzoFileModel mn fp dm ast fi fl fia fla)
+  where adjustAST :: Show a => (BzoFileModel a, CallAST) -> BzoFileModel CallAST
+        adjustAST ((BzoFileModel mn fp dm _ fi fl fia fla), ast) = (BzoFileModel mn fp dm ast fi fl fia fla)

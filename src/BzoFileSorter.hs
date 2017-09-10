@@ -21,7 +21,7 @@ import Debug.Trace
 
 
 
-getImportDependencies :: BzoFileModel -> [String]
+getImportDependencies :: BzoFileModel CallAST -> [String]
 getImportDependencies fs = nub $ (\(BzoFileModel mn fp dm ast im ln ia la) -> im ++ (map fst ia)) fs
 
 
@@ -33,7 +33,7 @@ getImportDependencies fs = nub $ (\(BzoFileModel mn fp dm ast im ln ia la) -> im
 
 
 
-getLinkDependencies :: [BzoFileModel] -> [String]
+getLinkDependencies :: [BzoFileModel CallAST] -> [String]
 getLinkDependencies fs = nub $ concatMap (\(BzoFileModel mn fp dm ast im ln ia la) -> ln ++ (map fst la)) fs
 
 
@@ -45,7 +45,7 @@ getLinkDependencies fs = nub $ concatMap (\(BzoFileModel mn fp dm ast im ln ia l
 
 
 
-orderByImports :: Map String BzoFileModel -> [BzoFileModel] -> [BzoFileModel] -> Either [BzoErr] [BzoFileModel]
+orderByImports :: Map String (BzoFileModel CallAST) -> [BzoFileModel CallAST] -> [BzoFileModel CallAST] -> Either [BzoErr] [BzoFileModel CallAST]
 orderByImports mp out [] = Right out
 orderByImports mp out fs =
   let (remain, next) = break (\x -> containsManyMembers mp $ getImportDependencies x) fs
@@ -66,7 +66,7 @@ orderByImports mp out fs =
 
 
 
-orderByLinks :: Map String [BzoFileModel] -> [[BzoFileModel]] -> [[BzoFileModel]] -> Either [BzoErr] [[BzoFileModel]]
+orderByLinks :: Map String [BzoFileModel CallAST] -> [[BzoFileModel CallAST]] -> [[BzoFileModel CallAST]] -> Either [BzoErr] [[BzoFileModel CallAST]]
 orderByLinks mp out [] = Right out
 orderByLinks mp out fs =
   let (remain, next) = break (\x -> containsManyMembers mp $ getLinkDependencies x) fs
@@ -83,7 +83,7 @@ orderByLinks mp out fs =
 
 
 
-orderFileData :: [BzoFileModel] -> Either [BzoErr] [BzoFileModel]
+orderFileData :: [BzoFileModel CallAST] -> Either [BzoErr] [BzoFileModel CallAST]
 orderFileData fs =
   let f0 = groupWith bfm_domain $ map appendStdDep fs
       f1 = map (orderByImports empty []) f0
@@ -105,7 +105,7 @@ orderFileData fs =
 
 
 
-appendStdDep :: BzoFileModel -> BzoFileModel
+appendStdDep :: BzoFileModel CallAST -> BzoFileModel CallAST
 appendStdDep (BzoFileModel mn fp "Std" ast imp lnk ima lna) = (BzoFileModel mn fp "Std" ast imp lnk ima lna)
 appendStdDep (BzoFileModel mn fp dmn   ast imp lnk ima lna) =
   case (elem "Std" imp, elem "Std" $ map fst ima) of

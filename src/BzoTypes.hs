@@ -373,51 +373,12 @@ instance Show BzoSyntax where show = showAST
 
 
 
-
-data BzoFileData
-  = BzoFileData{
-      bfd_moduleName    :: String,
-      bfd_filepath      :: FilePath,
-      bfd_domain        :: String,
-      bfd_fileAST       :: BzoSyntax,
-      bfd_fileImports   :: [String],
-      bfd_fileLinks     :: [String],
-      bfd_fileImporsAs  :: [(String, String)],
-      bfd_fileLinksAs   :: [(String, String)]}
-
-
-
-
-
-
-
-
-
-
-showBzoFileData :: BzoFileData -> String
-showBzoFileData (BzoFileData mn pth dmn ast imp lnk impa lnka) =
-  "\n \nModule: " ++ mn ++ "\nPath: " ++ pth ++
-    "\nDomain: "  ++ (show dmn) ++
-    "\nImports: " ++ (show imp) ++ "\nAliased Imports: " ++ (show impa) ++
-    "\nLinks: "   ++ (show lnk) ++ "\nAliased Links: "   ++ (show lnka) ++
-    "\nAST:\n"     ++ (show ast)
-instance Show BzoFileData where show = showBzoFileData
-
-
-
-
-
-
-
-
-
-
-data BzoFileModel
+data (Show a) => BzoFileModel a
   = BzoFileModel{
       bfm_moduleName    :: String,
       bfm_filepath      :: FilePath,
       bfm_domain        :: String,
-      bfm_fileModel     :: CallAST,
+      bfm_fileModel     :: a,
       bfm_fileImports   :: [String],
       bfm_fileLinks     :: [String],
       bfm_fileImporsAs  :: [(String, String)],
@@ -432,14 +393,14 @@ data BzoFileModel
 
 
 
-showBzoFileModel :: BzoFileModel -> String
+showBzoFileModel :: Show a => BzoFileModel a -> String
 showBzoFileModel (BzoFileModel mn pth dmn ast imp lnk impa lnka) =
   "\n \nModule: " ++ mn ++ "\nPath: " ++ pth ++
     "\nDomain: "  ++ (show dmn) ++
     "\nImports: " ++ (show imp) ++ "\nAliased Imports: " ++ (show impa) ++
     "\nLinks: "   ++ (show lnk) ++ "\nAliased Links: "   ++ (show lnka) ++
     "\nAST:\n"    ++ (show ast)
-instance Show BzoFileModel where show = showBzoFileModel
+instance (Show a) => Show (BzoFileModel a) where show = showBzoFileModel
 
 
 
