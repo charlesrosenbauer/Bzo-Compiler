@@ -560,6 +560,32 @@ applyWithErrList f x =
 
 
 
+applyRight :: (b -> c) -> E.Either a b -> Either a c
+applyRight f (Left  a) = Left  a
+applyRight f (Right b) = Right $ f b
+
+
+
+
+
+
+
+
+
+
+applyLeft :: (a -> c) -> E.Either a b -> Either c b
+applyLeft f (Left  a) = Left  $ f a
+applyLeft f (Right b) = Right b
+
+
+
+
+
+
+
+
+
+
 containsManyMembers :: Ord a => Mp.Map a b -> [a] -> Bool
 containsManyMembers mp as = all (\x -> Mp.member x mp) as
 

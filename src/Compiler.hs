@@ -25,12 +25,13 @@ compileFilePass (BzoSettings imp lib flg opt pfx) =
       files <- loadSourceFiles imp
 
       -- Load, preprocess
-      fdata <- (((fmap $ applyWithErr wrappedModellerMap). (applyWithErrM (wrappedLibLoader lCfg)). processFiles) $ map swap files)
+      models  <- (((fmap (applyWithErr orderFileData)). (fmap $ applyWithErr wrappedModellerMap). (applyWithErrM (wrappedLibLoader lCfg)). processFiles) $ map swap files)
+      symbols <- return ((applyRight generateSymbolTable) models)
       -- TODO: Type Checker
       -- TODO: Static Analysis
       -- TODO: Code Generation
       putStrLn $ case valid of
-                  Nothing -> showOutput $ applyWithErr orderFileData fdata
+                  Nothing -> showOutput models
                   Just er -> show er
 
 
