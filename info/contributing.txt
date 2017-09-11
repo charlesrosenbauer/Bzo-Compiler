@@ -3,17 +3,21 @@ This file is a quick explanation of how the code is organized and what work curr
 
 
 High Priority Goals:
-    * Generate Symbol Table for Program, storing Strings as Text.
+    * Add functionality for multiple type filters ( i.e, T':A:B:C )
+    * Add Records and Enums to Symbol Table
+    * Type Checker:
+        * Group Function Expressions and Types together properly (overloading)
+        * Check for more invalid uses of Records / Enums (nested)
+        * Typecheck Types
+        * Typecheck Functions
 
 Medium Priority Goals:
-    * Add functionality for multiple type filters ( i.e, T':A:B:C )
     * Strictness Optimizations
     * Transition from using String to Text types
     * Paralellism Optimizations
     * Improve Error Messages (especially parsing errors!)
 
 Long-Term Goals:
-    * Type Checker
     * Static Analysis Passes for Memory Management
     * Code Generator / LLVM Backend
     * Finish Runtime Environment (https://github.com/charlesrosenbauer/Bzo-Runtime-Library)
