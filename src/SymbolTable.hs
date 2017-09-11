@@ -14,6 +14,20 @@ import qualified Data.List  as L
 
 
 
+extractRecordsEnums :: CallAST -> [T.Text]
+extractRecordsEnums (CA_ContainerCall _ _ _ rs es _) = (map (T.pack . mr_name) rs) ++ (map (T.pack . me_name) es)
+extractRecordsEnums (CA_TyDefCall     _ _   rs es _) = (map (T.pack . mr_name) rs) ++ (map (T.pack . me_name) es)
+extractRecordsEnums _ = []
+
+
+
+
+
+
+
+
+
+
 addFile :: SymbolTable -> T.Text -> SymbolTable
 addFile st@(SymbolTable iids fids itab ftab itop ftop) file =
   case (M.lookup file fids) of
@@ -59,7 +73,10 @@ addToTable' :: String -> SymbolTable -> CallAST -> SymbolTable
 addToTable' file st (CA_Calls    _ xs ) = foldl (addToTable' file) st xs
 addToTable' file st (CA_HintCall _ _ _) = st
 addToTable' file st (CA_REPLCall _ _  ) = st
-addToTable' file st ca = addSymbol (T.pack file) st (T.pack $ ca_id ca)
+addToTable' file st ca =
+  case (extractRecordsEnums ca) of
+    [] -> addSymbol (T.pack file) st (T.pack $ ca_id ca)
+    xs -> foldl (addSymbol $ T.pack file) st ((T.pack $ ca_id ca):xs)
 
 
 
