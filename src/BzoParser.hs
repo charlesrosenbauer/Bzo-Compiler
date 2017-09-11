@@ -702,7 +702,7 @@ includesASTItem errFn mock sn@(BzS_Cmpd          p x) = (incASTHelp0 errFn mock 
 includesASTItem errFn mock sn@(BzS_Poly          p x) = (incASTHelp0 errFn mock sn) ++ (concatMap (includesASTItem errFn mock) x)
 includesASTItem errFn mock sn@(BzS_Expr          p x) = (incASTHelp0 errFn mock sn) ++ (concatMap (includesASTItem errFn mock) x)
 includesASTItem errFn mock sn@(BzS_Block         p x) = (incASTHelp0 errFn mock sn) ++ (concatMap (includesASTItem errFn mock) x)
-includesASTItem errFn mock sn@(BzS_FilterObj   p x l) = (incASTHelp0 errFn mock sn) ++ (includesASTItem errFn mock x) ++ (includesASTItem errFn mock l)
+includesASTItem errFn mock sn@(BzS_FilterObj   p x l) = (incASTHelp0 errFn mock sn) ++ (includesASTItem errFn mock x) ++ (concatMap (includesASTItem errFn mock) l)
 includesASTItem errFn mock sn@(BzS_Lambda      p x d) = (incASTHelp0 errFn mock sn) ++ (includesASTItem errFn mock x) ++ (includesASTItem errFn mock d)
 includesASTItem errFn mock sn@(BzS_FnTy        p i o) = (incASTHelp0 errFn mock sn) ++ (includesASTItem errFn mock i) ++ (includesASTItem errFn mock o)
 includesASTItem errFn mock sn@(BzS_Box           p x) = (incASTHelp0 errFn mock sn) ++ (includesASTItem errFn mock x)
@@ -756,13 +756,14 @@ fuseCurryObj a                 b                           = [a, b]
 
 
 fuseFilterObj :: BzoSyntax -> BzoSyntax -> [BzoSyntax]
-fuseFilterObj sn@(BzS_TyId  p0 x) (BzS_Filter p1 f) = [(BzS_FilterObj p0 sn f)]
-fuseFilterObj sn@(BzS_Id    p0 x) (BzS_Filter p1 f) = [(BzS_FilterObj p0 sn f)]
-fuseFilterObj sn@(BzS_Cmpd  p0 x) (BzS_Filter p1 f) = [(BzS_FilterObj p0 sn f)]
-fuseFilterObj sn@(BzS_Poly  p0 x) (BzS_Filter p1 f) = [(BzS_FilterObj p0 sn f)]
-fuseFilterObj sn@(BzS_TyVar p0 x) (BzS_Filter p1 f) = [(BzS_FilterObj p0 sn f)]
-fuseFilterObj sn@(BzS_Box   p0 x) (BzS_Filter p1 f) = [(BzS_FilterObj p0 sn f)]
-fuseFilterObj sn@(BzS_MId   p0 x) (BzS_Filter p1 f) = [(BzS_FilterObj p0 sn f)]
+fuseFilterObj sn@(BzS_TyId  p0 x) (BzS_Filter p1 f) = [(BzS_FilterObj p0 sn [f])]
+fuseFilterObj sn@(BzS_Id    p0 x) (BzS_Filter p1 f) = [(BzS_FilterObj p0 sn [f])]
+fuseFilterObj sn@(BzS_Cmpd  p0 x) (BzS_Filter p1 f) = [(BzS_FilterObj p0 sn [f])]
+fuseFilterObj sn@(BzS_Poly  p0 x) (BzS_Filter p1 f) = [(BzS_FilterObj p0 sn [f])]
+fuseFilterObj sn@(BzS_TyVar p0 x) (BzS_Filter p1 f) = [(BzS_FilterObj p0 sn [f])]
+fuseFilterObj sn@(BzS_Box   p0 x) (BzS_Filter p1 f) = [(BzS_FilterObj p0 sn [f])]
+fuseFilterObj sn@(BzS_MId   p0 x) (BzS_Filter p1 f) = [(BzS_FilterObj p0 sn [f])]
+fuseFilterObj sn@(BzS_FilterObj p0 x fs) (BzS_Filter p1 f) = [(BzS_FilterObj p0 x (fs ++ [f]))]
 fuseFilterObj a                b                     = [a, b]
 
 
@@ -875,7 +876,7 @@ simplifyASTPass xf f (BzS_Cmpd          p x) = (BzS_Cmpd       p (passHelp1 xf f
 simplifyASTPass xf f (BzS_Poly          p x) = (BzS_Poly       p (passHelp1 xf f x))
 simplifyASTPass xf f (BzS_Expr          p x) = (BzS_Expr       p (passHelp1 xf f x))
 simplifyASTPass xf f (BzS_Block         p x) = (BzS_Block      p (passHelp1 xf f x))
-simplifyASTPass xf f (BzS_FilterObj   p x l) = (BzS_FilterObj  p (passHelp0 xf f x) (passHelp0 xf f l))
+simplifyASTPass xf f (BzS_FilterObj   p x l) = (BzS_FilterObj  p (passHelp0 xf f x) (passHelp1 xf f l))
 simplifyASTPass xf f (BzS_Lambda      p x d) = (BzS_Lambda     p (passHelp0 xf f x) (passHelp0 xf f d))
 simplifyASTPass xf f (BzS_FnTy        p i o) = (BzS_FnTy       p (passHelp0 xf f i) (passHelp0 xf f o))
 simplifyASTPass xf f (BzS_Box           p x) = (BzS_Box        p (passHelp0 xf f x))

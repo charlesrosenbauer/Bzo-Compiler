@@ -29,14 +29,14 @@ stripSyntax x                = x
 
 
 checkRecord :: BzoSyntax -> Maybe (BzoPos, String, BzoSyntax)
-checkRecord (BzS_FilterObj p0 (BzS_Id  p1 i) ty) = Just (p0, i, ty)
-checkRecord (BzS_FilterObj p0 (BzS_BId p1 i) ty) = Just (p0, i, ty)
-checkRecord (BzS_Expr _ [(BzS_FilterObj p0 (BzS_Id  p1 i) ty)]) = Just (p0, i, ty)
-checkRecord (BzS_Expr _ [(BzS_FilterObj p0 (BzS_BId p1 i) ty)]) = Just (p0, i, ty)
-checkRecord (BzS_FilterObj p0 x@(BzS_Expr _ _) t) = checkRecord (BzS_FilterObj p0 (stripSyntax x) t)
-checkRecord (BzS_FilterObj p0 x@(BzS_Box  _ _) t) = checkRecord (BzS_FilterObj p0 (stripSyntax x) t)
-checkRecord (BzS_Expr _ [(BzS_FilterObj p0 x@(BzS_Expr _ _) t)]) = checkRecord (BzS_FilterObj p0 (stripSyntax x) t)
-checkRecord (BzS_Expr _ [(BzS_FilterObj p0 x@(BzS_Box  _ _) t)]) = checkRecord (BzS_FilterObj p0 (stripSyntax x) t)
+checkRecord (BzS_FilterObj p0 (BzS_Id  p1 i) [ty]) = Just (p0, i, ty)
+checkRecord (BzS_FilterObj p0 (BzS_BId p1 i) [ty]) = Just (p0, i, ty)
+checkRecord (BzS_Expr _ [(BzS_FilterObj p0 (BzS_Id  p1 i) [ty])]) = Just (p0, i, ty)
+checkRecord (BzS_Expr _ [(BzS_FilterObj p0 (BzS_BId p1 i) [ty])]) = Just (p0, i, ty)
+checkRecord (BzS_FilterObj p0 x@(BzS_Expr _ _) [t]) = checkRecord (BzS_FilterObj p0 (stripSyntax x) [t])
+checkRecord (BzS_FilterObj p0 x@(BzS_Box  _ _) [t]) = checkRecord (BzS_FilterObj p0 (stripSyntax x) [t])
+checkRecord (BzS_Expr _ [(BzS_FilterObj p0 x@(BzS_Expr _ _) [t])]) = checkRecord (BzS_FilterObj p0 (stripSyntax x) [t])
+checkRecord (BzS_Expr _ [(BzS_FilterObj p0 x@(BzS_Box  _ _) [t])]) = checkRecord (BzS_FilterObj p0 (stripSyntax x) [t])
 checkRecord _                                    = Nothing
 
 
@@ -49,14 +49,14 @@ checkRecord _                                    = Nothing
 
 
 checkEnum :: BzoSyntax -> Maybe (BzoPos, String, BzoSyntax)
-checkEnum (BzS_FilterObj p0 (BzS_TyId p1 i) ty) = Just (p0, i, ty)
-checkEnum (BzS_FilterObj p0 (BzS_BTId p1 i) ty) = Just (p0, i, ty)
-checkEnum (BzS_Expr _ [(BzS_FilterObj p0 (BzS_TyId p1 i) ty)]) = Just (p0, i, ty)
-checkEnum (BzS_Expr _ [(BzS_FilterObj p0 (BzS_BTId p1 i) ty)]) = Just (p0, i, ty)
-checkEnum (BzS_FilterObj p0 x@(BzS_Expr _ _) t) = checkEnum (BzS_FilterObj p0 (stripSyntax x) t)
-checkEnum (BzS_FilterObj p0 x@(BzS_Box  _ _) t) = checkEnum (BzS_FilterObj p0 (stripSyntax x) t)
-checkEnum (BzS_Expr _ [(BzS_FilterObj p0 x@(BzS_Expr _ _) t)]) = checkEnum (BzS_FilterObj p0 (stripSyntax x) t)
-checkEnum (BzS_Expr _ [(BzS_FilterObj p0 x@(BzS_Box  _ _) t)]) = checkEnum (BzS_FilterObj p0 (stripSyntax x) t)
+checkEnum (BzS_FilterObj p0 (BzS_TyId p1 i) [ty]) = Just (p0, i, ty)
+checkEnum (BzS_FilterObj p0 (BzS_BTId p1 i) [ty]) = Just (p0, i, ty)
+checkEnum (BzS_Expr _ [(BzS_FilterObj p0 (BzS_TyId p1 i) [ty])]) = Just (p0, i, ty)
+checkEnum (BzS_Expr _ [(BzS_FilterObj p0 (BzS_BTId p1 i) [ty])]) = Just (p0, i, ty)
+checkEnum (BzS_FilterObj p0 x@(BzS_Expr _ _) [t]) = checkEnum (BzS_FilterObj p0 (stripSyntax x) [t])
+checkEnum (BzS_FilterObj p0 x@(BzS_Box  _ _) [t]) = checkEnum (BzS_FilterObj p0 (stripSyntax x) [t])
+checkEnum (BzS_Expr _ [(BzS_FilterObj p0 x@(BzS_Expr _ _) [t])]) = checkEnum (BzS_FilterObj p0 (stripSyntax x) [t])
+checkEnum (BzS_Expr _ [(BzS_FilterObj p0 x@(BzS_Box  _ _) [t])]) = checkEnum (BzS_FilterObj p0 (stripSyntax x) [t])
 checkEnum _                                     = Nothing
 
 
@@ -69,8 +69,8 @@ checkEnum _                                     = Nothing
 
 
 separateRecords :: BzoSyntax -> Either BzoSyntax (String, BzoSyntax)
-separateRecords (BzS_Expr _ [(BzS_FilterObj p0 (BzS_Id  p1 i) ty)]) = Right (i, ty)
-separateRecords (BzS_Expr _ [(BzS_FilterObj p0 (BzS_BId p1 i) ty)]) = Right (i, ty)
+separateRecords (BzS_Expr _ [(BzS_FilterObj p0 (BzS_Id  p1 i) [ty])]) = Right (i, ty)
+separateRecords (BzS_Expr _ [(BzS_FilterObj p0 (BzS_BId p1 i) [ty])]) = Right (i, ty)
 separateRecords x                                    = Left  x
 
 
@@ -83,8 +83,8 @@ separateRecords x                                    = Left  x
 
 
 separateEnums :: BzoSyntax -> Either BzoSyntax (String, BzoSyntax)
-separateEnums (BzS_Expr _ [(BzS_FilterObj p0 (BzS_TyId p1 i) ty)]) = Right (i, ty)
-separateEnums (BzS_Expr _ [(BzS_FilterObj p0 (BzS_BTId p1 i) ty)]) = Right (i, ty)
+separateEnums (BzS_Expr _ [(BzS_FilterObj p0 (BzS_TyId p1 i) [ty])]) = Right (i, ty)
+separateEnums (BzS_Expr _ [(BzS_FilterObj p0 (BzS_BTId p1 i) [ty])]) = Right (i, ty)
 separateEnums x                                     = Left  x
 
 
@@ -234,10 +234,10 @@ modelBasicType (BzS_FilterObj p (BzS_TyId _ x) _) = Left [SntxErr p "Unexpected 
 
 modelBasicType (BzS_FilterObj p o f) =
   let !o'  = [modelBasicType o]
-      !f'  = [modelBasicType f]
+      !f'  = map modelBasicType f
       ers  = (lefts o') ++ (lefts f')
       vlo  = head $ rights o'
-      vlf  = head $ rights f'
+      vlf  = rights f'
   in case ers of
       [] -> Right (TA_Filt p vlf vlo)
       er -> Left $ concat er
@@ -347,9 +347,9 @@ modelType (BzS_FilterObj p (BzS_TyId _ x) _) = Left [SntxErr p "Unexpected Enum"
 
 modelType (BzS_FilterObj p o f) =
   let !o'  = [modelType o]
-      !f'  = [modelBasicType f]
+      !f'  = map modelBasicType f
       ers  = (lefts o') ++ (lefts f')
-      vlf  = head $ rights f'
+      vlf  = rights f'
       (vlo, rs, es) = head $ rights o'
   in case ers of
       [] -> Right ((TA_Filt p vlf vlo), rs, es)
@@ -400,13 +400,13 @@ modelType s = Left [SntxErr (pos s) "Unexpected Component of Type Expression."]
 
 
 modelTPars :: BzoSyntax -> Either [BzoErr] TParModel
-modelTPars (BzS_TyVar     p x   ) = Right (TParVar p x (TA_Nil p))
+modelTPars (BzS_TyVar     p x   ) = Right (TParVar p x [])
 modelTPars (BzS_FilterObj p (BzS_TyVar _ x) f ) =
-  let f' = [modelBasicType f]
+  let f' = map modelBasicType f
       fl = lefts f'
       fr = rights f'
   in case fl of
-      [] -> Right (TParVar p x (head fr))
+      [] -> Right (TParVar p x fr)
       er -> Left $ concat fl
 
 modelTPars (BzS_Expr      p [x] ) = modelTPars x
@@ -441,10 +441,10 @@ modelFPars (BzS_Str       p s   ) = Right (FParStr p s  )
 modelFPars (BzS_Nil       p     ) = Right (FParNilVal p )
 modelFPars (BzS_Wildcard  p     ) = Right (FParWild   p )
 modelFPars (BzS_FilterObj p x f ) =
-  let f' = [modelBasicType f]
+  let f' = map modelBasicType f
       x' = [modelFPars x]
       fl = (lefts f') ++ (lefts x')
-      fr = head $ rights f'
+      fr = rights f'
       xr = head $ rights x'
   in case fl of
       [] -> Right (FParFilt p xr fr)
@@ -528,10 +528,10 @@ modelExpr (BzS_Lambda p prs df) =
 
 modelExpr (BzS_FilterObj p x filt) =
   let x'   = [modelExpr x]
-      flt' = [modelBasicType filt]
+      flt' = map modelBasicType filt
       ers  = (lefts x') ++ (lefts flt')
   in case ers of
-      [] -> Right $ EM_Filt p (head $ rights x') (head $ rights flt')
+      [] -> Right $ EM_Filt p (head $ rights x') (rights flt')
       er -> Left  $ concat er
 
 modelExpr (BzS_MapObj p x ) =

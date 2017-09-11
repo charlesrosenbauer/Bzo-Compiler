@@ -282,7 +282,7 @@ data BzoSyntax
     | BzS_FilterObj {
         pos     :: !BzoPos,
         bzobj   :: !BzoSyntax,
-        filt    :: !BzoSyntax }
+        filts   :: ![BzoSyntax] }
     | BzS_CurryObj {
         pos     :: !BzoPos,
         bzobj   :: !BzoSyntax,
@@ -426,7 +426,7 @@ data TypeAST
           ta_nxt :: !TypeAST }
       | TA_Filt {
           ta_pos :: !BzoPos,
-          ta_filt :: !TypeAST,
+          ta_filt :: ![TypeAST],
           ta_exp :: !TypeAST }
       | TA_FnTy {
           ta_pos :: !BzoPos,
@@ -529,7 +529,7 @@ data TParModel
   | TParVar   {
       tp_pos  :: !BzoPos,
       tp_id   :: !String,
-      tp_filt :: !TypeAST }
+      tp_filt :: ![TypeAST] }
   | TParNil
 
 
@@ -548,7 +548,7 @@ data FParModel
   | FParFilt {
       fp_pos  :: !BzoPos,
       fp_mod  :: !FParModel,
-      fp_filt :: !TypeAST }
+      fp_filt :: ![TypeAST] }
   | FParVar {
       fp_pos  :: !BzoPos,
       fp_id   :: !String }
@@ -593,7 +593,7 @@ data ExprModel
   | EM_Filt {
       em_pos :: !BzoPos,
       em_exp :: !ExprModel,
-      em_typ :: !TypeAST }
+      em_typ :: ![TypeAST] }
   | EM_Lambda {
       em_pos :: !BzoPos,
       em_par :: !FParModel,
