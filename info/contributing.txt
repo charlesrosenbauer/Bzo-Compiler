@@ -4,7 +4,6 @@ This file is a quick explanation of how the code is organized and what work curr
 
 High Priority Goals:
     * Add functionality for multiple type filters ( i.e, T':A:B:C )
-    * Add Records and Enums to Symbol Table
     * Type Checker:
         * Group Function Expressions and Types together properly (overloading)
         * Check for more invalid uses of Records / Enums (nested)
@@ -70,7 +69,10 @@ Source Files:
   ModelRules.hs
     Due to the syntax of the language, an additional pass is required after parsing to create an AST that is easy to typecheck. This file contains logic for this pass.
 
-  BzoTypeModeller.hs
-    Mostly unused right now. Contains code for generating a faster symbol table.
+  BzoFileSorter.hs
+    Sorts files based on dependencies, detects circular and unsatisfiable dependencies.
+
+  SymbolTable.hs
+    Code for generating a symbol table for searching files where functions and types are defined.
 
   reducedast.hs and codegen.hs are also currently unused and are mostly placeholders with vague outlines for future code. They eventually will be used in code generation.
