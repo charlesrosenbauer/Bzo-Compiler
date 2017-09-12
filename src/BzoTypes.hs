@@ -923,3 +923,25 @@ data SymbolTable
       st_itop   :: !Integer,                           -- What is the highest used Identifier Table Index?
       st_ftop   :: !Integer }                          -- What is the highest used File Table Index?
   deriving Show
+
+
+
+
+
+
+
+
+
+
+data Definition
+  = FnDefinition {
+      def_ftdefs :: [(TypeAST,   TypeAST,   BzoPos)],
+      def_fndefs :: [(FParModel, FParModel, BzoPos)],
+      def_fnId   :: Integer,
+      def_fileId :: Integer }
+  | TyDefinition {
+      def_tydef  :: (TParModel,  TypeAST,   BzoPos),
+      def_tyId   :: Integer,
+      def_fileId :: Integer }
+  | NilDefinition
+  deriving Show
