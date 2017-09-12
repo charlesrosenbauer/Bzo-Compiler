@@ -101,3 +101,51 @@ addToTable st (BzoFileModel mn _ dm ca _ _ _ _) = addToTable' (mn ++ ":" ++ dm) 
 
 generateSymbolTable :: [BzoFileModel CallAST] -> SymbolTable
 generateSymbolTable ms = foldl addToTable (SymbolTable (M.empty) (M.empty) (M.empty) (M.empty) 0 0) ms
+
+
+
+
+
+
+
+
+
+
+queryId :: SymbolTable -> Integer -> T.Text -> Maybe Integer
+queryId (SymbolTable iids fids itab ftab itop ftop) fid t = L.lookup fid $ Mb.fromMaybe [] $ M.lookup t iids
+
+
+
+
+
+
+
+
+
+
+queryFId :: SymbolTable -> T.Text -> Maybe Integer
+queryFId (SymbolTable iids fids itab ftab itop ftop) f = M.lookup f fids
+
+
+
+
+
+
+
+
+
+
+queryIInt :: SymbolTable -> Integer -> Maybe (T.Text, Integer)
+queryIInt (SymbolTable iids fids itab ftab itop ftop) i = M.lookup i itab
+
+
+
+
+
+
+
+
+
+
+queryFInt :: SymbolTable -> Integer -> Maybe T.Text
+queryFInt (SymbolTable iids fids itab ftab itop ftop) f = M.lookup f ftab
