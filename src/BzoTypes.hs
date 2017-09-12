@@ -658,60 +658,19 @@ data ExprModel
 
 
 data CallAST
-    = CA_ContainerCall {
+    = CA_TypeDefCall {
         ca_pos     :: !BzoPos,
         ca_id      :: !String,
         ca_pars    :: !TParModel,
         ca_records :: ![ModelRecord],
         ca_enums   :: ![ModelEnum],
-        ca_tydef   :: !TypeAST }
-    | CA_TypeSetCall {
-        ca_pos     :: !BzoPos,
-        ca_id      :: !String,
-        ca_tydef   :: !TypeAST }
-    | CA_TyDefCall {
-        ca_pos     :: !BzoPos,
-        ca_id      :: !String,
-        ca_records :: ![ModelRecord],
-        ca_enums   :: ![ModelEnum],
-        ca_tydef   :: !TypeAST }
-    | CA_StructCall {
-        ca_pos     :: !BzoPos,
-        ca_id      :: !String,
-        ca_tydef   :: !TypeAST }
-    | CA_ContainerStructCall {
-        ca_pos     :: !BzoPos,
-        ca_id      :: !String,
-        ca_pars    :: !TParModel,
-        ca_tydef   :: !TypeAST }
-    | CA_TypeAliasCall {
-        ca_pos     :: !BzoPos,
-        ca_id      :: !String,
         ca_tydef   :: !TypeAST }
     | CA_FTDefCall {
         ca_pos     :: !BzoPos,
         ca_id      :: !String,
         ca_intype  :: !TypeAST,
         ca_extype  :: !TypeAST }
-    | CA_TacitCall {
-        ca_pos     :: !BzoPos,
-        ca_id      :: !String,
-        ca_fndef   :: !ExprModel }
-    | CA_AliasCall {
-        ca_pos     :: !BzoPos,
-        ca_id      :: !String,
-        ca_fndef   :: !ExprModel }
-    | CA_TacitInCall {
-        ca_pos     :: !BzoPos,
-        ca_id      :: !String,
-        ca_in      :: !FParModel,
-        ca_fndef   :: !ExprModel }
-    | CA_TacitOutCall {
-        ca_pos     :: !BzoPos,
-        ca_id      :: !String,
-        ca_ex      :: !FParModel,
-        ca_fndef   :: !ExprModel }
-    | CA_FunctionCall {
+    | CA_FnDefCall {
         ca_pos     :: !BzoPos,
         ca_id      :: !String,
         ca_in      :: !FParModel,
@@ -763,38 +722,15 @@ instance Show ModelRecord where show = showRecord
 
 
 showCallAST :: CallAST -> String
-showCallAST (CA_ContainerCall        p i s r e t) = " {TyContainerDef: " ++ i ++
+showCallAST (CA_TypeDefCall      p i s r e t) = " {TyDefCall: " ++ i ++
                                             "\n   PARS: " ++ (show s) ++
                                             "\n   RECS: " ++ (Prelude.concatMap (\x -> (show x) ++ ", ") r) ++
                                             "\n   ENMS: " ++ (Prelude.concatMap (\x -> (show x) ++ ", ") e) ++
                                             "\n   DEF : " ++ (show t) ++ " }\n"
-showCallAST (CA_TyDefCall            p i   r e t) = " {TyDef: " ++ i ++
-                                            "\n   RECS: " ++ (Prelude.concatMap (\x -> (show x) ++ ", ") r) ++
-                                            "\n   ENMS: " ++ (Prelude.concatMap (\x -> (show x) ++ ", ") e) ++
-                                            "\n   DEF : " ++ (show t) ++ " }\n"
-showCallAST (CA_TypeSetCall          p i       t) = " {TySetDef: " ++ i ++
-                                            "\n   DEF : " ++ (show t) ++ " }\n"
-showCallAST (CA_StructCall           p i       t) = " {TyStructDef: " ++ i ++
-                                            "\n   DEF : " ++ (show t) ++ " }\n"
-showCallAST (CA_ContainerStructCall  p i s     t) = " {TyContainerStructDef: " ++ i ++
-                                            "\n   PARS: " ++ (show s) ++
-                                            "\n   DEF : " ++ (show t) ++ " }\n"
-showCallAST (CA_TypeAliasCall        p i       t) = " {TyAliasDef: " ++ i ++
-                                            "\n   ALIAS OF: " ++ (show t) ++ " }\n"
-showCallAST (CA_FTDefCall            p x i o)   = " {FnTyDef: " ++ x ++
+showCallAST (CA_FTDefCall            p x i o) = " {FnTyDefCall: " ++ x ++
                                             "\n   INPUT : " ++ (show i) ++
                                             "\n   OUTPUT: " ++ (show o) ++ " }\n"
-showCallAST (CA_TacitCall            p f d)     = " {TacitFunDef: " ++ f ++
-                                            "\n   DEF : " ++ (show d) ++ " }\n"
-showCallAST (CA_AliasCall            p f d)     = " {AliasFunDef: " ++ f ++
-                                            "\n   DEF : " ++ (show d) ++ " }\n"
-showCallAST (CA_TacitInCall          p f i d)   = " {TacitInCall: " ++ f ++
-                                            "\n   IN PARS : " ++ (show i) ++
-                                            "\n   DEF     : " ++ (show d) ++ " }\n"
-showCallAST (CA_TacitOutCall         p f e d)   = " {TacitOutCall: " ++ f ++
-                                            "\n   OUT PARS : " ++ (show e) ++
-                                            "\n   DEF      : " ++ (show d) ++ " }\n"
-showCallAST (CA_FunctionCall         p f i e d) = " {FunctionCall: " ++ f ++
+showCallAST (CA_FnDefCall          p f i e d) = " {FnDefCall: " ++ f ++
                                             "\n   IN  PARS : " ++ (show i) ++
                                             "\n   OUT PARS : " ++ (show e) ++
                                             "\n   DEF      : " ++ (show d) ++ " }\n"

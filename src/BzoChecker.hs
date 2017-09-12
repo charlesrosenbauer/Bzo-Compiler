@@ -3,6 +3,7 @@ import BzoTypes
 import SymbolTable
 import qualified Data.Text   as T
 import qualified Data.Either as E
+import Debug.Trace
 
 
 
@@ -28,8 +29,8 @@ data DefState
 
 
 defOrganizer :: DefState -> CallAST -> DefState
-defOrganizer (DefState ds errs) t@(CA_TyDefCall p i _ _ d) =
-  (DefState (TyDefinition (TParNil, d, t, p) ((T.pack i)):ds) errs)
+defOrganizer (DefState ds errs) t@(CA_TypeDefCall p i prs _ _ d) =
+  (DefState (TyDefinition (prs, d, t, p) (T.pack i):ds) errs)
 
 defOrganizer (DefState ds errs) t = (DefState ds ((SntxErr (ca_pos t) "Unexpected Definition Order!"):errs))
 
