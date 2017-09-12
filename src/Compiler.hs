@@ -32,7 +32,7 @@ compileFilePass (BzoSettings imp lib flg opt pfx) =
       -- TODO: Static Analysis
       -- TODO: Code Generation
       putStrLn $ case valid of
-                  Nothing -> showOutput models
+                  Nothing -> showOutput $ (applyWithErr wrappedDefOrganizePass) models
                   Just er -> show er
 
 

@@ -933,15 +933,13 @@ data SymbolTable
 
 
 
-data Definition
+data Show a => Definition a
   = FnDefinition {
-      def_ftdefs :: [(TypeAST,   TypeAST,   BzoPos)],
-      def_fndefs :: [(FParModel, FParModel, BzoPos)],
-      def_fnId   :: Integer,
-      def_fileId :: Integer }
+      def_ftdefs :: [(TypeAST,   TypeAST,   CallAST, BzoPos)],
+      def_fndefs :: [(FParModel, FParModel, CallAST, BzoPos)],
+      def_fnId   :: a }
   | TyDefinition {
-      def_tydef  :: (TParModel,  TypeAST,   BzoPos),
-      def_tyId   :: Integer,
-      def_fileId :: Integer }
+      def_tydef  :: (TParModel,  TypeAST,   CallAST, BzoPos),
+      def_tyId   :: a }
   | NilDefinition
   deriving Show
