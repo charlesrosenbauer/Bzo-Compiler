@@ -1,9 +1,9 @@
 module SymbolTable where
 import BzoTypes
-import qualified Data.Text  as T
-import qualified Data.Map   as M
-import qualified Data.Maybe as Mb
-import qualified Data.List  as L
+import qualified Data.Text       as T
+import qualified Data.Map.Strict as M
+import qualified Data.Maybe      as Mb
+import qualified Data.List       as L
 
 
 

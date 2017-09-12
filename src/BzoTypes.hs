@@ -1,6 +1,6 @@
 module BzoTypes where
 import qualified Data.Text as T
-import Data.Map hiding (map)
+import Data.Map.Strict hiding (map)
 import HigherOrder
 
 
