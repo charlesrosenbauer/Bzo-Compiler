@@ -28,12 +28,36 @@ data DefState
 
 
 
+makeRecordDef :: ModelRecord -> Definition T.Text
+makeRecordDef (ModelRecord p nm pr ty) = (RcDefinition (ty, (T.pack pr), p) (T.pack nm))
+
+
+
+
+
+
+
+
+
+
+makeEnumDef :: ModelEnum -> Definition T.Text
+makeEnumDef (ModelEnum p nm pr ty) = (EnDefinition (ty, (T.pack pr), p) (T.pack nm))
+
+
+
+
+
+
+
+
+
+
 defOrganizer :: DefState -> CallAST -> DefState
 defOrganizer (DefState [] errs) t@(CA_TypeDefCall p i prs rs es df) =
-  (DefState [TyDefinition (prs, df, rs, es, p) (T.pack i)] errs)
+  (DefState ([TyDefinition (prs, df, rs, es, p) (T.pack i)] ++ (map makeRecordDef rs) ++ (map makeEnumDef es)) errs)
 
 defOrganizer (DefState (d:ds) errs) t@(CA_TypeDefCall p i prs rs es df) =
-  (DefState (TyDefinition (prs, df, rs, es, p) (T.pack i):ds) errs)
+  (DefState ([TyDefinition (prs, df, rs, es, p) (T.pack i)] ++ (map makeRecordDef rs) ++ (map makeEnumDef es) ++ ds) errs)
 
 defOrganizer (DefState [] errs) t@(CA_FTDefCall p i it xt) =
   (DefState [FnDefinition [(it, xt, p)] [] (T.pack i)] errs)

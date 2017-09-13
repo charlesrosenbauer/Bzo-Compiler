@@ -877,5 +877,11 @@ data Show a => Definition a
   | TyDefinition {
       def_tydef  :: (TParModel,  TypeAST, [ModelRecord], [ModelEnum], BzoPos),   -- TPars, Type, Records, Enums, Pos
       def_tyId   :: a }   -- Id
+  | RcDefinition {
+      def_rcdef  :: (TypeAST, a, BzoPos),    -- Type, Parent, Position
+      def_rcId   :: a }   -- Id
+  | EnDefinition {
+      def_endef  :: (TypeAST, a, BzoPos),    -- Type, Parent, Position
+      def_enId   :: a }   -- Id
   | NilDefinition
   deriving Show
