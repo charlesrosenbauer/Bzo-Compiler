@@ -871,11 +871,11 @@ data SymbolTable
 
 data Show a => Definition a
   = FnDefinition {
-      def_ftdefs :: [(TypeAST,   TypeAST,   CallAST, BzoPos)],
-      def_fndefs :: [(FParModel, FParModel, CallAST, BzoPos)],
-      def_fnId   :: a }
+      def_ftdefs :: [(TypeAST,   TypeAST  ,            BzoPos)],  -- InType, ExType, Pos
+      def_fndefs :: [(FParModel, FParModel, ExprModel, BzoPos)],  -- InPars, ExPars, Expr, Pos
+      def_fnId   :: a }   -- Id
   | TyDefinition {
-      def_tydef  :: (TParModel,  TypeAST,   CallAST, BzoPos),
-      def_tyId   :: a }
+      def_tydef  :: (TParModel,  TypeAST, [ModelRecord], [ModelEnum], BzoPos),   -- TPars, Type, Records, Enums, Pos
+      def_tyId   :: a }   -- Id
   | NilDefinition
   deriving Show

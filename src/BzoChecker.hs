@@ -29,10 +29,27 @@ data DefState
 
 
 defOrganizer :: DefState -> CallAST -> DefState
-defOrganizer (DefState ds errs) t@(CA_TypeDefCall p i prs _ _ d) =
-  (DefState (TyDefinition (prs, d, t, p) (T.pack i):ds) errs)
+defOrganizer (DefState [] errs) t@(CA_TypeDefCall p i prs rs es df) =
+  (DefState [TyDefinition (prs, df, rs, es, p) (T.pack i)] errs)
 
-defOrganizer (DefState ds errs) t = (DefState ds ((SntxErr (ca_pos t) "Unexpected Definition Order!"):errs))
+defOrganizer (DefState (d:ds) errs) t@(CA_TypeDefCall p i prs rs es df) =
+  (DefState (TyDefinition (prs, df, rs, es, p) (T.pack i):ds) errs)
+
+defOrganizer (DefState [] errs) t@(CA_FTDefCall p i it xt) =
+  (DefState [FnDefinition [(it, xt, p)] [] (T.pack i)] errs)
+
+defOrganizer (DefState (d:ds) errs) t@(CA_FTDefCall p i it xt) =
+  (DefState (FnDefinition [(it, xt, p)] [] (T.pack i):ds) errs)
+
+defOrganizer (DefState [] errs) t@(CA_FnDefCall p i ip xp df) =
+  (DefState [] ((SntxErr (ca_pos t) "Isolated Function Definition"):errs))
+
+defOrganizer (DefState (d:ds) errs) t@(CA_FnDefCall p i ip xp df) =
+  (DefState (FnDefinition [] [(ip, xp, df, p)] (T.pack i):ds) errs)
+
+-- Add Hint Calls Too!
+
+defOrganizer (DefState ds errs) t = (DefState ds ((SntxErr (ca_pos t) $ "Unexpected Definition Order!" ++ (show ds)):errs))
 
 
 
@@ -65,4 +82,4 @@ wrappedDefOrganizePass xs =
       xsr = E.rights xs'
   in case xsl of
       [] -> Right xsr
-      er -> Left  xsl
+      er -> Left  $ reverse xsl
