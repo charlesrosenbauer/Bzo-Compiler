@@ -56,14 +56,23 @@ defOrganizer :: DefState -> CallAST -> DefState
 defOrganizer (DefState [] errs) t@(CA_TypeDefCall p i prs rs es df) =
   (DefState ([TyDefinition (prs, df, rs, es, p) (T.pack i)] ++ (map makeRecordDef rs) ++ (map makeEnumDef es)) errs)
 
-defOrganizer (DefState (d:ds) errs) t@(CA_TypeDefCall p i prs rs es df) =
+defOrganizer (DefState ds errs) t@(CA_TypeDefCall p i prs rs es df) =
   (DefState ([TyDefinition (prs, df, rs, es, p) (T.pack i)] ++ (map makeRecordDef rs) ++ (map makeEnumDef es) ++ ds) errs)
 
 defOrganizer (DefState [] errs) t@(CA_FTDefCall p i it xt) =
   (DefState [FnDefinition [(it, xt, p)] [] (T.pack i)] errs)
 
 defOrganizer (DefState (d:ds) errs) t@(CA_FTDefCall p i it xt) =
-  (DefState (FnDefinition [(it, xt, p)] [] (T.pack i):ds) errs)
+  case d of
+    (TyDefinition _ _    ) -> (DefState (FnDefinition [(it, xt, p)] [] (T.pack i):ds) errs)
+    (RcDefinition _ _    ) -> (DefState (FnDefinition [(it, xt, p)] [] (T.pack i):ds) errs)
+    (EnDefinition _ _    ) -> (DefState (FnDefinition [(it, xt, p)] [] (T.pack i):ds) errs)
+    (NilDefinition       ) -> (DefState (FnDefinition [(it, xt, p)] [] (T.pack i):ds) errs)
+    (FnDefinition ft [] a) ->
+      if (a == (T.pack i))
+        then (DefState (FnDefinition ((it, xt, p):ft) [] (T.pack i):ds) errs)
+        else (DefState ds ((SntxErr (ca_pos t) $ "Expected Function Type Definition for " ++ i):errs))
+    _ -> (DefState ds ((SntxErr (ca_pos t) "Unexpected Function Type Definition"):errs))
 
 defOrganizer (DefState [] errs) t@(CA_FnDefCall p i ip xp df) =
   (DefState [] ((SntxErr (ca_pos t) "Isolated Function Definition"):errs))
