@@ -68,11 +68,13 @@ defOrganizer (DefState (d:ds) errs) t@(CA_FTDefCall p i it xt) =
     (RcDefinition _ _    ) -> (DefState (FnDefinition [(it, xt, p)] [] (T.pack i):ds) errs)
     (EnDefinition _ _    ) -> (DefState (FnDefinition [(it, xt, p)] [] (T.pack i):ds) errs)
     (NilDefinition       ) -> (DefState (FnDefinition [(it, xt, p)] [] (T.pack i):ds) errs)
+
     (FnDefinition ft [] a) ->
       if (a == (T.pack i))
         then (DefState (FnDefinition ((it, xt, p):ft) [] (T.pack i):ds) errs)
         else (DefState ds ((SntxErr (ca_pos t) $ "Expected Function Type Definition for " ++ i):errs))
-    _ -> (DefState ds ((SntxErr (ca_pos t) "Unexpected Function Type Definition"):errs))
+
+    (FnDefinition ft fn a) -> (DefState ((FnDefinition [(it, xt, p)] [] (T.pack i)):d:ds) errs)
 
 defOrganizer (DefState [] errs) t@(CA_FnDefCall p i ip xp df) =
   (DefState [] ((SntxErr (ca_pos t) "Isolated Function Definition"):errs))
@@ -82,7 +84,7 @@ defOrganizer (DefState (d:ds) errs) t@(CA_FnDefCall p i ip xp df) =
 
 -- Add Hint Calls Too!
 
-defOrganizer (DefState ds errs) t = (DefState ds ((SntxErr (ca_pos t) $ "Unexpected Definition Order!" ++ (show ds)):errs))
+defOrganizer (DefState ds errs) t = (DefState ds ((SntxErr (ca_pos t) $ "Unexpected Definition Order!"):errs))
 
 
 
