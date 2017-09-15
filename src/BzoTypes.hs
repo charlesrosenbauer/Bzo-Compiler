@@ -884,4 +884,33 @@ data Show a => Definition a
       def_endef  :: (TypeAST, a, BzoPos),    -- Type, Parent, Position
       def_enId   :: a }   -- Id
   | NilDefinition
-  deriving Show
+
+
+
+
+
+
+
+
+
+
+showDefinition :: (Show a) => Definition a -> String
+showDefinition (FnDefinition fts fns fnid) = "Function Defintion : " ++ (show fnid) ++ " { " ++
+                                              "\n\n    FtDefs:\n" ++ (concatMap (\(a, b, _)    ->
+                                                  "(" ++ (show a) ++ " ;; " ++ (show b) ++ "),\n") fts) ++
+                                              "\n\n    FnDefs:\n" ++ (concatMap (\(a, b, c, d) ->
+                                                  "(" ++ (show a) ++ " -> " ++ (show b) ++ " :: " ++ (show c) ++ "),\n") fns) ++ " }\n\n"
+
+showDefinition (TyDefinition (tp, t, r, e, _) tyid) =
+                                             "Type Defintion : " ++ (show tyid) ++ " { " ++
+                                              "\n\n    TyDef:\n"   ++ (show tp) ++ " -> " ++ (show t) ++
+                                              "\n\n    Records:\n" ++ (show r)  ++
+                                              "\n\n    Enums:\n"   ++ (show e)  ++ " }\n\n"
+showDefinition (RcDefinition (t, p, _) r)  = "Record Definition : " ++ (show r) ++ " { " ++
+                                              "\n    Type   : " ++ (show t) ++ "\n" ++
+                                              "\n    Parent : " ++ (show p) ++ " }\n\n"
+showDefinition (EnDefinition (t, p, _) e)  = "Enum Definition : " ++ (show e) ++ " { " ++
+                                              "\n    Type   : " ++ (show t) ++ "\n" ++
+                                              "\n    Parent : " ++ (show p) ++ " }\n\n"
+showDefinition (NilDefinition) = "NilDefinition\n\n"
+instance (Show a) => Show (Definition a) where show = showDefinition
