@@ -64,15 +64,15 @@ defOrganizer (DefState [] errs) t@(CA_FTDefCall p i it xt) =
 
 defOrganizer (DefState (d:ds) errs) t@(CA_FTDefCall p i it xt) =
   case d of
-    (TyDefinition _ _    ) -> (DefState (FnDefinition [(it, xt, p)] [] (T.pack i):ds) errs)
-    (RcDefinition _ _    ) -> (DefState (FnDefinition [(it, xt, p)] [] (T.pack i):ds) errs)
-    (EnDefinition _ _    ) -> (DefState (FnDefinition [(it, xt, p)] [] (T.pack i):ds) errs)
-    (NilDefinition       ) -> (DefState (FnDefinition [(it, xt, p)] [] (T.pack i):ds) errs)
+    (TyDefinition _ _ ) -> (DefState (FnDefinition [(it, xt, p)] [] (T.pack i):ds) errs)
+    (RcDefinition _ _ ) -> (DefState (FnDefinition [(it, xt, p)] [] (T.pack i):ds) errs)
+    (EnDefinition _ _ ) -> (DefState (FnDefinition [(it, xt, p)] [] (T.pack i):ds) errs)
+    (NilDefinition    ) -> (DefState (FnDefinition [(it, xt, p)] [] (T.pack i):ds) errs)
 
     (FnDefinition ft [] a) ->
       if (a == (T.pack i))
         then (DefState (FnDefinition ((it, xt, p):ft) [] (T.pack i):ds) errs)
-        else (DefState ds ((SntxErr (ca_pos t) $ "Expected Function Type Definition for " ++ i):errs))
+        else (DefState (NilDefinition:d:ds) ((SntxErr (ca_pos t) $ "Expected Function Type Definition for " ++ i):errs))
 
     (FnDefinition ft fn a) -> (DefState ((FnDefinition [(it, xt, p)] [] (T.pack i)):d:ds) errs)
 
@@ -80,7 +80,21 @@ defOrganizer (DefState [] errs) t@(CA_FnDefCall p i ip xp df) =
   (DefState [] ((SntxErr (ca_pos t) "Isolated Function Definition"):errs))
 
 defOrganizer (DefState (d:ds) errs) t@(CA_FnDefCall p i ip xp df) =
-  (DefState (FnDefinition [] [(ip, xp, df, p)] (T.pack i):ds) errs)
+  case d of
+    (TyDefinition _ _ ) -> (DefState (NilDefinition:d:ds) ((SntxErr (ca_pos t) "Function Definition without Defined Type"):errs))
+    (RcDefinition _ _ ) -> (DefState (NilDefinition:d:ds) ((SntxErr (ca_pos t) "Function Definition without Defined Type"):errs))
+    (EnDefinition _ _ ) -> (DefState (NilDefinition:d:ds) ((SntxErr (ca_pos t) "Function Definition without Defined Type"):errs))
+    (NilDefinition    ) -> (DefState (NilDefinition:d:ds) ((SntxErr (ca_pos t) "Function Definition without Defined Type"):errs))
+
+    (FnDefinition ft [] a) ->
+      if (a == (T.pack i))
+        then (DefState (FnDefinition ft [(ip, xp, df, p)] (T.pack i):ds) errs)
+        else (DefState (NilDefinition:d:ds) ((SntxErr (ca_pos t) $ "Expected Definition for Function " ++ i):errs))
+
+    (FnDefinition ft fn a) ->
+      if (a == (T.pack i))
+        then (DefState (FnDefinition ft ((ip, xp, df, p):fn) (T.pack i):ds) errs)
+        else (DefState (NilDefinition:d:ds) ((SntxErr (ca_pos t) $ "Expected Definition for Function " ++ i):errs))
 
 -- Add Hint Calls Too!
 
