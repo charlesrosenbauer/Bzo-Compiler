@@ -883,6 +883,9 @@ data Show a => Definition a
   | EnDefinition {
       def_endef  :: (TypeAST, a, BzoPos),    -- Type, Parent, Position
       def_enId   :: a }   -- Id
+  | HintDefinition {
+      def_hint   :: ([ExprModel], BzoPos),    -- Parameters, Position
+      def_hintId :: T.Text }  -- Hint
   | NilDefinition
 
 
@@ -912,5 +915,6 @@ showDefinition (RcDefinition (t, p, _) r)  = "Record Definition : " ++ (show r) 
 showDefinition (EnDefinition (t, p, _) e)  = "Enum Definition : " ++ (show e) ++ " { " ++
                                               "\n    Type   : " ++ (show t) ++ "\n" ++
                                               "\n    Parent : " ++ (show p) ++ " }\n\n"
+showDefinition (HintDefinition (ps, _) h)  = "Hint Definition : " ++ (show h) ++ " { " ++ (concatMap (\x -> (show x) ++ ", ") ps) ++ " }\n"
 showDefinition (NilDefinition) = "NilDefinition\n\n"
 instance (Show a) => Show (Definition a) where show = showDefinition
