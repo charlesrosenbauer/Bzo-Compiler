@@ -420,7 +420,7 @@ areFilesValid fs =
 appendFilePath :: FilePath -> FilePath -> FilePath
 appendFilePath p a =
   let a' = if ((head a) == '/')
-             then drop 1 a
+             then Data.List.drop 1 a
              else a
   in if (last p) == '/'
        then (p ++ a)
