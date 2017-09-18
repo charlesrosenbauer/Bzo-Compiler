@@ -919,3 +919,48 @@ showDefinition (EnDefinition (t, p, _) e)  = "Enum Definition : " ++ (show e) ++
 showDefinition (HintDefinition (ps, _) h)  = "Hint Definition : " ++ (show h) ++ " { " ++ (concatMap (\x -> (show x) ++ ", ") ps) ++ " }\n"
 showDefinition (NilDefinition) = "NilDefinition\n\n"
 instance (Show a) => Show (Definition a) where show = showDefinition
+
+
+
+
+
+
+
+
+
+
+data BzoType
+  = BT_Int Integer
+  | BT_Flt Double
+  | BT_Str T.Text
+  | BT_Nil
+  | BT_Wild
+  | BT_Type Int64
+  | BT_Cmpd [BzoType]
+  | BT_Poly [BzoType]
+  | BT_Expr BzoType BzoType
+  | BT_Enum Int64 BzoType
+  | BT_FnTy BzoType BzoType
+  deriving Show
+
+
+
+
+
+
+
+
+
+
+data BzoPattern
+  = BP_Int Integer
+  | BP_Flt Double
+  | BP_Str T.Text
+  | BP_Nil
+  | BP_Wild
+  | BP_Type Int64
+  | BP_Cmpd [BzoPattern]
+  | BP_Expr BzoPattern BzoPattern
+  | BP_Filt BzoType BzoPattern
+  | BP_Enum Int64 BzoPattern
+  deriving Show
