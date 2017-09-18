@@ -10,7 +10,8 @@ build-type: Simple
 executable main
     default-language: Haskell2010
     main-is: bzo.hs
-    ghc-options: -dynamic -O2 -XBangPatterns
+    ghc-options: -dynamic -O2
+    default-extensions: BangPatterns
     hs-source-dirs: src
     build-depends:
         base >= 4.7
@@ -19,7 +20,7 @@ executable main
       , containers >= 0.5.7
       , directory >= 1.3
       , filepath >= 1.4
-      , llvm-hs >= 4.0.0
+      , llvm-hs >= 5.0.0
       , llvm-hs-pure >= 5.0.0
     other-modules:
         BzoChecker
