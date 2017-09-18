@@ -1,5 +1,6 @@
 module SymbolTable where
 import BzoTypes
+import Data.Int
 import qualified Data.Text       as T
 import qualified Data.Map.Strict as M
 import qualified Data.Maybe      as Mb
@@ -110,7 +111,7 @@ generateSymbolTable ms = foldl addToTable (SymbolTable (M.empty) (M.empty) (M.em
 
 
 
-queryId :: SymbolTable -> Integer -> T.Text -> Maybe Integer
+queryId :: SymbolTable -> Int64 -> T.Text -> Maybe Int64
 queryId (SymbolTable iids fids itab ftab itop ftop) fid t = L.lookup fid $ Mb.fromMaybe [] $ M.lookup t iids
 
 
@@ -122,7 +123,7 @@ queryId (SymbolTable iids fids itab ftab itop ftop) fid t = L.lookup fid $ Mb.fr
 
 
 
-queryFId :: SymbolTable -> T.Text -> Maybe Integer
+queryFId :: SymbolTable -> T.Text -> Maybe Int64
 queryFId (SymbolTable iids fids itab ftab itop ftop) f = M.lookup f fids
 
 
@@ -134,7 +135,7 @@ queryFId (SymbolTable iids fids itab ftab itop ftop) f = M.lookup f fids
 
 
 
-queryIInt :: SymbolTable -> Integer -> Maybe (T.Text, Integer)
+queryIInt :: SymbolTable -> Int64 -> Maybe (T.Text, Int64)
 queryIInt (SymbolTable iids fids itab ftab itop ftop) i = M.lookup i itab
 
 
@@ -146,5 +147,5 @@ queryIInt (SymbolTable iids fids itab ftab itop ftop) i = M.lookup i itab
 
 
 
-queryFInt :: SymbolTable -> Integer -> Maybe T.Text
+queryFInt :: SymbolTable -> Int64 -> Maybe T.Text
 queryFInt (SymbolTable iids fids itab ftab itop ftop) f = M.lookup f ftab
