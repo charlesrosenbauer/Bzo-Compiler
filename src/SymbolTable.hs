@@ -1,6 +1,7 @@
 module SymbolTable where
 import BzoTypes
 import Data.Int
+import HigherOrder
 import qualified Data.Text       as T
 import qualified Data.Map.Strict as M
 import qualified Data.Maybe      as Mb
@@ -29,9 +30,9 @@ extractRecordsEnums _ = []
 
 
 addFile :: SymbolTable -> T.Text -> SymbolTable
-addFile st@(SymbolTable iids fids itab ftab itop ftop) file =
+addFile st@(SymbolTable iids fids itab ftab dmid itop ftop) file =
   case (M.lookup file fids) of
-    Nothing -> (SymbolTable iids (M.insert file (ftop+1) fids) itab (M.insert (ftop+1) file ftab) itop (ftop+1))
+    Nothing -> (SymbolTable iids (M.insert file (ftop+1) fids) itab (M.insert (ftop+1) file ftab) dmid itop (ftop+1))
     Just _  -> st
 
 
@@ -44,8 +45,8 @@ addFile st@(SymbolTable iids fids itab ftab itop ftop) file =
 
 
 addSymbol :: T.Text -> SymbolTable -> T.Text -> SymbolTable
-addSymbol file st@(SymbolTable iids fids itab ftab itop ftop) symbol =
-  let st'@(SymbolTable iids' fids' itab' ftab' itop' ftop') =
+addSymbol file st@(SymbolTable iids fids itab ftab dmid itop ftop) symbol =
+  let st'@(SymbolTable iids' fids' itab' ftab' dmid' itop' ftop') =
         case (M.lookup file fids) of
           Nothing -> addFile st file
           Just _  -> st
@@ -53,12 +54,12 @@ addSymbol file st@(SymbolTable iids fids itab ftab itop ftop) symbol =
       iid = Mb.fromMaybe []   $ M.lookup symbol iids'
   in case iid of
       [] -> -- Symbol has no previous usage
-        (SymbolTable (M.insert symbol [(fid, itop'+1)] iids') fids' (M.insert (itop'+1) (symbol, fid) itab') ftab' (itop'+1) ftop')
+        (SymbolTable (M.insert symbol [(fid, itop'+1)] iids') fids' (M.insert (itop'+1) (symbol, fid) itab') ftab' dmid' (itop'+1) ftop')
       xs -> -- Symbol has been used before
         case (L.lookup fid xs) of
           Just _  -> st' -- Symbol has been used in the current file. No need for additions
           Nothing ->
-            (SymbolTable (M.insert symbol ((fid, itop'+1):xs) iids') fids' (M.insert (itop'+1) (symbol, fid) itab') ftab' (itop'+1) ftop')
+            (SymbolTable (M.insert symbol ((fid, itop'+1):xs) iids') fids' (M.insert (itop'+1) (symbol, fid) itab') ftab' dmid' (itop'+1) ftop')
 
 
 
@@ -100,7 +101,16 @@ addToTable st (BzoFileModel mn _ dm ca _ _ _ _) = addToTable' (mn ++ ":" ++ dm) 
 
 
 generateSymbolTable :: [BzoFileModel CallAST] -> SymbolTable
-generateSymbolTable ms = foldl addToTable (SymbolTable (M.empty) (M.empty) (M.empty) (M.empty) 0 0) ms
+generateSymbolTable ms =
+  let (SymbolTable iids fids itab ftab dmid itop ftop) = foldl addToTable (SymbolTable (M.empty) (M.empty) (M.empty) (M.empty) (M.empty) 0 0) ms
+      dmids  = Mb.catMaybes $ map (dmidHelp fids) ms
+      dmids' = insertManyListAlt (M.empty) dmids
+  in (SymbolTable iids fids itab ftab dmids' itop ftop)
+  where dmidHelp :: Show a => M.Map T.Text Int64 -> BzoFileModel a -> Maybe (T.Text, [Int64])
+        dmidHelp fids (BzoFileModel mn _ dm _ imps _ impas _ ) =
+          case Mb.catMaybes $ L.nub $ map (\x -> M.lookup x fids) $ map (\f -> T.pack (f ++ ":" ++ mn)) ([mn] ++ imps ++ (map fst impas)) of
+            [] -> Nothing
+            xs -> Just (T.pack dm, xs)
 
 
 
@@ -112,7 +122,7 @@ generateSymbolTable ms = foldl addToTable (SymbolTable (M.empty) (M.empty) (M.em
 
 
 queryId :: SymbolTable -> Int64 -> T.Text -> Maybe Int64
-queryId (SymbolTable iids fids itab ftab itop ftop) fid t = L.lookup fid $ Mb.fromMaybe [] $ M.lookup t iids
+queryId (SymbolTable iids fids itab ftab dmid itop ftop) fid t = L.lookup fid $ Mb.fromMaybe [] $ M.lookup t iids
 
 
 
@@ -124,7 +134,7 @@ queryId (SymbolTable iids fids itab ftab itop ftop) fid t = L.lookup fid $ Mb.fr
 
 
 queryFId :: SymbolTable -> T.Text -> Maybe Int64
-queryFId (SymbolTable iids fids itab ftab itop ftop) f = M.lookup f fids
+queryFId (SymbolTable iids fids itab ftab dmid itop ftop) f = M.lookup f fids
 
 
 
@@ -136,7 +146,7 @@ queryFId (SymbolTable iids fids itab ftab itop ftop) f = M.lookup f fids
 
 
 queryIInt :: SymbolTable -> Int64 -> Maybe (T.Text, Int64)
-queryIInt (SymbolTable iids fids itab ftab itop ftop) i = M.lookup i itab
+queryIInt (SymbolTable iids fids itab ftab dmid itop ftop) i = M.lookup i itab
 
 
 
@@ -148,4 +158,40 @@ queryIInt (SymbolTable iids fids itab ftab itop ftop) i = M.lookup i itab
 
 
 queryFInt :: SymbolTable -> Int64 -> Maybe T.Text
-queryFInt (SymbolTable iids fids itab ftab itop ftop) f = M.lookup f ftab
+queryFInt (SymbolTable iids fids itab ftab dmid itop ftop) f = M.lookup f ftab
+
+
+
+
+
+
+
+
+
+
+queryType :: TypeTable -> Int64 -> Maybe BzoType
+queryType tt i = M.lookup i tt
+
+
+
+
+
+
+
+
+
+
+adjustType :: (BzoType -> BzoType) -> TypeTable -> Int64 -> TypeTable
+adjustType f tt i = M.adjust f i tt
+
+
+
+
+
+
+
+
+
+
+insertType :: TypeTable -> Int64 -> BzoType -> TypeTable
+insertType tt i t = M.insert i t tt

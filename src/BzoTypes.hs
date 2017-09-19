@@ -857,6 +857,7 @@ data SymbolTable
       st_fids   :: !(Map T.Text Int64),              -- To look up if a File Identifier exists, and if so, what is the Table Index?
       st_itable :: !(Map Int64 (T.Text, Int64)),     -- For a given Table Index, what is the associated Identifier, and the file where it's defined?
       st_ftable :: !(Map Int64 T.Text),              -- For a given Table Index, what is the associated File Identifier?
+      st_dmids  :: !(Map T.Text [Int64]),            -- For a given File Domain, what are the associated File Indices?
       st_itop   :: !Int64,                           -- What is the highest used Identifier Table Index?
       st_ftop   :: !Int64 }                          -- What is the highest used File Table Index?
   deriving Show
@@ -964,3 +965,14 @@ data BzoPattern
   | BP_Filt BzoType BzoPattern
   | BP_Enum Int64 BzoPattern
   deriving Show
+
+
+
+
+
+
+
+
+
+
+type TypeTable = Map Int64 BzoType
