@@ -103,14 +103,8 @@ addToTable st (BzoFileModel mn _ dm ca _ _ _ _) = addToTable' (mn ++ ":" ++ dm) 
 generateSymbolTable :: [BzoFileModel CallAST] -> SymbolTable
 generateSymbolTable ms =
   let (SymbolTable iids fids itab ftab dmid itop ftop) = foldl addToTable (SymbolTable (M.empty) (M.empty) (M.empty) (M.empty) (M.empty) 0 0) ms
-      dmids  = Mb.catMaybes $ map (dmidHelp fids) ms
-      dmids' = insertManyListAlt (M.empty) dmids
-  in (SymbolTable iids fids itab ftab dmids' itop ftop)
-  where dmidHelp :: Show a => M.Map T.Text Int64 -> BzoFileModel a -> Maybe (T.Text, [Int64])
-        dmidHelp fids (BzoFileModel mn _ dm _ imps _ impas _ ) =
-          case Mb.catMaybes $ L.nub $ map (\x -> M.lookup x fids) $ map (\f -> T.pack (f ++ ":" ++ mn)) ([mn] ++ imps ++ (map fst impas)) of
-            [] -> Nothing
-            xs -> Just (T.pack dm, xs)
+      dmids = fromListToListMap $ map (\(a, b) -> (last $ T.splitOn (T.pack ":") b, [a])) $ M.assocs ftab
+  in (SymbolTable iids fids itab ftab dmids itop ftop)
 
 
 

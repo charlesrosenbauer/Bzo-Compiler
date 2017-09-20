@@ -513,12 +513,12 @@ insertManyList m xs = L.foldl' (\mp (k, a) ->
 
 
 
-insertManyListAlt :: Ord k => Mp.Map k [a] -> [(k, [a])] -> Mp.Map k [a]
-insertManyListAlt m xs = L.foldl' (\mp (k, a) ->
+fromListToListMap :: Ord k => [(k, [a])] -> Mp.Map k [a]
+fromListToListMap xs = L.foldl' (\mp (k, a) ->
   if (Mp.member k mp)
     then Mp.adjust (\as -> as ++ a) k mp
     else Mp.insert k a mp
-  ) m xs
+  ) (Mp.empty) xs
 
 
 
