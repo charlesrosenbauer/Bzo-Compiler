@@ -17,6 +17,7 @@ import System.Environment
 import HigherOrder
 import Debug.Trace
 import System.IO hiding (try)
+import Control.Parallel.Strategies
 
 
 
@@ -322,7 +323,7 @@ loadFullProject _ _ _ = do
 
 wrappedLexerMap :: [(FilePath, String)] -> Either [BzoErr] [(FilePath, [BzoToken])]
 wrappedLexerMap fs =
-  let contents = Prelude.map (\(f, c) -> fileLexer f c) fs
+  let contents = parMap rpar (\(f, c) -> fileLexer f c) fs
       errors   = concat $ lefts contents
       passes   = rights contents
   in case errors of
@@ -340,7 +341,7 @@ wrappedLexerMap fs =
 
 wrappedParserMap :: [(FilePath, [BzoToken])] -> Either [BzoErr] [BzoSyntax]
 wrappedParserMap tks =
-  let contents = Prelude.map (\(f, t) -> parseFile f t [parseCalls]) tks
+  let contents = parMap rpar (\(f, t) -> parseFile f t [parseCalls]) tks
       errors   = concat $ lefts contents
       passes   = rights contents
   in case errors of
@@ -358,9 +359,9 @@ wrappedParserMap tks =
 
 wrappedPrepMap :: [BzoSyntax] -> Either [BzoErr] [BzoFileModel BzoSyntax]
 wrappedPrepMap asts =
-  let contents = Prelude.map (\syn -> verifyAST (Right (False, syn, (BzoFileModel "" (fileName $ pos syn) "@" syn [] [] [] [])))) asts
+  let contents = parMap rpar (\syn -> verifyAST (Right (False, syn, (BzoFileModel "" (fileName $ pos syn) "@" syn [] [] [] [])))) asts
       errors   = concat $ lefts contents
-      passes   = Prelude.map (\(a, b, c) -> c) $ rights contents
+      passes   = parMap rpar (\(a, b, c) -> c) $ rights contents
   in case errors of
     [] -> Right passes
     er -> Left  er

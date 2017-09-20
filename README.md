@@ -35,6 +35,8 @@ Libraries are stored in a /bzo file. The compiler checks in your /opt, /opt/lib,
 
 /bzo consists mainly of two subdirectories; /cfg, and /libs. /cfg holds config files, and /libs holds library code. For the most up-to-date library code, go to (https://github.com/charlesrosenbauer/Bzo-Standard-Library).
 
+The compiler can be run in parallel by adding the parameters "+RTS -NX" where X is the number of CPU cores you wish you use. This does have some drawbacks however, mainly that it only currently handles parallelism across full files (meaning you won't see much of an improvement in compilation speed without many large program files), and that it is not extremely stable.
+
 
 
 *Short-Term Plans / Features*
