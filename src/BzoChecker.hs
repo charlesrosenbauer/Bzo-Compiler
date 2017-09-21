@@ -1,8 +1,12 @@
 module BzoChecker where
 import BzoTypes
 import SymbolTable
-import qualified Data.Text   as T
-import qualified Data.Either as E
+import Data.Int
+import qualified Data.Text       as T
+import qualified Data.Either     as E
+import qualified Data.Map.Strict as M
+import qualified Data.Maybe      as Mb
+import qualified Data.List       as L
 import Debug.Trace
 
 
@@ -135,3 +139,29 @@ wrappedDefOrganizePass xs =
   in case xsl of
       [] -> Right xsr
       er -> Left  $ reverse xsl
+
+
+
+
+
+
+
+
+
+
+getFIdSet :: SymbolTable -> [T.Text] -> [T.Text] -> [Int64]
+getFIdSet (SymbolTable iids fids itab ftab dmid itop ftop) imps lnks =
+  let lnks' =          Mb.catMaybes $ map (\x -> M.lookup x fids) lnks
+      imps' = concat $ Mb.catMaybes $ map (\x -> M.lookup x dmid) imps
+  in L.nub (lnks' ++ imps')
+
+
+
+
+
+
+
+
+
+
+--getIdSet :: SymbolTable -> [Int64] -> T.Text -> [Int64]
