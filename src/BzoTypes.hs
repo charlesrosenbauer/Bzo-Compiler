@@ -931,17 +931,17 @@ instance (Show a) => Show (Definition a) where show = showDefinition
 
 
 data BzoType
-  = BT_Int Integer
-  | BT_Flt Double
-  | BT_Str T.Text
-  | BT_Nil
-  | BT_Wild
-  | BT_Type Int64
-  | BT_Cmpd [BzoType]
-  | BT_Poly [BzoType]
-  | BT_Expr BzoType BzoType
-  | BT_Enum Int64 BzoType
-  | BT_FnTy BzoType BzoType
+  = BT_Int  BzoHash Integer
+  | BT_Flt  BzoHash Double
+  | BT_Str  BzoHash T.Text
+  | BT_Nil  BzoHash
+  | BT_Wild BzoHash
+  | BT_Type BzoHash Int64
+  | BT_Cmpd BzoHash [BzoType]
+  | BT_Poly BzoHash [BzoType]
+  | BT_Expr BzoHash BzoType BzoType
+  | BT_Enum BzoHash Int64 BzoType
+  | BT_FnTy BzoHash BzoType BzoType
   deriving Show
 
 
@@ -954,16 +954,16 @@ data BzoType
 
 
 data BzoPattern
-  = BP_Int Integer
-  | BP_Flt Double
-  | BP_Str T.Text
-  | BP_Nil
-  | BP_Wild
-  | BP_Type Int64
-  | BP_Cmpd [BzoPattern]
-  | BP_Expr BzoPattern BzoPattern
-  | BP_Filt BzoType BzoPattern
-  | BP_Enum Int64 BzoPattern
+  = BP_Int  BzoHash Integer
+  | BP_Flt  BzoHash Double
+  | BP_Str  BzoHash T.Text
+  | BP_Nil  BzoHash
+  | BP_Wild BzoHash
+  | BP_Type BzoHash Int64
+  | BP_Cmpd BzoHash [BzoPattern]
+  | BP_Expr BzoHash BzoPattern BzoPattern
+  | BP_Filt BzoHash BzoType BzoPattern
+  | BP_Enum BzoHash Int64 BzoPattern
   deriving Show
 
 
@@ -976,3 +976,15 @@ data BzoPattern
 
 
 type TypeTable = Map Int64 BzoType
+
+
+
+
+
+
+
+
+
+
+-- Used to accelerate type/pattern comparison checks
+type BzoHash = Int32
