@@ -988,3 +988,26 @@ type TypeTable = Map Int64 BzoType
 
 -- Used to accelerate type/pattern comparison checks
 type BzoHash = Int32
+
+
+
+
+
+
+
+
+
+
+class (Eq a) => SetObj a where
+  setsub  :: a -> a -> Bool
+  setsup  :: a -> a -> Bool
+  setelem :: a -> a -> Bool
+  setfilt :: a -> a -> Bool
+  (⊆) :: a -> a -> Bool
+  a ⊆ b = setsub a b
+  (⊇) :: a -> a -> Bool
+  a ⊇ b = setsup a b
+  (∈) :: a -> a -> Bool
+  a ∈ b = setelem a b
+  (∩) :: a -> a -> Bool
+  a ∩ b = setfilt a b
