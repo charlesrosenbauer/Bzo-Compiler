@@ -942,6 +942,8 @@ data BzoType
   | BT_Expr BzoHash BzoType BzoType
   | BT_Enum BzoHash Int64 BzoType
   | BT_FnTy BzoHash BzoType BzoType
+  | BT_Filt BzoHash BzoType [BzoType]
+  | BT_Arr  BzoHash BzoType [Int64]
   deriving Show
 
 
