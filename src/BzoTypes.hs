@@ -931,19 +931,19 @@ instance (Show a) => Show (Definition a) where show = showDefinition
 
 
 data BzoType
-  = BT_Int  BzoHash Integer
-  | BT_Flt  BzoHash Double
-  | BT_Str  BzoHash T.Text
-  | BT_Nil  BzoHash
-  | BT_Wild BzoHash
-  | BT_Type BzoHash Int64
-  | BT_Cmpd BzoHash [BzoType]
-  | BT_Poly BzoHash [BzoType]
-  | BT_Expr BzoHash BzoType BzoType
-  | BT_Enum BzoHash Int64 BzoType
-  | BT_FnTy BzoHash BzoType BzoType
-  | BT_Filt BzoHash BzoType [BzoType]
-  | BT_Arr  BzoHash BzoType [Int64]
+  = BT_Int  { bt_hash :: BzoHash, bt_int :: Integer }
+  | BT_Flt  { bt_hash :: BzoHash, bt_flt :: Double }
+  | BT_Str  { bt_hash :: BzoHash, bt_str :: T.Text }
+  | BT_Nil  { bt_hash :: BzoHash }
+  | BT_Wild { bt_hash :: BzoHash }
+  | BT_Type { bt_hash :: BzoHash, bt_id  :: Int64 }
+  | BT_Cmpd { bt_hash :: BzoHash, bt_typs:: [BzoType] }
+  | BT_Poly { bt_hash :: BzoHash, bt_typs:: [BzoType] }
+  | BT_Expr { bt_hash :: BzoHash, bt_typ :: BzoType, bt_nxt :: BzoType }
+  | BT_Enum { bt_hash :: BzoHash, bt_id  :: Int64,   bt_typ :: BzoType }
+  | BT_FnTy { bt_hash :: BzoHash, bt_inty:: BzoType, bt_exty:: BzoType }
+  | BT_Filt { bt_hash :: BzoHash, bt_typ :: BzoType, bt_filt:: [BzoType] }
+  | BT_Arr  { bt_hash :: BzoHash, bt_typ :: BzoType, bt_size:: [Int64] }
   deriving Show
 
 
@@ -989,7 +989,7 @@ type TypeTable = Map Int64 BzoType
 
 
 -- Used to accelerate type/pattern comparison checks
-type BzoHash = Int32
+type BzoHash = Int64
 
 
 
