@@ -1,8 +1,95 @@
 module HigherOrder where
+import qualified Data.Int  as I
+import qualified Data.Text as T
+import qualified Data.Char as C
 import qualified Data.List as L hiding (foldl, map)
 import qualified Data.Either as E
 import qualified Data.Maybe as M
 import qualified Data.Map.Strict as Mp hiding (foldl, map)
+
+
+
+
+
+
+
+
+
+
+class Hashable a where
+  hash :: a -> I.Int64
+
+
+
+
+
+
+
+
+
+
+hashInt :: I.Int64 -> I.Int64
+hashInt x = (0x5eadbeefdeadbeef * x) + 0x700dba11f00dba11
+instance Hashable I.Int64 where hash = hashInt
+
+
+
+
+
+
+
+
+
+
+hashFlt :: Double -> I.Int64
+-- 6822318947978559215 is decimal form of 0x5eadbeefdeadbeef, 6822318947978559215 is decimal 0x700dba11f00dba11
+hashFlt x = round $ (6822318947978559215.0 * x) + 6822318947978559215.0
+instance Hashable Double where hash = hashFlt
+
+
+
+
+
+
+
+
+
+
+hashChr :: Char -> I.Int64
+hashChr c = fromInteger $ toInteger $ ((C.ord c) * 0x5eadbeefdeadbeef) + 0x700dba11f00dba11
+instance Hashable Char where hash = hashChr
+
+
+
+
+
+
+
+
+
+
+hashTxt :: T.Text -> I.Int64
+hashTxt t = if T.null t
+              then 0x700dba11f00dba11
+              else (fromInteger $ toInteger $ ((C.ord $ T.head t) * 0x5eadbeefdeadbeef)) + 0x700dba11f00dba11 + (hashTxt $ T.tail t)
+instance Hashable T.Text where hash = hashTxt
+
+
+
+
+
+
+
+
+
+
+hashList :: (Hashable a) => [a] -> I.Int64
+hashList []     = 0x700dba11f00dba11
+hashList (l:ls) = (hash l) + 0x700dba11f00dba11 + (hash ls)
+instance (Hashable a) => Hashable [a] where hash = hashList
+
+
+
 
 
 
