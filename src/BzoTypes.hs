@@ -955,6 +955,19 @@ data BzoType
 
 
 
+hashType :: BzoType -> Int64
+hashType = bt_hash
+instance Hashable BzoType where hash = hashType
+
+
+
+
+
+
+
+
+
+
 data BzoPattern
   = BP_Int  BzoHash Integer
   | BP_Flt  BzoHash Double

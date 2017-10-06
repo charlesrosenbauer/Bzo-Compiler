@@ -28,6 +28,19 @@ class Hashable a where
 
 
 
+hashInteger :: Integer -> I.Int64
+hashInteger x = hashInt $ fromInteger x
+instance Hashable Integer where hash = hashInteger
+
+
+
+
+
+
+
+
+
+
 hashInt :: I.Int64 -> I.Int64
 hashInt x = (0x5eadbeefdeadbeef * x) + 0x700dba11f00dba11
 instance Hashable I.Int64 where hash = hashInt

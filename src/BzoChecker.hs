@@ -2,6 +2,7 @@ module BzoChecker where
 import BzoTypes
 import SymbolTable
 import Data.Int
+import HigherOrder
 import qualified Data.Text       as T
 import qualified Data.Either     as E
 import qualified Data.Map.Strict as M
@@ -164,34 +165,37 @@ getFIdSet (SymbolTable iids fids itab ftab dmid itop ftop) imps lnks =
 
 
 
--- Hash values are temporary for now
 constructType :: SymbolTable -> TypeAST -> Either [BzoErr] BzoType
-constructType st (TA_Nil    _      ) = Right $ BT_Nil 0
-constructType st (TA_IntLit _ i    ) = Right $ BT_Int 1 i
-constructType st (TA_FltLit _ f    ) = Right $ BT_Flt 2 f
-constructType st (TA_StrLit _ s    ) = Right $ BT_Str 3 (T.pack s)
+constructType st (TA_Nil    _      ) = Right $ BT_Nil (hashInt 0)
+constructType st (TA_IntLit _ i    ) = Right $ BT_Int (hash i) i
+constructType st (TA_FltLit _ f    ) = Right $ BT_Flt (hash f) f
+constructType st (TA_StrLit _ s    ) = Right $ BT_Str (hash s) (T.pack s)
 constructType st (TA_Arr    _ sz t ) =
-  case (constructType st t) of
+  let sizes = map fromInteger sz
+      sizeHash = hash sizes
+  in case (constructType st t) of
     Left errs -> Left  errs
-    Right typ -> Right (BT_Arr   4 typ (map fromInteger sz))
+    Right typ -> Right (BT_Arr   (hash [bt_hash typ, sizeHash]) typ sizes)
 
 constructType st (TA_Cmpd   _    ts) =
-  let types = map (constructType st) ts
+  let types  = map (constructType st) ts
+      hashes = hash $ E.rights types
   in case (E.lefts types) of
-      []      -> Right $ BT_Cmpd 5 (E.rights types)
+      []      -> Right $ BT_Cmpd hashes (E.rights types)
       ers     -> Left  $ concat ers
 
 constructType st (TA_Poly   _    ts) =
-  let types = map (constructType st) ts
+  let types  = map (constructType st) ts
+      hashes = hash $ E.rights types
   in case (E.lefts types) of
-      []      -> Right $ BT_Poly 6 (E.rights types)
+      []      -> Right $ BT_Poly hashes (E.rights types)
       ers     -> Left  $ concat ers
 
 constructType st (TA_Expr   _ hd tl) =
   let headtype = (constructType st) hd
       tailtype = (constructType st) tl
   in case (headtype, tailtype) of
-      (Right h, Right t) -> Right $ BT_Expr 7 h t
+      (Right h, Right t) -> Right $ BT_Expr (hash [h, t]) h t
       (Left  h, Right t) -> Left h
       (Right h, Left  t) -> Left t
       (Left  h, Left  t) -> Left (h ++ t)
@@ -200,7 +204,7 @@ constructType st (TA_FnTy   _ it xt) =
   let intype = (constructType st) it
       extype = (constructType st) xt
   in case (intype, extype) of
-      (Right i, Right x) -> Right $ BT_Expr 7 i x
+      (Right i, Right x) -> Right $ BT_Expr (hash [i, x]) i x
       (Left  i, Right x) -> Left i
       (Right i, Left  x) -> Left x
       (Left  i, Left  x) -> Left (i ++ x)
