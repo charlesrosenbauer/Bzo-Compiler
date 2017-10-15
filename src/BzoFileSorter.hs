@@ -108,6 +108,6 @@ orderFileData fs =
 appendStdDep :: BzoFileModel CallAST -> BzoFileModel CallAST
 appendStdDep (BzoFileModel mn fp "Std" ast imp lnk ima lna) = (BzoFileModel mn fp "Std" ast imp lnk ima lna)
 appendStdDep (BzoFileModel mn fp dmn   ast imp lnk ima lna) =
-  case (elem "Std" imp, elem "Std" $ map fst ima) of
-    (False, False) -> (BzoFileModel mn fp dmn ast imp (lnk ++ ["Std"]) ima lna)
-    (_    , _    ) -> (BzoFileModel mn fp dmn ast imp lnk ima lna)
+  case (elem "Std" imp, elem "Std" $ map fst ima, elem "Std" lnk, elem "Std" $ map fst lna) of
+    (False, False, False, False) -> (BzoFileModel mn fp dmn ast imp (lnk ++ ["Std"]) ima lna)
+    (_    , _    , _    , _    ) -> (BzoFileModel mn fp dmn ast imp lnk ima lna)

@@ -165,6 +165,30 @@ getFIdSet (SymbolTable iids fids itab ftab dmid itop ftop) imps lnks =
 
 
 
+getNamespaces :: Show a => SymbolTable -> BzoFileModel a -> Either [BzoErr] (M.Map T.Text Int64)
+getNamespaces st (BzoFileModel mn _ dm _ imps lnks impas lnkas) =
+  let domain'  = T.pack dm
+      imports' = map T.pack imps
+      links'   = map T.pack lnks
+      impsAs'  = map (\(a, b) -> (T.pack a, T.pack b)) impas
+      linkAs'  = map (\(a, b) -> (T.pack a, T.pack b)) lnkas
+      names    = imports' ++ links' ++ (map snd impsAs') ++ (map snd linkAs')
+      names'   = L.nub names
+      errs0    = ife (length names /= length names') [(DepErr ("In module " ++ mn ++ ", the following duplicate namespaces exist: " ++ (show $ names L.\\ names')))] []
+      allErrs  = errs0
+  in case allErrs of
+      [] -> Right M.empty
+      er -> Left  er
+
+
+
+
+
+
+
+
+
+
 constructType :: SymbolTable -> TypeAST -> Either [BzoErr] BzoType
 constructType st (TA_Nil    _      ) = Right $ BT_Nil (hashInt 0)
 constructType st (TA_IntLit _ i    ) = Right $ BT_Int (hash i) i

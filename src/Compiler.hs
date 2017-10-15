@@ -8,6 +8,7 @@ import ModelRules
 import SymbolTable
 import BzoChecker
 import HigherOrder
+import Debug.Trace
 
 
 
@@ -26,8 +27,9 @@ compileFilePass (BzoSettings imp lib flg opt pfx) =
       files <- loadSourceFiles imp
 
       -- Load, preprocess
-      models  <- (((fmap (applyWithErr orderFileData)). (fmap $ applyWithErr wrappedModellerMap). (applyWithErrM (wrappedLibLoader lCfg)). processFiles) $ map swap files)
-      symbols <- return ((applyRight generateSymbolTable) models)
+      models   <- (((fmap (applyWithErr orderFileData)). (fmap $ applyWithErr wrappedModellerMap). (applyWithErrM (wrappedLibLoader lCfg)). processFiles) $ map swap files)
+      symbols  <- return (applyRight generateSymbolTable models)
+      namemaps <- return (applyRight (\st -> applyRight (map (getNamespaces st)) models) symbols)
       -- TODO: Type Checker
       -- TODO: Static Analysis
       -- TODO: Code Generation
