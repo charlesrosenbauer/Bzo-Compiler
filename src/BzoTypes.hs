@@ -384,8 +384,8 @@ data (Show a) => BzoFileModel a
       bfm_fileModel     :: !a,
       bfm_fileImports   :: ![String],
       bfm_fileLinks     :: ![String],
-      bfm_fileImporsAs  :: ![(String, String)],
-      bfm_fileLinksAs   :: ![(String, String)]}
+      bfm_fileImportsAs :: ![(String, String)],   -- [(import fst, refer to as snd)]
+      bfm_fileLinksAs   :: ![(String, String)]}   -- [(link   fst, refer to as snd)]
 
 
 
