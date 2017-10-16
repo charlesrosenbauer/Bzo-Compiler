@@ -172,10 +172,20 @@ getNamespaces st (BzoFileModel mn _ dm _ imps lnks impas lnkas) =
       links'   = map T.pack lnks
       impsAs'  = map (\(a, b) -> (T.pack a, T.pack b)) impas
       linkAs'  = map (\(a, b) -> (T.pack a, T.pack b)) lnkas
+
       names    = imports' ++ links' ++ (map snd impsAs') ++ (map snd linkAs')
       names'   = L.nub names
-      errs0    = ife (length names /= length names') [(DepErr ("In module " ++ mn ++ ", the following duplicate namespaces exist: " ++ (show $ names L.\\ names')))] []
-      allErrs  = errs0
+      errs0    = ife (length names /= length names') [(DepErr ("In module " ++ mn ++ ", the following are duplicate namespaces: " ++ (show $ names L.\\ names')))] []
+
+      allLinks = links' ++ (map fst linkAs')
+      allLinks'= L.nub allLinks
+      errs1    = ife (length allLinks /= length allLinks') [(DepErr ("In module " ++ mn ++ ", the following are duplicate library links: " ++ (show $ allLinks L.\\ allLinks')))] []
+
+      allImps  = imports' ++ (map fst impsAs')
+      allImps' = L.nub allImps
+      errs2    = ife (length allImps /= length allImps') [(DepErr ("In module " ++ mn ++ ", the following are duplicate module imports: " ++ (show $ allImps L.\\ allImps')))] []
+
+      allErrs  = errs0 ++ errs1 ++ errs2
   in case allErrs of
       [] -> Right M.empty
       er -> Left  er
