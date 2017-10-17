@@ -8,6 +8,7 @@ import qualified Data.Either     as E
 import qualified Data.Map.Strict as M
 import qualified Data.Maybe      as Mb
 import qualified Data.List       as L
+import qualified Data.Set        as S
 import Debug.Trace
 
 
@@ -165,29 +166,35 @@ getFIdSet (SymbolTable iids fids itab ftab dmid itop ftop) imps lnks =
 
 
 
-getNamespaces :: Show a => SymbolTable -> BzoFileModel a -> Either [BzoErr] (M.Map T.Text Int64)
+getNamespaces :: Show a => SymbolTable -> BzoFileModel a -> Either [BzoErr] NameTable
 getNamespaces st (BzoFileModel mn _ dm _ imps lnks impas lnkas) =
-  let domain'  = T.pack dm
-      imports' = map T.pack imps
-      links'   = map T.pack lnks
-      impsAs'  = map (\(a, b) -> (T.pack a, T.pack b)) impas
-      linkAs'  = map (\(a, b) -> (T.pack a, T.pack b)) lnkas
+  let domain'   = T.pack dm
+      imports'  = map T.pack imps
+      links'    = map T.pack lnks
+      impsAs'   = map (\(a, b) -> (T.pack a, T.pack b)) impas
+      linkAs'   = map (\(a, b) -> (T.pack a, T.pack b)) lnkas
 
-      names    = imports' ++ links' ++ (map snd impsAs') ++ (map snd linkAs')
-      names'   = L.nub names
-      errs0    = ife (length names /= length names') [(DepErr ("In module " ++ mn ++ ", the following are duplicate namespaces: " ++ (show $ names L.\\ names')))] []
+      names     = imports' ++ links' ++ (map snd impsAs') ++ (map snd linkAs')
+      names'    = L.nub names
+      errs0     = ife (length names /= length names') [(DepErr ("In module " ++ mn ++ ", the following are duplicate namespaces: " ++ (show $ names L.\\ names')))] []
 
-      allLinks = links' ++ (map fst linkAs')
-      allLinks'= L.nub allLinks
-      errs1    = ife (length allLinks /= length allLinks') [(DepErr ("In module " ++ mn ++ ", the following are duplicate library links: " ++ (show $ allLinks L.\\ allLinks')))] []
+      allLinks  = links' ++ (map fst linkAs')
+      allLinks' = L.nub allLinks
+      errs1     = ife (length allLinks /= length allLinks') [(DepErr ("In module " ++ mn ++ ", the following are duplicate library links: " ++ (show $ allLinks L.\\ allLinks')))] []
 
-      allImps  = imports' ++ (map fst impsAs')
-      allImps' = L.nub allImps
-      errs2    = ife (length allImps /= length allImps') [(DepErr ("In module " ++ mn ++ ", the following are duplicate module imports: " ++ (show $ allImps L.\\ allImps')))] []
+      allImps   = (map (\x -> (x, x)) imports') ++ impsAs'
+      allImps'  = L.nub allImps
+      errs2     = ife (length allImps /= length allImps') [(DepErr ("In module " ++ mn ++ ", the following are duplicate module imports: " ++ (show $ allImps L.\\ allImps')))] []
 
-      allErrs  = errs0 ++ errs1 ++ errs2
+      domainSet = S.fromList $ Mb.fromMaybe [] $ M.lookup domain' (st_dmids st)
+      errs3     = ife (S.null domainSet) [(DepErr ("In module " ++ mn ++ ", the following domain could not be found: " ++ dm))] []  -- Pretty sure this should never actually happen, but it's here to prevent bugs
+
+      impLists  = map (\(a, b) -> (b, Mb.fromJust $ M.lookup (T.append a $ T.pack ":@") (st_fids st))) allImps
+      nmTable0  = M.fromList impLists
+
+      allErrs  = errs0 ++ errs1 ++ errs2 ++ errs3
   in case allErrs of
-      [] -> Right M.empty
+      [] -> Right nmTable0
       er -> Left  er
 
 

@@ -1001,6 +1001,17 @@ type TypeTable = Map Int64 BzoType
 
 
 
+type NameTable = Map T.Text Int64
+
+
+
+
+
+
+
+
+
+
 -- Used to accelerate type/pattern comparison checks
 type BzoHash = Int64
 
