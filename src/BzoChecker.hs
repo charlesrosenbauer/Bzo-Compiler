@@ -186,9 +186,6 @@ getNamespaces st (BzoFileModel mn _ dm _ imps lnks impas lnkas) =
       allImps'  = L.nub allImps
       errs2     = ife (length allImps /= length allImps') [(DepErr ("In module " ++ mn ++ ", the following are duplicate module imports: " ++ (show $ allImps L.\\ allImps')))] []
 
-      --domainSet = M.fromList $ map (\x -> (Mb.fromJust $ M.lookup x (st_ftable st), x)) $ Mb.fromMaybe [] $ M.lookup domain' (st_dmids st)
-      --errs3     = ife (M.null domainSet) [(DepErr ("In module " ++ mn ++ ", the following domain could not be found: " ++ dm))] []  -- Pretty sure this should never actually happen, but it's here to prevent bugs
-
       impLists  = map (\(a, b) -> (b, [Mb.fromJust $ M.lookup (T.append a $ T.pack ":@") (st_fids st)])) allImps
       nmTable0  = M.fromList impLists
 
@@ -199,6 +196,30 @@ getNamespaces st (BzoFileModel mn _ dm _ imps lnks impas lnkas) =
   in case allErrs of
       [] -> Right nmTable1
       er -> Left  er
+
+
+
+
+
+
+
+
+
+
+getTypeVarsHelper :: TypeAST -> S.Set T.Text
+getTypeVarsHelper (TA_Cmpd   _ xs   ) = S.unions $ map getTypeVarsHelper xs
+getTypeVarsHelper (TA_Poly   _ xs   ) = S.unions $ map getTypeVarsHelper xs
+getTypeVarsHelper (TA_Filt   _ ft _ ) = S.unions $ map getTypeVarsHelper ft
+getTypeVarsHelper (TA_FnTy   _ it xt) = S.union (getTypeVarsHelper it) (getTypeVarsHelper xt)
+getTypeVarsHelper (TA_Enum   _ _  x ) = getTypeVarsHelper x
+getTypeVarsHelper (TA_Record _ _  x ) = getTypeVarsHelper x
+getTypeVarsHelper (TA_Curry  _ cy x ) = S.unions $ map getTypeVarsHelper (x:cy)
+getTypeVarsHelper (TA_Arr    _ _  x ) = getTypeVarsHelper x
+getTypeVarsHelper (TA_TyVar  _ i    ) = S.singleton $ T.pack i
+getTypeVarsHelper _                   = S.empty
+
+getTypeVars :: TypeAST -> M.Map Int64 T.Text
+getTypeVars t = M.fromList $ zip [1..] $ S.elems $ getTypeVarsHelper t
 
 
 
