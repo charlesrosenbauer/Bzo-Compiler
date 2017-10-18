@@ -230,6 +230,21 @@ getTypeVars t = M.fromList $ zip [1..] $ S.elems $ getTypeVarsHelper t
 
 
 
+getVisibleIds :: SymbolTable -> NameTable -> S.Set T.Text
+getVisibleIds st nt =
+  let allIds = concatMap (\(a, bs) -> zip (repeat a) $ map snd bs) $ M.assocs $ st_iids st
+      spaces = S.fromList $ L.nub $ concat $ M.elems nt
+  in S.fromList $ map fst $ filter (\(a, b) -> S.member b spaces) allIds
+
+
+
+
+
+
+
+
+
+
 constructType :: SymbolTable -> TypeAST -> Either [BzoErr] BzoType
 constructType st (TA_Nil    _      ) = Right $ BT_Nil (hashInt 0)
 constructType st (TA_IntLit _ i    ) = Right $ BT_Int (hash i) i
