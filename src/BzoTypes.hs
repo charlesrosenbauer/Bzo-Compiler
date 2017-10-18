@@ -1001,7 +1001,7 @@ type TypeTable = Map Int64 BzoType
 
 
 
-type NameTable = Map T.Text Int64
+type NameTable = Map T.Text [Int64]
 
 
 

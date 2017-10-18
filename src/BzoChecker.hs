@@ -178,7 +178,7 @@ getNamespaces st (BzoFileModel mn _ dm _ imps lnks impas lnkas) =
       names'    = L.nub names
       errs0     = ife (length names /= length names') [(DepErr ("In module " ++ mn ++ ", the following are duplicate namespaces: " ++ (show $ names L.\\ names')))] []
 
-      allLinks  = links' ++ (map fst linkAs')
+      allLinks  = (map (\x -> (x, x)) links') ++ linkAs'
       allLinks' = L.nub allLinks
       errs1     = ife (length allLinks /= length allLinks') [(DepErr ("In module " ++ mn ++ ", the following are duplicate library links: " ++ (show $ allLinks L.\\ allLinks')))] []
 
@@ -186,15 +186,18 @@ getNamespaces st (BzoFileModel mn _ dm _ imps lnks impas lnkas) =
       allImps'  = L.nub allImps
       errs2     = ife (length allImps /= length allImps') [(DepErr ("In module " ++ mn ++ ", the following are duplicate module imports: " ++ (show $ allImps L.\\ allImps')))] []
 
-      domainSet = S.fromList $ Mb.fromMaybe [] $ M.lookup domain' (st_dmids st)
-      errs3     = ife (S.null domainSet) [(DepErr ("In module " ++ mn ++ ", the following domain could not be found: " ++ dm))] []  -- Pretty sure this should never actually happen, but it's here to prevent bugs
+      --domainSet = M.fromList $ map (\x -> (Mb.fromJust $ M.lookup x (st_ftable st), x)) $ Mb.fromMaybe [] $ M.lookup domain' (st_dmids st)
+      --errs3     = ife (M.null domainSet) [(DepErr ("In module " ++ mn ++ ", the following domain could not be found: " ++ dm))] []  -- Pretty sure this should never actually happen, but it's here to prevent bugs
 
-      impLists  = map (\(a, b) -> (b, Mb.fromJust $ M.lookup (T.append a $ T.pack ":@") (st_fids st))) allImps
+      impLists  = map (\(a, b) -> (b, [Mb.fromJust $ M.lookup (T.append a $ T.pack ":@") (st_fids st)])) allImps
       nmTable0  = M.fromList impLists
 
-      allErrs  = errs0 ++ errs1 ++ errs2 ++ errs3
+      lnkLists  = map (\(a, b) -> (b, Mb.fromJust $ M.lookup a (st_dmids st))) allLinks
+      nmTable1  = insertMany nmTable0 lnkLists
+
+      allErrs  = errs0 ++ errs1 ++ errs2-- ++ errs3
   in case allErrs of
-      [] -> Right nmTable0
+      [] -> Right nmTable1
       er -> Left  er
 
 
