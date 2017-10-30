@@ -304,10 +304,10 @@ loadFullProject path (LibLines p ls) ds =
       l3       = fmap (map (Prelude.filter (\x -> or[(isSuffixOf ".lbz" x) , (isSuffixOf ".bz" x)]))) l2''     -- filter out non-source files
       l4       = fmap (zip l0) l3
       libpmap  = fmap (insertMany empty) l4                                                                    -- produce Map of library names to library contentsgit s
-      loaded   = Data.Map.Strict.insert "Project Files" ds empty                                               -- produce Map of main project files
+      loaded   = Data.Map.Strict.insert "Project Files" (map appendStdDep ds) empty                                               -- produce Map of main project files
   in do
     libraryData <- libpmap
-    loadLibsPass libraryData loaded (concatMap getDependencies ds)
+    loadLibsPass libraryData loaded (concatMap (getDependencies . appendStdDep) ds)
 
 loadFullProject _ _ _ = do
   return (Left [PrepErr (BzoPos 0 0 "Full Project") "Something isn't working correctly with library loading?\n"])
@@ -483,3 +483,19 @@ getLibraryCfgContents settings =
   let text = getLibraryCfg settings
       tks  = fmap (applyWithErr (\(p, s) -> fileLexer s p)) text
   in fmap (applyWithErr $ parseLibCfgFile "libs.cfg") tks
+
+
+
+
+
+
+
+
+
+
+appendStdDep :: Show a => BzoFileModel a -> BzoFileModel a
+appendStdDep (BzoFileModel mn fp "Std" ast imp lnk ima lna) = (BzoFileModel mn fp "Std" ast imp lnk ima lna)
+appendStdDep (BzoFileModel mn fp dmn   ast imp lnk ima lna) =
+  case (elem "Std" imp, elem "Std" $ map fst ima, elem "Std" lnk, elem "Std" $ map fst lna) of
+    (False, False, False, False) -> (BzoFileModel mn fp dmn ast imp (lnk ++ ["Std"]) ima lna)
+    (_    , _    , _    , _    ) -> (BzoFileModel mn fp dmn ast imp lnk ima lna)

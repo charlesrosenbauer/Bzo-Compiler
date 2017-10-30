@@ -85,7 +85,7 @@ orderByLinks mp out fs =
 
 orderFileData :: [BzoFileModel CallAST] -> Either [BzoErr] [BzoFileModel CallAST]
 orderFileData fs =
-  let f0 = groupWith bfm_domain $ map appendStdDep fs
+  let f0 = groupWith bfm_domain fs
       f1 = map (orderByImports empty []) f0
       f2 = concat $ lefts  f1
       f3 = [orderByLinks empty [] $ rights f1]
@@ -95,19 +95,3 @@ orderFileData fs =
       ([], []) -> Right $ concat f5
       ([], er) -> Left  $ concat er
       (er, _ ) -> Left  er
-
-
-
-
-
-
-
-
-
-
-appendStdDep :: BzoFileModel CallAST -> BzoFileModel CallAST
-appendStdDep (BzoFileModel mn fp "Std" ast imp lnk ima lna) = (BzoFileModel mn fp "Std" ast imp lnk ima lna)
-appendStdDep (BzoFileModel mn fp dmn   ast imp lnk ima lna) =
-  case (elem "Std" imp, elem "Std" $ map fst ima, elem "Std" lnk, elem "Std" $ map fst lna) of
-    (False, False, False, False) -> (BzoFileModel mn fp dmn ast imp (lnk ++ ["Std"]) ima lna)
-    (_    , _    , _    , _    ) -> (BzoFileModel mn fp dmn ast imp lnk ima lna)
