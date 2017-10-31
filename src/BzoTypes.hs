@@ -1,7 +1,8 @@
 module BzoTypes where
 import Data.Int
 import qualified Data.Text as T
-import Data.Map.Strict hiding (map)
+import qualified Data.Set  as S
+import qualified Data.Map.Strict as M
 import HigherOrder
 
 
@@ -853,11 +854,11 @@ instance Show ExprModel where show = showExprModel
 
 data SymbolTable
   = SymbolTable {
-      st_iids   :: !(Map T.Text [(Int64, Int64)]),   -- To look up if an Identifier exists, and if so, what are the Table Indices(snd) and Files(fst)?
-      st_fids   :: !(Map T.Text Int64),              -- To look up if a File Identifier exists, and if so, what is the Table Index?
-      st_itable :: !(Map Int64 (T.Text, Int64)),     -- For a given Table Index, what is the associated Identifier, and the file where it's defined?
-      st_ftable :: !(Map Int64 T.Text),              -- For a given Table Index, what is the associated File Identifier?
-      st_dmids  :: !(Map T.Text [Int64]),            -- For a given File Domain, what are the associated File Indices?
+      st_iids   :: !(M.Map T.Text [(Int64, Int64)]),   -- To look up if an Identifier exists, and if so, what are the Table Indices(snd) and Files(fst)?
+      st_fids   :: !(M.Map T.Text Int64),              -- To look up if a File Identifier exists, and if so, what is the Table Index?
+      st_itable :: !(M.Map Int64 (T.Text, Int64)),     -- For a given Table Index, what is the associated Identifier, and the file where it's defined?
+      st_ftable :: !(M.Map Int64 T.Text),              -- For a given Table Index, what is the associated File Identifier?
+      st_dmids  :: !(M.Map T.Text [Int64]),            -- For a given File Domain, what are the associated File Indices?
       st_itop   :: !Int64,                           -- What is the highest used Identifier Table Index?
       st_ftop   :: !Int64 }                          -- What is the highest used File Table Index?
   deriving Show
@@ -990,7 +991,7 @@ data BzoPattern
 
 
 
-type TypeTable = Map Int64 BzoType
+type TypeTable = M.Map Int64 BzoType
 
 
 
@@ -1001,7 +1002,7 @@ type TypeTable = Map Int64 BzoType
 
 
 
-type NameTable = Map T.Text [Int64]
+type NameTable = M.Map T.Text [Int64]
 
 
 
@@ -1037,3 +1038,40 @@ class (Eq a) => SetObj a where
   a ∈ b = setelem a b
   (∩) :: a -> a -> Bool
   a ∩ b = setfilt a b
+
+
+
+
+
+
+
+
+
+
+data Show a => TypeObject a
+  = LinearType{
+      tobj_align :: Int64,
+      tobj_bytes :: Int64,
+      tobj_type  :: a,
+      tobj_name  :: T.Text,
+      tobj_id    :: Int64,
+      tobj_tvars :: M.Map Int64 T.Text,
+      tobj_deps  :: S.Set Int64 }
+  | RecursiveType{
+      tobj_align :: Int64,
+      tobj_bytes :: Int64,
+      tobj_type  :: a,
+      tobj_name  :: T.Text,
+      tobj_id    :: Int64,
+      tobj_tvars :: M.Map Int64 T.Text,
+      tobj_deps  :: S.Set Int64 }
+  | IndirectRecType{
+      tobj_align :: Int64,
+      tobj_bytes :: Int64,
+      tobj_type  :: a,
+      tobj_name  :: T.Text,
+      tobj_id    :: Int64,
+      tobj_tvars :: M.Map Int64 T.Text,
+      tobj_rdeps :: S.Set Int64,
+      tobj_deps  :: S.Set Int64 }
+  deriving Show
