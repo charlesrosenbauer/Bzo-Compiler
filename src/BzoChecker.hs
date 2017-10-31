@@ -245,44 +245,44 @@ getVisibleIds st nt =
 
 
 
-constructType :: SymbolTable -> TypeAST -> Either [BzoErr] BzoType
-constructType st (TA_Nil    _      ) = Right $ BT_Nil (hashInt 0)
-constructType st (TA_IntLit _ i    ) = Right $ BT_Int (hash i) i
-constructType st (TA_FltLit _ f    ) = Right $ BT_Flt (hash f) f
-constructType st (TA_StrLit _ s    ) = Right $ BT_Str (hash s) (T.pack s)
-constructType st (TA_Arr    _ sz t ) =
+constructType :: M.Map Int64 T.Text -> SymbolTable -> TypeAST -> Either [BzoErr] BzoType
+constructType vt st (TA_Nil    _      ) = Right $ BT_Nil (hashInt 0)
+constructType vt st (TA_IntLit _ i    ) = Right $ BT_Int (hash i) i
+constructType vt st (TA_FltLit _ f    ) = Right $ BT_Flt (hash f) f
+constructType vt st (TA_StrLit _ s    ) = Right $ BT_Str (hash s) (T.pack s)
+constructType vt st (TA_Arr    _ sz t ) =
   let sizes = map fromInteger sz
       sizeHash = hash sizes
-  in case (constructType st t) of
+  in case (constructType vt st t) of
     Left errs -> Left  errs
     Right typ -> Right (BT_Arr   (hash [bt_hash typ, sizeHash]) typ sizes)
 
-constructType st (TA_Cmpd   _    ts) =
-  let types  = map (constructType st) ts
+constructType vt st (TA_Cmpd   _    ts) =
+  let types  = map (constructType vt st) ts
       hashes = hash $ E.rights types
   in case (E.lefts types) of
       []      -> Right $ BT_Cmpd hashes (E.rights types)
       ers     -> Left  $ concat ers
 
-constructType st (TA_Poly   _    ts) =
-  let types  = map (constructType st) ts
+constructType vt st (TA_Poly   _    ts) =
+  let types  = map (constructType vt st) ts
       hashes = hash $ E.rights types
   in case (E.lefts types) of
       []      -> Right $ BT_Poly hashes (E.rights types)
       ers     -> Left  $ concat ers
 
-constructType st (TA_Expr   _ hd tl) =
-  let headtype = (constructType st) hd
-      tailtype = (constructType st) tl
+constructType vt st (TA_Expr   _ hd tl) =
+  let headtype = (constructType vt st) hd
+      tailtype = (constructType vt st) tl
   in case (headtype, tailtype) of
       (Right h, Right t) -> Right $ BT_Expr (hash [h, t]) h t
       (Left  h, Right t) -> Left h
       (Right h, Left  t) -> Left t
       (Left  h, Left  t) -> Left (h ++ t)
 
-constructType st (TA_FnTy   _ it xt) =
-  let intype = (constructType st) it
-      extype = (constructType st) xt
+constructType vt st (TA_FnTy   _ it xt) =
+  let intype = (constructType vt st) it
+      extype = (constructType vt st) xt
   in case (intype, extype) of
       (Right i, Right x) -> Right $ BT_Expr (hash [i, x]) i x
       (Left  i, Right x) -> Left i
