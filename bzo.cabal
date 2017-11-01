@@ -38,3 +38,4 @@ executable main
       , HigherOrder
       , ModelRules
       , SymbolTable
+      , Builtins
