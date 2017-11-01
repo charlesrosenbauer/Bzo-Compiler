@@ -251,60 +251,60 @@ getVisibleIds st nt =
 
 
 
-constructType :: M.Map T.Text Int64 -> SymbolTable -> TypeAST -> Either [BzoErr] BzoType
-constructType vt st (TA_Nil    _      ) = Right $ BT_Nil (hashInt 0)
-constructType vt st (TA_IntLit _ i    ) = Right $ BT_Int (hash i) i
-constructType vt st (TA_FltLit _ f    ) = Right $ BT_Flt (hash f) f
-constructType vt st (TA_StrLit _ s    ) = Right $ BT_Str (hash s) (T.pack s)
-constructType vt st (TA_Arr    _ sz t ) =
+constructType :: NameTable -> M.Map T.Text Int64 -> SymbolTable -> TypeAST -> Either [BzoErr] BzoType
+constructType nt vt st (TA_Nil    _      ) = Right $ BT_Nil (hashInt 0)
+constructType nt vt st (TA_IntLit _ i    ) = Right $ BT_Int (hash i) i
+constructType nt vt st (TA_FltLit _ f    ) = Right $ BT_Flt (hash f) f
+constructType nt vt st (TA_StrLit _ s    ) = Right $ BT_Str (hash s) (T.pack s)
+constructType nt vt st (TA_Arr    _ sz t ) =
   let sizes = map fromInteger sz
       sizeHash = hash sizes
-  in case (constructType vt st t) of
+  in case (constructType nt vt st t) of
     Left errs -> Left  errs
     Right typ -> Right (BT_Arr   (hash [bt_hash typ, sizeHash]) typ sizes)
 
-constructType vt st (TA_Cmpd   _    ts) =
-  let types  = map (constructType vt st) ts
+constructType nt vt st (TA_Cmpd   _    ts) =
+  let types  = map (constructType nt vt st) ts
       hashes = hash $ E.rights types
   in case (E.lefts types) of
       []      -> Right $ BT_Cmpd hashes (E.rights types)
       ers     -> Left  $ concat ers
 
-constructType vt st (TA_Poly   _    ts) =
-  let types  = map (constructType vt st) ts
+constructType nt vt st (TA_Poly   _    ts) =
+  let types  = map (constructType nt vt st) ts
       hashes = hash $ E.rights types
   in case (E.lefts types) of
       []      -> Right $ BT_Poly hashes (E.rights types)
       ers     -> Left  $ concat ers
 
-constructType vt st (TA_Expr   _ hd tl) =
-  let headtype = (constructType vt st) hd
-      tailtype = (constructType vt st) tl
+constructType nt vt st (TA_Expr   _ hd tl) =
+  let headtype = (constructType nt vt st) hd
+      tailtype = (constructType nt vt st) tl
   in case (headtype, tailtype) of
       (Right h, Right t) -> Right $ BT_Expr (hash [h, t]) h t
       (Left  h, Right t) -> Left h
       (Right h, Left  t) -> Left t
       (Left  h, Left  t) -> Left (h ++ t)
 
-constructType vt st (TA_FnTy   _ it xt) =
-  let intype = (constructType vt st) it
-      extype = (constructType vt st) xt
+constructType nt vt st (TA_FnTy   _ it xt) =
+  let intype = (constructType nt vt st) it
+      extype = (constructType nt vt st) xt
   in case (intype, extype) of
       (Right i, Right x) -> Right $ BT_Expr (hash [i, x]) i x
       (Left  i, Right x) -> Left i
       (Right i, Left  x) -> Left x
       (Left  i, Left  x) -> Left (i ++ x)
 
-constructType vt st (TA_TyVar  _ vr) =
+constructType nt vt st (TA_TyVar  _ vr) =
   let x = vt M.! (T.pack vr)
   in Right $ BT_TVar (hashInt x) x
 
-constructType vt st (TA_BFnLit p f) =
+constructType nt vt st (TA_BFnLit p f) =
   case (isBuiltinFunc $ T.pack f) of
     0 -> Left  [ TypeErr p (f ++ " is not a valid builtin function.") ]
     x -> Right $ BT_BFun (hashInt x) x
 
-constructType vt st (TA_BTyLit p f) =
+constructType nt vt st (TA_BTyLit p f) =
   case (isBuiltinType $ T.pack f) of
     0 -> Left  [ TypeErr p (f ++ " is not a valid builtin type.") ]
     x -> Right $ BT_BTyp (hashInt x) x
