@@ -3,6 +3,7 @@ import BzoTypes
 import SymbolTable
 import Data.Int
 import HigherOrder
+import Builtins
 import qualified Data.Text       as T
 import qualified Data.Either     as E
 import qualified Data.Map.Strict as M
@@ -296,3 +297,13 @@ constructType vt st (TA_FnTy   _ it xt) =
 constructType vt st (TA_TyVar  _ vr) =
   let x = vt M.! (T.pack vr)
   in Right $ BT_TVar (hashInt x) x
+
+constructType vt st (TA_BFnLit p f) =
+  case (isBuiltinFunc $ T.pack f) of
+    0 -> Left  [ TypeErr p (f ++ " is not a valid builtin function.") ]
+    x -> Right $ BT_BFun (hashInt x) x
+
+constructType vt st (TA_BTyLit p f) =
+  case (isBuiltinType $ T.pack f) of
+    0 -> Left  [ TypeErr p (f ++ " is not a valid builtin type.") ]
+    x -> Right $ BT_BTyp (hashInt x) x

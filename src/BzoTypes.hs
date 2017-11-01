@@ -946,6 +946,8 @@ data BzoType
   | BT_FnTy { bt_hash :: BzoHash, bt_inty:: BzoType, bt_exty:: BzoType }
   | BT_Filt { bt_hash :: BzoHash, bt_typ :: BzoType, bt_filt:: [BzoType] }
   | BT_Arr  { bt_hash :: BzoHash, bt_typ :: BzoType, bt_size:: [Int64] }
+  | BT_BTyp { bt_hash :: BzoHash, bt_id  :: Int64 }
+  | BT_BFun { bt_hash :: BzoHash, bt_id  :: Int64 }
   deriving Show
 
 
