@@ -937,6 +937,7 @@ data BzoType
   | BT_Str  { bt_hash :: BzoHash, bt_str :: T.Text }
   | BT_Nil  { bt_hash :: BzoHash }
   | BT_Wild { bt_hash :: BzoHash }
+  | BT_TVar { bt_hash :: BzoHash, bt_id  :: Int64 }
   | BT_Type { bt_hash :: BzoHash, bt_id  :: Int64 }
   | BT_Cmpd { bt_hash :: BzoHash, bt_typs:: [BzoType] }
   | BT_Poly { bt_hash :: BzoHash, bt_typs:: [BzoType] }

@@ -9,6 +9,7 @@ import qualified Data.Map.Strict as M
 import qualified Data.Maybe      as Mb
 import qualified Data.List       as L
 import qualified Data.Set        as S
+import qualified Data.Tuple      as Tp
 import Debug.Trace
 
 
@@ -218,8 +219,11 @@ getTypeVarsHelper (TA_Arr    _ _  x ) = getTypeVarsHelper x
 getTypeVarsHelper (TA_TyVar  _ i    ) = S.singleton $ T.pack i
 getTypeVarsHelper _                   = S.empty
 
-getTypeVars :: TypeAST -> M.Map Int64 T.Text
-getTypeVars t = M.fromList $ zip [1..] $ S.elems $ getTypeVarsHelper t
+getTypeVars :: TypeAST -> (M.Map Int64 T.Text, M.Map T.Text Int64)
+getTypeVars t =
+  let pairs = zip [1..] $ S.elems $ getTypeVarsHelper t
+      flips = map Tp.swap pairs
+  in (M.fromList pairs, M.fromList flips)
 
 
 
@@ -245,7 +249,7 @@ getVisibleIds st nt =
 
 
 
-constructType :: M.Map Int64 T.Text -> SymbolTable -> TypeAST -> Either [BzoErr] BzoType
+constructType :: M.Map T.Text Int64 -> SymbolTable -> TypeAST -> Either [BzoErr] BzoType
 constructType vt st (TA_Nil    _      ) = Right $ BT_Nil (hashInt 0)
 constructType vt st (TA_IntLit _ i    ) = Right $ BT_Int (hash i) i
 constructType vt st (TA_FltLit _ f    ) = Right $ BT_Flt (hash f) f
@@ -288,3 +292,7 @@ constructType vt st (TA_FnTy   _ it xt) =
       (Left  i, Right x) -> Left i
       (Right i, Left  x) -> Left x
       (Left  i, Left  x) -> Left (i ++ x)
+
+constructType vt st (TA_TyVar  _ vr) =
+  let x = vt M.! (T.pack vr)
+  in Right $ BT_TVar (hashInt x) x
