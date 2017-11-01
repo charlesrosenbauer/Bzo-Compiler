@@ -1005,6 +1005,7 @@ type TypeTable = M.Map Int64 BzoType
 
 
 
+-- Map from Namespace Ids to Associated File Indices
 type NameTable = M.Map T.Text [Int64]
 
 

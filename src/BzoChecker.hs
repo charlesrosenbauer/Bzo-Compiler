@@ -235,6 +235,7 @@ getTypeVars t =
 
 
 
+-- Returns a set of all identifiers visible in a given namespace
 getVisibleIds :: SymbolTable -> NameTable -> S.Set T.Text
 getVisibleIds st nt =
   let allIds = concatMap (\(a, bs) -> zip (repeat a) $ map snd bs) $ M.assocs $ st_iids st
