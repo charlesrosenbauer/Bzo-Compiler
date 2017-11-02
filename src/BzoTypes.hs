@@ -1006,6 +1006,7 @@ type TypeTable = M.Map Int64 BzoType
 
 
 -- Map from Namespace Ids to Associated File Indices
+-- Multiple Indices are returned because Libraries ($link) can map to multiple files.
 type NameTable = M.Map T.Text [Int64]
 
 

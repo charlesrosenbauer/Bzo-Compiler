@@ -236,7 +236,9 @@ getTypeVars t =
 
 
 -- Returns a set of all identifiers visible in a given namespace
-getVisibleIds :: SymbolTable -> NameTable -> S.Set T.Text
+type VisibleIds = S.Set T.Text
+
+getVisibleIds :: SymbolTable -> NameTable -> VisibleIds
 getVisibleIds st nt =
   let allIds = concatMap (\(a, bs) -> zip (repeat a) $ map snd bs) $ M.assocs $ st_iids st
       spaces = S.fromList $ L.nub $ concat $ M.elems nt
@@ -251,7 +253,7 @@ getVisibleIds st nt =
 
 
 
-constructType :: NameTable -> M.Map T.Text Int64 -> SymbolTable -> TypeAST -> Either [BzoErr] BzoType
+constructType :: (VisibleIds, NameTable) -> M.Map T.Text Int64 -> SymbolTable -> TypeAST -> Either [BzoErr] BzoType
 constructType nt vt st (TA_Nil    _      ) = Right $ BT_Nil (hashInt 0)
 constructType nt vt st (TA_IntLit _ i    ) = Right $ BT_Int (hash i) i
 constructType nt vt st (TA_FltLit _ f    ) = Right $ BT_Flt (hash f) f
