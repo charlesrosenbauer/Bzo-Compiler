@@ -253,60 +253,67 @@ getVisibleIds st nt =
 
 
 
-constructType :: (VisibleIds, NameTable) -> M.Map T.Text Int64 -> SymbolTable -> TypeAST -> Either [BzoErr] BzoType
-constructType nt vt st (TA_Nil    _      ) = Right $ BT_Nil (hashInt 0)
-constructType nt vt st (TA_IntLit _ i    ) = Right $ BT_Int (hash i) i
-constructType nt vt st (TA_FltLit _ f    ) = Right $ BT_Flt (hash f) f
-constructType nt vt st (TA_StrLit _ s    ) = Right $ BT_Str (hash s) (T.pack s)
-constructType nt vt st (TA_Arr    _ sz t ) =
+constructType :: Int64 -> (VisibleIds, NameTable) -> M.Map T.Text Int64 -> SymbolTable -> TypeAST -> Either [BzoErr] BzoType
+constructType fid nt vt st (TA_Nil    _      ) = Right $ BT_Nil (hashInt 0)
+constructType fid nt vt st (TA_IntLit _ i    ) = Right $ BT_Int (hash i) i
+constructType fid nt vt st (TA_FltLit _ f    ) = Right $ BT_Flt (hash f) f
+constructType fid nt vt st (TA_StrLit _ s    ) = Right $ BT_Str (hash s) (T.pack s)
+constructType fid nt vt st (TA_Arr    _ sz t ) =
   let sizes = map fromInteger sz
       sizeHash = hash sizes
-  in case (constructType nt vt st t) of
+  in case (constructType fid nt vt st t) of
     Left errs -> Left  errs
     Right typ -> Right (BT_Arr   (hash [bt_hash typ, sizeHash]) typ sizes)
 
-constructType nt vt st (TA_Cmpd   _    ts) =
-  let types  = map (constructType nt vt st) ts
+constructType fid nt vt st (TA_Cmpd   _    ts) =
+  let types  = map (constructType fid nt vt st) ts
       hashes = hash $ E.rights types
   in case (E.lefts types) of
       []      -> Right $ BT_Cmpd hashes (E.rights types)
       ers     -> Left  $ concat ers
 
-constructType nt vt st (TA_Poly   _    ts) =
-  let types  = map (constructType nt vt st) ts
+constructType fid nt vt st (TA_Poly   _    ts) =
+  let types  = map (constructType fid nt vt st) ts
       hashes = hash $ E.rights types
   in case (E.lefts types) of
       []      -> Right $ BT_Poly hashes (E.rights types)
       ers     -> Left  $ concat ers
 
-constructType nt vt st (TA_Expr   _ hd tl) =
-  let headtype = (constructType nt vt st) hd
-      tailtype = (constructType nt vt st) tl
+constructType fid nt vt st (TA_Expr   _ hd tl) =
+  let headtype = (constructType fid nt vt st) hd
+      tailtype = (constructType fid nt vt st) tl
   in case (headtype, tailtype) of
       (Right h, Right t) -> Right $ BT_Expr (hash [h, t]) h t
       (Left  h, Right t) -> Left h
       (Right h, Left  t) -> Left t
       (Left  h, Left  t) -> Left (h ++ t)
 
-constructType nt vt st (TA_FnTy   _ it xt) =
-  let intype = (constructType nt vt st) it
-      extype = (constructType nt vt st) xt
+constructType fid nt vt st (TA_FnTy   _ it xt) =
+  let intype = (constructType fid nt vt st) it
+      extype = (constructType fid nt vt st) xt
   in case (intype, extype) of
       (Right i, Right x) -> Right $ BT_Expr (hash [i, x]) i x
       (Left  i, Right x) -> Left i
       (Right i, Left  x) -> Left x
       (Left  i, Left  x) -> Left (i ++ x)
 
-constructType nt vt st (TA_TyVar  _ vr) =
+constructType fid nt vt st (TA_TyVar  _ vr) =
   let x = vt M.! (T.pack vr)
   in Right $ BT_TVar (hashInt x) x
 
-constructType nt vt st (TA_BFnLit p f) =
+constructType fid nt vt st (TA_BFnLit p f) =
   case (isBuiltinFunc $ T.pack f) of
     0 -> Left  [ TypeErr p (f ++ " is not a valid builtin function.") ]
     x -> Right $ BT_BFun (hashInt x) x
 
-constructType nt vt st (TA_BTyLit p f) =
-  case (isBuiltinType $ T.pack f) of
-    0 -> Left  [ TypeErr p (f ++ " is not a valid builtin type.") ]
+constructType fid nt vt st (TA_BTyLit p t) =
+  case (isBuiltinType $ T.pack t) of
+    0 -> Left  [ TypeErr p (t ++ " is not a valid builtin type.") ]
     x -> Right $ BT_BTyp (hashInt x) x
+
+constructType fid (vi, nt) vt st (TA_FnLit p f) =
+  let xid  = L.lookup fid $ Mb.fromJust $ M.lookup (T.pack f) (st_iids st)
+      xid' = Mb.fromJust xid
+  in if ((S.member (T.pack f) vi) && (Mb.isJust xid))
+      then Right $ BT_Func (hashInt xid') xid'
+      else Left  [ TypeErr p (f ++ " is undefined.")]
