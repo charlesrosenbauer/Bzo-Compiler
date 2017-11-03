@@ -932,23 +932,23 @@ instance (Show a) => Show (Definition a) where show = showDefinition
 
 
 data BzoType
-  = BT_Int  { bt_hash :: BzoHash, bt_int :: Integer }
-  | BT_Flt  { bt_hash :: BzoHash, bt_flt :: Double }
-  | BT_Str  { bt_hash :: BzoHash, bt_str :: T.Text }
-  | BT_Nil  { bt_hash :: BzoHash }
-  | BT_Wild { bt_hash :: BzoHash }
-  | BT_TVar { bt_hash :: BzoHash, bt_id  :: Int64 }
-  | BT_Type { bt_hash :: BzoHash, bt_id  :: Int64 }
-  | BT_Cmpd { bt_hash :: BzoHash, bt_typs:: [BzoType] }
-  | BT_Poly { bt_hash :: BzoHash, bt_typs:: [BzoType] }
-  | BT_Expr { bt_hash :: BzoHash, bt_typ :: BzoType, bt_nxt :: BzoType }
-  | BT_Enum { bt_hash :: BzoHash, bt_id  :: Int64,   bt_typ :: BzoType }
-  | BT_FnTy { bt_hash :: BzoHash, bt_inty:: BzoType, bt_exty:: BzoType }
-  | BT_Func { bt_hash :: BzoHash, bt_id  :: Int64 }
-  | BT_Filt { bt_hash :: BzoHash, bt_typ :: BzoType, bt_filt:: [BzoType] }
-  | BT_Arr  { bt_hash :: BzoHash, bt_typ :: BzoType, bt_size:: [Int64] }
-  | BT_BTyp { bt_hash :: BzoHash, bt_id  :: Int64 }
-  | BT_BFun { bt_hash :: BzoHash, bt_id  :: Int64 }
+  = BT_Int  { bt_hash :: !BzoHash, bt_int :: !Integer }
+  | BT_Flt  { bt_hash :: !BzoHash, bt_flt :: !Double }
+  | BT_Str  { bt_hash :: !BzoHash, bt_str :: !T.Text }
+  | BT_Nil  { bt_hash :: !BzoHash }
+  | BT_Wild { bt_hash :: !BzoHash }
+  | BT_TVar { bt_hash :: !BzoHash, bt_id  :: !Int64 }
+  | BT_Type { bt_hash :: !BzoHash, bt_id  :: !Int64 }
+  | BT_Cmpd { bt_hash :: !BzoHash, bt_typs:: ![BzoType] }
+  | BT_Poly { bt_hash :: !BzoHash, bt_typs:: ![BzoType] }
+  | BT_Expr { bt_hash :: !BzoHash, bt_typ :: !BzoType, bt_nxt :: !BzoType }
+  | BT_Enum { bt_hash :: !BzoHash, bt_id  :: !Int64,   bt_typ :: !BzoType }
+  | BT_FnTy { bt_hash :: !BzoHash, bt_inty:: !BzoType, bt_exty:: !BzoType }
+  | BT_Func { bt_hash :: !BzoHash, bt_id  :: !Int64 }
+  | BT_Filt { bt_hash :: !BzoHash, bt_typ :: !BzoType, bt_filt:: ![BzoType] }
+  | BT_Arr  { bt_hash :: !BzoHash, bt_typ :: !BzoType, bt_size:: ![Int64] }
+  | BT_BTyp { bt_hash :: !BzoHash, bt_id  :: !Int64 }
+  | BT_BFun { bt_hash :: !BzoHash, bt_id  :: !Int64 }
   deriving Show
 
 
@@ -974,16 +974,16 @@ instance Hashable BzoType where hash = hashType
 
 
 data BzoPattern
-  = BP_Int  BzoHash Integer
-  | BP_Flt  BzoHash Double
-  | BP_Str  BzoHash T.Text
-  | BP_Nil  BzoHash
-  | BP_Wild BzoHash
-  | BP_Type BzoHash Int64
-  | BP_Cmpd BzoHash [BzoPattern]
-  | BP_Expr BzoHash BzoPattern BzoPattern
-  | BP_Filt BzoHash BzoType BzoPattern
-  | BP_Enum BzoHash Int64 BzoPattern
+  = BP_Int  !BzoHash !Integer
+  | BP_Flt  !BzoHash !Double
+  | BP_Str  !BzoHash !T.Text
+  | BP_Nil  !BzoHash
+  | BP_Wild !BzoHash
+  | BP_Type !BzoHash !Int64
+  | BP_Cmpd !BzoHash ![BzoPattern]
+  | BP_Expr !BzoHash !BzoPattern !BzoPattern
+  | BP_Filt !BzoHash !BzoType !BzoPattern
+  | BP_Enum !BzoHash !Int64 !BzoPattern
   deriving Show
 
 
@@ -1056,28 +1056,28 @@ class (Eq a) => SetObj a where
 
 data Show a => TypeObject a
   = LinearType{
-      tobj_align :: Int64,
-      tobj_bytes :: Int64,
-      tobj_type  :: a,
-      tobj_name  :: T.Text,
-      tobj_id    :: Int64,
-      tobj_tvars :: M.Map Int64 T.Text,
-      tobj_deps  :: S.Set Int64 }
+      tobj_align :: !Int64,
+      tobj_bytes :: !Int64,
+      tobj_type  :: !a,
+      tobj_name  :: !T.Text,
+      tobj_id    :: !Int64,
+      tobj_tvars ::  M.Map Int64 T.Text,
+      tobj_deps  ::  S.Set Int64 }
   | RecursiveType{
-      tobj_align :: Int64,
-      tobj_bytes :: Int64,
-      tobj_type  :: a,
-      tobj_name  :: T.Text,
-      tobj_id    :: Int64,
-      tobj_tvars :: M.Map Int64 T.Text,
-      tobj_deps  :: S.Set Int64 }
+      tobj_align :: !Int64,
+      tobj_bytes :: !Int64,
+      tobj_type  :: !a,
+      tobj_name  :: !T.Text,
+      tobj_id    :: !Int64,
+      tobj_tvars ::  M.Map Int64 T.Text,
+      tobj_deps  ::  S.Set Int64 }
   | IndirectRecType{
-      tobj_align :: Int64,
-      tobj_bytes :: Int64,
-      tobj_type  :: a,
-      tobj_name  :: T.Text,
-      tobj_id    :: Int64,
-      tobj_tvars :: M.Map Int64 T.Text,
-      tobj_rdeps :: S.Set Int64,
-      tobj_deps  :: S.Set Int64 }
+      tobj_align :: !Int64,
+      tobj_bytes :: !Int64,
+      tobj_type  :: !a,
+      tobj_name  :: !T.Text,
+      tobj_id    :: !Int64,
+      tobj_tvars ::  M.Map Int64 T.Text,
+      tobj_rdeps ::  S.Set Int64,
+      tobj_deps  ::  S.Set Int64 }
   deriving Show
