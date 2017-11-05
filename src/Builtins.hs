@@ -49,6 +49,7 @@ isBuiltinType "$Ptr"    = 1001
 isBuiltinType "$UntPtr" = 1002
 isBuiltinType "$Unique" = 1003
 isBuiltinType "$Effect" = 1004
+isBuiltinType "$Any"    = 1005
 
 isBuiltinType _         = 0
 
