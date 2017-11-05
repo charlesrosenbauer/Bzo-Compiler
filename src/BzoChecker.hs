@@ -315,5 +315,12 @@ constructType fid (vi, nt) vt st (TA_FnLit p f) =
   let xid  = L.lookup fid $ Mb.fromJust $ M.lookup (T.pack f) (st_iids st)
       xid' = Mb.fromJust xid
   in if ((S.member (T.pack f) vi) && (Mb.isJust xid))
-      then Right $ BT_Func (hashInt xid') xid'
-      else Left  [ TypeErr p (f ++ " is undefined.")]
+      then Right $ BT_Func (hashInt xid') xid' fid
+      else Left  [ TypeErr p ("Function " ++ f ++ " is undefined.")]
+
+constructType fid (vi, nt) vt st (TA_TyLit p t) =
+  let xid  = L.lookup fid $ Mb.fromJust $ M.lookup (T.pack t) (st_iids st)
+      xid' = Mb.fromJust xid
+  in if ((S.member (T.pack t) vi) && (Mb.isJust xid))
+      then Right $ BT_Type (hashInt xid') xid' fid
+      else Left  [ TypeErr p ("Type " ++ t ++ " is undefined.")]

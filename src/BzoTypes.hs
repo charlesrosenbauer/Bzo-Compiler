@@ -938,13 +938,13 @@ data BzoType
   | BT_Nil  { bt_hash :: !BzoHash }
   | BT_Wild { bt_hash :: !BzoHash }
   | BT_TVar { bt_hash :: !BzoHash, bt_id  :: !Int64 }
-  | BT_Type { bt_hash :: !BzoHash, bt_id  :: !Int64 }
+  | BT_Type { bt_hash :: !BzoHash, bt_id  :: !Int64,   bt_file:: !Int64 }
+  | BT_Func { bt_hash :: !BzoHash, bt_id  :: !Int64,   bt_file:: !Int64 }
   | BT_Cmpd { bt_hash :: !BzoHash, bt_typs:: ![BzoType] }
   | BT_Poly { bt_hash :: !BzoHash, bt_typs:: ![BzoType] }
   | BT_Expr { bt_hash :: !BzoHash, bt_typ :: !BzoType, bt_nxt :: !BzoType }
   | BT_Enum { bt_hash :: !BzoHash, bt_id  :: !Int64,   bt_typ :: !BzoType }
   | BT_FnTy { bt_hash :: !BzoHash, bt_inty:: !BzoType, bt_exty:: !BzoType }
-  | BT_Func { bt_hash :: !BzoHash, bt_id  :: !Int64 }
   | BT_Filt { bt_hash :: !BzoHash, bt_typ :: !BzoType, bt_filt:: ![BzoType] }
   | BT_Arr  { bt_hash :: !BzoHash, bt_typ :: !BzoType, bt_size:: ![Int64] }
   | BT_BTyp { bt_hash :: !BzoHash, bt_id  :: !Int64 }
