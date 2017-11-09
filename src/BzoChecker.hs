@@ -324,3 +324,61 @@ constructType fid (vi, nt) vt st (TA_TyLit p t) =
   in if ((S.member (T.pack t) vi) && (Mb.isJust xid))
       then Right $ BT_Type (hashInt xid') xid' fid
       else Left  [ TypeErr p ("Type " ++ t ++ " is undefined.")]
+
+constructType fid (vi, nt) vt st _ = Right $ BT_Nil 0 -- Temporary
+
+
+
+
+
+
+
+
+
+
+generateTypesHelper :: Int64 -> VisibleIds -> NameTable -> SymbolTable -> [Definition T.Text] -> ([BzoErr], [BzoType])
+generateTypesHelper fid vn nt st [] = ([], [])
+generateTypesHelper fid vn nt st ((TyDefinition (_, tast, _, _, _) _):xs) =
+  let (_, tvars)   = getTypeVars tast
+      bzotype      = constructType fid (vn, nt) tvars st tast
+      (errs, typs) = generateTypesHelper fid vn nt st xs
+  in case bzotype of
+      Left  err -> (err++errs, typs)
+      Right typ -> (errs,  typ:typs)
+generateTypesHelper fid vn nt st (def:xs) = generateTypesHelper fid vn nt st xs
+
+
+
+
+
+
+
+
+
+generateTypes :: SymbolTable -> [BzoFileModel [Definition T.Text]] -> ([BzoErr], [BzoType])
+generateTypes st [] = ([], [])
+generateTypes st (fm@(BzoFileModel mn _ dm model _ _ _ _) : fms) =
+  let nametable      = getNamespaces st fm
+      nametable'     = head $ E.rights [nametable]
+      fid            = Mb.fromJust $ M.lookup (T.pack $ mn ++ ":" ++ dm) (st_fids st)
+      visibleids     = getVisibleIds st nametable'
+      (errs , typs ) = generateTypes st fms
+      (errs', typs') = generateTypesHelper fid visibleids nametable' st model
+  in case nametable of
+      Left  err -> (err ++ errs, typs)
+      Right _   -> (errs' ++ errs, typs' ++ typs)
+
+
+
+
+
+
+
+
+
+-- This function and it's helpers are mostly just testing functions for now.
+wrappedGenerateTypes :: Either [BzoErr] SymbolTable -> Either [BzoErr] [BzoFileModel [Definition T.Text]] -> ([BzoErr], [BzoType])
+wrappedGenerateTypes (Left errs0) (Left errs1) = (errs0 ++ errs1, [])
+wrappedGenerateTypes (Left  errs) (Right _   ) = (errs, [])
+wrappedGenerateTypes (Right _   ) (Left  errs) = (errs, [])
+wrappedGenerateTypes (Right st  ) (Right fms) = generateTypes st fms
