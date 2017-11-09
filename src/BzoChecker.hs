@@ -173,6 +173,7 @@ getFIdSet (SymbolTable iids fids itab ftab dmid itop ftop) imps lnks =
 getNamespaces :: Show a => SymbolTable -> BzoFileModel a -> Either [BzoErr] NameTable
 getNamespaces st (BzoFileModel mn _ dm _ imps lnks impas lnkas) =
   let domain'   = T.pack dm
+      self      = T.pack mn
       imports'  = map T.pack imps
       links'    = map T.pack lnks
       impsAs'   = map (\(a, b) -> (T.pack a, T.pack b)) impas
@@ -186,14 +187,14 @@ getNamespaces st (BzoFileModel mn _ dm _ imps lnks impas lnkas) =
       allLinks' = L.nub allLinks
       errs1     = ife (length allLinks /= length allLinks') [(DepErr ("In module " ++ mn ++ ", the following are duplicate library links: " ++ (show $ allLinks L.\\ allLinks')))] []
 
-      allImps   = (map (\x -> (x, x)) imports') ++ impsAs'
+      allImps   = (map (\x -> (x, x)) $ self:imports') ++ impsAs'
       allImps'  = L.nub allImps
       errs2     = ife (length allImps /= length allImps') [(DepErr ("In module " ++ mn ++ ", the following are duplicate module imports: " ++ (show $ allImps L.\\ allImps')))] []
 
-      impLists  = map (\(a, b) -> (b, [Mb.fromJust $ M.lookup (T.append a $ T.pack ":@") (st_fids st)])) allImps
+      impLists  = map (\(a, b) -> (b, [Mb.fromJust $ M.lookup (T.append a $ T.pack (":" ++ dm)) (st_fids st)])) allImps'
       nmTable0  = M.fromList impLists
 
-      lnkLists  = map (\(a, b) -> (b, Mb.fromJust $ M.lookup a (st_dmids st))) allLinks
+      lnkLists  = map (\(a, b) -> (b, Mb.fromJust $ M.lookup a (st_dmids st))) allLinks'
       nmTable1  = insertMany nmTable0 lnkLists
 
       allErrs  = errs0 ++ errs1 ++ errs2-- ++ errs3
@@ -384,4 +385,4 @@ wrappedGenerateTypes :: Either [BzoErr] SymbolTable -> Either [BzoErr] [BzoFileM
 wrappedGenerateTypes (Left errs0) (Left errs1) = (errs0 ++ errs1, [])
 wrappedGenerateTypes (Left  errs) (Right _   ) = (errs, [])
 wrappedGenerateTypes (Right _   ) (Left  errs) = (errs, [])
-wrappedGenerateTypes (Right st  ) (Right fms) = generateTypes st fms
+wrappedGenerateTypes (Right st  ) (Right fms) = trace (show st) $ generateTypes st fms
