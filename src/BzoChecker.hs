@@ -153,6 +153,7 @@ wrappedDefOrganizePass xs =
 
 
 
+-- | Provides a list of all file ids visible, given a set of imports and links
 getFIdSet :: SymbolTable -> [T.Text] -> [T.Text] -> [Int64]
 getFIdSet (SymbolTable iids fids itab ftab dmid itop ftop) imps lnks =
   let lnks' =          Mb.catMaybes $ map (\x -> M.lookup x fids) lnks
@@ -168,6 +169,7 @@ getFIdSet (SymbolTable iids fids itab ftab dmid itop ftop) imps lnks =
 
 
 
+-- | Provides a table of all Identifiers visible to a certain file
 getNamespaces :: Show a => SymbolTable -> BzoFileModel a -> Either [BzoErr] NameTable
 getNamespaces st (BzoFileModel mn _ dm _ imps lnks impas lnkas) =
   let domain'   = T.pack dm
@@ -220,6 +222,7 @@ getTypeVarsHelper (TA_Arr    _ _  x ) = getTypeVarsHelper x
 getTypeVarsHelper (TA_TyVar  _ i    ) = S.singleton $ T.pack i
 getTypeVarsHelper _                   = S.empty
 
+-- | Takes a TypeAST and returns map to/from Identifiers/Local Identifiers
 getTypeVars :: TypeAST -> (M.Map Int64 T.Text, M.Map T.Text Int64)
 getTypeVars t =
   let pairs = zip [1..] $ S.elems $ getTypeVarsHelper t
