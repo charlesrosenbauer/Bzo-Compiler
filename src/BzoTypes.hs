@@ -874,21 +874,21 @@ data SymbolTable
 
 data Show a => Definition a
   = FnDefinition {
-      def_ftdefs :: [(TypeAST,   TypeAST  ,            BzoPos)],  -- InType, ExType, Pos
-      def_fndefs :: [(FParModel, FParModel, ExprModel, BzoPos)],  -- InPars, ExPars, Expr, Pos
-      def_fnId   :: a }   -- Id
+      def_ftdefs :: ![(TypeAST,   TypeAST  ,            BzoPos)],  -- InType, ExType, Pos
+      def_fndefs :: ![(FParModel, FParModel, ExprModel, BzoPos)],  -- InPars, ExPars, Expr, Pos
+      def_fnId   :: !a }   -- Id
   | TyDefinition {
-      def_tydef  :: (TParModel,  TypeAST, [ModelRecord], [ModelEnum], BzoPos),   -- TPars, Type, Records, Enums, Pos
-      def_tyId   :: a }   -- Id
+      def_tydef  :: !(TParModel,  TypeAST, [ModelRecord], [ModelEnum], BzoPos),   -- TPars, Type, Records, Enums, Pos
+      def_tyId   :: !a }   -- Id
   | RcDefinition {
-      def_rcdef  :: (TypeAST, a, BzoPos),    -- Type, Parent, Position
-      def_rcId   :: a }   -- Id
+      def_rcdef  :: !(TypeAST, a, BzoPos),    -- Type, Parent, Position
+      def_rcId   :: !a }   -- Id
   | EnDefinition {
-      def_endef  :: (TypeAST, a, BzoPos),    -- Type, Parent, Position
-      def_enId   :: a }   -- Id
+      def_endef  :: !(TypeAST, a, BzoPos),    -- Type, Parent, Position
+      def_enId   :: !a }   -- Id
   | HintDefinition {
-      def_hint   :: ([ExprModel], BzoPos),    -- Parameters, Position
-      def_hintId :: T.Text }  -- Hint
+      def_hint   :: !([ExprModel], BzoPos),    -- Parameters, Position
+      def_hintId :: !T.Text }  -- Hint
   | NilDefinition
 
 
