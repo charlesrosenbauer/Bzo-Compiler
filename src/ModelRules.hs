@@ -134,30 +134,6 @@ getPolymorphContents parent (Right (str, syn)) =
 
 
 
-toRecordModel :: String -> (BzoPos, String, TypeAST) -> ModelRecord
-toRecordModel r (p, i, t) = (ModelRecord p i r t)
-
-
-
-
-
-
-
-
-
-
-toEnumModel ::  String -> (BzoPos, String, TypeAST) -> ModelEnum
-toEnumModel r (p, i, t) = (ModelEnum p i r t)
-
-
-
-
-
-
-
-
-
-
 modelArrayObj :: BzoSyntax -> Either [BzoErr] Integer
 modelArrayObj (BzS_ArrGnObj p  ) = Right 0
 modelArrayObj (BzS_ArrSzObj p s) = Right s
