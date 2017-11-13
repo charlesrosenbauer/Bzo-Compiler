@@ -96,14 +96,14 @@ separateEnums x                                     = Left  x
 
 
 
-getCompoundContents :: String -> Either BzoSyntax (String, BzoSyntax) -> Either [BzoErr] (TypeAST, [ModelRecord], [ModelEnum])
+getCompoundContents :: String -> Either BzoSyntax (String, BzoSyntax) -> Either [BzoErr] TypeAST
 getCompoundContents parent (Left       syn ) = modelType parent syn
 getCompoundContents parent (Right (str, syn)) =
   let x  = [modelType str syn]
       ls = lefts  x
-      (rs, mrs, mes) = head $ rights x
+      rs = head $ rights x
   in case ls of
-      []  -> Right ((TA_Record (pos syn) str parent rs), mrs, mes)
+      []  -> Right (TA_Record (pos syn) str parent rs)
       ers -> Left $ concat ers
 
 
@@ -115,14 +115,14 @@ getCompoundContents parent (Right (str, syn)) =
 
 
 
-getPolymorphContents :: String -> Either BzoSyntax (String, BzoSyntax) -> Either [BzoErr] (TypeAST, [ModelRecord], [ModelEnum])
+getPolymorphContents :: String -> Either BzoSyntax (String, BzoSyntax) -> Either [BzoErr] TypeAST
 getPolymorphContents parent (Left        syn ) = modelType parent syn
 getPolymorphContents parent (Right (str, syn)) =
   let x  = [modelType str syn]
       ls = lefts  x
-      (es, mrs, mes) = head $ rights x
+      es = head $ rights x
   in case ls of
-      []  -> Right ((TA_Enum (pos syn) str parent es), mrs, mes)
+      []  -> Right (TA_Enum (pos syn) str parent es)
       ers -> Left $ concat ers
 
 
@@ -280,7 +280,7 @@ modelBasicType (BzS_CurryObj p o x) =
       x'  = map modelBasicType x
 
       ers = concat $ (lefts o') ++ (lefts x')
-      
+
       vlo = head $ rights o'
       vlx = rights x'
   in case ers of
@@ -298,29 +298,28 @@ modelBasicType s = Left [SntxErr (pos s) "Unexpected Component of Type Expressio
 
 
 
-modelType :: String -> BzoSyntax -> Either [BzoErr] (TypeAST, [ModelRecord], [ModelEnum])
-modelType _ (BzS_Int   p i)  = Right ((TA_IntLit p i), [], [])
-modelType _ (BzS_Flt   p f)  = Right ((TA_FltLit p f), [], [])
-modelType _ (BzS_Str   p s)  = Right ((TA_StrLit p s), [], [])
-modelType _ (BzS_Id    p x)  = Right ((TA_FnLit  p x), [], [])
-modelType _ (BzS_TyId  p x)  = Right ((TA_TyLit  p x), [], [])
-modelType _ (BzS_BId   p x)  = Right ((TA_BFnLit p x), [], [])
-modelType _ (BzS_BTId  p x)  = Right ((TA_BTyLit p x), [], [])
-modelType _ (BzS_Nil   p  )  = Right ((TA_Nil    p  ), [], [])
-modelType _ (BzS_TyVar p x)  = Right ((TA_TyVar  p x), [], [])
-modelType _ (BzS_ExFunObj p x n) = Right ((TA_ExFnLit  p x n), [], [])
-modelType _ (BzS_ExTypObj p x n) = Right ((TA_ExTyLit  p x n), [], [])
-
+modelType :: String -> BzoSyntax -> Either [BzoErr] TypeAST
+modelType _ (BzS_Int   p i)  = Right (TA_IntLit p i)
+modelType _ (BzS_Flt   p f)  = Right (TA_FltLit p f)
+modelType _ (BzS_Str   p s)  = Right (TA_StrLit p s)
+modelType _ (BzS_Id    p x)  = Right (TA_FnLit  p x)
+modelType _ (BzS_TyId  p x)  = Right (TA_TyLit  p x)
+modelType _ (BzS_BId   p x)  = Right (TA_BFnLit p x)
+modelType _ (BzS_BTId  p x)  = Right (TA_BTyLit p x)
+modelType _ (BzS_Nil   p  )  = Right (TA_Nil    p  )
+modelType _ (BzS_TyVar p x)  = Right (TA_TyVar  p x)
+modelType _ (BzS_ExFunObj p x n) = Right (TA_ExFnLit  p x n)
+modelType _ (BzS_ExTypObj p x n) = Right (TA_ExTyLit  p x n)
 modelType parent (BzS_FnTy p i e) =
   let !i'  = [modelType parent i]
       !e'  = [modelType parent e]
 
       ers  = (lefts  i') ++ (lefts e')
 
-      (vli, rs0, es0) = head $ rights i'
-      (vle, rs1, es1) = head $ rights e'
+      vli  = head $ rights i'
+      vle  = head $ rights e'
   in case ers of
-      [] -> Right ((TA_FnTy p vli vle), (rs0 ++ rs1), (es0 ++ es1))
+      [] -> Right (TA_FnTy p vli vle)
       er -> Left $ concat er
 
 modelType parent (BzS_Cmpd p xs) =
@@ -329,13 +328,9 @@ modelType parent (BzS_Cmpd p xs) =
       exs' = map (\(p, n, _) -> SntxErr p (n ++ " is an Enum defined in a Compound Tuple. This is not valid.")) $ catMaybes $ map checkEnum xs
       errs = (concat $ lefts xs') ++ exs'
 
-      (as, rs, es) = (app_3_23 concat concat) $ unzip3 $ rights xs'
-      (p', s, sn0) = unzip3 $ catMaybes $ map checkRecord xs
-
-      sn1  = zip3 p' s $ map fst3 $ rights $ map (modelType parent) sn0    -- Should only work properly when no errs. Lazy evaluation kicks in then and this only runs if it's guaranteed to work.
-      sn2  = map (toRecordModel parent) sn1
+      as   = rights xs'
   in case errs of
-      [] -> Right ((TA_Cmpd p as), (rs ++ sn2), es)
+      [] -> Right (TA_Cmpd p as)
       er -> Left er
 
 modelType parent (BzS_Poly p xs) =
@@ -344,13 +339,9 @@ modelType parent (BzS_Poly p xs) =
       rxs' = map (\(p, n, _) -> SntxErr p (n ++ " is an Record defined in a Polymorphic Tuple. This is not valid.")) $ catMaybes $ map checkRecord xs
       errs = (concat $ lefts xs') ++ rxs'
 
-      (as, rs, es) = (app_3_23 concat concat) $ unzip3 $ rights xs'
-      (p', s, sn0) = unzip3 $ catMaybes $ map checkEnum xs
-
-      sn1  = zip3 p' s $ map fst3 $ rights $ map (modelType parent) sn0    -- Should only work properly when no errs. Lazy evaluation kicks in then and this only runs if it's guaranteed to work.
-      sn2  = map (toEnumModel parent) sn1
+      as  = rights xs'
   in case errs of
-      [] -> Right ((TA_Poly p as), rs, (es ++ sn2))
+      [] -> Right (TA_Poly p as)
       er -> Left er
 
 modelType parent (BzS_Box p x) = modelType parent x
@@ -372,9 +363,9 @@ modelType parent (BzS_FilterObj p o f) =
       ers  = (lefts o') ++ (lefts f')
 
       vlf  = rights f'
-      (vlo, rs, es) = head $ rights o'
+      vlo  = head $ rights o'
   in case ers of
-      [] -> Right ((TA_Filt p vlf vlo), rs, es)
+      [] -> Right (TA_Filt p vlf vlo)
       er -> Left $ concat er
 
 modelType _ (BzS_MapObj p o) = Left [SntxErr p "Unexpected Map Syntax in Type Expression"]
@@ -384,12 +375,12 @@ modelType parent (BzS_ArrayObj p o a) =
 
       ers = lefts  o'
 
-      (vls, rs, es) = head $ rights o'
+      vls = head $ rights o'
       szs = map modelArrayObj a
       sze = lefts szs
       szx = rights szs
   in case (ers ++ sze) of
-      [] -> Right $ ((TA_Arr p szx vls), rs, es)
+      [] -> Right $ (TA_Arr p szx vls)
       er -> Left  $ concat er
 
 modelType parent (BzS_Expr p (x:xs)) =
@@ -401,7 +392,7 @@ modelType parent (BzS_Expr p (x:xs)) =
       vlx = head $ rights x'
       vly = head $ rights xs'
   in case (ers) of
-      [] -> Right ((TA_Expr p vlx vly), [], [])
+      [] -> Right (TA_Expr p vlx vly)
       er -> Left $ concat er
 
 modelType parent (BzS_CurryObj p o x) =
@@ -413,7 +404,7 @@ modelType parent (BzS_CurryObj p o x) =
       vlo = head $ rights o'
       vlx = rights x'
   in case ers of
-      [] -> Right $ ((TA_Curry p vlx vlo), [], [])
+      [] -> Right $ (TA_Curry p vlx vlo)
       er -> Left  er
 
 modelType _ s = Left [SntxErr (pos s) "Unexpected Component of Type Expression."]
@@ -633,6 +624,25 @@ modelExpr (BzS_Expr   p (x:xs)) =
 
 
 
+extractEnumsRecords :: TypeAST -> ([ModelEnum], [ModelRecord])
+extractEnumsRecords (TA_Enum   position eid parent expr) =
+  let (enms, recs) = extractEnumsRecords expr
+  in ((ModelEnum   position eid parent expr):enms, recs)
+extractEnumsRecords (TA_Record position rid parent expr) =
+  let (enms, recs) = extractEnumsRecords expr
+  in (enms, (ModelRecord position rid parent expr):recs)
+extractEnumsRecords (TA_Cmpd   position xs             ) = (\(a, b) -> (concat a, concat b)) $ unzip $ map extractEnumsRecords xs
+extractEnumsRecords (TA_Poly   position xs             ) = (\(a, b) -> (concat a, concat b)) $ unzip $ map extractEnumsRecords xs
+extractEnumsRecords _ = ([], [])
+
+
+
+
+
+
+
+
+
 modelCalls :: BzoSyntax -> Either [BzoErr] [CallAST]
 modelCalls (BzS_Calls  p xs) =
   let cs = map modelCalls xs
@@ -647,11 +657,10 @@ modelCalls (BzS_TypDef p prs t df) =
       ps' = [modelTPars prs]
       psr = head $ rights ps'
       er  = (concat $ lefts  df') ++ (concat $ lefts ps')
-      (xs, rs, es) = unzip3 $ rights df'
-      rs' = map (\(ModelRecord rp ri _ rt) -> (ModelRecord rp ri t rt)) $ concat rs
-      es' = map (\(ModelEnum   ep ei _ et) -> (ModelEnum   ep ei t et)) $ concat es
+      xs  = head $ rights df'
+      (es', rs') = extractEnumsRecords xs
   in case er of
-      [] -> Right [(CA_TypeDefCall p t psr rs' es' (head xs))]
+      [] -> Right [(CA_TypeDefCall p t psr rs' es' xs)]
       ers -> Left ers
 
 modelCalls (BzS_FnTypeDef p fnid (BzS_FnTy _ i o)) =
