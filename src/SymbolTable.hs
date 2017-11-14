@@ -162,7 +162,7 @@ queryFInt (SymbolTable iids fids itab ftab dmid itop ftop) f = M.lookup f ftab
 
 
 
-
+{-
 queryType :: TypeTable -> Int64 -> Maybe BzoType
 queryType tt i = M.lookup i tt
 
@@ -189,3 +189,4 @@ adjustType f tt i = M.adjust f i tt
 
 insertType :: TypeTable -> Int64 -> BzoType -> TypeTable
 insertType tt i t = M.insert i t tt
+-}

@@ -997,7 +997,10 @@ data BzoPattern
 
 
 
-type TypeTable = M.Map Int64 BzoType
+data TypeTable
+  = TypeTable {
+      tt_ftys :: !(M.Map Int64 [(BzoType, BzoPos)]),    -- | fn id#  -> [(type, position)]
+      tt_ttys :: !(M.Map Int64  (BzoType, BzoPos) ) }   -- | ty id#  ->  (type, position)
 
 
 
@@ -1010,7 +1013,12 @@ type TypeTable = M.Map Int64 BzoType
 
 -- Map from Namespace Ids to Associated File Indices
 -- Multiple Indices are returned because Libraries ($link) can map to multiple files.
-type NameTable = M.Map T.Text [Int64]
+data NameTable
+  = NameTable {
+      nt_fnids  :: !(M.Map T.Text [(Int64, Int64)]),   -- | fn id    -> [(id#s, file id#s)]
+      nt_tyids  :: !(M.Map T.Text  (Int64, Int64) ),   -- | ty id    ->  (id#s, file id#s)
+      nt_names  :: !(M.Map T.Text   Int64         ),   -- | @name    ->   file id#
+      nt_names' :: !(M.Map Int64    T.Text        )  } -- | file id# ->   @name
 
 
 

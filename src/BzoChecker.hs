@@ -170,6 +170,7 @@ getFIdSet (SymbolTable iids fids itab ftab dmid itop ftop) imps lnks =
 
 
 -- | Provides a table of all Identifiers visible to a certain file
+{-
 getNamespaces :: Show a => SymbolTable -> BzoFileModel a -> Either [BzoErr] NameTable
 getNamespaces st (BzoFileModel mn _ dm _ imps lnks impas lnkas) =
   let domain'   = T.pack dm
@@ -200,7 +201,7 @@ getNamespaces st (BzoFileModel mn _ dm _ imps lnks impas lnkas) =
       allErrs  = errs0 ++ errs1 ++ errs2-- ++ errs3
   in case allErrs of
       [] -> Right nmTable1
-      er -> Left  er
+      er -> Left  er-}
 
 
 
@@ -240,13 +241,14 @@ getTypeVars t =
 
 
 -- Returns a set of all identifiers visible in a given namespace
-type VisibleIds = S.Set T.Text
 
+type VisibleIds = S.Set T.Text
+{-
 getVisibleIds :: SymbolTable -> NameTable -> VisibleIds
 getVisibleIds st nt =
   let allIds = concatMap (\(a, bs) -> zip (repeat a) $ map snd bs) $ M.assocs $ st_iids st
       spaces = S.fromList $ L.nub $ concat $ M.elems nt
-  in S.fromList $ map fst $ filter (\(a, b) -> S.member b spaces) allIds
+  in S.fromList $ map fst $ filter (\(a, b) -> S.member b spaces) allIds -}
 
 
 
@@ -339,7 +341,7 @@ constructType fid (vi, nt) vt st _ = Right $ BT_Nil 0 -- Temporary
 
 
 
-
+{-
 generateTypesHelper :: Int64 -> VisibleIds -> NameTable -> SymbolTable -> [Definition T.Text] -> ([BzoErr], [BzoType])
 generateTypesHelper fid vn nt st [] = ([], [])
 generateTypesHelper fid vn nt st ((TyDefinition (_, tast, _, _, _) _):xs) =
@@ -385,4 +387,4 @@ wrappedGenerateTypes :: Either [BzoErr] SymbolTable -> Either [BzoErr] [BzoFileM
 wrappedGenerateTypes (Left errs0) (Left errs1) = (errs0 ++ errs1, [])
 wrappedGenerateTypes (Left  errs) (Right _   ) = (errs, [])
 wrappedGenerateTypes (Right _   ) (Left  errs) = (errs, [])
-wrappedGenerateTypes (Right st  ) (Right fms) = trace (show st) $ generateTypes st fms
+wrappedGenerateTypes (Right st  ) (Right fms) = trace (show st) $ generateTypes st fms-}

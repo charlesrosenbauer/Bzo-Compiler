@@ -29,14 +29,14 @@ compileFilePass (BzoSettings imp lib flg opt pfx) =
       -- Load, preprocess
       models   <- (((fmap (applyWithErr orderFileData)). (fmap $ applyWithErr wrappedModellerMap). (applyWithErrM (wrappedLibLoader lCfg)). processFiles) $ map swap files)
       symbols  <- return (applyRight generateSymbolTable models)
-      namemaps <- return (applyRight (\st -> applyRight (map (getNamespaces st)) models) symbols)
+      --namemaps <- return (applyRight (\st -> applyRight (map (getNamespaces st)) models) symbols)
       defs     <- return $ (applyWithErr wrappedDefOrganizePass) models
-      types    <- return (wrappedGenerateTypes symbols defs)
+      --types    <- return (wrappedGenerateTypes symbols defs)
       -- TODO: Type Checker
       -- TODO: Static Analysis
       -- TODO: Code Generation
       putStrLn $ case valid of
-                  Nothing -> showOutput $ trace (show types) defs
+                  Nothing -> showOutput {-$ trace (show types)-} defs
                   Just er -> show er
 
 
