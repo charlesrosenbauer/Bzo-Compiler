@@ -126,19 +126,6 @@ instance Applicative Lexer where
 
 
 
--- | Alternative to pure for applicative lexer. Not sure if it's necessary.
-pureErr :: String -> Lexer a
-pureErr err = Lexer (\_ ls -> Left $ LexErr (BzoPos (lsLine ls) (lsColumn ls) (lsFName ls)) err)
-
-
-
-
-
-
-
-
-
-
 instance Monad Lexer where
   return    = pure
   (>>=) p f = Lexer (\s ls ->
