@@ -1011,14 +1011,13 @@ data TypeTable
 
 
 
--- Map from Namespace Ids to Associated File Indices
--- Multiple Indices are returned because Libraries ($link) can map to multiple files.
 data NameTable
   = NameTable {
       nt_fnids  :: !(M.Map T.Text [(Int64, Int64)]),   -- | fn id    -> [(id#s, file id#s)]
       nt_tyids  :: !(M.Map T.Text  (Int64, Int64) ),   -- | ty id    ->  (id#s, file id#s)
-      nt_names  :: !(M.Map T.Text   Int64         ),   -- | @name    ->   file id#
+      nt_names  :: !(M.Map T.Text  [Int64]        ),   -- | @name    ->   file id#s
       nt_names' :: !(M.Map Int64    T.Text        )  } -- | file id# ->   @name
+      deriving Show
 
 
 

@@ -170,7 +170,6 @@ getFIdSet (SymbolTable iids fids itab ftab dmid itop ftop) imps lnks =
 
 
 -- | Provides a table of all Identifiers visible to a certain file
-{-
 getNamespaces :: Show a => SymbolTable -> BzoFileModel a -> Either [BzoErr] NameTable
 getNamespaces st (BzoFileModel mn _ dm _ imps lnks impas lnkas) =
   let domain'   = T.pack dm
@@ -180,28 +179,26 @@ getNamespaces st (BzoFileModel mn _ dm _ imps lnks impas lnkas) =
       impsAs'   = map (\(a, b) -> (T.pack a, T.pack b)) impas
       linkAs'   = map (\(a, b) -> (T.pack a, T.pack b)) lnkas
 
-      names     = imports' ++ links' ++ (map snd impsAs') ++ (map snd linkAs')
+      linkfiles = map (\(a,b) -> (M.lookup a $ st_dmids st, b)) ((map (\x -> (x,x)) links'  ) ++ linkAs')
+      impfiles  = map (\(a,b) -> (M.lookup a $ st_fids  st, b)) ((map (\x -> (x,x)) imports') ++ impsAs')
+      allfiles  = linkfiles ++ (map (\(a,b) -> ((fmap (\x -> [x]) a), b)) impfiles)
+
+      maybenames= map fst allfiles
+      names     = Mb.catMaybes maybenames
+      maybefails= map snd $ filter (Mb.isNothing. fst) allfiles
+      errs0     = ife (length maybenames /= length names) [(DepErr ("In module " ++ mn ++ ", the following links/imports failed: " ++ (concatMap (\x -> show x ++ ", ")  maybefails)))] []
+
       names'    = L.nub names
-      errs0     = ife (length names /= length names') [(DepErr ("In module " ++ mn ++ ", the following are duplicate namespaces: " ++ (show $ names L.\\ names')))] []
+      errs1     = ife (length names /= length names') [(DepErr ("In module " ++ mn ++ ", the following are duplicate namespaces: " ++ (show $ names L.\\ names')))] []
 
-      allLinks  = (map (\x -> (x, x)) links') ++ linkAs'
-      allLinks' = L.nub allLinks
-      errs1     = ife (length allLinks /= length allLinks') [(DepErr ("In module " ++ mn ++ ", the following are duplicate library links: " ++ (show $ allLinks L.\\ allLinks')))] []
+      namePairs    = map (\(a,b) -> (b, Mb.fromJust a)) allfiles
+      namePairs'   = concatMap (\(a,bs) -> zip (repeat a) bs) namePairs
+      namePairSwap = map Tp.swap namePairs'
 
-      allImps   = (map (\x -> (x, x)) $ self:imports') ++ impsAs'
-      allImps'  = L.nub allImps
-      errs2     = ife (length allImps /= length allImps') [(DepErr ("In module " ++ mn ++ ", the following are duplicate module imports: " ++ (show $ allImps L.\\ allImps')))] []
-
-      impLists  = map (\(a, b) -> (b, [Mb.fromJust $ M.lookup (T.append a $ T.pack (":" ++ dm)) (st_fids st)])) allImps'
-      nmTable0  = M.fromList impLists
-
-      lnkLists  = map (\(a, b) -> (b, Mb.fromJust $ M.lookup a (st_dmids st))) allLinks'
-      nmTable1  = insertMany nmTable0 lnkLists
-
-      allErrs  = errs0 ++ errs1 ++ errs2-- ++ errs3
-  in case allErrs of
-      [] -> Right nmTable1
-      er -> Left  er-}
+      errs      = errs0 ++ errs1
+  in case errs of
+      [] -> Right (NameTable M.empty M.empty (M.fromList namePairs) (M.fromList namePairSwap))
+      er -> Left  er
 
 
 
