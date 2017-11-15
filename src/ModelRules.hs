@@ -591,6 +591,8 @@ modelExpr (BzS_Expr   p (x:xs)) =
       [] -> Right $ EM_Expr p (head $ rights x') (head $ rights xs')
       er -> Left er
 
+modelExpr x = Left [(SntxErr (pos x) "Unexpected Expression Contents")]
+
 
 
 
