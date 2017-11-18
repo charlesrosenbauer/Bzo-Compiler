@@ -18,6 +18,7 @@ data IRPos = IRPos{
   ir_line   :: Int,
   ir_column :: Int,
   ir_fname  :: Text }
+  deriving (Eq, Show)
 
 
 
@@ -36,6 +37,18 @@ data IRToken
   | CloseBrace IRPos
   | DefFunc    IRPos
   | DefType    IRPos
+  deriving (Eq, Show)
+
+
+
+
+
+
+
+
+
+
+data IRErr = IRErr IRPos Text deriving Show
 
 
 
@@ -52,3 +65,27 @@ data IRLexerState = IRLexerState{
   lx_offset :: Int,
   lx_fname  :: Text,
   lx_tokens :: [IRToken] }
+  deriving (Eq, Show)
+
+
+
+
+
+
+
+
+
+
+data IRLexer a = IRLexer { irlex :: String -> IRLexerState -> Either [IRErr] (a, IRLexerState) }
+
+
+
+
+
+
+
+
+
+
+makeLexErr :: IRLexerState -> IRErr
+makeLexErr (IRLexerState line column offset fname tokens) = (IRErr (IRPos line column fname) (pack "Lexer Error\n"))
