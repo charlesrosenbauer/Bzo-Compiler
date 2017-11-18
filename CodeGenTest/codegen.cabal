@@ -1,0 +1,26 @@
+name: bzo-compiler-codegen-test
+version: 0.4
+author: Charles Rosenbauer
+cabal-version: >=2.0
+build-type: Simple
+
+executable main
+    default-language: Haskell2010
+    main-is: Main.hs
+    ghc-options: -dynamic -O2 -threaded +RTS -N8
+    default-extensions: BangPatterns
+    hs-source-dirs: CodeGenTest
+    hs-source-dirs: src
+    build-depends:
+        base >= 4.7
+      , haskeline >= 0.7
+      , text >= 1.2
+      , containers >= 0.5.7
+      , directory >= 1.3
+      , filepath >= 1.4
+      , llvm-hs >= 5.0.0
+      , llvm-hs-pure >= 5.0.0
+      , parallel >= 3.2.1.1
+    other-modules:
+        Codegen
+      , IRLexer
