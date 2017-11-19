@@ -86,14 +86,18 @@ data IRErr = IRErr IRPos Text
 
 
 data IRToken
-  = FuncToken  IRPos Text
-  | NodeToken  IRPos Int
-  | TypeToken  IRPos Text
-  | OpenBrace  IRPos
-  | CloseBrace IRPos
-  | DefFunc    IRPos
-  | DefType    IRPos
-  | NewLine    IRPos
+  = FuncToken   IRPos Text
+  | NodeToken   IRPos Int
+  | TypeToken   IRPos Text
+  | ExternToken IRPos Text
+  | ProcToken   IRPos Text
+  | OpenBrace   IRPos
+  | CloseBrace  IRPos
+  | DefFunc     IRPos
+  | DefType     IRPos
+  | DefExtern   IRPos
+  | DefProc     IRPos
+  | NewLine     IRPos
   deriving (Eq, Show)
 
 
@@ -364,3 +368,66 @@ lexExceptChar ch = satisfy (\c -> c /= ch)
 
 lexExceptCharFrom :: [Char] -> IRLexer Char
 lexExceptCharFrom cs = satisfy (\c -> not $ elem c cs)
+
+
+
+
+
+
+
+
+
+
+lexGenString :: String -> IRLexer String
+lexGenString [] = return []
+lexGenString (c:cs) = do { _ <- lexChar c; _ <- lexGenString cs; return (c:cs)}
+
+
+
+
+
+
+
+
+
+
+lexStringToToken :: String -> (IRPos -> IRToken) -> IRLexer IRToken
+lexStringToToken st f = do
+  p <- getLexerState
+  _ <- lexGenString st
+  return $ f (makeIRPos p)
+
+
+
+
+
+
+
+
+
+
+lexSymbol :: IRLexer IRToken
+lexSymbol =
+  (lexStringToToken "@"  (\p -> DefFunc     p)) <|>
+  (lexStringToToken "%"  (\p -> DefType     p)) <|>
+  (lexStringToToken "^"  (\p -> DefExtern   p)) <|>
+  (lexStringToToken "{"  (\p -> OpenBrace   p)) <|>
+  (lexStringToToken "}"  (\p -> CloseBrace  p)) <|>
+  (lexStringToToken "~"  (\p -> DefProc     p)) <|>
+  (lexStringToToken "\n" (\p -> NewLine     p))
+
+
+
+
+
+
+
+
+
+
+lexFunc :: IRLexer IRToken
+lexFunc = do
+  p  <- getLexerState
+  c0 <- satisfy (\c -> (not $ isUpper c) && (not $ isDigit c))
+  cs <- many $ satisfy (not . isDigit)
+  return (FuncToken (makeIRPos p) $ pack (c0 : cs))
