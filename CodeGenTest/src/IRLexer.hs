@@ -98,6 +98,7 @@ data IRToken
   | DefExtern   IRPos
   | DefProc     IRPos
   | NewLine     IRPos
+  | PtrToken    IRPos
   deriving (Eq, Show)
 
 
@@ -414,6 +415,7 @@ lexSymbol =
   (lexStringToToken "{"  (\p -> OpenBrace   p)) <|>
   (lexStringToToken "}"  (\p -> CloseBrace  p)) <|>
   (lexStringToToken "~"  (\p -> DefProc     p)) <|>
+  (lexStringToToken "*"  (\p -> PtrToken    p)) <|>
   (lexStringToToken "\n" (\p -> NewLine     p))
 
 
@@ -428,6 +430,101 @@ lexSymbol =
 lexFunc :: IRLexer IRToken
 lexFunc = do
   p  <- getLexerState
-  c0 <- satisfy (\c -> (not $ isUpper c) && (not $ isDigit c))
-  cs <- many $ satisfy (not . isDigit)
+  c0 <- satisfy isLower
+  cs <- many $ satisfy isAlphaNum
   return (FuncToken (makeIRPos p) $ pack (c0 : cs))
+
+
+
+
+
+
+
+
+
+
+lexType :: IRLexer IRToken
+lexType = do
+  p  <- getLexerState
+  c0 <- satisfy isUpper
+  cs <- many $ satisfy isAlphaNum
+  return (TypeToken (makeIRPos p) $ pack (c0 : cs))
+
+
+
+
+
+
+
+
+
+
+lexNode :: IRLexer IRToken
+lexNode = do
+  p  <- getLexerState
+  c0 <- lexChar '#'
+  cs <- many $ satisfy isDigit
+  return (NodeToken (makeIRPos p) $ readInt cs)
+
+
+
+
+
+
+
+
+
+
+lexExtn :: IRLexer IRToken
+lexExtn = do
+  p  <- getLexerState
+  c0 <- lexChar ':'
+  c1 <- satisfy isLower
+  cs <- many $ satisfy isAlphaNum
+  return (FuncToken (makeIRPos p) $ pack (c0 : c1 : cs))
+
+
+
+
+
+
+
+
+
+
+lexProc :: IRLexer IRToken
+lexProc = do
+  p  <- getLexerState
+  c0 <- lexChar '!'
+  c1 <- satisfy isLower
+  cs <- many $ satisfy isAlphaNum
+  return (FuncToken (makeIRPos p) $ pack (c0 : c1 : cs))
+
+
+
+
+
+
+
+
+
+
+readInt :: String -> Int
+readInt sr =
+  let rs = L.reverse sr
+  in  (readDgt rs)
+    where readDgt [] = 0
+          readDgt st =
+            let (s0 : ss) = st
+                n = case s0 of
+                  '0' -> 0
+                  '1' -> 1
+                  '2' -> 2
+                  '3' -> 3
+                  '4' -> 4
+                  '5' -> 5
+                  '6' -> 6
+                  '7' -> 7
+                  '8' -> 8
+                  '9' -> 9
+              in (n + (10 * (readDgt ss)))
