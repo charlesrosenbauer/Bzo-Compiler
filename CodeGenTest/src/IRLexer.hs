@@ -99,6 +99,7 @@ data IRToken
   | DefProc     IRPos
   | NewLine     IRPos
   | PtrToken    IRPos
+  | NilToken
   deriving (Eq, Show)
 
 
@@ -379,6 +380,22 @@ lexExceptCharFrom cs = satisfy (\c -> not $ elem c cs)
 
 
 
+toLstLexer :: IRLexer a -> IRLexer [a]
+toLstLexer lx = IRLexer (\s ls ->
+  case (IRLexer.lex lx s ls) of
+    Left  err -> Left err
+    Right lst -> Right $ L.map xform lst)
+    where xform (a, b, c) = ([a], b, c)
+
+
+
+
+
+
+
+
+
+
 lexGenString :: String -> IRLexer String
 lexGenString [] = return []
 lexGenString (c:cs) = do { _ <- lexChar c; _ <- lexGenString cs; return (c:cs)}
@@ -528,3 +545,56 @@ readInt sr =
                   '8' -> 8
                   '9' -> 9
               in (n + (10 * (readDgt ss)))
+
+
+
+
+
+
+
+
+
+
+lexWhiteSpace :: IRLexer IRToken
+lexWhiteSpace = do
+  _  <- (toLstLexer $ satisfy isSpace)
+  return NilToken
+
+
+
+
+
+
+
+
+
+
+lexToken :: IRLexer IRToken
+lexToken =
+  lexNode    <|>
+  lexFunc    <|>
+  lexType    <|>
+  lexExtn    <|>
+  lexProc    <|>
+  lexSymbol  <|>
+  lexWhiteSpace
+
+
+
+
+
+
+
+
+
+
+lexFile :: String -> String -> Either IRErr [IRToken]
+lexFile fcontents fname =
+  let tokens  = runLexer fname (many lexToken) fcontents
+      tokens' = L.filter notNil $ L.head $ E.rights [tokens]
+  in case tokens of
+      Left errs -> Left  errs
+      Right tks -> Right tokens'
+
+    where notNil NilToken = False
+          notNil _        = True
