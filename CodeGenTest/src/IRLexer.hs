@@ -74,7 +74,7 @@ data IRPos = IRPos{
 
 
 
-data IRErr = IRErr IRPos Text
+data IRErr = IRErr IRPos Text deriving (Eq, Show)
 
 
 
@@ -91,6 +91,7 @@ data IRToken
   | TypeToken   IRPos Text
   | ExternToken IRPos Text
   | ProcToken   IRPos Text
+  | NumToken    IRPos Int
   | OpenBrace   IRPos
   | CloseBrace  IRPos
   | DefFunc     IRPos
@@ -526,6 +527,21 @@ lexProc = do
 
 
 
+lexInt :: IRLexer IRToken
+lexInt = do
+  p  <- getLexerState
+  cs <- some $ satisfy isDigit
+  return (NumToken (makeIRPos p) $ readInt cs)
+
+
+
+
+
+
+
+
+
+
 readInt :: String -> Int
 readInt sr =
   let rs = L.reverse sr
@@ -571,6 +587,7 @@ lexWhiteSpace = do
 
 lexToken :: IRLexer IRToken
 lexToken =
+  lexInt     <|>
   lexNode    <|>
   lexFunc    <|>
   lexType    <|>
@@ -589,7 +606,7 @@ lexToken =
 
 
 lexFile :: String -> String -> Either IRErr [IRToken]
-lexFile fcontents fname =
+lexFile fname fcontents =
   let tokens  = runLexer fname (many lexToken) fcontents
       tokens' = L.filter notNil $ L.head $ E.rights [tokens]
   in case tokens of

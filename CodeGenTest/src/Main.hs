@@ -1,5 +1,6 @@
 module Main where
 import System.IO
+import IRLexer
 
 
 
@@ -11,4 +12,6 @@ import System.IO
 
 
 main :: IO()
-main = putStrLn "Hello LLVM!\n"
+main = do
+  fcontents <- readFile "test.bzir"
+  putStrLn (fcontents ++ "\n\n" ++ (show $ lexFile "test.bzir" fcontents))
