@@ -91,7 +91,10 @@ data IRToken
   | TypeToken   IRPos Text
   | ExternToken IRPos Text
   | ProcToken   IRPos Text
+  | ConstToken  IRPos Text
+  | HintToken   IRPos Text
   | NumToken    IRPos Int
+  | StrToken    IRPos Text
   | OpenBrace   IRPos
   | CloseBrace  IRPos
   | DefFunc     IRPos
@@ -449,7 +452,7 @@ lexFunc :: IRLexer IRToken
 lexFunc = do
   p  <- getLexerState
   c0 <- satisfy isLower
-  cs <- many $ satisfy isAlphaNum
+  cs <- many $ satisfy (\c -> (isAlphaNum c) || (c == '_'))
   return (FuncToken (makeIRPos p) $ pack (c0 : cs))
 
 
@@ -465,7 +468,7 @@ lexType :: IRLexer IRToken
 lexType = do
   p  <- getLexerState
   c0 <- satisfy isUpper
-  cs <- many $ satisfy isAlphaNum
+  cs <- many $ satisfy (\c -> (isAlphaNum c) || (c == '_'))
   return (TypeToken (makeIRPos p) $ pack (c0 : cs))
 
 
@@ -498,8 +501,42 @@ lexExtn = do
   p  <- getLexerState
   c0 <- lexChar ':'
   c1 <- satisfy isLower
-  cs <- many $ satisfy isAlphaNum
+  cs <- many $ satisfy (\c -> (isAlphaNum c) || (c == '_'))
   return (FuncToken (makeIRPos p) $ pack (c0 : c1 : cs))
+
+
+
+
+
+
+
+
+
+
+lexHint :: IRLexer IRToken
+lexHint = do
+  p  <- getLexerState
+  c0 <- lexChar '$'
+  c1 <- satisfy isLower
+  cs <- many $ satisfy (\c -> (isAlphaNum c) || (c == '_'))
+  return (HintToken (makeIRPos p) $ pack (c0 : c1 : cs))
+
+
+
+
+
+
+
+
+
+
+lexConst :: IRLexer IRToken
+lexConst = do
+  p  <- getLexerState
+  c0 <- lexChar '.'
+  c1 <- satisfy isLower
+  cs <- many $ satisfy (\c -> (isAlphaNum c) || (c == '_'))
+  return (ConstToken (makeIRPos p) $ pack (c0 : c1 : cs))
 
 
 
@@ -515,8 +552,62 @@ lexProc = do
   p  <- getLexerState
   c0 <- lexChar '!'
   c1 <- satisfy isLower
-  cs <- many $ satisfy isAlphaNum
+  cs <- many $ satisfy (\c -> (isAlphaNum c) || (c == '_'))
   return (FuncToken (makeIRPos p) $ pack (c0 : c1 : cs))
+
+
+
+
+
+
+
+
+
+
+lexGenEscape :: Char -> Char -> IRLexer Char
+lexGenEscape ch ret = do
+  _ <- lexChar '\\'
+  _ <- lexChar ch
+  return ret
+
+
+
+
+
+
+
+
+
+
+lexEscape :: IRLexer Char
+lexEscape =
+  lexGenEscape 'n'  '\n' <|>
+  lexGenEscape 'v'  '\v' <|>
+  lexGenEscape 't'  '\t' <|>
+  lexGenEscape 'r'  '\r' <|>
+  lexGenEscape '\\' '\\' <|>
+  lexGenEscape 'n'  '\n' <|>
+  lexGenEscape '\'' '\'' <|>
+  lexGenEscape '"'  '\"' <|>
+  lexGenEscape '0'  '\o0'<|>
+  lexGenEscape 'a'  '\a'
+
+
+
+
+
+
+
+
+
+
+lexString :: IRLexer IRToken
+lexString = do
+  pos <- getLexerState
+  _   <- lexChar '\''
+  sr  <- many (lexEscape <|> (lexExceptChar '\''))
+  _   <- lexChar '\''
+  return (StrToken (makeIRPos pos) $ pack sr)
 
 
 
@@ -604,11 +695,14 @@ lexWhiteSpace = do
 lexToken :: IRLexer IRToken
 lexToken =
   lexInt     <|>
+  lexString  <|>
   lexNode    <|>
   lexFunc    <|>
   lexType    <|>
   lexExtn    <|>
   lexProc    <|>
+  lexConst   <|>
+  lexHint    <|>
   lexSymbol  <|>
   lexWhiteSpace
 
