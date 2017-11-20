@@ -571,9 +571,25 @@ readInt sr =
 
 
 
+lexComment :: IRLexer String
+lexComment = do
+  _  <- lexChar '"'
+  cm <- many $ lexExceptChar '"'
+  _  <- lexChar '"'
+  return cm
+
+
+
+
+
+
+
+
+
+
 lexWhiteSpace :: IRLexer IRToken
 lexWhiteSpace = do
-  _  <- (toLstLexer $ satisfy isSpace)
+  _  <- (toLstLexer $ satisfy isSpace) <|> lexComment
   return NilToken
 
 
