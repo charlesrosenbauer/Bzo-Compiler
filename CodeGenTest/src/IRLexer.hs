@@ -95,6 +95,7 @@ data IRToken
   | HintToken   IRPos Text
   | NumToken    IRPos Int
   | StrToken    IRPos Text
+  | ArrToken    IRPos Int
   | OpenBrace   IRPos
   | CloseBrace  IRPos
   | DefFunc     IRPos
@@ -530,6 +531,23 @@ lexHint = do
 
 
 
+lexArr :: IRLexer IRToken
+lexArr = do
+  p  <- getLexerState
+  c0 <- lexChar '['
+  cs <- many $ satisfy isDigit
+  cl <- lexChar ']'
+  return (ArrToken (makeIRPos p) $ readInt cs)
+
+
+
+
+
+
+
+
+
+
 lexConst :: IRLexer IRToken
 lexConst = do
   p  <- getLexerState
@@ -696,6 +714,7 @@ lexToken :: IRLexer IRToken
 lexToken =
   lexInt     <|>
   lexString  <|>
+  lexArr     <|>
   lexNode    <|>
   lexFunc    <|>
   lexType    <|>
