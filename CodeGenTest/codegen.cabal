@@ -24,3 +24,4 @@ executable main
     other-modules:
         Codegen
       , IRLexer
+      , IRParser
