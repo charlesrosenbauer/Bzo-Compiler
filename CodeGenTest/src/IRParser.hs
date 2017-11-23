@@ -47,24 +47,52 @@ data IRParseItem
 
 
 
-irParseIter :: [IRParseItem] -> Either IRErr IRParseItem
-irParseIter [] = Left $ IRErr (IRPos 1 1 $ pack "????") $ pack "Nothing to parse?"
+irParseIter :: [IRParseItem] ->  [IRParseItem] -> Either IRErr IRParseItem
+irParseIter [] [] = Left $ IRErr (IRPos 1 1 $ pack "????") $ pack "Nothing to parse?"
 
-irParseIter ((PI_Token (NumToken p0 n0))
-            :(PI_Token (NumToken p1 n1)): ts) = irParseIter ((PI_NS    p0 [n1, n0]) : ts)
+-- Numbers -- #N
+irParseIter header ((PI_Token (NumToken p0 n0))
+                   :(PI_Token (NumToken p1 n1)): ts) = irParseIter header ((PI_NS       p0 [n1, n0]) : ts)
 
-irParseIter ((PI_NS     p0 ns)
-            :(PI_Token (NumToken p1 n0)): ts) = irParseIter ((PI_NS    p0 (n0: ns)) : ts)
+irParseIter header ((PI_NS     p0 ns)
+            :(PI_Token (NumToken p1 n0)): ts) = irParseIter header ((PI_NS       p0 (n0: ns)) : ts)
 
-irParseIter ((PI_Token (NumToken p0 n0)): ts) = irParseIter ((PI_NS    p0  [n0]   ) : ts)
+irParseIter header ((PI_Token (NumToken p0 n0)): ts) = irParseIter header ((PI_NS       p0  [n0]   ) : ts)
 
-irParseIter ((PI_Token (PtrToken p0))
-            :(PI_Token (PtrToken p1))   : ts) = irParseIter ((PI_Ptr   p0  2      ) : ts)
+-- Pointers -- *
+irParseIter header ((PI_Token (PtrToken p0))
+            :(PI_Token (PtrToken p1))   : ts) = irParseIter header ((PI_Ptr      p0  2      ) : ts)
 
-irParseIter ((PI_Ptr    p0 n )
-            :(PI_Token (PtrToken p1   )): ts) = irParseIter ((PI_Ptr   p0  (n + 1)) : ts)
+irParseIter header ((PI_Ptr    p0 n )
+            :(PI_Token (PtrToken p1   )): ts) = irParseIter header ((PI_Ptr      p0  (n + 1)) : ts)
 
-irParseIter ((PI_Ptr    p0 n)           : ts) = irParseIter ((PI_Ptr   p0  1      ) : ts)
+irParseIter header ((PI_Ptr    p0 n)           : ts) = irParseIter header ((PI_Ptr      p0  1      ) : ts)
+
+-- Newlines -- \n
+irParseIter header ((PI_NL     p0  )
+            :(PI_Token (NewLine  p1))   : ts) = irParseIter header ((PI_NL       p0)          : ts)
+
+irParseIter header ((PI_Token (NewLine  p0))
+            :(PI_Token (NewLine  p1))   : ts) = irParseIter header ((PI_NL       p0)          : ts)
+
+irParseIter header ((PI_Token (NewLine  p0))   : ts) = irParseIter header ((PI_NL       p0)          : ts)
+
+-- Arrays -- [N]
+irParseIter header ((PI_Token (ArrToken p0 n0))
+            :(PI_Token (ArrToken p1 n1)): ts) = irParseIter header ((PI_MultiArr p0 [n1, n0]) : ts)
+
+irParseIter header ((PI_MultiArr p0 ns)
+            :(PI_Token (ArrToken p1 n0)): ts) = irParseIter header ((PI_MultiArr p0 (n0: ns)) : ts)
+
+irParseIter header ((PI_Token (ArrToken p0 n0)): ts) = irParseIter header ((PI_MultiArr p0  [n0]   ) : ts)
+
+-- Nodes -- #N op #A #B ... \n
+irParseIter header ((PI_Token (NumToken  p0 n0))
+            :(PI_Token (FuncToken p1 fn))
+            :params
+            :(PI_NL    p3              ): ts) = irParseIter header ((PI_Node p0 n0 fn params))
+
+
 
 
 
@@ -75,4 +103,4 @@ irParseIter ((PI_Ptr    p0 n)           : ts) = irParseIter ((PI_Ptr   p0  1    
 
 
 irParse :: [IRToken] -> Either IRErr IRParseItem
-irParse tks = irParseIter $ L.map PI_Token tks
+irParse tks = irParseIter [] $ L.map PI_Token tks
