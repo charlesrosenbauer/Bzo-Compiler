@@ -26,14 +26,14 @@ data IRParseItem
   | PI_Arr      IRPos Int
   | PI_MultiArr IRPos [Int]
   | PI_Type     IRPos [Int] Int Text
-  | PI_Node     IRPos Int Text [IRParseItem]
+  | PI_Node     IRPos Int Text IRParseItem
   | PI_NS       IRPos [Int]
   | PI_Nodes    IRPos [IRParseItem]
   | PI_Def      IRPos IRParseItem
   | PI_Defs     IRPos [IRParseItem]
   | PI_Const    IRPos Text
   | PI_ConstInt IRPos Text Int
-  | PI_ConstStr IRPos Text Text
+  | PI_Consstktr IRPos Text Text
   | PI_Str      IRPos Text
   | PI_Int      IRPos Int
   | PI_Token    IRToken
@@ -51,46 +51,46 @@ irParseIter :: [IRParseItem] ->  [IRParseItem] -> Either IRErr IRParseItem
 irParseIter [] [] = Left $ IRErr (IRPos 1 1 $ pack "????") $ pack "Nothing to parse?"
 
 -- Numbers -- #N
-irParseIter header ((PI_Token (NumToken p0 n0))
-                   :(PI_Token (NumToken p1 n1)): ts) = irParseIter header ((PI_NS       p0 [n1, n0]) : ts)
+irParseIter header ((PI_Token (NumToken p1 n1))
+                   :(PI_Token (NumToken p0 n0)): stk)  = irParseIter header ((PI_NS       p0 [n1, n0]) : stk)
 
-irParseIter header ((PI_NS     p0 ns)
-            :(PI_Token (NumToken p1 n0)): ts) = irParseIter header ((PI_NS       p0 (n0: ns)) : ts)
+irParseIter header ((PI_Token (NumToken p1 n0))
+                   :(PI_NS     p0 ns)          : stk)  = irParseIter header ((PI_NS       p0 (n0: ns)) : stk)
 
-irParseIter header ((PI_Token (NumToken p0 n0)): ts) = irParseIter header ((PI_NS       p0  [n0]   ) : ts)
+irParseIter header ((PI_Token (NumToken p0 n0)): stk)  = irParseIter header ((PI_NS       p0  [n0]   ) : stk)
 
 -- Pointers -- *
-irParseIter header ((PI_Token (PtrToken p0))
-            :(PI_Token (PtrToken p1))   : ts) = irParseIter header ((PI_Ptr      p0  2      ) : ts)
+irParseIter header ((PI_Token (PtrToken p1))
+                   :(PI_Token (PtrToken p0))   : stk)  = irParseIter header ((PI_Ptr      p0  2      ) : stk)
 
-irParseIter header ((PI_Ptr    p0 n )
-            :(PI_Token (PtrToken p1   )): ts) = irParseIter header ((PI_Ptr      p0  (n + 1)) : ts)
+irParseIter header ((PI_Token (PtrToken p1   ))
+                   :(PI_Ptr    p0 n )          : stk)  = irParseIter header ((PI_Ptr      p0  (n + 1)) : stk)
 
-irParseIter header ((PI_Ptr    p0 n)           : ts) = irParseIter header ((PI_Ptr      p0  1      ) : ts)
+irParseIter header ((PI_Ptr    p0 n)           : stk)  = irParseIter header ((PI_Ptr      p0  1      ) : stk)
 
 -- Newlines -- \n
-irParseIter header ((PI_NL     p0  )
-            :(PI_Token (NewLine  p1))   : ts) = irParseIter header ((PI_NL       p0)          : ts)
+irParseIter header ((PI_Token (NewLine  p1))
+                   :(PI_NL     p0  )           : stk)  = irParseIter header ((PI_NL       p0)          : stk)
 
-irParseIter header ((PI_Token (NewLine  p0))
-            :(PI_Token (NewLine  p1))   : ts) = irParseIter header ((PI_NL       p0)          : ts)
+irParseIter header ((PI_Token (NewLine  p1))
+                   :(PI_Token (NewLine  p0))   : stk)  = irParseIter header ((PI_NL       p0)          : stk)
 
-irParseIter header ((PI_Token (NewLine  p0))   : ts) = irParseIter header ((PI_NL       p0)          : ts)
+irParseIter header ((PI_Token (NewLine  p0))   : stk)  = irParseIter header ((PI_NL       p0)          : stk)
 
 -- Arrays -- [N]
-irParseIter header ((PI_Token (ArrToken p0 n0))
-            :(PI_Token (ArrToken p1 n1)): ts) = irParseIter header ((PI_MultiArr p0 [n1, n0]) : ts)
+irParseIter header ((PI_Token (ArrToken p1 n1))
+                   :(PI_Token (ArrToken p0 n0)): stk)  = irParseIter header ((PI_MultiArr p0 [n1, n0]) : stk)
 
-irParseIter header ((PI_MultiArr p0 ns)
-            :(PI_Token (ArrToken p1 n0)): ts) = irParseIter header ((PI_MultiArr p0 (n0: ns)) : ts)
+irParseIter header ((PI_Token (ArrToken p1 n0))
+                   :(PI_MultiArr p0 ns)        : stk)  = irParseIter header ((PI_MultiArr p0 (n0: ns)) : stk)
 
-irParseIter header ((PI_Token (ArrToken p0 n0)): ts) = irParseIter header ((PI_MultiArr p0  [n0]   ) : ts)
+irParseIter header ((PI_Token (ArrToken p0 n0)): stk)  = irParseIter header ((PI_MultiArr p0  [n0]   ) : stk)
 
 -- Nodes -- #N op #A #B ... \n
-irParseIter header ((PI_Token (NumToken  p0 n0))
-            :(PI_Token (FuncToken p1 fn))
-            :params
-            :(PI_NL    p3              ): ts) = irParseIter header ((PI_Node p0 n0 fn params))
+irParseIter header ((PI_NL    p3              )
+                   :params
+                   :(PI_Token (FuncToken p1 fn))
+                   :(PI_Token (NumToken  p0 n0)): stk) = irParseIter header ((PI_Node p0 n0 fn params) : stk)
 
 
 
