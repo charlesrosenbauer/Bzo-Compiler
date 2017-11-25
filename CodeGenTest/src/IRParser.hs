@@ -33,10 +33,11 @@ data IRParseItem
   | PI_Defs     IRPos [IRParseItem]
   | PI_Const    IRPos Text
   | PI_ConstInt IRPos Text Int
-  | PI_Consstktr IRPos Text Text
+  | PI_ConstStr IRPos Text Text
   | PI_Str      IRPos Text
   | PI_Int      IRPos Int
   | PI_Token    IRToken
+  deriving (Eq, Show)
 
 
 
@@ -91,6 +92,19 @@ irParseIter tokens ((PI_NL    p3              )
                    :params
                    :(PI_Token (FuncToken p1 fn))
                    :(PI_Token (NumToken  p0 n0)): stk) = irParseIter tokens ((PI_Node p0 n0 fn params) : stk)
+
+-- Types -- Ty | *Ty | [n]Ty | ...
+irParseIter tokens ((PI_Token (TypeToken p2 ty))
+                   :(PI_Ptr      p1 pn         )
+                   :(PI_MultiArr p0 as         ): stk) = irParseIter tokens ((PI_Type p0 as pn ty)    : stk)
+
+irParseIter tokens ((PI_Token (TypeToken p1 ty))
+                   :(PI_Ptr   p0 pn            ): stk) = irParseIter tokens ((PI_Type p0 [] pn ty)     : stk)
+
+irParseIter tokens ((PI_Token (TypeToken p1 ty))
+                   :(PI_MultiArr p0 as         ): stk) = irParseIter tokens ((PI_Type p0 as 0 ty)     : stk)
+
+irParseIter tokens ((PI_Token (TypeToken p0 ty)): stk) = irParseIter tokens ((PI_Type p0 [] 0  ty)     : stk)
 
 -- No rules work?
 irParseIter [] stack = Left $ IRErr (IRPos 1 1 $ pack "Fix me later") $ pack "Parser could not consume entire file."
