@@ -1,0 +1,28 @@
+$link 'cstdlib\n'
+
+.hello 'Hello World!'
+
+@ add3 3 1 {
+	#0 input Int32
+	#1 input Int32
+	#2 input Int32
+	#3 output Int32
+
+	#4 iadd #0 #1
+	#5 iadd #4 #2
+	
+	#6 return #3 #5
+}
+
+% Int32x4 1{
+	#0 [4]Int32
+}
+
+"This is a f#%!@#% comment"
+
+^ :printf 1 {
+	#0 input *Char
+	
+}
+
+
