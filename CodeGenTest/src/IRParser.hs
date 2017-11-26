@@ -112,26 +112,41 @@ irParseIter fname tokens ((PI_NL p5)
                    :(PI_Token (NumToken  p3 n1))
                    :(PI_Token (NumToken  p2 n0))
                    :(PI_Token (FuncToken p1 fnid))
-                   :(PI_Token (DefFunc   p0))         : stk) = irParseIter fname tokens ((PI_FnHeader p0 fnid n0 n1):stk)
+                   :(PI_Token (DefFunc   p0))         : stk) = irParseIter fname tokens ((PI_FnHeader p0 fnid n0 n1)   :stk)
 
 -- Function Definition
 irParseIter fname tokens ((PI_NL p3)
                    :(PI_Token (CloseBrace p2))
                    :(PI_Nodes p1 ns)
-                   :(PI_FnHeader p0 fnid n0 n1)       : stk) = irParseIter fname tokens ((PI_FnDef p0 fnid n0 n1 ns):stk)
+                   :(PI_FnHeader p0 fnid n0 n1)       : stk) = irParseIter fname tokens ((PI_FnDef p0 fnid n0 n1 ns)   :stk)
 
 -- Ty Header
 irParseIter fname tokens ((PI_NL p4)
                    :(PI_Token (OpenBrace p3))
                    :(PI_Token (NumToken  p2 n))
                    :(PI_Token (FuncToken p1 tyid))
-                   :(PI_Token (DefType   p0))         : stk) = irParseIter fname tokens ((PI_TyHeader p0 tyid n)    :stk)
+                   :(PI_Token (DefType   p0))         : stk) = irParseIter fname tokens ((PI_TyHeader p0 tyid n)       :stk)
 
 -- Type Definition
 irParseIter fname tokens ((PI_NL p3)
                    :(PI_Token (CloseBrace p2))
                    :(PI_Nodes p1 ns)
-                   :(PI_TyHeader p0 tyid n)           : stk) = irParseIter fname tokens ((PI_TyDef p0 tyid n ns)    :stk)
+                   :(PI_TyHeader p0 tyid n)           : stk) = irParseIter fname tokens ((PI_TyDef p0 tyid n ns)       :stk)
+
+-- Pr Header
+irParseIter fname tokens ((PI_NL p6)
+                   :(PI_Token (OpenBrace p5))
+                   :(PI_Token (TypeToken p4 ty))
+                   :(PI_Token (NumToken  p3 n1))
+                   :(PI_Token (NumToken  p2 n0))
+                   :(PI_Token (ProcToken p1 prid))
+                   :(PI_Token (DefProc   p0))         : stk) = irParseIter fname tokens ((PI_PrHeader p0 prid n0 n1 ty):stk)
+
+-- Procedure Definition
+irParseIter fname tokens ((PI_NL p3)
+                   :(PI_Token (CloseBrace p2))
+                   :(PI_Nodes p1 ns)
+                   :(PI_PrHeader p0 prid n0 n1 ty)    : stk) = irParseIter fname tokens ((PI_PrDef p0 prid n0 n1 ty ns):stk)
 
 -- No rules work?
 irParseIter fname [] [item] = Right item
