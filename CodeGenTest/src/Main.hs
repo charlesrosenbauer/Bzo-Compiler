@@ -15,7 +15,7 @@ import IRParser
 main :: IO()
 main = do
   fcontents <- readFile "test.bzir"
-  putStrLn (fcontents ++ "\n\n" ++ (show $ eitherMap irParse $ lexFile "test.bzir" fcontents))
+  putStrLn (fcontents ++ "\n\n" ++ (show $ eitherMap (irParse "test.bzir") $ lexFile "test.bzir" fcontents))
 
 
 
