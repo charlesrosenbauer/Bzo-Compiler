@@ -2,6 +2,7 @@ module IRParser where
 import IRLexer
 import Data.List as L
 import Data.Text
+import Debug.Trace
 
 
 
@@ -82,6 +83,9 @@ irParseIter fname tokens ((PI_Token _ (NewLine  p1))
 irParseIter fname tokens ((PI_Token _ (NewLine  p1))
                    :(PI_Token _ (NewLine  p0))        : stk)  = irParseIter fname tokens ((PI_NL       p0)          : stk)
 
+irParseIter fname ((PI_Token _ (NewLine p1)):tokens) (
+                    (PI_Token _ (NewLine  p0))        : stk)  = irParseIter fname tokens ((PI_NL       p0)          : stk)
+
 irParseIter fname tokens ((PI_Token _ (NewLine  p0))  : stk)  = irParseIter fname tokens ((PI_NL       p0)          : stk)
 
 
@@ -121,12 +125,17 @@ irParseIter fname tokens ((PI_Token _ (TypeToken p0 ty)):stk) = irParseIter fnam
 
 
 -- Fn Header
-irParseIter fname tokens ((PI_NL p5)
-                   :(PI_Token _ (OpenBrace p4))
-                   :(PI_Token _ (NumToken  p3 n1))
-                   :(PI_Token _ (NumToken  p2 n0))
+irParseIter fname tokens ((PI_NL p4)
+                   :(PI_Token _ (OpenBrace p3))
+                   :(PI_NS    p2 [n0, n1])
                    :(PI_Token _ (FuncToken p1 fnid))
                    :(PI_Token _ (DefFunc   p0))       : stk) = irParseIter fname tokens ((PI_FnHeader p0 fnid n0 n1)   :stk)
+
+irParseIter fname tokens ((PI_NL p4)
+                   :(PI_Token _ (OpenBrace p3))
+                   :(PI_NS    p2 ns)
+                   :(PI_Token _ (FuncToken p1 fnid))
+                   :(PI_Token _ (DefFunc   p0))       : stk) = Left $ IRErr p1 $ pack ("Expected 2 numerical parameters in function header. Found " ++ (show $ L.length ns) ++ ".")
 
 
 
@@ -145,10 +154,15 @@ irParseIter fname tokens ((PI_NL p2)
 -- Ty Header
 irParseIter fname tokens ((PI_NL p4)
                    :(PI_Token _ (OpenBrace p3))
-                   :(PI_Token _ (NumToken  p2 n))
+                   :(PI_NS    p2 [n])
                    :(PI_Token _ (FuncToken p1 tyid))
                    :(PI_Token _ (DefType   p0))       : stk) = irParseIter fname tokens ((PI_TyHeader p0 tyid n)       :stk)
 
+irParseIter fname tokens ((PI_NL p4)
+                   :(PI_Token _ (OpenBrace p3))
+                   :(PI_NS    p2 ns)
+                   :(PI_Token _ (FuncToken p1 tyid))
+                   :(PI_Token _ (DefType   p0))       : stk) = Left $ IRErr p1 $ pack ("Expected 1 numerical parameter in type header. Found " ++ (show $ L.length ns) ++ ".")
 
 
 -- Type Definition
@@ -167,10 +181,16 @@ irParseIter fname tokens ((PI_NL p2)
 irParseIter fname tokens ((PI_NL p6)
                    :(PI_Token _ (OpenBrace p5))
                    :(PI_Token _ (TypeToken p4 ty))
-                   :(PI_Token _ (NumToken  p3 n1))
-                   :(PI_Token _ (NumToken  p2 n0))
+                   :(PI_NS    p2 [n0, n1])
                    :(PI_Token _ (ProcToken p1 prid))
                    :(PI_Token _ (DefProc   p0))       : stk) = irParseIter fname tokens ((PI_PrHeader p0 prid n0 n1 ty):stk)
+
+irParseIter fname tokens ((PI_NL p6)
+                   :(PI_Token _ (OpenBrace p5))
+                   :(PI_Token _ (TypeToken p4 ty))
+                   :(PI_NS    p2 ns)
+                   :(PI_Token _ (ProcToken p1 prid))
+                   :(PI_Token _ (DefProc   p0))       : stk) = Left $ IRErr p1 $ pack ("Expected 2 numerical parameter in type header. Found " ++ (show $ L.length ns) ++ ".")
 
 
 
@@ -189,7 +209,7 @@ irParseIter fname tokens ((PI_NL p2)
 -- No rules work?
 irParseIter fname [] [item] = Right item
 
-irParseIter fname [] (s:stack) = Left $ IRErr (ppos s) $ pack "Parser could not consume entire file."
+irParseIter fname [] (s:stack) = Left $ IRErr (ppos s) $ pack ("Parser could not consume entire file.\nStack:\n" ++ (L.concatMap (\s -> show s ++ "\n") (s:stack)))
 
 irParseIter fname (t:tokens) stack = irParseIter fname tokens (t:stack)
 

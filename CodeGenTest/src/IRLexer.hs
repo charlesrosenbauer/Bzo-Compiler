@@ -74,7 +74,9 @@ data IRPos = IRPos{
 
 
 
-data IRErr = IRErr IRPos Text deriving (Eq, Show)
+data IRErr = IRErr IRPos Text deriving Eq
+instance Show IRErr where
+  show (IRErr (IRPos l c f) t) = "At " ++ (show l) ++ ":" ++ (show c) ++ ", in " ++ (show f) ++ ":\n" ++ unpack t
 
 
 
