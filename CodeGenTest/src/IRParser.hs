@@ -35,6 +35,8 @@ data IRParseItem
   | PI_Const    {ppos :: IRPos, txt0 :: Text}
   | PI_ConstInt {ppos :: IRPos, txt0 :: Text, num0 :: Int}
   | PI_ConstStr {ppos :: IRPos, txt0 :: Text, txt1 :: Text}
+  | PI_HintInt  {ppos :: IRPos, txt0 :: Text, num0 :: Int}
+  | PI_HintStr  {ppos :: IRPos, txt0 :: Text, txt1 :: Text}
   | PI_Str      {ppos :: IRPos, txt0 :: Text}
   | PI_Int      {ppos :: IRPos, num0 :: Int}
   | PI_Token    {ppos :: IRPos, tkn :: IRToken}
@@ -204,6 +206,16 @@ irParseIter fname tokens ((PI_NL p2)
                    :(PI_Token _ (CloseBrace p1))
                    :(PI_PrHeader p0 prid n0 n1 ty)    : stk) = Left $ IRErr p1 $ pack "Expected contents for the procedure declaration."
 
+
+
+-- Constant Definitions
+irParseIter fname tokens ((PI_NL p2)
+                   :(PI_Token p1 (StrToken _ str))
+                   :(PI_Token p0 (ConstToken _ cid))  : stk) = irParseIter fname tokens ((PI_ConstStr p0 cid str)      :stk)
+
+irParseIter fname tokens ((PI_NL p2)
+                   :(PI_Token p1 (NumToken _ num))
+                   :(PI_Token p0 (ConstToken _ cid))  : stk) = irParseIter fname tokens ((PI_ConstInt p0 cid num)      :stk)
 
 
 -- No rules work?
