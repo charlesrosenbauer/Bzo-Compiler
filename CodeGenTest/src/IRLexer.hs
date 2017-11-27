@@ -86,24 +86,24 @@ data IRErr = IRErr IRPos Text deriving (Eq, Show)
 
 
 data IRToken
-  = FuncToken   IRPos Text
-  | NodeToken   IRPos Int
-  | TypeToken   IRPos Text
-  | ExternToken IRPos Text
-  | ProcToken   IRPos Text
-  | ConstToken  IRPos Text
-  | HintToken   IRPos Text
-  | NumToken    IRPos Int
-  | StrToken    IRPos Text
-  | ArrToken    IRPos Int
-  | OpenBrace   IRPos
-  | CloseBrace  IRPos
-  | DefFunc     IRPos
-  | DefType     IRPos
-  | DefExtern   IRPos
-  | DefProc     IRPos
-  | NewLine     IRPos
-  | PtrToken    IRPos
+  = FuncToken   {tpos :: IRPos, ttxt :: Text}
+  | NodeToken   {tpos :: IRPos, tnum :: Int }
+  | TypeToken   {tpos :: IRPos, ttxt :: Text}
+  | ExternToken {tpos :: IRPos, ttxt :: Text}
+  | ProcToken   {tpos :: IRPos, ttxt :: Text}
+  | ConstToken  {tpos :: IRPos, ttxt :: Text}
+  | HintToken   {tpos :: IRPos, ttxt :: Text}
+  | NumToken    {tpos :: IRPos, tnum :: Int }
+  | StrToken    {tpos :: IRPos, ttxt :: Text}
+  | ArrToken    {tpos :: IRPos, tnum :: Int }
+  | OpenBrace   {tpos :: IRPos}
+  | CloseBrace  {tpos :: IRPos}
+  | DefFunc     {tpos :: IRPos}
+  | DefType     {tpos :: IRPos}
+  | DefExtern   {tpos :: IRPos}
+  | DefProc     {tpos :: IRPos}
+  | NewLine     {tpos :: IRPos}
+  | PtrToken    {tpos :: IRPos}
   | NilToken
   deriving (Eq, Show)
 
