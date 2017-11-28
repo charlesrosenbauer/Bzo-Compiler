@@ -505,7 +505,7 @@ lexExtn = do
   c0 <- lexChar ':'
   c1 <- satisfy isLower
   cs <- many $ satisfy (\c -> (isAlphaNum c) || (c == '_'))
-  return (FuncToken (makeIRPos p) $ pack (c0 : c1 : cs))
+  return (ExternToken (makeIRPos p) $ pack (c0 : c1 : cs))
 
 
 
@@ -573,7 +573,7 @@ lexProc = do
   c0 <- lexChar '!'
   c1 <- satisfy isLower
   cs <- many $ satisfy (\c -> (isAlphaNum c) || (c == '_'))
-  return (FuncToken (makeIRPos p) $ pack (c0 : c1 : cs))
+  return (ProcToken (makeIRPos p) $ pack (c0 : c1 : cs))
 
 
 

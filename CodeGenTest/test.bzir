@@ -29,4 +29,8 @@ $link 'stdio\n'
 	#3 return #1 #2
 }
 
+~ !print 1 0 IO {
+	#0 input *Char
 
+	#1 forcecall :printf #0
+}

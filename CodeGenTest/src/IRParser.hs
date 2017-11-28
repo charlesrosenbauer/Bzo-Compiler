@@ -30,7 +30,6 @@ data IRParseItem
   | PI_Node     {ppos :: IRPos, num0 :: Int, txt0 :: Text, pars :: [IRParseItem]}
   | PI_NS       {ppos :: IRPos, nums :: [Int]}
   | PI_Nodes    {ppos :: IRPos, pars :: [IRParseItem]}
-  | PI_Def      {ppos :: IRPos, par0 :: IRParseItem}
   | PI_Defs     {ppos :: IRPos, pars :: [IRParseItem]}
   | PI_Const    {ppos :: IRPos, txt0 :: Text}
   | PI_ConstInt {ppos :: IRPos, txt0 :: Text, num0 :: Int}
@@ -69,13 +68,13 @@ irParseIter fname tokens ((PI_Token _ (NumToken p0 n0)):stk)  = irParseIter fnam
 
 
 -- Pointers -- *
+irParseIter fname tokens ((PI_Token _ (PtrToken p0))  : stk)  = irParseIter fname tokens ((PI_Ptr      p0  1      ) : stk)
+
 irParseIter fname tokens ((PI_Token _ (PtrToken p1))
                    :(PI_Token _ (PtrToken p0))        : stk)  = irParseIter fname tokens ((PI_Ptr      p0  2      ) : stk)
 
 irParseIter fname tokens ((PI_Token _ (PtrToken p1   ))
                    :(PI_Ptr    p0 n )                 : stk)  = irParseIter fname tokens ((PI_Ptr      p0  (n + 1)) : stk)
-
-irParseIter fname tokens ((PI_Ptr    p0 n)            : stk)  = irParseIter fname tokens ((PI_Ptr      p0  1      ) : stk)
 
 
 
@@ -104,14 +103,6 @@ irParseIter fname tokens ((PI_Token _ (ArrToken p0 n0)):stk)  = irParseIter fnam
 
 
 
--- Nodes -- #N op #A #B ... \n
---irParseIter fname tokens ((PI_NL    p3              )
---                   :params
---                   :(PI_Token _ (FuncToken p1 fn))
---                   :(PI_Token _ (NumToken  p0 n0)):     stk) = irParseIter fname tokens ((PI_Node p0 n0 fn params) : stk)
-
-
-
 -- Types -- Ty | *Ty | [n]Ty | ...
 irParseIter fname tokens ((PI_Token _ (TypeToken p2 ty))
                    :(PI_Ptr      p1 pn         )
@@ -123,7 +114,7 @@ irParseIter fname tokens ((PI_Token _ (TypeToken p1 ty))
 irParseIter fname tokens ((PI_Token _ (TypeToken p1 ty))
                    :(PI_MultiArr p0 as         )      : stk) = irParseIter fname tokens ((PI_Type p0 as 0 ty)      : stk)
 
-irParseIter fname tokens ((PI_Token _ (TypeToken p0 ty)):stk) = irParseIter fname tokens ((PI_Type p0 [] 0  ty)     : stk)
+irParseIter fname tokens ((PI_Token _ (TypeToken p0 ty)):stk)= irParseIter fname tokens ((PI_Type p0 [] 0  ty)     : stk)
 
 
 
@@ -193,7 +184,7 @@ irParseIter fname tokens ((PI_NL p6)
                    :(PI_Token _ (TypeToken p4 ty))
                    :(PI_NS    p2 ns)
                    :(PI_Token _ (ProcToken p1 prid))
-                   :(PI_Token _ (DefProc   p0))       : stk) = Left $ IRErr p1 $ pack ("Expected 2 numerical parameter in type header. Found " ++ (show $ L.length ns) ++ ".")
+                   :(PI_Token _ (DefProc   p0))       : stk) = Left $ IRErr p1 $ pack ("Expected 2 numerical parameters in procedure header. Found " ++ (show $ L.length ns) ++ ".")
 
 
 
@@ -206,6 +197,32 @@ irParseIter fname tokens ((PI_NL p3)
 irParseIter fname tokens ((PI_NL p2)
                    :(PI_Token _ (CloseBrace p1))
                    :(PI_PrHeader p0 prid n0 n1 ty)    : stk) = Left $ IRErr p1 $ pack "Expected contents for the procedure declaration."
+
+
+
+-- Ex Header
+irParseIter fname tokens ((PI_NL p4)
+                   :(PI_Token _ (OpenBrace p3))
+                   :(PI_NS    p2 [n0, n1])
+                   :(PI_Token _ (ExternToken p1 exid))
+                   :(PI_Token _ (DefExtern p0))       : stk) = irParseIter fname tokens ((PI_ExHeader p0 exid n0 n1)   :stk)
+
+irParseIter fname tokens ((PI_NL p4)
+                   :(PI_Token _ (OpenBrace p3))
+                   :(PI_NS    p2 ns)
+                   :(PI_Token _ (ProcToken p1 prid))
+                   :(PI_Token _ (DefExtern p0))       : stk) = Left $ IRErr p1 $ pack ("Expected 2 numerical parameters in extern header. Found " ++ (show $ L.length ns) ++ ".")
+
+
+-- Extern Definition
+irParseIter fname tokens ((PI_NL p3)
+                   :(PI_Token _ (CloseBrace p2))
+                   :(PI_Nodes p1 ns)
+                   :(PI_ExHeader p0 exid n0 n1)       : stk) = irParseIter fname tokens ((PI_ExDef p0 exid n0 n1 ns)   :stk)
+
+irParseIter fname tokens ((PI_NL p2)
+                   :(PI_Token _ (CloseBrace p1))
+                   :(PI_ExHeader p0 exid n0 n1)       : stk) = Left $ IRErr p1 $ pack "Expected contents for the procedure declaration."
 
 
 
@@ -249,6 +266,20 @@ irParseIter fname tokens ((PI_NL p1)
 
 irParseIter fname tokens ((PI_Nodes p1 nodes1)
                    :(PI_Nodes p0 nodes0)              : stk) = irParseIter fname tokens ((PI_Nodes p0 (nodes0 ++ nodes1))             :stk)
+
+
+
+-- Wrap everything up with a nice little bow
+irParseIter fname tokens (fndef@(PI_FnDef p0 _ _ _ _)   : stk) = irParseIter fname tokens ((PI_Defs p0 [fndef])                       :stk)
+
+irParseIter fname tokens (tydef@(PI_TyDef p0 _ _ _  )   : stk) = irParseIter fname tokens ((PI_Defs p0 [tydef])                       :stk)
+
+irParseIter fname tokens (prdef@(PI_PrDef p0 _ _ _ _ _) : stk) = irParseIter fname tokens ((PI_Defs p0 [prdef])                       :stk)
+
+irParseIter fname tokens (exdef@(PI_ExDef p0 _ _ _ _)   : stk) = irParseIter fname tokens ((PI_Defs p0 [exdef])                       :stk)
+
+irParseIter fname tokens ((PI_Defs p1 ds1)
+                   :(PI_Defs p0 ds0)                    : stk) = irParseIter fname tokens ((PI_Defs p0 (ds0 ++ ds1))                  :stk)
 
 
 
