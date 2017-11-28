@@ -2,11 +2,11 @@ $link 'stdio\n'
 
 .hello 'Hello World!'
 
-@ add3 3 1 {
-	#0 input Int32
-	#1 input Int32
-	#2 input Int32
-	#3 output Int32
+@ add3 (I32 I32 I32 > I32) {
+	#0 input  I32
+	#1 input  I32
+	#2 input  I32
+	#3 output I32
 
 	#4 iadd #0 #1
 	#5 iadd #4 #2
@@ -14,11 +14,11 @@ $link 'stdio\n'
 	#6 return #3 #5
 }
 
-@ divmod 2 2 {
-	#0 input  Int32
-	#1 input  Int32
-	#2 output Int32
-	#3 output Int32
+@ divmod (I32 I32 > I32 I32) {
+	#0 input  I32
+	#1 input  I32
+	#2 output I32
+	#3 output I32
 
 	#4 div #0 #1
 	#5 mod #0 #1
@@ -28,22 +28,21 @@ $link 'stdio\n'
 }
 
 % Int32x4 1 {
-	#0 element [4]Int32
-	#1 element (Ty Ty [4]Ty > A B C)
+	#0 element [4]I32
 }
 
 "This is a f#%!@#% comment"
 
-^ :printf 1 1 {
+^ :printf (*Char > I32) {
 	#0 input *Char
-	#1 output Int
+	#1 output I32
 
 	#2 ffiCall 'printf' #0
 	
 	#3 return #1 #2
 }
 
-~ !print 1 0 IO {
+~ !print (*Char > ) IO {
 
 	#0 input *Char
 
