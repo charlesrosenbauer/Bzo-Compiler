@@ -100,6 +100,9 @@ data IRToken
   | ArrToken    {tpos :: IRPos, tnum :: Int }
   | OpenBrace   {tpos :: IRPos}
   | CloseBrace  {tpos :: IRPos}
+  | OpenParen   {tpos :: IRPos}
+  | CloseParen  {tpos :: IRPos}
+  | FTypeToken  {tpos :: IRPos}
   | DefFunc     {tpos :: IRPos}
   | DefType     {tpos :: IRPos}
   | DefExtern   {tpos :: IRPos}
@@ -438,6 +441,9 @@ lexSymbol =
   (lexStringToToken "^"  (\p -> DefExtern   p)) <|>
   (lexStringToToken "{"  (\p -> OpenBrace   p)) <|>
   (lexStringToToken "}"  (\p -> CloseBrace  p)) <|>
+  (lexStringToToken "("  (\p -> OpenParen   p)) <|>
+  (lexStringToToken ")"  (\p -> CloseParen  p)) <|>
+  (lexStringToToken ">"  (\p -> FTypeToken  p)) <|>
   (lexStringToToken "~"  (\p -> DefProc     p)) <|>
   (lexStringToToken "*"  (\p -> PtrToken    p)) <|>
   (lexStringToToken "\n" (\p -> NewLine     p))

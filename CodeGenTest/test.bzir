@@ -14,8 +14,22 @@ $link 'stdio\n'
 	#6 return #3 #5
 }
 
+@ divmod 2 2 {
+	#0 input  Int32
+	#1 input  Int32
+	#2 output Int32
+	#3 output Int32
+
+	#4 div #0 #1
+	#5 mod #0 #1
+
+	#6 return #2 #4
+	#7 return #3 #5
+}
+
 % Int32x4 1 {
 	#0 element [4]Int32
+	#1 element (Ty Ty [4]Ty > A B C)
 }
 
 "This is a f#%!@#% comment"
@@ -30,6 +44,7 @@ $link 'stdio\n'
 }
 
 ~ !print 1 0 IO {
+
 	#0 input *Char
 
 	#1 forcecall :printf #0

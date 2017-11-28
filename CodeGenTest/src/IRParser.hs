@@ -23,9 +23,10 @@ data IRParseItem
   | PI_ExHeader {ppos :: IRPos, txt0 :: Text, num0 :: Int, num1 :: Int}
   | PI_ExDef    {ppos :: IRPos, txt0 :: Text, num0 :: Int, num1 :: Int, pars :: [IRParseItem]}
   | PI_NL       {ppos :: IRPos}
-  -- | PI_Ptr      {ppos :: IRPos, num0 :: Int}
   | PI_Arr      {ppos :: IRPos, num0 :: Int}
-  -- | PI_MultiArr {ppos :: IRPos, nums :: [Int]}
+  | PI_FTyPart0 {ppos :: IRPos, pars :: [IRParseItem]}
+  | PI_FTyPart1 {ppos :: IRPos, pars0:: [IRParseItem], pars1:: [IRParseItem]}
+  | PI_FTy      {ppos :: IRPos, pars0:: [IRParseItem], pars1:: [IRParseItem]}
   | PI_Type     {ppos :: IRPos, nums :: [Int], txt0 :: Text}
   | PI_Node     {ppos :: IRPos, num0 :: Int, txt0 :: Text, pars :: [IRParseItem]}
   | PI_NS       {ppos :: IRPos, nums :: [Int]}
@@ -92,6 +93,23 @@ irParseIter fname tokens ((PI_Type p1 ns ty)
                    :(PI_Token p0 (ArrToken _ as))     : stk) = irParseIter fname tokens ((PI_Type p0 (as:ns) ty)    : stk)
 
 irParseIter fname tokens ((PI_Token _ (TypeToken p0 ty)):stk)= irParseIter fname tokens ((PI_Type p0 [] ty)         : stk)
+
+
+
+-- Function Types
+irParseIter fname tokens ((PI_Token p0 (OpenParen _)) : stk) = irParseIter fname tokens ((PI_FTyPart0 p0 [])        : stk)
+
+irParseIter fname tokens (ty@(PI_Type p1 _ _)
+                   :(PI_FTyPart0 p0 tys)             : stk) = irParseIter fname tokens ((PI_FTyPart0 p0 (ty:tys))  : stk)
+
+irParseIter fname tokens ((PI_Token p1 (FTypeToken _))
+                   :(PI_FTyPart0 p0 tys)             : stk) = irParseIter fname tokens ((PI_FTyPart1 p0 tys [])    : stk)
+
+irParseIter fname tokens (ty@(PI_Type p1 _ _)
+                   :(PI_FTyPart1 p0 ins tys)         : stk) = irParseIter fname tokens ((PI_FTyPart1 p0 ins (ty:tys)): stk)
+
+irParseIter fname tokens ((PI_Token p1 (CloseParen _))
+                   :(PI_FTyPart1 p0 ins exs)         : stk) = irParseIter fname tokens ((PI_FTy p0 ins exs)          : stk)
 
 
 
@@ -249,6 +267,9 @@ irParseIter fname tokens ((PI_Token p1 (NumToken _ n))
                    :(PI_Node p0 num fnid pars)        : stk) = irParseIter fname tokens ((PI_Node p0 num fnid ((PI_Int p1 n):pars))  :stk)
 
 irParseIter fname tokens (t@(PI_Type p1 _ _)
+                   :(PI_Node p0 num fnid pars)        : stk) = irParseIter fname tokens ((PI_Node p0 num fnid (t:pars))               :stk)
+
+irParseIter fname tokens (t@(PI_FTy  p1 _ _)
                    :(PI_Node p0 num fnid pars)        : stk) = irParseIter fname tokens ((PI_Node p0 num fnid (t:pars))               :stk)
 
 irParseIter fname tokens ((PI_NL p1)
