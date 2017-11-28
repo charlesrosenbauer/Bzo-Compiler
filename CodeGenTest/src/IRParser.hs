@@ -27,7 +27,7 @@ data IRParseItem
   | PI_Arr      {ppos :: IRPos, num0 :: Int}
   | PI_MultiArr {ppos :: IRPos, nums :: [Int]}
   | PI_Type     {ppos :: IRPos, nums :: [Int], num0 :: Int, txt0 :: Text}
-  | PI_Node     {ppos :: IRPos, num0 :: Int, txt0 :: Text, par0 :: IRParseItem}
+  | PI_Node     {ppos :: IRPos, num0 :: Int, txt0 :: Text, pars :: [IRParseItem]}
   | PI_NS       {ppos :: IRPos, nums :: [Int]}
   | PI_Nodes    {ppos :: IRPos, pars :: [IRParseItem]}
   | PI_Def      {ppos :: IRPos, par0 :: IRParseItem}
@@ -39,6 +39,7 @@ data IRParseItem
   | PI_HintStr  {ppos :: IRPos, txt0 :: Text, txt1 :: Text}
   | PI_Str      {ppos :: IRPos, txt0 :: Text}
   | PI_Int      {ppos :: IRPos, num0 :: Int}
+  | PI_Func     {ppos :: IRPos, txt0 :: Text}
   | PI_Token    {ppos :: IRPos, tkn :: IRToken}
   deriving (Eq, Show)
 
@@ -104,10 +105,10 @@ irParseIter fname tokens ((PI_Token _ (ArrToken p0 n0)):stk)  = irParseIter fnam
 
 
 -- Nodes -- #N op #A #B ... \n
-irParseIter fname tokens ((PI_NL    p3              )
-                   :params
-                   :(PI_Token _ (FuncToken p1 fn))
-                   :(PI_Token _ (NumToken  p0 n0)):     stk) = irParseIter fname tokens ((PI_Node p0 n0 fn params) : stk)
+--irParseIter fname tokens ((PI_NL    p3              )
+--                   :params
+--                   :(PI_Token _ (FuncToken p1 fn))
+--                   :(PI_Token _ (NumToken  p0 n0)):     stk) = irParseIter fname tokens ((PI_Node p0 n0 fn params) : stk)
 
 
 
@@ -157,13 +158,13 @@ irParseIter fname tokens ((PI_NL p2)
 irParseIter fname tokens ((PI_NL p4)
                    :(PI_Token _ (OpenBrace p3))
                    :(PI_NS    p2 [n])
-                   :(PI_Token _ (FuncToken p1 tyid))
+                   :(PI_Type  p1 [] 0 tyid)
                    :(PI_Token _ (DefType   p0))       : stk) = irParseIter fname tokens ((PI_TyHeader p0 tyid n)       :stk)
 
 irParseIter fname tokens ((PI_NL p4)
                    :(PI_Token _ (OpenBrace p3))
                    :(PI_NS    p2 ns)
-                   :(PI_Token _ (FuncToken p1 tyid))
+                   :(PI_Type  p1 [] 0 tyid)
                    :(PI_Token _ (DefType   p0))       : stk) = Left $ IRErr p1 $ pack ("Expected 1 numerical parameter in type header. Found " ++ (show $ L.length ns) ++ ".")
 
 
@@ -216,6 +217,39 @@ irParseIter fname tokens ((PI_NL p2)
 irParseIter fname tokens ((PI_NL p2)
                    :(PI_Token p1 (NumToken _ num))
                    :(PI_Token p0 (ConstToken _ cid))  : stk) = irParseIter fname tokens ((PI_ConstInt p0 cid num)      :stk)
+
+
+
+-- Hint Definitions
+irParseIter fname tokens ((PI_NL p2)
+                   :(PI_Token p1 (StrToken _ str))
+                   :(PI_Token p0 (HintToken _ hid))   : stk) = irParseIter fname tokens ((PI_HintStr p0 hid str)       :stk)
+
+irParseIter fname tokens ((PI_NL p2)
+                   :(PI_Token p1 (NumToken _ num))
+                   :(PI_Token p0 (HintToken _ hid))   : stk) = irParseIter fname tokens ((PI_HintInt p0 hid num)       :stk)
+
+
+
+-- Nodes
+irParseIter fname tokens ((PI_Token p1 (FuncToken _ fnid))
+                   :(PI_Token p0 (NodeToken _ num))   : stk) = irParseIter fname tokens ((PI_Node p0 num fnid [])      :stk)
+
+irParseIter fname tokens ((PI_Token p1 (NodeToken _ n))
+                   :(PI_Node p0 num fnid pars)        : stk) = irParseIter fname tokens ((PI_Node p0 num fnid ((PI_Int  p1 n):pars))  :stk)
+
+irParseIter fname tokens ((PI_Token p1 (FuncToken _ f))
+                   :(PI_Node p0 num fnid pars)        : stk) = irParseIter fname tokens ((PI_Node p0 num fnid ((PI_Func p1 f):pars))  :stk)
+
+irParseIter fname tokens (t@(PI_Type p1 _ _ _)
+                   :(PI_Node p0 num fnid pars)        : stk) = irParseIter fname tokens ((PI_Node p0 num fnid (t:pars))               :stk)
+
+irParseIter fname tokens ((PI_NL p1)
+                   :node@(PI_Node p0 _ _ _)           : stk) = irParseIter fname tokens ((PI_Nodes p0 [node])                         :stk)
+
+irParseIter fname tokens ((PI_Nodes p1 nodes1)
+                   :(PI_Nodes p0 nodes0)              : stk) = irParseIter fname tokens ((PI_Nodes p0 (nodes0 ++ nodes1))             :stk)
+
 
 
 -- No rules work?

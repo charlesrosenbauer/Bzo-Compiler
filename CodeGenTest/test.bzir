@@ -1,4 +1,4 @@
-$link 'cstdlib\n'
+$link 'stdio\n'
 
 .hello 'Hello World!'
 
@@ -14,15 +14,19 @@ $link 'cstdlib\n'
 	#6 return #3 #5
 }
 
-% Int32x4 1{
-	#0 [4]Int32
+% Int32x4 1 {
+	#0 element [4]Int32
 }
 
 "This is a f#%!@#% comment"
 
-^ :printf 1 {
+^ :printf 1 1 {
 	#0 input *Char
+	#1 output Int
+
+	#2 ffiCall 'printf' #0
 	
+	#3 return #1 #2
 }
 
 
