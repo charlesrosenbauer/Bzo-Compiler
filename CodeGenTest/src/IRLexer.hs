@@ -98,6 +98,7 @@ data IRToken
   | NumToken    {tpos :: IRPos, tnum :: Int }
   | StrToken    {tpos :: IRPos, ttxt :: Text}
   | ArrToken    {tpos :: IRPos, tnum :: Int }
+  | AttribToken {tpos :: IRPos, ttxt :: Text}
   | OpenBrace   {tpos :: IRPos}
   | CloseBrace  {tpos :: IRPos}
   | OpenParen   {tpos :: IRPos}
@@ -181,7 +182,7 @@ runLexer :: String -> IRLexer a -> String -> Either IRErr a
 runLexer fname lx s =
   case (IRLexer.lex lx s (IRLexerState 1 1 0 $ pack fname)) of
     Right [(ret,  _, [] )] -> Right  ret
-    Right [(_  , st, _  )] -> Left $ IRErr (IRPos (lxLine st) (lxColumn st) (lxFName st)) $ pack "Failed to consume entire input."
+    Right [(_  , st, _  )] -> Left $ IRErr (IRPos (lxLine st) (lxColumn st) (lxFName st)) $ pack "Lexer failed to consume entire input."
     Left  err              -> Left err
     _                      -> Left $ IRErr (IRPos 0 0 $ pack fname) $ pack "Bug detected in runLexer in BzoLexer.hs"
 
@@ -522,6 +523,23 @@ lexExtn = do
 
 
 
+lexAttr :: IRLexer IRToken
+lexAttr = do
+  p  <- getLexerState
+  c0 <- lexChar '-'
+  c1 <- satisfy isLower
+  cs <- many $ satisfy (\c -> (isAlphaNum c) || (c == '_'))
+  return (AttribToken (makeIRPos p) $ pack (c0 : c1 : cs))
+
+
+
+
+
+
+
+
+
+
 lexHint :: IRLexer IRToken
 lexHint = do
   p  <- getLexerState
@@ -730,6 +748,7 @@ lexToken =
   lexProc    <|>
   lexConst   <|>
   lexHint    <|>
+  lexAttr    <|>
   lexSymbol  <|>
   lexWhiteSpace
 

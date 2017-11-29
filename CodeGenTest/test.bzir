@@ -74,6 +74,8 @@ $link 'stdio\n'
 
 ~ !print (*Char > ) IO {
 
+	-effectWrite
+
 	#0 input *Char
 
 	#1 forcecall :printf #0
