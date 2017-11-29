@@ -2,6 +2,8 @@ $link 'stdio\n'
 
 .hello 'Hello World!'
 
+
+
 @ add3 (I32 I32 I32 > I32) {
 	#0 input  I32
 	#1 input  I32
@@ -13,6 +15,8 @@ $link 'stdio\n'
 	
 	#6 return #3 #5
 }
+
+
 
 @ divmod (I32 I32 > I32 I32) {
 	#0 input  I32
@@ -27,11 +31,35 @@ $link 'stdio\n'
 	#7 return #3 #5
 }
 
+
+
+@ func (I32 I32 > F32 F32) {
+
+	#0 input  I32
+	#1 input  I32
+	#2 output F32
+	#3 output F32
+
+	#4 #5 divmod #0 #1
+	#6 cast F32 #4
+	#7 case F32 #5
+
+	#8 return #2 #6
+	#9 return #3 #7
+
+}
+
+
+
 % Int32x4 1 {
 	#0 element [4]I32
 }
 
-"This is a f#%!@#% comment"
+
+
+"This is a comment."
+
+
 
 ^ :printf (*Char > I32) {
 	#0 input *Char
@@ -41,6 +69,8 @@ $link 'stdio\n'
 	
 	#3 return #1 #2
 }
+
+
 
 ~ !print (*Char > ) IO {
 

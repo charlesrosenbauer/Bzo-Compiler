@@ -28,7 +28,7 @@ data IRParseItem
   | PI_FTyPart1 {ppos :: IRPos, pars0:: [IRParseItem], pars1:: [IRParseItem]}
   | PI_FTy      {ppos :: IRPos, pars0:: [IRParseItem], pars1:: [IRParseItem]}
   | PI_Type     {ppos :: IRPos, nums :: [Int], txt0 :: Text}
-  | PI_Node     {ppos :: IRPos, num0 :: Int, txt0 :: Text, pars :: [IRParseItem]}
+  | PI_Node     {ppos :: IRPos, nums :: [Int], txt0 :: Text, pars :: [IRParseItem]}
   | PI_NS       {ppos :: IRPos, nums :: [Int]}
   | PI_Nodes    {ppos :: IRPos, pars :: [IRParseItem]}
   | PI_Defs     {ppos :: IRPos, pars :: [IRParseItem]}
@@ -233,7 +233,10 @@ irParseIter fname tokens ((PI_NL p2)
 
 -- Nodes
 irParseIter fname tokens ((PI_Token p1 (FuncToken _ fnid))
-                   :(PI_Token p0 (NodeToken _ num))   : stk) = irParseIter fname tokens ((PI_Node p0 num fnid [])      :stk)
+                   :(PI_Token p0 (NodeToken _ num))   : stk) = irParseIter fname tokens ((PI_Node p0 [num] fnid [])    :stk)
+
+irParseIter fname tokens ((PI_Node p1 nums fnid pars)
+                   :(PI_Token p0 (NodeToken _ n))       : stk) = irParseIter fname tokens ((PI_Node p0 (n:nums) fnid pars):stk)
 
 irParseIter fname tokens ((PI_Token p1 (NodeToken _ n))
                    :(PI_Node p0 num fnid pars)        : stk) = irParseIter fname tokens ((PI_Node p0 num fnid ((PI_Int  p1 n):pars))  :stk)
@@ -264,6 +267,8 @@ irParseIter fname tokens ((PI_NL p1)
 
 irParseIter fname tokens ((PI_Nodes p1 nodes1)
                    :(PI_Nodes p0 nodes0)              : stk) = irParseIter fname tokens ((PI_Nodes p0 (nodes0 ++ nodes1))             :stk)
+
+irParseIter fname tokens ((PI_NL p1):(nd@(PI_Nodes _ _)):stk) = irParseIter fname tokens (nd:stk)
 
 
 
