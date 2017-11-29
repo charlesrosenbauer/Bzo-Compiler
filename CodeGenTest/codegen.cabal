@@ -25,3 +25,4 @@ executable main
         Codegen
       , IRLexer
       , IRParser
+      , IRModel
