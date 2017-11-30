@@ -15,7 +15,7 @@ import Data.Map.Strict
 data FuncData = FuncType{
   inputTypes  :: [TypeData],
   outputTypes :: [TypeData],
-  attributes  :: [Attribute],
+  attributes  :: AttrSet,
   funcNodes   :: [Node],
   funcId      :: FnId }
 
@@ -48,7 +48,9 @@ data Attribute
   | StrAttribute AttrId Text
   | BlAttribute  AttrId
 
-type AttrId = Int
+type AttrId  = Int
+
+type AttrSet = Map AttrId Attribute
 
 
 
@@ -89,17 +91,16 @@ data IRSymbols
 
 
 data Node
-  = CastNode  [Attribute]  Int  TypeData  Int
-  | BinopNode [Attribute]  Int  BinopCode Int  Int
-  | OpNode    [Attribute]  Int  OpCode    Int
-  | OutNode   [Attribute]  Int  TypeData
-  | InNode    [Attribute]  Int  TypeData
-  | RetNode   [Attribute]  Int  Int       Int
-  | CallNode  [Attribute] [Int] FnId     [Int]
-  | HOFNode   [Attribute]  Int  HOFCode  [Int]
-  | PhiNode   [Attribute]  Int  CondCode  Int  Int
-  | FuncNode  [Attribute]  Int  FnId
-  | TypeNode  [Attribute]  Int  TyId
+  = CastNode  AttrSet  Int  TypeData  Int
+  | BinopNode AttrSet  Int  BinopCode Int  Int
+  | OpNode    AttrSet  Int  OpCode    Int
+  | ParNode   AttrSet  Int  TypeData
+  | RetNode   AttrSet  Int  TypeData  Int
+  | CallNode  AttrSet [Int] FnId     [Int]
+  | HOFNode   AttrSet  Int  HOFCode  [Int]
+  | PhiNode   AttrSet  Int  CondCode  Int  Int
+  | FuncNode  AttrSet  Int  FnId
+  | TypeNode  AttrSet  Int  TyId
 
 
 
@@ -117,7 +118,7 @@ data BinopCode  = IAddOp | ISubOp | IMulOp | IDivOp | IModOp | ICmpOp |   -- Int
                   FAddOp | FSubOp | FMulOp | FDivOp | FModOp | FCmpOp |   -- Float Ops
                   NAddOp | NSubOp | NMulOp | NDivOp | NModOp | NCmpOp |   -- Unum Ops
                   OrOp   | AndOp  | XorOp  | LOrOp  | LAndOp | LXorOp |
-                  CttzOp | CtlzOp | PCntOp | LShLOp | LShROp | AShROp 
+                  CttzOp | CtlzOp | PCntOp | LShLOp | LShROp | AShROp
 
 data HOFCode    = MapHF  | FoldHF | RedcHF | ZipHF  | UZipHF | ScanHF |
                   ChnHF  | FiltHF
