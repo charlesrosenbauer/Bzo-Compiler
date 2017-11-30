@@ -13,11 +13,14 @@ import Data.Map.Strict
 
 
 data FuncData = FuncType{
+  funcKind    :: FunctionKind,
   inputTypes  :: [TypeData],
   outputTypes :: [TypeData],
   attributes  :: AttrSet,
   funcNodes   :: [Node],
   funcId      :: FnId }
+
+data FunctionKind = PureFn | ProcFn | ExtrFn
 
 type FnId = Int
 
