@@ -3,6 +3,7 @@ import Data.Text
 import Data.List
 import Data.Map.Strict as M
 import IRParser
+import IRLexer
 
 
 
@@ -146,14 +147,18 @@ data Node
 
 
 
-data OpCode     = AbsOp  | TrncOp | WideOp | NegOp  | NotOp  | LNotOp
+data OpCode     = AbsOp  | TrncOp | WideOp | NegOp  | NotOp  | LNotOp |
+                  SqrtOp | CbrtOp | Lg2Op  | Lg10Op | SinOp  | CosOp  |
+                  TanOp  | AsinOp | AcosOp | AtanOp | SinhOp | CoshOp |
+                  TanhOp | AsinhOp| AcoshOp| AtanhOp
 
 data BinopCode  = IAddOp | ISubOp | IMulOp | IDivOp | IModOp | ICmpOp |   -- Integer Ops
                   UAddOp | USubOp | UMulOp | UDivOp | UModOp | UCmpOp |   -- Unsigned Integer Ops
                   FAddOp | FSubOp | FMulOp | FDivOp | FModOp | FCmpOp |   -- Float Ops
                   NAddOp | NSubOp | NMulOp | NDivOp | NModOp | NCmpOp |   -- Unum Ops
                   OrOp   | AndOp  | XorOp  | LOrOp  | LAndOp | LXorOp |
-                  CttzOp | CtlzOp | PCntOp | LShLOp | LShROp | AShROp
+                  CttzOp | CtlzOp | PCntOp | LShLOp | LShROp | AShROp |
+                  LogOp  | RootOp | ExpOp  | PowOp
 
 data HOFCode    = MapHF  | FoldHF | RedcHF | ZipHF  | UZipHF | ScanHF |
                   ChnHF  | FiltHF
@@ -176,8 +181,26 @@ modelIR :: [IRParseItem] -> ([IRErr], IRSymbols, Map FnId FuncData,
                                                  Map CnstId ConstantData,
                                                  [Hint])
 modelIR irs =
-  let-}
+  let symbols = getSymbols irs
+  in ([], symbols, M.empty, M.empty, M.empty, M.empty, [])
 
+
+
+
+
+
+
+
+
+
+modelIRHelper :: IRSymbols -> [IRParseItem] -> ([IRErr], [FuncData], [TypeData], [Attribute], [ConstantData], [Hint])
+modelIRHelper syms ((PI_FnDef p fnid typ nodes):irs) =
+  let (errors, nodes', attrs') = modelFnNodes nodes
+      (errs, fns, tys, ats, cns, hts) = modelIRHelper syms irs
+      fn = if (null errors)
+            then [(FuncData PureFunc [] attrs' nodes' (M.lookup ))]
+            else []
+  in  (errors ++ errs, ():fns, tys, ats, cns, hts)-}
 
 
 
