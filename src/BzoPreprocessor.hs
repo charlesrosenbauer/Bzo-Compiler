@@ -340,13 +340,13 @@ wrappedLexerMap fs =
 
 
 wrappedParserMap :: [(FilePath, [BzoToken])] -> Either [BzoErr] [BzoSyntax]
-wrappedParserMap tks =
+wrappedParserMap tks = Right [] {-
   let contents = parMap rpar (\(f, t) -> parseFile f t [parseCalls]) tks
       errors   = concat $ lefts contents
       passes   = rights contents
   in case errors of
     [] -> Right passes
-    er -> Left  er
+    er -> Left  er -}
 
 
 
@@ -477,12 +477,12 @@ getLibraryCfg (BzoSettings imp lib flg opt pfx) =
 
 
 
-
+{-
 getLibraryCfgContents :: BzoSettings -> IO (Either [BzoErr] CfgSyntax)
 getLibraryCfgContents settings =
   let text = getLibraryCfg settings
       tks  = fmap (applyWithErr (\(p, s) -> fileLexer s p)) text
-  in fmap (applyWithErr $ parseLibCfgFile "libs.cfg") tks
+  in fmap (applyWithErr $ parseLibCfgFile "libs.cfg") tks-}
 
 
 

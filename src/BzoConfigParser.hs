@@ -10,7 +10,7 @@ import BzoTypes
 
 
 
-
+{-
 parseLibCfg0 :: ParserOp
 parseLibCfg0 = genericParseOp [mtk_TypeId, mtk_Str, mtk_Newline] (\psi ->
   PI_Cfg (LibLine (spos $ piTok $ head psi) (valId $ piTok $ head psi) (valStr $ piTok $ psi !! 1)))
@@ -83,3 +83,4 @@ parseLibCfgFile f tks =
   case (parseIter (ParserState f (BzoPos 0 0 f) [] tks) [parseLibCfg]) of
       Left errs -> Left errs
       Right ast -> Right $ piCfg ast
+-}
