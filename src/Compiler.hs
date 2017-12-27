@@ -27,6 +27,8 @@ compileFilePass (BzoSettings imp lib flg opt pfx) =
       files <- loadSourceFiles imp
 
       -- Load, preprocess
+
+      defs       <- return $ processFiles $ map swap files
       --models   <- (((fmap (applyWithErr orderFileData)). (fmap $ applyWithErr wrappedModellerMap). (applyWithErrM (wrappedLibLoader lCfg)). processFiles) $ map swap files)
       --symbols  <- return (applyRight generateSymbolTable models)
       --namemaps <- return (applyRight (\st -> applyRight (map (getNamespaces st)) models) symbols)
@@ -36,7 +38,7 @@ compileFilePass (BzoSettings imp lib flg opt pfx) =
       -- TODO: Static Analysis
       -- TODO: Code Generation
       putStrLn $ case valid of
-                  Nothing -> "Mock" -- showOutput {-$ trace (show namemaps)-} defs
+                  Nothing -> showOutput {-$ trace (show namemaps)-} defs
                   Just er -> show er
 
 
