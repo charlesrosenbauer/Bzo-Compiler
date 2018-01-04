@@ -451,14 +451,13 @@ simplifyAST ast =
 
 
 parseFile :: String -> [BzoToken] -> Either [BzoErr] BzoSyntax
-parseFile f tks = Right $ BzS_Nil (BzoPos 0 0 "mock")
-
-  {-
+parseFile f tks =
   let bracketErrs = bracketCheck tks
-  in case (bracketErrs, Right []) of
+      parseOut    = Right $ BzS_Nil (BzoPos 0 0 "Mock")
+  in case (bracketErrs, parseOut) of
       (Just errs,        _ ) -> Left errs
       (Nothing  , Left errs) -> Left errs
-      (Nothing  , Right ast) ->
-          case (simplifyAST (piSyn ast)) of
+      (Nothing  , Right ast) -> Right ast
+          {-case (simplifyAST ast) of
             Left errs -> Left errs
             Right out -> Right out-}
