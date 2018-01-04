@@ -10,7 +10,7 @@ import HigherOrder
 
 
 
-
+{-
 data ParseItem
   = PI_Token{ piTok :: !BzoToken  }
   | PI_BzSyn{ piSyn :: !BzoSyntax }
@@ -28,7 +28,7 @@ data ParseItem
   | PI_SOF
   | PI_Cfg  { piCfg :: !CfgSyntax }
   deriving Show
-
+-}
 
 
 

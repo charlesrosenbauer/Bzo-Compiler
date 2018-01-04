@@ -340,13 +340,13 @@ wrappedLexerMap fs =
 
 
 wrappedParserMap :: [(FilePath, [BzoToken])] -> Either [BzoErr] [BzoSyntax]
-wrappedParserMap tks = Right [] {-
-  let contents = parMap rpar (\(f, t) -> parseFile f t [parseCalls]) tks
+wrappedParserMap tks =
+  let contents = parMap rpar (\(f, t) -> parseFile f t) tks
       errors   = concat $ lefts contents
       passes   = rights contents
   in case errors of
     [] -> Right passes
-    er -> Left  er -}
+    er -> Left  er
 
 
 
