@@ -1,5 +1,6 @@
 module BzoParser where
 import BzoTypes
+import BzoParserRules
 import HigherOrder
 
 
@@ -453,7 +454,7 @@ simplifyAST ast =
 parseFile :: String -> [BzoToken] -> Either [BzoErr] BzoSyntax
 parseFile fname tks =
   let bracketErrs = bracketCheck fname tks
-      parseOut    = Right $ BzS_Nil (BzoPos 0 0 "Mock")
+      parseOut    = parserIter fname (map (\t -> BzS_Token (spos t) t) tks) []
   in case (bracketErrs, parseOut) of
       (Just errs,        _ ) -> Left errs
       (Nothing  , Left errs) -> Left errs
