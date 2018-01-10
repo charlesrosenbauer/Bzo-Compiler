@@ -25,6 +25,19 @@ parserIter fname tokens ((BzS_Token _ (TkNewline p1))
 parserIter fname tokens ((BzS_Token _ (TkEndTup   p1))
                         :(BzS_Token _ (TkStartTup p0)):stk)       = parserIter fname tokens ((BzS_Nil p0):stk)
 
+parserIter fname tokens ((BzS_Token _ (TkEndDat   p1))
+                        :(BzS_Token _ (TkStartDat p0)):stk)       = parserIter fname tokens ((BzS_ArrGenMod p0):stk)
+
+parserIter fname tokens ((BzS_Token _ (TkId       p0 fnid)) :stk)       = parserIter fname tokens ((BzS_Expr p0 [(BzS_Id   p0 fnid)]):stk)
+
+parserIter fname tokens ((BzS_Token _ (TkBuiltin  p0 bfid)) :stk)       = parserIter fname tokens ((BzS_Expr p0 [(BzS_BId  p0 bfid)]):stk)
+
+parserIter fname tokens ((BzS_Token _ (TkBIType   p0 btid)) :stk)       = parserIter fname tokens ((BzS_Expr p0 [(BzS_BTId p0 btid)]):stk)
+
+parserIter fname tokens ((BzS_Token _ (TkMutId    p0 mtid)) :stk)       = parserIter fname tokens ((BzS_Expr p0 [(BzS_MId  p0 mtid)]):stk)
+
+parserIter fname tokens ((BzS_Expr p1 [x])
+                        :(BzS_Expr p0 xs)                   :stk)       = parserIter fname tokens ((BzS_Expr p0 (x:xs)):stk)
 
 
 
