@@ -300,6 +300,12 @@ data BzoSyntax
     | BzS_Token {
         pos     :: !BzoPos,
         tok     :: !BzoToken }
+    | BzS_CmpdHead {
+        pos     :: !BzoPos,
+        exprs   :: ![BzoSyntax] }
+    | BzS_PolyHead {
+        pos     :: !BzoPos,
+        exprs   :: ![BzoSyntax] }
     | BzS_Undefined
     deriving Eq
 
@@ -370,6 +376,7 @@ showAST (BzS_CurryObj  _ o p)              = " <" ++ (show p) ++ " applied to " 
 showAST (BzS_MapObj    _ o)                = " <" ++ (show o) ++ " .. > "
 showAST (BzS_Token     _ t)                = (show t)
 showAST (BzS_Undefined)                    = " UNDEFINED "
+showAST _                                  = " <???> "
 instance Show BzoSyntax where show = showAST
 
 

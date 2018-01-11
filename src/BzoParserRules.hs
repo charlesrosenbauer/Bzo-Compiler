@@ -76,6 +76,31 @@ parserIter fname tokens ((BzS_Token _ (TkStr      p0  str)) :stk)       = parser
 
 
 
+-- | Expression Construction
+
+parserIter fname tokens ((BzS_Token _ (TkSepExpr p2))
+                        :x@(BzS_Expr  p1 _)
+                        :(BzS_Token _ (TkStartTup p0)):stk)             = parserIter fname tokens ((BzS_CmpdHead p0 [x]):stk)
+
+parserIter fname tokens ((BzS_Token _ (TkSepExpr p2))
+                        :x@(BzS_Expr  p1 _)
+                        :(BzS_CmpdHead p0 xs):stk)                      = parserIter fname tokens ((BzS_CmpdHead p0 (x:xs)):stk)
+
+parserIter fname tokens ((BzS_Token _ (TkEndTup p2))
+                        :x@(BzS_Expr  p1 _)
+                        :(BzS_CmpdHead p0 xs):stk)                      = parserIter fname tokens ((BzS_Expr p0 [BzS_Cmpd p0 (x:xs)]):stk)
+
+parserIter fname tokens ((BzS_Token _ (TkSepPoly p2))
+                        :x@(BzS_Expr  p1 _)
+                        :(BzS_Token _ (TkStartTup p0)):stk)             = parserIter fname tokens ((BzS_PolyHead p0 [x]):stk)
+
+parserIter fname tokens ((BzS_Token _ (TkSepPoly p2))
+                        :x@(BzS_Expr  p1 _)
+                        :(BzS_PolyHead p0 xs):stk)                      = parserIter fname tokens ((BzS_PolyHead p0 (x:xs)):stk)
+
+parserIter fname tokens ((BzS_Token _ (TkEndTup p2))
+                        :x@(BzS_Expr  p1 _)
+                        :(BzS_PolyHead p0 xs):stk)                      = parserIter fname tokens ((BzS_Expr p0 [BzS_Poly p0 (x:xs)]):stk)
 
 -- | Control Logic
 
