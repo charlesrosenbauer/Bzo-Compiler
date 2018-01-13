@@ -405,7 +405,7 @@ loadSourceFiles ps =
 
 areFilesValid :: [FilePath] -> Maybe BzoErr
 areFilesValid fs =
-  case Prelude.filter (\s -> not $ (isSuffixOf ".bz" s) || (isSuffixOf ".lbz" s)) fs of
+  case Prelude.filter (\s -> not $ (isSuffixOf ".bzo" s) || (isSuffixOf ".lbz" s)) fs of
     [] -> Nothing
     xs -> Just $ CfgErr ("The following files have invalid extensions : " ++ (show xs))
 
