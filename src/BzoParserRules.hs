@@ -132,7 +132,17 @@ parserIter fname tokens ((BzS_Token _ (TkEndTup p2))
 
 
 
--- |
+-- | Lambda Expressions
+parserIter fname tokens (xpr@(BzS_Block p2 _)
+                        :x@(BzS_Expr p1 [_])
+                        :(BzS_Token _ (TkLambdaSym p0)):stk)            = parserIter fname tokens ((BzS_Lambda p0 x xpr):stk)
+
+parserIter fname tokens (xpr@(BzS_Block  p2 _)
+                        :x@(BzS_Cmpd p1 pars)
+                        :(BzS_Token _ (TkLambdaSym p0)):stk)            = parserIter fname tokens ((BzS_Lambda p0 x xpr):stk)
+
+
+
 
 -- | Control Logic
 
