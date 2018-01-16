@@ -306,6 +306,12 @@ data BzoSyntax
     | BzS_PolyHead {
         pos     :: !BzoPos,
         exprs   :: ![BzoSyntax] }
+    | BzS_BlockHead {
+        pos     :: !BzoPos,
+        sttmnts :: ![BzoSyntax] }
+    | BzS_Statement {
+        pos     :: !BzoPos,
+        expr    :: !BzoSyntax }
     | BzS_Undefined
     deriving Eq
 

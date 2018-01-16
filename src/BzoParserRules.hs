@@ -74,7 +74,35 @@ parserIter fname tokens ((BzS_Token _ (TkFlt      p0  num)) :stk)       = parser
 
 parserIter fname tokens ((BzS_Token _ (TkStr      p0  str)) :stk)       = parserIter fname tokens ((BzS_Expr p0 [BzS_Str p0 str]):stk)
 
+parserIter fname tokens ((BzS_Token _ (TkEndTup p2))
+                        :x@(BzS_Expr p1 _)
+                        :(BzS_Token _ (TkStartTup p0)):stk)             = parserIter fname tokens ((BzS_Expr p0 [x]):stk)
 
+
+-- | Statements and Blocks
+
+parserIter fname tokens ((BzS_Token _ (TkNewline p1))
+                        :x@(BzS_Expr p0 _)      :stk)                   = parserIter fname tokens ((BzS_Statement p0 x):stk)
+
+parserIter fname tokens ((BzS_Token _ (TkNewline p1))
+                        :(BzS_Statement p0 x)  :stk)                    = parserIter fname tokens ((BzS_Statement p0 x):stk)
+
+parserIter fname tokens ((BzS_Statement p1 x)
+                        :(BzS_Token _ (TkStartDo p0)):stk)              = parserIter fname tokens ((BzS_BlockHead p0 [x]):stk)
+
+parserIter fname tokens ((BzS_Statement p1 x)
+                        :(BzS_BlockHead p0 xs):stk)                     = parserIter fname tokens ((BzS_BlockHead p0 (x:xs)):stk)
+
+parserIter fname tokens ((BzS_Token _ (TkEndDo p1))
+                        :(BzS_BlockHead p0 xs):stk)                     = parserIter fname tokens ((BzS_Block p0 xs):stk)
+
+parserIter fname tokens ((BzS_Token _ (TkEndDo p2))
+                        :x@(BzS_Expr p1 _)
+                        :(BzS_BlockHead p0 xs):stk)                     = parserIter fname tokens ((BzS_Block p0 (x:xs)):stk)
+
+parserIter fname tokens ((BzS_Token _ (TkEndDo p2))
+                        :x@(BzS_Expr p1 _)
+                        :(BzS_Token _ (TkStartDo p0)):stk)              = parserIter fname tokens ((BzS_Block p0 [x]):stk)
 
 -- | Expression Construction
 
@@ -101,6 +129,10 @@ parserIter fname tokens ((BzS_Token _ (TkSepPoly p2))
 parserIter fname tokens ((BzS_Token _ (TkEndTup p2))
                         :x@(BzS_Expr  p1 _)
                         :(BzS_PolyHead p0 xs):stk)                      = parserIter fname tokens ((BzS_Expr p0 [BzS_Poly p0 (x:xs)]):stk)
+
+
+
+-- |
 
 -- | Control Logic
 
