@@ -312,6 +312,11 @@ data BzoSyntax
     | BzS_Statement {
         pos     :: !BzoPos,
         expr    :: !BzoSyntax }
+    | BzS_FnHead {
+        pos     :: !BzoPos,
+        inpars  :: !BzoSyntax,
+        fnid    :: !String,
+        expars  :: !BzoSyntax }
     | BzS_Undefined
     deriving Eq
 
@@ -363,6 +368,7 @@ showAST (BzS_Poly _ p)                     = " {POLY: " ++ (Prelude.concatMap sh
 showAST (BzS_Cmpd _ c)                     = " {CMPD: " ++ (Prelude.concatMap showAST c) ++ "} "
 showAST (BzS_Block _ ex)                   = " {BK: " ++ (Prelude.concatMap showAST ex) ++ " } "
 showAST (BzS_Expr _ ex)                    = " (EX: " ++ (Prelude.concatMap showAST ex) ++ " ) "
+showAST (BzS_Statement _ ex)               = " (STMT: " ++ (showAST ex) ++ " ) "
 showAST (BzS_Box  _ ex)                    = " (BX: " ++ (showAST ex) ++ ") "
 showAST (BzS_Calls _ c)                    = Prelude.concatMap (\s -> " CALL:: " ++ (show s) ++ "\n") c
 showAST (BzS_Wildcard _)                   = " _ "

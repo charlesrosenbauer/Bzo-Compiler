@@ -147,7 +147,60 @@ parserIter fname tokens (xpr@(BzS_Block  p2 _)
                         :x@(BzS_Cmpd p1 pars)
                         :(BzS_Token _ (TkLambdaSym p0)):stk)            = parserIter fname tokens ((BzS_Lambda p0 x xpr):stk)
 
+-- | Functions
+parserIter fname tokens ((BzS_Token p0 (TkDefine _))
+                        :(BzS_Expr p1 [inpar@(BzS_Expr _ _),
+                                             (BzS_Id _ fn ),
+                                       expar@(BzS_Expr _ _)])  :stk)    = parserIter fname tokens ((BzS_FnHead p0 inpar fn expar):stk)
 
+parserIter fname tokens ((BzS_Token p0 (TkDefine _))
+                        :(BzS_Expr p1 [inpar@(BzS_Expr _ _),
+                                             (BzS_Id _ fn ),
+                                       expar@(BzS_Cmpd _ _)])  :stk)    = parserIter fname tokens ((BzS_FnHead p0 inpar fn expar):stk)
+
+parserIter fname tokens ((BzS_Token p0 (TkDefine _))
+                        :(BzS_Expr p1 [inpar@(BzS_Cmpd _ _),
+                                             (BzS_Id _ fn ),
+                                       expar@(BzS_Expr _ _)])  :stk)    = parserIter fname tokens ((BzS_FnHead p0 inpar fn expar):stk)
+
+parserIter fname tokens ((BzS_Token p0 (TkDefine _))
+                        :(BzS_Expr p1 [inpar@(BzS_Cmpd _ _),
+                                             (BzS_Id _ fn ),
+                                       expar@(BzS_Cmpd _ _)])  :stk)    = parserIter fname tokens ((BzS_FnHead p0 inpar fn expar):stk)
+
+parserIter fname tokens ((BzS_Token p0 (TkDefine _))
+                        :(BzS_Expr p1 [      (BzS_Id _ fn ),
+                                       expar@(BzS_Expr _ _)])  :stk)    = parserIter fname tokens ((BzS_FnHead p0 BzS_Undefined fn expar):stk)
+
+parserIter fname tokens ((BzS_Token p0 (TkDefine _))
+                        :(BzS_Expr p1 [      (BzS_Id _ fn ),
+                                       expar@(BzS_Cmpd _ _)])  :stk)    = parserIter fname tokens ((BzS_FnHead p0 BzS_Undefined fn expar):stk)
+
+parserIter fname tokens ((BzS_Token p0 (TkDefine _))
+                        :(BzS_Expr p1 [inpar@(BzS_Cmpd _ _),
+                                             (BzS_Id _ fn )])  :stk)    = parserIter fname tokens ((BzS_FnHead p0 inpar fn BzS_Undefined):stk)
+
+parserIter fname tokens ((BzS_Token p0 (TkDefine _))
+                        :(BzS_Expr p1 [inpar@(BzS_Expr _ _),
+                                             (BzS_Id _ fn )])  :stk)    = parserIter fname tokens ((BzS_FnHead p0 inpar fn BzS_Undefined):stk)
+
+parserIter fname tokens ((BzS_Token p0 (TkDefine _))
+                        :(BzS_Expr p1 [(BzS_Id _ fn )])        :stk)    = parserIter fname tokens ((BzS_FnHead p0 BzS_Undefined fn BzS_Undefined):stk)
+
+parserIter fname tokens (def@(BzS_Block p1 xs)
+                        :(BzS_FnHead p0 ins fn exs)             :stk)    = parserIter fname tokens ((BzS_FunDef p0 ins fn exs def):stk)
+
+parserIter fname tokens (def@(BzS_Statement p1 xs)
+                        :(BzS_FnHead p0 ins fn exs)             :stk)    = parserIter fname tokens ((BzS_Calls p0 [BzS_FunDef p0 ins fn exs def]):stk)
+
+
+
+-- | Generic Call Rules
+parserIter fname tokens ((BzS_Token  p1 (TkNewline _))
+                        :(BzS_Calls  p0 calls)                  :stk)    = parserIter fname tokens ((BzS_Calls p0 calls):stk)
+
+parserIter fname tokens ((BzS_Calls  p1 calls1)
+                        :(BzS_Calls  p0 calls0)                 :stk)    = parserIter fname tokens ((BzS_Calls p0 (calls1++calls0)):stk)
 
 
 -- | Control Logic
