@@ -91,7 +91,8 @@ expr : Type
 Type Filter
 
 
-;(parameters) :: definition
+;parameter{definition}
+;(par0.par1){definition}
 Lambda expression
 
 
@@ -109,7 +110,7 @@ Type :: Def
 Simple Type Definition
 
 
-(Pars) Type :: Def
+(Pars') Type :: Def
 Parameterized Type Definition
 
 
@@ -183,13 +184,15 @@ Wildcard Value; discard value in output
 
 
 6423
+-312
 0x35F
 0b110011
 03523
-Some Integer Literals
+Some Integer Literals - Negatives are only allowed in decimal format
 
 53.2523
-Floating Point Literal
+-2.15
+Some Floating Point Literals
 
 "This is a comment"
 
