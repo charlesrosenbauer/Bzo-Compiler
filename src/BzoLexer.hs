@@ -645,6 +645,21 @@ lexDecInt = do
 
 
 
+lexNegDecInt :: Lexer BzoToken
+lexNegDecInt = do
+  p <- getLexerState
+  _ <- lexGenString "-"
+  c <- some $ satisfy isDigit
+  return (TkInt (makeBzoPos p) $ -1 * (readIntWithBase c 10))
+
+
+
+
+
+
+
+
+
 lexHexInt :: Lexer BzoToken
 lexHexInt = do
   p  <- getLexerState
@@ -679,6 +694,25 @@ lexFlt = do
 
 
 
+lexNegFlt :: Lexer BzoToken
+lexNegFlt = do
+  p  <- getLexerState
+  _  <- lexGenString "-"
+  c0 <- some $ satisfy isDigit
+  _  <- lexGenString "."      -- c1
+  c2 <- some $ satisfy isDigit
+  return (TkFlt (makeBzoPos p) $ -1 * ((fromIntegral $ readIntWithBase c0 10) +
+    ((fromIntegral $ readIntWithBase c2 10) / (10 ^ (length c2))) ) )
+
+
+
+
+
+
+
+
+
+
 lexNewline :: Lexer BzoToken
 lexNewline = do
   p <- getLexerState
@@ -698,6 +732,8 @@ generalLexer =
   lexNewline          <|>
   lexWhiteSpace       <|>
   lexMutIdentifier    <|>
+  lexNegFlt           <|>
+  lexNegDecInt        <|>
   lexSymbol           <|>
   lexString           <|>
   lexBITypeIdentifier <|>
