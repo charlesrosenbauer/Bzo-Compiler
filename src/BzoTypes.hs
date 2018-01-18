@@ -317,6 +317,10 @@ data BzoSyntax
         inpars  :: !BzoSyntax,
         fnid    :: !String,
         expars  :: !BzoSyntax }
+    | BzS_TyHead {
+        pos     :: !BzoPos,
+        pars    :: !BzoSyntax,
+        tyid    :: !String }
     | BzS_Undefined
     deriving Eq
 

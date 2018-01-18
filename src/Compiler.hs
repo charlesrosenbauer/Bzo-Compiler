@@ -78,7 +78,7 @@ showOutput (Left  errs) =
 
 
 replExpression :: (FilePath, String) -> String
-replExpression s = showOutput (((applyWithErr wrappedModellerMapREPL). (applyWithErr wrappedParserMap). wrappedLexerMap) [swap s])
+replExpression s = showOutput (({-}(applyWithErr wrappedModellerMapREPL).-} (applyWithErr wrappedParserMap). wrappedLexerMap) [swap s])
 
 
 
