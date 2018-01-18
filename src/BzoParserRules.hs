@@ -69,9 +69,6 @@ parserIter fname tokens ((BzS_Token _ (TkMutId    p0 mtid)) :stk)       = parser
 
 parserIter fname tokens ((BzS_Token _ (TkTyVar    p0 tyvr)) :stk)       = parserIter fname tokens ((BzS_Expr p0 [BzS_TyVar p0 tyvr]):stk)
 
-parserIter fname tokens ((BzS_Expr p1 [x])
-                        :(BzS_Expr p0 xs)                   :stk)       = parserIter fname tokens ((BzS_Expr p0 (x:xs)):stk)
-
 parserIter fname tokens ((BzS_Token _ (TkInt      p0  num)) :stk)       = parserIter fname tokens ((BzS_Expr p0 [BzS_Int p0 num]):stk)
 
 parserIter fname tokens ((BzS_Token _ (TkFlt      p0  num)) :stk)       = parserIter fname tokens ((BzS_Expr p0 [BzS_Flt p0 num]):stk)
@@ -110,6 +107,7 @@ parserIter fname tokens ((BzS_Token _ (TkEndDo p2))
                         :x@(BzS_Expr p1 _)
                         :(BzS_Token _ (TkStartDo p0)):stk)              = parserIter fname tokens ((BzS_Block p0 [x]):stk)
 
+
 -- | Expression Construction
 
 parserIter fname tokens ((BzS_Token _ (TkSepExpr p2))
@@ -136,9 +134,20 @@ parserIter fname tokens ((BzS_Token _ (TkEndTup p2))
                         :x@(BzS_Expr  p1 _)
                         :(BzS_PolyHead p0 xs):stk)                      = parserIter fname tokens ((BzS_Expr p0 [BzS_Poly p0 (x:xs)]):stk)
 
-parserIter fname tokens (ty0@(BzS_Expr  p2 xs1)
+parserIter fname tokens (ty1@(BzS_Expr  p2 xs1)
                         :(BzS_Token p1 (TkFnSym _))
-                        :ty1@(BzS_Expr  p0 xs0)  :stk)                  = parserIter fname tokens ((BzS_FnTy p0 ty1 ty0):stk)
+                        :ty0@(BzS_Expr  p0 xs0)  :stk)                  = parserIter fname tokens ((BzS_Expr p0 [BzS_FnTy p0 ty0 ty1]):stk)
+
+parserIter fname tokens ((BzS_Expr p1 xs)
+                        :(BzS_Expr p0 [BzS_FnTy _ t0 (BzS_Expr p t1)])
+                        :stk)                                           = parserIter fname tokens ((BzS_Expr p0 [BzS_FnTy p0 t0 (BzS_Expr p $ t1++xs)]):stk)
+
+parserIter fname tokens ((BzS_Expr p1 [BzS_FnTy _ (BzS_Expr p t0) t1])
+                        :(BzS_Expr p0 xs)
+                        :stk)                                           = parserIter fname tokens ((BzS_Expr p0 [BzS_FnTy p0 (BzS_Expr p $ xs++t0) t1]):stk)
+
+parserIter fname tokens ((BzS_Expr p1 [x])
+                        :(BzS_Expr p0 xs)                   :stk)       = parserIter fname tokens ((BzS_Expr p0 (x:xs)):stk)
 
 
 
