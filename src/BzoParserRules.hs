@@ -164,6 +164,7 @@ parserIter fname tokens (xpr@(BzS_Block  p2 _)
                         :x@(BzS_Cmpd p1 pars)
                         :(BzS_Token _ (TkLambdaSym p0)):stk)            = parserIter fname tokens ((BzS_Lambda p0 x xpr):stk)
 
+
 -- | Functions
 parserIter fname tokens ((BzS_Token p0 (TkDefine _))
                         :(BzS_Expr p1 [expar@(BzS_Expr _ _),
@@ -231,6 +232,14 @@ parserIter fname tokens ((BzS_Token p0 (TkDefine _))
 parserIter fname tokens (def@(BzS_Statement p1 xs)
                         :(BzS_TyHead p0 ins ty)                 :stk)    = parserIter fname tokens ((BzS_Calls p0 [BzS_TypDef p0 ins ty def]):stk)
 
+
+-- | Miscellaneous Parsing Rules - Curry, Map, Filter, Namespaces
+parserIter fname tokens ((BzS_Token p1 (TkArrMod _))
+                        :(BzS_Expr  p0 (x:xs))                  :stk)   = parserIter fname tokens ((BzS_Expr p0 ((BzS_MapObj (pos x) x):xs)):stk)
+
+parserIter fname tokens ((BzS_Expr  p2 [y])
+                        :(BzS_Token p1 (TkCurrySym _))
+                        :(BzS_Expr  p0 (x:xs))                  :stk)   = parserIter fname tokens ((BzS_Expr p0 ((BzS_CurryObj (pos x) x [y]):xs)):stk)
 
 
 -- | Generic Call Rules
