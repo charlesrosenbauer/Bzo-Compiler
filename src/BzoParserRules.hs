@@ -239,6 +239,11 @@ parserIter fname tokens ((BzS_Token p1 (TkArrMod _))
 
 parserIter fname tokens ((BzS_Expr  p2 [y])
                         :(BzS_Token p1 (TkCurrySym _))
+                        :(BzS_Expr  p0 ((BzS_CurryObj p x ys):xs))
+                        :stk)                                           = parserIter fname tokens ((BzS_Expr p0 ((BzS_CurryObj p x (y:ys)):xs)):stk)
+
+parserIter fname tokens ((BzS_Expr  p2 [y])
+                        :(BzS_Token p1 (TkCurrySym _))
                         :(BzS_Expr  p0 (x:xs))                  :stk)   = parserIter fname tokens ((BzS_Expr p0 ((BzS_CurryObj (pos x) x [y]):xs)):stk)
 
 parserIter fname tokens ((BzS_Expr  p2 [BzS_TyId _ ns])
