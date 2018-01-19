@@ -241,6 +241,14 @@ parserIter fname tokens ((BzS_Expr  p2 [y])
                         :(BzS_Token p1 (TkCurrySym _))
                         :(BzS_Expr  p0 (x:xs))                  :stk)   = parserIter fname tokens ((BzS_Expr p0 ((BzS_CurryObj (pos x) x [y]):xs)):stk)
 
+parserIter fname tokens ((BzS_Expr  p2 [BzS_TyId _ ns])
+                        :(BzS_Token p1 (TkReference _))
+                        :(BzS_Expr  p0 ((BzS_Id p nm):xs))     :stk)   = parserIter fname tokens ((BzS_Expr p0 ((BzS_ExFunObj p nm ns):xs)):stk)
+
+parserIter fname tokens ((BzS_Expr  p2 [BzS_TyId _ ns])
+                        :(BzS_Token p1 (TkReference _))
+                        :(BzS_Expr  p0 ((BzS_TyId p nm):xs))   :stk)   = parserIter fname tokens ((BzS_Expr p0 ((BzS_ExTypObj p nm ns):xs)):stk)
+
 
 -- | Generic Call Rules
 parserIter fname tokens ((BzS_Token  p1 (TkNewline _))
