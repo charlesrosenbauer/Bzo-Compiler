@@ -280,7 +280,7 @@ data BzoSyntax
     | BzS_ArrayObj {
         pos      :: !BzoPos,
         bzobj    :: !BzoSyntax,
-        arrexprs :: ![BzoSyntax] }
+        arrszs   :: ![Integer] }
     | BzS_FilterObj {
         pos     :: !BzoPos,
         bzobj   :: !BzoSyntax,
@@ -386,7 +386,7 @@ showAST (BzS_Nil _)                        = " () "
 showAST (BzS_TyVar _ i)                    = " TyVr: " ++ (show i)
 showAST (BzS_ExTypObj _ o n)               = " <" ++ (show o) ++ " from " ++ (show n) ++ "> "
 showAST (BzS_ExFunObj _ o n)               = " <" ++ (show o) ++ " from " ++ (show n) ++ "> "
-showAST (BzS_ArrayObj  _ o a)              = " <" ++ (show o) ++ " array: " ++ (Prelude.concatMap showAST a) ++ "> "
+showAST (BzS_ArrayObj  _ o a)              = " <" ++ (show o) ++ " array: " ++ (Prelude.concatMap (\x -> show x ++ ", ") a) ++ "> "
 showAST (BzS_FilterObj _ o f)              = " <" ++ (show o) ++ " of type " ++ (show f) ++ "> "
 showAST (BzS_CurryObj  _ o p)              = " <" ++ (show p) ++ " applied to " ++ (show o) ++ "> "
 showAST (BzS_MapObj    _ o)                = " <" ++ (show o) ++ " .. > "

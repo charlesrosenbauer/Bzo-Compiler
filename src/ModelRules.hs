@@ -13,7 +13,7 @@ import Debug.Trace
 
 
 
-
+{-
 stripSyntax :: BzoSyntax -> BzoSyntax
 stripSyntax (BzS_Expr p [x]) = stripSyntax x
 stripSyntax (BzS_Box  p  x ) = stripSyntax x
@@ -741,3 +741,4 @@ wrappedModellerMap ss =
       ers -> Left ers
   where adjustAST :: Show a => (BzoFileModel a, CallAST) -> BzoFileModel CallAST
         adjustAST ((BzoFileModel mn fp dm _ fi fl fia fla), ast) = (BzoFileModel mn fp dm ast fi fl fia fla)
+-}

@@ -244,7 +244,7 @@ fuseNameObj a                b                     = [a, b]
 
 
 
-
+{-
 fuseCurryObj :: BzoSyntax -> BzoSyntax -> [BzoSyntax]
 fuseCurryObj sn@(BzS_Curry p0 (BzS_Curry p1 o)) x          = [sn, x]
 fuseCurryObj sn@(BzS_Box        p1   x ) (BzS_Curry p0 o0) = [(BzS_CurryObj p0 sn [o0])]
@@ -441,7 +441,7 @@ simplifyAST ast =
   in case errs of
         [] -> Right pass3
         er -> Left  er
--}
+-}-}
 
 
 
