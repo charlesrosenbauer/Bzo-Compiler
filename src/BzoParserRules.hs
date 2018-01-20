@@ -258,6 +258,11 @@ parserIter fname tokens ((BzS_Expr  p2 [BzS_TyId _ ns])
                         :(BzS_Token p1 (TkReference _))
                         :(BzS_Expr  p0 ((BzS_TyId p nm):xs))    :stk)   = parserIter fname tokens ((BzS_Expr p0 ((BzS_ExTypObj p nm ns):xs)):stk)
 
+parserIter fname tokens ((BzS_Expr  p2 [BzS_TyId _ ns])
+                        :(BzS_Token p1 (TkReference _))
+                        :(BzS_Expr  p0 ((BzS_FilterObj p x ((BzS_TyId p' nm):ys)):xs))
+                        :stk)                                           = parserIter fname tokens ((BzS_Expr p0 ((BzS_FilterObj p x ((BzS_ExTypObj p' nm ns):ys)):xs)):stk)
+
 parserIter fname tokens ((BzS_Expr  p1 ((BzS_ArrayObj _ x ys):xs))
                         :(BzS_Token p0 (TkArrGnrl _))           :stk)   = parserIter fname tokens ((BzS_Expr p0 ((BzS_ArrayObj p0 x (0:ys)):xs)):stk)
 
