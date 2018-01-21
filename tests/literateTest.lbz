@@ -11,7 +11,7 @@ This is great for walking the reader through hard-to-understand code.
 Here we initialize the file:
 
 > LiterateTest $Module
-> Math         $link
+> Math         $Import
 
 
 Here we define a function:

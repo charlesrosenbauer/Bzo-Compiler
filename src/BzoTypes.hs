@@ -329,10 +329,10 @@ data BzoSyntax
         pos     :: !BzoPos,
         fname   :: !String,
         frename :: !String }
-    | BzS_Module {
-        pos     :: !BzoPos,
-        mname   :: !String,
-        fname   :: !String }
+    -- | BzS_Module {
+    --    pos     :: !BzoPos,
+    --    mname   :: !String,
+    --    fname   :: !String }
     | BzS_File {
         pos     :: !BzoPos,
         mname   :: !String,
@@ -371,9 +371,9 @@ data CfgSyntax
 
 
 showAST :: BzoSyntax -> String
-showAST (BzS_FunDef _ inpar fid expar def) = " {FNDEF: " ++ (show inpar) ++ " -> " ++ (show fid) ++ " -> " ++ (show expar) ++ " :: " ++ (show def) ++ "} "
-showAST (BzS_TypDef _ par tid def)         = " {TYDEF: " ++ (show tid) ++ " [ " ++ (show par) ++ " ] :: " ++ (show def) ++ "} "
-showAST (BzS_FnTypeDef _ fid def)          = " {FTDEF: " ++ (show fid) ++ " [ " ++ (show def) ++ " ]} "
+showAST (BzS_FunDef _ inpar fid expar def) = " {FNDEF: " ++ (show inpar) ++ " -> " ++ (show fid) ++ " -> " ++ (show expar) ++ " :: " ++ (show def) ++ "} \n"
+showAST (BzS_TypDef _ par tid def)         = " {TYDEF: " ++ (show tid) ++ " [ " ++ (show par) ++ " ] :: " ++ (show def) ++ "} \n"
+showAST (BzS_FnTypeDef _ fid def)          = " {FTDEF: " ++ (show fid) ++ " [ " ++ (show def) ++ " ]} \n"
 showAST (BzS_Lambda _ par def)             = " {LAMBDA: " ++ (show par) ++ " :: " ++ (show def) ++ "} "
 showAST (BzS_FnTy _ tin tex)               = " {FNTY: " ++ (show tin) ++ " ;;" ++ (show tex) ++ "} "
 showAST (BzS_Filter _ filt)                = " {FILTER: " ++ (show filt) ++ "} "
@@ -413,8 +413,8 @@ showAST (BzS_Token     _ t)                = (show t)
 
 showAST (BzS_Import    _ fn fr)            = "    -- Import  " ++ fn ++ " as " ++ fr ++ " --\n"
 showAST (BzS_Include   _ fn fr)            = "    -- Include " ++ fn ++ " as " ++ fr ++ " --\n"
-showAST (BzS_Module    _ mn fn)            = " -- Module " ++ mn ++ " --\n"
-showAST (BzS_File      _ mn fn ins ims dfs)= " -- (File, Module): (" ++ fn ++ ", " ++ mn ++ ")\n  Includes:\n" ++ (concatMap show ins) ++ "\nImports:\n" ++ (concatMap show ims) ++ "\nDefs:\n" ++ (concatMap show dfs)
+-- showAST (BzS_Module    _ mn fn)            = " -- Module " ++ mn ++ " --\n"
+showAST (BzS_File      _ mn fn ins ims dfs)= "\n-- (File, Module): (" ++ fn ++ ", " ++ mn ++ ")\nIncludes:\n" ++ (concatMap show ins) ++ "\nImports:\n" ++ (concatMap show ims) ++ "\nDefs:\n" ++ (concatMap show dfs)
 
 showAST (BzS_Undefined)                    = " UNDEFINED "
 showAST _                                  = " <???> "

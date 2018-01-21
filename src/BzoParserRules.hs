@@ -285,6 +285,72 @@ parserIter fname tokens ((BzS_Expr  p2 [y])
                         :(BzS_Expr  p0 (x:xs))                  :stk)   = parserIter fname tokens ((BzS_Expr p0 ((BzS_FilterObj p0 x [y]):xs)):stk)
 
 -- | Hints and Headers
+parserIter fname tokens ((BzS_Token  p1 (TkNewline _))
+                        :f@(BzS_File p0 mname _     incs imps df):stk)  = parserIter fname tokens (f:stk)
+
+parserIter fname tokens (f@(BzS_File p1 mname _     incs imps df)
+                        :(BzS_Token  p0 (TkNewline _))           :stk)  = parserIter fname tokens (f:stk)
+
+parserIter fname tokens ((BzS_Statement p0 (BzS_Expr  _ [
+                                            (BzS_TyId _ impas),
+                                            (BzS_BTId _ "$ImportAs"),
+                                            (BzS_TyId _ imp)])) :stk)   = parserIter fname tokens ((BzS_Import p0 imp impas):stk)
+
+parserIter fname tokens ((BzS_Statement p0 (BzS_Expr  _ [
+                                            (BzS_BTId _ "$ImportAs"),
+                                            (BzS_TyId _ imp)])) :stk)   = Left [ParseErr p0 "Attempting to import module with unspecified namespace."]
+
+parserIter fname tokens ((BzS_Statement p0 (BzS_Expr  _ [_,
+                                            (BzS_BTId _ "$ImportAs"),
+                                            (BzS_TyId _ imp)])) :stk)   = Left [ParseErr p0 "Attempting to import module with invalid namespace."]
+
+parserIter fname tokens ((BzS_Statement p0 (BzS_Expr  _ [
+                                            (BzS_BTId _ "$Import"),
+                                            (BzS_TyId _ imp)])) :stk)   = parserIter fname tokens ((BzS_Import p0 imp imp):stk)
+
+parserIter fname tokens ((BzS_Statement p0 (BzS_Expr  _ [_,
+                                            (BzS_BTId _ "$Import"),
+                                            (BzS_TyId _ imp)])) :stk)   = Left [ParseErr p0 "Invalid import call. Did you mean to use $ImportAs?"]
+
+parserIter fname tokens ((BzS_Statement p0 (BzS_Expr  _ [
+                                            (BzS_TyId _ impas),
+                                            (BzS_BTId _ "$IncludeAs"),
+                                            (BzS_TyId _ imp)])) :stk)   = parserIter fname tokens ((BzS_Include p0 imp impas):stk)
+
+parserIter fname tokens ((BzS_Statement p0 (BzS_Expr  _ [
+                                            (BzS_BTId _ "$Include"),
+                                            (BzS_TyId _ imp)])) :stk)   = parserIter fname tokens ((BzS_Include p0 imp imp):stk)
+
+parserIter fname tokens ((BzS_Statement p0 (BzS_Expr  _ [
+                                            (BzS_BTId _ "$IncludeAs"),
+                                            (BzS_TyId _ imp)])) :stk)   = Left [ParseErr p0 "Attempting to include module with unspecified namespace."]
+
+parserIter fname tokens ((BzS_Statement p0 (BzS_Expr  _ [_,
+                                            (BzS_BTId _ "$IncludeAs"),
+                                            (BzS_TyId _ imp)])) :stk)   = Left [ParseErr p0 "Attempting to include module with invalid namespace."]
+
+parserIter fname tokens ((BzS_Statement p0 (BzS_Expr  _ [_,
+                                            (BzS_BTId _ "$Include"),
+                                            (BzS_TyId _ imp)])) :stk)   = Left [ParseErr p0 "Invalide include call. Did you mean to use $IncludeAs?"]
+
+parserIter fname tokens ((BzS_Statement p0 (BzS_Expr  _ [
+                                            (BzS_BTId _ "$Module"),
+                                            (BzS_TyId _ mname)])):stk)  = parserIter fname tokens ((BzS_File p0 mname fname [] [] []):stk)
+
+parserIter fname tokens (i@(BzS_Include p1 imp impas)
+                        :(BzS_File p0 mname _       incs imps []):stk)  = parserIter fname tokens ((BzS_File p0 mname fname (i:incs) imps []):stk)
+
+parserIter fname tokens (i@(BzS_Include p1 imp impas)
+                        :(BzS_File p0 mname _       incs imps df):stk)  = Left [ParseErr p1 "Include call found outside of file header."]
+
+parserIter fname tokens (i@(BzS_Import p1 imp impas)
+                        :(BzS_File p0 mname _       incs imps []):stk)  = parserIter fname tokens ((BzS_File p0 mname fname incs (i:imps) []):stk)
+
+parserIter fname tokens (i@(BzS_Import p1 imp impas)
+                        :(BzS_File p0 mname _       incs imps []):stk)  = Left [ParseErr p1 "Import call found outside of file header."]
+
+parserIter fname tokens ((BzS_Calls  p1 calls)
+                        :(BzS_File p0 mname _       incs imps df):stk)  = parserIter fname tokens ((BzS_File p0 mname fname incs imps (calls++df)):stk)
 
 
 -- | Generic Call Rules
