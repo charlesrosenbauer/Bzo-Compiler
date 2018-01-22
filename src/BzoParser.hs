@@ -185,6 +185,3 @@ parseFile fname tks =
       (Just errs,        _ ) -> Left errs
       (Nothing  , Left errs) -> Left errs
       (Nothing  , Right ast) -> Right ast
-          {-case (simplifyAST ast) of
-            Left errs -> Left errs
-            Right out -> Right out-}

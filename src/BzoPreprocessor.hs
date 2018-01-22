@@ -134,11 +134,12 @@ loadFullProject _ _ _ = do
 
 wrappedLexerMap :: [(FilePath, String)] -> Either [BzoErr] [(FilePath, [BzoToken])]
 wrappedLexerMap fs =
-  let contents = parMap rpar (\(f, c) -> fileLexer f c) fs
+  let contents = parMap rpar (\(f, c) -> fileLexer c f) fs
       errors   = concat $ lefts contents
       passes   = rights contents
+      ret      = zip (Prelude.map fst fs) passes
   in case errors of
-      [] -> Right $ zip (Prelude.map fst fs) passes
+      [] -> Right ret
       er -> Left  er
 
 
