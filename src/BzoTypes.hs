@@ -329,10 +329,16 @@ data BzoSyntax
         pos     :: !BzoPos,
         fname   :: !String,
         frename :: !String }
-    -- | BzS_Module {
-    --    pos     :: !BzoPos,
-    --    mname   :: !String,
-    --    fname   :: !String }
+    | BzS_TyHint {
+        pos     :: !BzoPos,
+        inpars  :: !BzoSyntax,
+        htid    :: !String,
+        expars  :: !BzoSyntax }
+    | BzS_FnHint {
+        pos     :: !BzoPos,
+        inpars  :: !BzoSyntax,
+        htid    :: !String,
+        expars  :: !BzoSyntax }
     | BzS_File {
         pos     :: !BzoPos,
         mname   :: !String,
@@ -410,10 +416,11 @@ showAST (BzS_FilterObj _ o f)              = " <" ++ (show o) ++ " of type " ++ 
 showAST (BzS_CurryObj  _ o p)              = " <" ++ (show p) ++ " applied to " ++ (show o) ++ "> "
 showAST (BzS_MapObj    _ o)                = " <" ++ (show o) ++ " .. > "
 showAST (BzS_Token     _ t)                = (show t)
+showAST (BzS_TyHint    _ ins h exs)        = " {Ty HINT: " ++ (show ins) ++ " -> " ++ h ++ " -> " ++ (show exs) ++ "} \n"
+showAST (BzS_FnHint    _ ins h exs)        = " {Fn HINT: " ++ (show ins) ++ " -> " ++ h ++ " -> " ++ (show exs) ++ "} \n"
 
 showAST (BzS_Import    _ fn fr)            = "    -- Import  " ++ fn ++ " as " ++ fr ++ " --\n"
 showAST (BzS_Include   _ fn fr)            = "    -- Include " ++ fn ++ " as " ++ fr ++ " --\n"
--- showAST (BzS_Module    _ mn fn)            = " -- Module " ++ mn ++ " --\n"
 showAST (BzS_File      _ mn fn ins ims dfs)= "\n-- (File, Module): (" ++ fn ++ ", " ++ mn ++ ")\nIncludes:\n" ++ (concatMap show ins) ++ "\nImports:\n" ++ (concatMap show ims) ++ "\nDefs:\n" ++ (concatMap show dfs)
 
 showAST (BzS_Undefined)                    = " UNDEFINED "
