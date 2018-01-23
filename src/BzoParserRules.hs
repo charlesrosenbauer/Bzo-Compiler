@@ -417,20 +417,20 @@ parserErr :: String -> [BzoSyntax] -> [BzoSyntax] -> [BzoErr]
 
 -- | Nothing to Parse?
 
-parserErr fname [] [] = trace "0!" $ [ParseErr (BzoPos 1 1 fname) "Nothing to Parse?"]
+parserErr fname [] [] = [ParseErr (BzoPos 1 1 fname) "Nothing to Parse?"]
 
 -- | Errors
 
-parserErr fname errStack ((BzS_Token _ (TkSepPoly p2))
-                        :x@(BzS_Expr  p1 _)
-                        :(BzS_CmpdHead p0 xs):stk)                      = trace "1!" $ [ParseErr p0 "Unexpected comma (,) in compound tuple."]
+parserErr fname (n:nxt) stk@((BzS_Token _ (TkSepPoly p2))
+                             :x@(BzS_Expr  p1 _)
+                             :(BzS_CmpdHead p0 xs):_)                = (ParseErr p0 "Unexpected comma (,) in compound tuple."    ):(parserErr fname nxt (n:stk))
 
-parserErr fname errStack ((BzS_Token _ (TkSepExpr p2))
-                        :x@(BzS_Expr  p1 _)
-                        :(BzS_PolyHead p0 xs):stk)                      = trace "2!" $ [ParseErr p0 "Unexpected period (.) in polymorphic tuple."]
+parserErr fname (n:nxt) stk@((BzS_Token _ (TkSepExpr p2))
+                             :x@(BzS_Expr  p1 _)
+                             :(BzS_PolyHead p0 xs):_)                = (ParseErr p0 "Unexpected period (.) in polymorphic tuple."):(parserErr fname nxt (n:stk))
 
 -- | Control Logic
 
-parserErr fname [] (s:stack)     = trace (show $ s:stack) $ []    -- | Not sure what to put here for now, but this case happens when
+parserErr fname [] (s:stack)     = []
 
-parserErr fname (s:errStack) stack     = parserErr fname errStack (s:stack)
+parserErr fname (s:nxt) stack    = parserErr fname nxt (s:stack)
