@@ -399,6 +399,38 @@ parserIter fname tokens ((BzS_Calls  p1 calls1)
 
 parserIter fname [] [item]        = Right item
 
-parserIter fname [] (s:stack)     = Left [ParseErr (pos s) ("Parser could not consume entire file.\nStack:\n" ++ (L.concatMap (\s -> show s ++ "\n") (s:stack)))]
+parserIter fname [] (s:stack)     = Left (ParseErr (pos s) ("Parser could not consume entire file.\n"):(parserErr fname (L.reverse (s:stack)) []))
 
 parserIter fname (t:tokens) stack = parserIter fname tokens (t:stack)
+
+
+
+
+
+
+
+
+
+
+parserErr :: String -> [BzoSyntax] -> [BzoSyntax] -> [BzoErr]
+
+
+-- | Nothing to Parse?
+
+parserErr fname [] [] = trace "0!" $ [ParseErr (BzoPos 1 1 fname) "Nothing to Parse?"]
+
+-- | Errors
+
+parserErr fname errStack ((BzS_Token _ (TkSepPoly p2))
+                        :x@(BzS_Expr  p1 _)
+                        :(BzS_CmpdHead p0 xs):stk)                      = trace "1!" $ [ParseErr p0 "Unexpected comma (,) in compound tuple."]
+
+parserErr fname errStack ((BzS_Token _ (TkSepExpr p2))
+                        :x@(BzS_Expr  p1 _)
+                        :(BzS_PolyHead p0 xs):stk)                      = trace "2!" $ [ParseErr p0 "Unexpected period (.) in polymorphic tuple."]
+
+-- | Control Logic
+
+parserErr fname [] (s:stack)     = trace (show $ s:stack) $ []    -- | Not sure what to put here for now, but this case happens when
+
+parserErr fname (s:errStack) stack     = parserErr fname errStack (s:stack)
