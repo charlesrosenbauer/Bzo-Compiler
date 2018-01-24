@@ -429,6 +429,49 @@ parserErr fname (n:nxt) stk@((BzS_Token _ (TkSepExpr p2))
                              :x@(BzS_Expr  p1 _)
                              :(BzS_PolyHead p0 xs):_)                = (ParseErr p0 "Unexpected period (.) in polymorphic tuple."):(parserErr fname nxt (n:stk))
 
+parserErr fname (n:nxt) stk@((BzS_Calls p1 calls1)
+                             :xpr:_)                                 = (ParseErr (pos xpr) "Unexpected random expression among calls."):(parserErr fname nxt (n:stk))
+
+parserErr fname (n:nxt) stk@((BzS_Token _ (TkEndDat   p2))
+                             :(BzS_Expr  _ [BzS_Flt    p1 num])
+                             :(BzS_Token _ (TkStartDat p0)):_)       = (ParseErr p1 "Floats cannot be used to denote the size of an array."):(parserErr fname nxt (n:stk))
+
+parserErr fname (n:nxt) stk@((BzS_Token _ (TkEndDat   p2))
+                             :(BzS_Expr  _ [BzS_Str    p1 str])
+                             :(BzS_Token _ (TkStartDat p0)):_)       = (ParseErr p1 "Strings cannot be used to denote the size of an array."):(parserErr fname nxt (n:stk))
+
+parserErr fname (n:nxt) stk@((BzS_Token _ (TkEndDat   p2))
+                             :(BzS_Expr  p x)
+                             :(BzS_Token _ (TkStartDat p0)):_)       = (ParseErr p "Only integers can be used to denote the size of an array."):(parserErr fname nxt (n:stk))
+
+parserErr fname (n:nxt) stk@((BzS_Token p1 (TkArrMod _))
+                             :_)                                     = (ParseErr p1 "Unexpected array modifier (..)."):(parserErr fname nxt (n:stk))
+
+parserErr fname (n:nxt) stk@((BzS_Token p1 (TkLambdaSym _))
+                             :_)                                     = (ParseErr p1 "Unexpected semicolon (;)."):(parserErr fname nxt (n:stk))
+
+parserErr fname (n:nxt) stk@((BzS_Token p1 (TkDefine _))
+                             :_)                                     = (ParseErr p1 "Unexpected definition symbol (::)."):(parserErr fname nxt (n:stk))
+
+parserErr fname (n:nxt) stk@((BzS_Token p1 (TkReference _))
+                             :_)                                     = (ParseErr p1 "Unexpected reference symbol (@)."):(parserErr fname nxt (n:stk))
+
+parserErr fname (n:nxt) stk@((BzS_Token p2 (TkNewline _))
+                             :(BzS_FnHead p1 _ _ _)
+                             :_)                                     = (ParseErr p2 "Newlines are not allowed immediated after a definition symbol (::)."):(parserErr fname nxt (n:stk))
+
+parserErr fname (n:nxt) stk@((BzS_Token p2 (TkNewline _))
+                             :(BzS_TyHead p1 _ _)
+                             :_)                                     = (ParseErr p2 "Newlines are not allowed immediated after a definition symbol (::)."):(parserErr fname nxt (n:stk))
+
+parserErr fname (n:nxt) stk@(_
+                             :(BzS_FnHead p1 _ _ _)
+                             :_)                                     = (ParseErr p1 "Improper definition of function or function type."):(parserErr fname nxt (n:stk))
+
+parserErr fname (n:nxt) stk@(_
+                             :(BzS_TyHead p1 _ _)
+                             :_)                                     = (ParseErr p1 "Improper definition of type."):(parserErr fname nxt (n:stk))
+
 -- | Control Logic
 
 parserErr fname [] (s:stack)     = []
