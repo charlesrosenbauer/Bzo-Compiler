@@ -366,6 +366,9 @@ data CfgSyntax
   | LibLines {
       cpos     :: BzoPos,
       libLines :: [CfgSyntax] }
+  | LibParseItem {
+      cpos     :: BzoPos,
+      libtoken :: BzoToken }
   deriving (Eq, Show)
 
 

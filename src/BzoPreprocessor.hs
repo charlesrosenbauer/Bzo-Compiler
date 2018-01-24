@@ -309,12 +309,12 @@ getLibraryCfg (BzoSettings imp lib flg opt pfx) =
 
 
 
-{-
+
 getLibraryCfgContents :: BzoSettings -> IO (Either [BzoErr] CfgSyntax)
 getLibraryCfgContents settings =
   let text = getLibraryCfg settings
       tks  = fmap (applyWithErr (\(p, s) -> fileLexer s p)) text
-  in fmap (applyWithErr $ parseLibCfgFile "libs.cfg") tks-}
+  in fmap (applyWithErr $ parseLibCfgFile "libs.cfg") tks
 
 
 

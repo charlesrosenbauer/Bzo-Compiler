@@ -10,64 +10,40 @@ import BzoTypes
 
 
 
-{-
-parseLibCfg0 :: ParserOp
-parseLibCfg0 = genericParseOp [mtk_TypeId, mtk_Str, mtk_Newline] (\psi ->
-  PI_Cfg (LibLine (spos $ piTok $ head psi) (valId $ piTok $ head psi) (valStr $ piTok $ psi !! 1)))
+
+cfgParserIter :: String -> [CfgSyntax] -> [CfgSyntax] -> Either [BzoErr] CfgSyntax
+
+-- | Nothing to Parse?
+
+cfgParserIter fname [] [] = Left $ [ParseErr (BzoPos 1 1 fname) "Nothing to Parse?"]
 
 
 
+-- | Simple reductions
+
+cfgParserIter fname tokens ((LibParseItem _ (TkNil)):stk)            = cfgParserIter fname tokens stk
+
+cfgParserIter fname tokens ((LibParseItem _ (TkNewline _))
+                           :(LibParseItem _ (TkStr _ path))
+                           :(LibParseItem p (TkTypeId _ name)):stk)  = cfgParserIter fname tokens ((LibLine p name path):stk)
+
+cfgParserIter fname tokens (l0@(LibLine _ _ _)
+                           :l1@(LibLine p _ _):stk)                  = cfgParserIter fname tokens ((LibLines p (l0:l1:[])):stk)
+
+cfgParserIter fname tokens (l0@(LibLine _ _ _)
+                           :   (LibLines p ls):stk)                  = cfgParserIter fname tokens ((LibLines p (l0:ls)):stk)
+
+cfgParserIter fname tokens (l0@(LibLine p _ _)
+                           :(LibParseItem _ (TkNewline _)):stk)      = cfgParserIter fname tokens ((LibLines p [l0]):stk)
 
 
+-- | Control Logic
 
+cfgParserIter fname [] [item]        = Right item
 
+cfgParserIter fname [] (s:stack)     = Left [ParseErr (cpos s) ("Parser could not consume entire file.\n")]
 
-
-
-parseLibCfg1 :: ParserOp
-parseLibCfg1 = genericParseOp [MP_Cfg_Line, MP_Cfg_Line] (\psi ->
-  PI_Cfg (LibLines (cpos $ piCfg $ head psi) ([piCfg $ head psi] ++ [piCfg $ psi !! 1])))
-
-
-
-
-
-
-
-
-
-
-parseLibCfg2 :: ParserOp
-parseLibCfg2 = genericParseOp [MP_Cfg_Lines, MP_Cfg_Line] (\psi ->
-  PI_Cfg (LibLines (cpos $ piCfg $ head psi) ((libLines $ piCfg $ head psi) ++ [piCfg $ psi !! 1])))
-
-
-
-
-
-
-
-
-
-
-parseLibCfg3 :: ParserOp
-parseLibCfg3 = genericParseOp [mtk_Newline, MP_Cfg_Line] (\psi -> psi !! 1)
-
-
-
-
-
-
-
-
-
-
-parseLibCfg :: Parser
-parseLibCfg = Parser (\ps ->
-  let parseFn = [parseLibCfg0, parseLibCfg3, parseLibCfg2, parseLibCfg1]
-  in case tryParsers ps parseFn of
-      Just pst -> Right pst
-      Nothing  -> Left [] )
+cfgParserIter fname (t:tokens) stack = cfgParserIter fname tokens (t:stack)
 
 
 
@@ -80,7 +56,7 @@ parseLibCfg = Parser (\ps ->
 
 parseLibCfgFile :: String -> [BzoToken] -> Either [BzoErr] CfgSyntax
 parseLibCfgFile f tks =
-  case (parseIter (ParserState f (BzoPos 0 0 f) [] tks) [parseLibCfg]) of
+  let tks' = map (\tk -> LibParseItem (spos tk) tk) tks
+  in case (cfgParserIter f tks' []) of
       Left errs -> Left errs
-      Right ast -> Right $ piCfg ast
--}
+      Right ast -> Right ast
