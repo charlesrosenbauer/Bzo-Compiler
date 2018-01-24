@@ -171,12 +171,32 @@ wrappedParserMap tks =
 
 wrappedPrepMap :: [BzoSyntax] -> Either [BzoErr] [BzoFileModel BzoSyntax]
 wrappedPrepMap asts =
-  let contents = parMap rpar (\syn -> (Right (False, syn, (BzoFileModel "" (fileName $ pos syn) "@" syn [] [] [] [])))) asts
-      errors   = concat $ lefts contents
-      passes   = parMap rpar (\(a, b, c) -> c) $ rights contents
+  let contents = map getConts asts
+      errors   = lefts contents
+      passes   = rights contents
   in case errors of
     [] -> Right passes
     er -> Left  er
+
+  where getConts :: BzoSyntax -> Either BzoErr (BzoFileModel BzoSyntax)
+        getConts (BzS_File ps mnam fnam inc imp conts) = Right (BzoFileModel mnam fnam "@" (BzS_Calls (pos $ head conts) conts) (getImps imp) (getIncs inc) (getImpAs imp) (getIncAs inc))
+        getConts bzs                                   = Left  (PrepErr (pos bzs) "File is not properly formatted.")
+
+        getImps  :: [BzoSyntax] -> [String]
+        getImps  ((BzS_Import _ name rename):imps) = ife (name == rename) (name:(getImps imps)) (getImps imps)
+        getImps  [] = []
+
+        getImpAs :: [BzoSyntax] -> [(String, String)]
+        getImpAs ((BzS_Import _ name rename):imps) = ife (name /= rename) ((name, rename):(getImpAs imps)) (getImpAs imps)
+        getImpAs [] = []
+
+        getIncs  :: [BzoSyntax] -> [String]
+        getIncs  ((BzS_Include _ name rename):imps) = ife (name == rename) (name:(getIncs imps)) (getIncs imps)
+        getIncs  [] = []
+
+        getIncAs :: [BzoSyntax] -> [(String, String)]
+        getIncAs ((BzS_Include _ name rename):imps) = ife (name /= rename) ((name, rename):(getIncAs imps)) (getIncAs imps)
+        getIncAs [] = []
 
 
 
