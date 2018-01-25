@@ -179,7 +179,7 @@ wrappedPrepMap asts =
     er -> Left  er
 
   where getConts :: BzoSyntax -> Either BzoErr (BzoFileModel BzoSyntax)
-        getConts (BzS_File ps mnam fnam inc imp conts) = Right (BzoFileModel mnam fnam "@" (BzS_Calls (pos $ head conts) conts) (getImps imp) (getIncs inc) (getImpAs imp) (getIncAs inc))
+        getConts (BzS_File ps mnam fnam inc imp conts) = Right (BzoFileModel mnam fnam "@" (BzS_Calls (pos $ head conts) conts) (getIncs inc) (getImps imp) (getIncAs inc) (getImpAs imp))
         getConts bzs                                   = Left  (PrepErr (pos bzs) "File is not properly formatted.")
 
         getImps  :: [BzoSyntax] -> [String]
