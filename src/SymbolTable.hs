@@ -15,9 +15,9 @@ import qualified Data.List       as L
 
 
 
-
+-- | Stripped out for now
 extractRecordsEnums :: CallAST -> [T.Text]
-extractRecordsEnums (CA_TypeDefCall _ _ _ rs es _) = (map (T.pack . mr_name) rs) ++ (map (T.pack . me_name) es)
+extractRecordsEnums (CA_TypeDefCall _ _ _ _) = []
 extractRecordsEnums _ = []
 
 

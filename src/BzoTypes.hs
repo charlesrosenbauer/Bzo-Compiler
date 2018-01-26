@@ -558,36 +558,6 @@ data TypeAST
 
 
 
-data ModelRecord = ModelRecord{
-    mr_pos    :: !BzoPos,
-    mr_name   :: !String,
-    mr_parent :: !String,
-    mr_type   :: !TypeAST }
-
-
-
-
-
-
-
-
-
-
-data ModelEnum = ModelEnum{
-    me_pos    :: !BzoPos,
-    me_name   :: !String,
-    me_parent :: !String,
-    me_type   :: !TypeAST }
-
-
-
-
-
-
-
-
-
-
 data TParModel
   = TParModel {
       tp_pos  :: !BzoPos,
@@ -728,8 +698,6 @@ data CallAST
         ca_pos     :: !BzoPos,
         ca_id      :: !String,
         ca_pars    :: !TParModel,
-        ca_records :: ![ModelRecord],
-        ca_enums   :: ![ModelEnum],
         ca_tydef   :: !TypeAST }
     | CA_FTDefCall {
         ca_pos     :: !BzoPos,
@@ -761,37 +729,10 @@ data CallAST
 
 
 
-showEnum :: ModelEnum -> String
-showEnum (ModelEnum p n r t) = " {Enum : " ++ n ++ ", inside " ++ r ++ ", of type " ++ (show t) ++ " } "
-instance Show ModelEnum where show = showEnum
-
-
-
-
-
-
-
-
-
-
-showRecord :: ModelRecord -> String
-showRecord (ModelRecord p n r t) = " {Record : " ++ n ++ ", inside " ++ r ++ ", of type " ++ (show t) ++ " } "
-instance Show ModelRecord where show = showRecord
-
-
-
-
-
-
-
-
-
 
 showCallAST :: CallAST -> String
-showCallAST (CA_TypeDefCall      p i s r e t) = " {TyDefCall: " ++ i ++
+showCallAST (CA_TypeDefCall          p i s t) = " {TyDefCall: " ++ i ++
                                             "\n   PARS: " ++ (show s) ++
-                                            "\n   RECS: " ++ (Prelude.concatMap (\x -> (show x) ++ ", ") r) ++
-                                            "\n   ENMS: " ++ (Prelude.concatMap (\x -> (show x) ++ ", ") e) ++
                                             "\n   DEF : " ++ (show t) ++ " }\n"
 showCallAST (CA_FTDefCall            p x i o) = " {FnTyDefCall: " ++ x ++
                                             "\n   INPUT : " ++ (show i) ++
@@ -942,7 +883,7 @@ data Show a => Definition a
       def_fndefs :: ![(FParModel, FParModel, ExprModel, BzoPos)],  -- InPars, ExPars, Expr, Pos
       def_fnId   :: !a }   -- Id
   | TyDefinition {
-      def_tydef  :: !(TParModel,  TypeAST, [ModelRecord], [ModelEnum], BzoPos),   -- TPars, Type, Records, Enums, Pos
+      def_tydef  :: !(TParModel,  TypeAST, BzoPos),   -- TPars, Type, Pos
       def_tyId   :: !a }   -- Id
   | RcDefinition {
       def_rcdef  :: !(TypeAST, a, BzoPos),    -- Type, Parent, Position
@@ -971,17 +912,9 @@ showDefinition (FnDefinition fts fns fnid) = "Function Defintion : " ++ (show fn
                                               "\n\n    FnDefs:\n" ++ (concatMap (\(a, b, c, d) ->
                                                   "(" ++ (show a) ++ " -> " ++ (show b) ++ " :: " ++ (show c) ++ "),\n") fns) ++ " }\n\n"
 
-showDefinition (TyDefinition (tp, t, r, e, _) tyid) =
+showDefinition (TyDefinition (tp, t, _) tyid) =
                                              "Type Defintion : " ++ (show tyid) ++ " { " ++
-                                              "\n\n    TyDef:\n"   ++ (show tp) ++ " -> " ++ (show t) ++
-                                              "\n\n    Records:\n" ++ (show r)  ++
-                                              "\n\n    Enums:\n"   ++ (show e)  ++ " }\n\n"
-showDefinition (RcDefinition (t, p, _) r)  = "Record Definition : " ++ (show r) ++ " { " ++
-                                              "\n    Type   : " ++ (show t) ++ "\n" ++
-                                              "\n    Parent : " ++ (show p) ++ " }\n\n"
-showDefinition (EnDefinition (t, p, _) e)  = "Enum Definition : " ++ (show e) ++ " { " ++
-                                              "\n    Type   : " ++ (show t) ++ "\n" ++
-                                              "\n    Parent : " ++ (show p) ++ " }\n\n"
+                                              "\n\n    TyDef:\n"   ++ (show tp) ++ " -> " ++ (show t) ++ " }\n\n"
 showDefinition (HintDefinition (ps, _) h)  = "Hint Definition : " ++ (show h) ++ " { " ++ (concatMap (\x -> (show x) ++ ", ") ps) ++ " }\n"
 showDefinition (NilDefinition) = "NilDefinition\n\n"
 instance (Show a) => Show (Definition a) where show = showDefinition
