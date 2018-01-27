@@ -1,6 +1,6 @@
 module IRModel where
 import Data.Text
-import Data.List
+import Data.List as L
 import Data.Map.Strict as M
 import IRParser
 import IRLexer
@@ -18,7 +18,8 @@ data FuncData = FuncType{
   funcKind    :: FunctionKind,
   inputTypes  :: [TypeData],
   outputTypes :: [TypeData],
-  attributes  :: AttrSet,
+  funchints   :: [Hint],
+  funcattribs :: AttrSet,
   funcNodes   :: [Node],
   funcId      :: FnId }
 
@@ -35,7 +36,10 @@ type FnId = Int
 
 
 
-data TypeData = TypeData [([Int], TyId)]
+data TypeData = TypeData{
+  typeNodes   :: [([Int], TyId)],
+  typehints   :: [Hint],
+  typeattribs :: AttrSet }
 
 type TyId = Int
 
@@ -174,7 +178,7 @@ data CondCode   = LSCond | GTCond | EQCond | NECond | LECond | GECond |
 
 
 
-{-
+
 modelIR :: [IRParseItem] -> ([IRErr], IRSymbols, Map FnId FuncData,
                                                  Map TyId TypeData,
                                                  Map AttrId Attribute,
@@ -193,14 +197,19 @@ modelIR irs =
 
 
 
-modelIRHelper :: IRSymbols -> [IRParseItem] -> ([IRErr], [FuncData], [TypeData], [Attribute], [ConstantData], [Hint])
-modelIRHelper syms ((PI_FnDef p fnid typ nodes):irs) =
-  let (errors, nodes', attrs') = modelFnNodes nodes
-      (errs, fns, tys, ats, cns, hts) = modelIRHelper syms irs
-      fn = if (null errors)
-            then [(FuncData PureFunc [] attrs' nodes' (M.lookup ))]
-            else []
-  in  (errors ++ errs, ():fns, tys, ats, cns, hts)-}
+modelIRHelper :: IRSymbols -> [IRParseItem] -> ([IRErr], [FuncData], [TypeData], [Attribute], [ConstantData], [Hint]) -> ([IRErr], [FuncData], [TypeData], [Attribute], [ConstantData], [Hint])
+modelIRHelper syms@(IRSymbols fs fs' ts ts' as as' cs cs' top) ((PI_FnDef p fnid typ nodes):irs) (errs, fns, tys, ats, cts, hts) =
+  let (fs'', pos, err0) =
+        case (M.lookup fnid $ fs) of
+          Just x  -> (fs,                         x,         [IRErr p $ append fnid $ pack " defined multiple times."])
+          Nothing -> (M.insert fnid (top + 1) fs, (top + 1), [])
+
+  in modelIRHelper (IRSymbols fs'' fs' ts ts' as as' cs cs' (top + 1)) irs (err0 ++ errs, fns, tys, ats, cts, hts)
+
+modelIRHelper syms [] ret = ret
+
+modelIRHelper syms (item:irs) (errs, fns, tys, ats, cts, hts) = modelIRHelper syms irs ((IRErr (ppos item) $ pack "Unrecognized pattern."):errs, fns, tys, ats, cts, hts)
+
 
 
 
