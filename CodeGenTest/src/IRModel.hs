@@ -199,16 +199,33 @@ modelIR irs =
 
 modelIRHelper :: IRSymbols -> [IRParseItem] -> ([IRErr], [FuncData], [TypeData], [Attribute], [ConstantData], [Hint]) -> ([IRErr], [FuncData], [TypeData], [Attribute], [ConstantData], [Hint])
 modelIRHelper syms@(IRSymbols fs fs' ts ts' as as' cs cs' top) ((PI_FnDef p fnid typ nodes):irs) (errs, fns, tys, ats, cts, hts) =
-  let (fs'', pos, err0) =
-        case (M.lookup fnid $ fs) of
-          Just x  -> (fs,                         x,         [IRErr p $ append fnid $ pack " defined multiple times."])
-          Nothing -> (M.insert fnid (top + 1) fs, (top + 1), [])
+  let (err0, fs'', fs''') = customInsert [IRErr p $ append fnid $ pack " defined multiple times."] fs fs' fnid (top+1)
+      -- Add pass to model functions
+  in modelIRHelper (IRSymbols fs'' fs''' ts ts' as as' cs cs' (top + 1)) irs (err0 ++ errs, fns, tys, ats, cts, hts)
 
-  in modelIRHelper (IRSymbols fs'' fs' ts ts' as as' cs cs' (top + 1)) irs (err0 ++ errs, fns, tys, ats, cts, hts)
+modelIRHelper syms@(IRSymbols fs fs' ts ts' as as' cs cs' top) ((PI_TyDef p tyid sz nodes):irs) (errs, fns, tys, ats, cts, hts) =
+  let (err0, ts'', ts''') = customInsert [IRErr p $ append tyid $ pack " defined multiple times."] ts ts' tyid (top+1)
+      -- Add pass to model types
+  in modelIRHelper (IRSymbols fs fs' ts'' ts''' as as' cs cs' (top + 1)) irs (err0 ++ errs, fns, tys, ats, cts, hts)
 
 modelIRHelper syms [] ret = ret
 
 modelIRHelper syms (item:irs) (errs, fns, tys, ats, cts, hts) = modelIRHelper syms irs ((IRErr (ppos item) $ pack "Unrecognized pattern."):errs, fns, tys, ats, cts, hts)
+
+
+
+
+
+
+
+
+
+
+customInsert :: (Ord k, Ord a) => [IRErr] -> Map k a -> Map a k -> k -> a -> ([IRErr], Map k a, Map a k)
+customInsert errs forward backward k a =
+  case (M.lookup k forward) of
+    Just x  -> (errs, forward,              backward             )
+    Nothing -> ([]  , M.insert k a forward, M.insert a k backward)
 
 
 
