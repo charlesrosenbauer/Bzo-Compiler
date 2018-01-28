@@ -52,11 +52,17 @@ $link 'stdio\n'
 
 
 
+% IO 0 {
+	-effectSRSW
+}
+
+
+
 "This is a comment."
 
 
 
-^ :printf (*Char > I32) {
+^ :printf (*Char > I32) [| IO] {
 	-externName 'printf'
 }
 
@@ -64,10 +70,7 @@ $link 'stdio\n'
 
 ~ !print (*Char > ) [| IO] {
 
-	-effectWrite
-
 	#0 input *Char
 
-	#1 constPrc :printf
-	#2 forcecall #1 #0
+	#1 prcall :printf #0
 }

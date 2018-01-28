@@ -20,8 +20,8 @@ data IRParseItem
   | PI_TyDef    {ppos :: IRPos, txt0 :: Text, num0 :: Int, pars :: [IRParseItem]}
   | PI_PrHeader {ppos :: IRPos, txt0 :: Text, par0 :: IRParseItem, pars0 :: [IRParseItem], pars1 :: [IRParseItem]}
   | PI_PrDef    {ppos :: IRPos, txt0 :: Text, par0 :: IRParseItem, pars0 :: [IRParseItem], pars1 :: [IRParseItem], pars :: [IRParseItem]}
-  | PI_ExHeader {ppos :: IRPos, txt0 :: Text, par0 :: IRParseItem}
-  | PI_ExDef    {ppos :: IRPos, txt0 :: Text, par0 :: IRParseItem, pars :: [IRParseItem]}
+  | PI_ExHeader {ppos :: IRPos, txt0 :: Text, par0 :: IRParseItem, pars0 :: [IRParseItem], pars1 :: [IRParseItem]}
+  | PI_ExDef    {ppos :: IRPos, txt0 :: Text, par0 :: IRParseItem, pars0 :: [IRParseItem], pars1 :: [IRParseItem], pars :: [IRParseItem]}
   | PI_NL       {ppos :: IRPos}
   | PI_Arr      {ppos :: IRPos, num0 :: Int}
   | PI_FTyPart0 {ppos :: IRPos, pars :: [IRParseItem]}
@@ -208,13 +208,15 @@ irParseIter fname tokens ((PI_NL p2)
 -- Ex Header
 irParseIter fname tokens ((PI_NL p4)
                    :(PI_Token _ (OpenBrace p3))
+                   :(PI_Effects _ i o)
                    :(fty@(PI_FTy   _ _ _))
                    :(PI_Token _ (ExternToken p1 exid))
-                   :(PI_Token _ (DefExtern p0))       : stk) = irParseIter fname tokens ((PI_ExHeader p0 exid fty)     :stk)
+                   :(PI_Token _ (DefExtern p0))       : stk) = irParseIter fname tokens ((PI_ExHeader p0 exid fty i o)   :stk)
 
 irParseIter fname tokens ((PI_NL p4)
                    :(PI_Token _ (OpenBrace p3))
                    :(PI_NS    p2 ns)
+                   :(PI_Effects _ i o)
                    :(PI_Token _ (ProcToken p1 prid))
                    :(PI_Token _ (DefExtern p0))       : stk) = Left $ IRErr p1 $ pack ("Expected 2 numerical parameters in extern header. Found " ++ (show $ L.length ns) ++ ".")
 
@@ -223,11 +225,11 @@ irParseIter fname tokens ((PI_NL p4)
 irParseIter fname tokens ((PI_NL p3)
                    :(PI_Token _ (CloseBrace p2))
                    :(PI_Nodes p1 ns)
-                   :(PI_ExHeader p0 exid fty)         : stk) = irParseIter fname tokens ((PI_ExDef p0 exid fty ns)     :stk)
+                   :(PI_ExHeader p0 exid fty i o)    : stk) = irParseIter fname tokens ((PI_ExDef p0 exid fty i o ns)     :stk)
 
 irParseIter fname tokens ((PI_NL p2)
                    :(PI_Token _ (CloseBrace p1))
-                   :(PI_ExHeader p0 exid fty)         : stk) = Left $ IRErr p1 $ pack "Expected contents for the procedure declaration."
+                   :(PI_ExHeader p0 exid i o fty)    : stk) = Left $ IRErr p1 $ pack "Expected contents for the procedure declaration."
 
 
 
@@ -321,7 +323,7 @@ irParseIter fname tokens (tydef@(PI_TyDef p0 _ _ _  )   : stk) = irParseIter fna
 
 irParseIter fname tokens (prdef@(PI_PrDef p0 _ _ _ _ _) : stk) = irParseIter fname tokens ((PI_Defs p0 [prdef])                       :stk)
 
-irParseIter fname tokens (exdef@(PI_ExDef p0 _ _ _)     : stk) = irParseIter fname tokens ((PI_Defs p0 [exdef])                       :stk)
+irParseIter fname tokens (exdef@(PI_ExDef p0 _ _ _ _ _) : stk) = irParseIter fname tokens ((PI_Defs p0 [exdef])                       :stk)
 
 irParseIter fname tokens (csdef@(PI_ConstInt p0 _ _ )   : stk) = irParseIter fname tokens ((PI_Defs p0 [csdef])                       :stk)
 
