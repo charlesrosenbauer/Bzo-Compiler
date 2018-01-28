@@ -47,7 +47,7 @@ $link 'stdio\n'
 
 
 % Int32x4 1 {
-	#0 element *4 *3 * I32
+	#0 element *4*3*I32
 }
 
 
@@ -62,7 +62,7 @@ $link 'stdio\n'
 
 
 
-~ !print (*Char > ) IO {
+~ !print (*Char > ) [| IO] {
 
 	-effectWrite
 

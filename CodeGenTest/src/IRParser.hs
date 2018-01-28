@@ -18,8 +18,8 @@ data IRParseItem
   | PI_FnDef    {ppos :: IRPos, txt0 :: Text, par0 :: IRParseItem, pars :: [IRParseItem]}
   | PI_TyHeader {ppos :: IRPos, txt0 :: Text, num0 :: Int}
   | PI_TyDef    {ppos :: IRPos, txt0 :: Text, num0 :: Int, pars :: [IRParseItem]}
-  | PI_PrHeader {ppos :: IRPos, txt0 :: Text, par0 :: IRParseItem, txt1 :: Text}
-  | PI_PrDef    {ppos :: IRPos, txt0 :: Text, par0 :: IRParseItem, txt2 :: Text, pars :: [IRParseItem]}
+  | PI_PrHeader {ppos :: IRPos, txt0 :: Text, par0 :: IRParseItem, pars0 :: [IRParseItem], pars1 :: [IRParseItem]}
+  | PI_PrDef    {ppos :: IRPos, txt0 :: Text, par0 :: IRParseItem, pars0 :: [IRParseItem], pars1 :: [IRParseItem], pars :: [IRParseItem]}
   | PI_ExHeader {ppos :: IRPos, txt0 :: Text, par0 :: IRParseItem}
   | PI_ExDef    {ppos :: IRPos, txt0 :: Text, par0 :: IRParseItem, pars :: [IRParseItem]}
   | PI_NL       {ppos :: IRPos}
@@ -27,6 +27,9 @@ data IRParseItem
   | PI_FTyPart0 {ppos :: IRPos, pars :: [IRParseItem]}
   | PI_FTyPart1 {ppos :: IRPos, pars0:: [IRParseItem], pars1:: [IRParseItem]}
   | PI_FTy      {ppos :: IRPos, pars0:: [IRParseItem], pars1:: [IRParseItem]}
+  | PI_EffPart0 {ppos :: IRPos, pars :: [IRParseItem]}
+  | PI_EffPart1 {ppos :: IRPos, pars0:: [IRParseItem], pars1:: [IRParseItem]}
+  | PI_Effects  {ppos :: IRPos, pars0:: [IRParseItem], pars1:: [IRParseItem]}
   | PI_Type     {ppos :: IRPos, nums :: [Int], txt0 :: Text}
   | PI_Node     {ppos :: IRPos, nums :: [Int], txt0 :: Text, pars :: [IRParseItem]}
   | PI_NS       {ppos :: IRPos, nums :: [Int]}
@@ -116,6 +119,22 @@ irParseIter fname tokens ((PI_Token p1 (CloseParen _))
 
 
 
+-- Effect Types
+irParseIter fname tokens ((PI_Token p0 (OpenBox  _)) : stk) = irParseIter fname tokens ((PI_EffPart0 p0 [])        : stk)
+
+irParseIter fname tokens (ty@(PI_Type p1 _ _)
+                   :(PI_EffPart0 p0 tys)             : stk) = irParseIter fname tokens ((PI_EffPart0 p0 (ty:tys))  : stk)
+
+irParseIter fname tokens ((PI_Token p1 (EffectToken _))
+                   :(PI_EffPart0 p0 tys)             : stk) = irParseIter fname tokens ((PI_EffPart1 p0 tys [])    : stk)
+
+irParseIter fname tokens (ty@(PI_Type p1 _ _)
+                   :(PI_EffPart1 p0 ins tys)         : stk) = irParseIter fname tokens ((PI_EffPart1 p0 ins (ty:tys)): stk)
+
+irParseIter fname tokens ((PI_Token p1 (CloseBox _))
+                   :(PI_EffPart1 p0 ins exs)         : stk) = irParseIter fname tokens ((PI_Effects p0 ins exs)          : stk)
+
+
 
 -- Fn Header
 irParseIter fname tokens ((PI_NL p4)
@@ -167,10 +186,10 @@ irParseIter fname tokens ((PI_NL p2)
 -- Pr Header
 irParseIter fname tokens ((PI_NL p6)
                    :(PI_Token _ (OpenBrace p5))
-                   :(PI_Type  p3 [] ty)
-                   :(fty@(PI_FTy   _ _ _))
+                   :(PI_Effects _ i o)
+                   :(fty@(PI_FTy _ _ _))
                    :(PI_Token _ (ProcToken p1 prid))
-                   :(PI_Token _ (DefProc   p0))       : stk) = irParseIter fname tokens ((PI_PrHeader p0 prid fty ty)  :stk)
+                   :(PI_Token _ (DefProc   p0))       : stk) = irParseIter fname tokens ((PI_PrHeader p0 prid fty i o)  :stk)
 
 
 
@@ -178,11 +197,11 @@ irParseIter fname tokens ((PI_NL p6)
 irParseIter fname tokens ((PI_NL p3)
                    :(PI_Token _ (CloseBrace p2))
                    :(PI_Nodes p1 ns)
-                   :(PI_PrHeader p0 prid fty ty)      : stk) = irParseIter fname tokens ((PI_PrDef p0 prid fty ty ns)  :stk)
+                   :(PI_PrHeader p0 prid fty i o)    : stk) = irParseIter fname tokens ((PI_PrDef p0 prid fty i o ns)  :stk)
 
 irParseIter fname tokens ((PI_NL p2)
                    :(PI_Token _ (CloseBrace p1))
-                   :(PI_PrHeader p0 prid fty ty)      : stk) = Left $ IRErr p1 $ pack "Expected contents for the procedure declaration."
+                   :(PI_PrHeader p0 prid fty i o)    : stk) = Left $ IRErr p1 $ pack "Expected contents for the procedure declaration."
 
 
 
@@ -300,7 +319,7 @@ irParseIter fname tokens (fndef@(PI_FnDef p0 _ _ _  )   : stk) = irParseIter fna
 
 irParseIter fname tokens (tydef@(PI_TyDef p0 _ _ _  )   : stk) = irParseIter fname tokens ((PI_Defs p0 [tydef])                       :stk)
 
-irParseIter fname tokens (prdef@(PI_PrDef p0 _ _ _ _)   : stk) = irParseIter fname tokens ((PI_Defs p0 [prdef])                       :stk)
+irParseIter fname tokens (prdef@(PI_PrDef p0 _ _ _ _ _) : stk) = irParseIter fname tokens ((PI_Defs p0 [prdef])                       :stk)
 
 irParseIter fname tokens (exdef@(PI_ExDef p0 _ _ _)     : stk) = irParseIter fname tokens ((PI_Defs p0 [exdef])                       :stk)
 

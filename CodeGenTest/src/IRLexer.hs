@@ -103,7 +103,10 @@ data IRToken
   | CloseBrace  {tpos :: IRPos}
   | OpenParen   {tpos :: IRPos}
   | CloseParen  {tpos :: IRPos}
+  | OpenBox     {tpos :: IRPos}
+  | CloseBox    {tpos :: IRPos}
   | FTypeToken  {tpos :: IRPos}
+  | EffectToken {tpos :: IRPos}
   | DefFunc     {tpos :: IRPos}
   | DefType     {tpos :: IRPos}
   | DefExtern   {tpos :: IRPos}
@@ -444,7 +447,10 @@ lexSymbol =
   (lexStringToToken "}"  (\p -> CloseBrace  p)) <|>
   (lexStringToToken "("  (\p -> OpenParen   p)) <|>
   (lexStringToToken ")"  (\p -> CloseParen  p)) <|>
+  (lexStringToToken "["  (\p -> OpenBox     p)) <|>
+  (lexStringToToken "]"  (\p -> CloseBox    p)) <|>
   (lexStringToToken ">"  (\p -> FTypeToken  p)) <|>
+  (lexStringToToken "|"  (\p -> EffectToken p)) <|>
   (lexStringToToken "~"  (\p -> DefProc     p)) <|>
   (lexStringToToken "*"  (\p -> PtrToken    p)) <|>
   (lexStringToToken "\n" (\p -> NewLine     p))
