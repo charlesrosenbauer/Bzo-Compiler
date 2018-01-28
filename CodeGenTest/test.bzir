@@ -11,7 +11,7 @@ $link 'stdio\n'
 
 	#3 iadd #0 #1
 	#4 iadd #4 #2
-	
+
 	#5 output I32 #5
 }
 
@@ -47,7 +47,7 @@ $link 'stdio\n'
 
 
 % Int32x4 1 {
-	#0 element [4]I32
+	#0 element *4 *3 * I32
 }
 
 
@@ -57,12 +57,7 @@ $link 'stdio\n'
 
 
 ^ :printf (*Char > I32) {
-	#0 input *Char
-
-	#1 constStr 'printf'
-	#2 ffiCall #1 #0
-	
-	#3 output I32 #2
+	-externName 'printf'
 }
 
 

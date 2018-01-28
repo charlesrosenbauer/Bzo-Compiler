@@ -560,9 +560,8 @@ lexHint = do
 lexArr :: IRLexer IRToken
 lexArr = do
   p  <- getLexerState
-  c0 <- lexChar '['
+  c0 <- lexChar '*'
   cs <- many $ satisfy isDigit
-  cl <- lexChar ']'
   return (ArrToken (makeIRPos p) $ readInt cs)
 
 
