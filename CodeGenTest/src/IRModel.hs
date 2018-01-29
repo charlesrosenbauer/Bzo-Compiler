@@ -59,6 +59,7 @@ data TypeData = TypeData{
   deriving Show
 
 data TypeRef = TypeRef [Int] TyId
+  deriving Show
 
 type TyId = Int
 
@@ -154,11 +155,11 @@ data IRSymbols
 
 
 data Node
-  = CastNode  AttrSet  Int  TypeData  Int
+  = CastNode  AttrSet  Int  TypeRef   Int
   | BinopNode AttrSet  Int  BinopCode Int  Int
   | OpNode    AttrSet  Int  OpCode    Int
-  | ParNode   AttrSet  Int  TypeData
-  | RetNode   AttrSet  Int  TypeData  Int
+  | ParNode   AttrSet  Int  TypeRef
+  | RetNode   AttrSet  Int  TypeRef   Int
   | CallNode  AttrSet [Int] FnId     [Int]
   | HOFNode   AttrSet  Int  HOFCode  [Int]
   | PhiNode   AttrSet  Int  CondCode  Int  Int
@@ -227,49 +228,12 @@ modelIR irs =
 
 
 
-modelIRHelper :: IRSymbols -> [IRParseItem] -> ([IRErr], [FuncData], [TypeData], [Attribute], [ConstantData], [Hint]) -> ([IRErr], [FuncData], [TypeData], [Attribute], [ConstantData], [Hint])
-modelIRHelper syms@(IRSymbols fs fs' ts ts' as as' cs cs' top) ((PI_FnDef p fnid typ nodes):irs) (errs, fns, tys, ats, cts, hts) =
-  let (err0, fs'', fs''') = customInsert [IRErr p $ append fnid $ pack " defined multiple times."] fs fs' fnid (top+1)
-      -- Add pass to model functions
-  in modelIRHelper (IRSymbols fs'' fs''' ts ts' as as' cs cs' (top + 1)) irs (err0 ++ errs, fns, tys, ats, cts, hts)
 
-modelIRHelper syms@(IRSymbols fs fs' ts ts' as as' cs cs' top) ((PI_TyDef p tyid sz nodes):irs) (errs, fns, tys, ats, cts, hts) =
-  let (err0, ts'', ts''') = customInsert [IRErr p $ append tyid $ pack " defined multiple times."] ts ts' tyid (top+1)
-      -- Add pass to model types
-  in modelIRHelper (IRSymbols fs fs' ts'' ts''' as as' cs cs' (top + 1)) irs (err0 ++ errs, fns, tys, ats, cts, hts)
-
-modelIRHelper syms [] ret = ret
-
-modelIRHelper syms (item:irs) (errs, fns, tys, ats, cts, hts) = modelIRHelper syms irs ((IRErr (ppos item) $ pack "Unrecognized pattern."):errs, fns, tys, ats, cts, hts)
-
-
-
-
-
-
-
-
-
-
-customInsert :: (Ord k, Ord a) => [IRErr] -> Map k a -> Map a k -> k -> a -> ([IRErr], Map k a, Map a k)
-customInsert errs forward backward k a =
-  case (M.lookup k forward) of
-    Just x  -> (errs, forward,              backward             )
-    Nothing -> ([]  , M.insert k a forward, M.insert a k backward)
-
-
-
-
-
-
-
-
-
-{-
-modelNode :: IRSymbols -> IRParseItem -> Either IRErr Node
+modelNode :: IRSymbols -> IRParseItem -> Either [IRErr] Node
 modelNode syms (PI_Node p outs call ins) =
   case (outs, unpack call, ins) of
-    ([o], "input", [PI_Type _ nms ty]) ->-}
+    ([o], "input", [PI_Type p nms ty]) -> typeLookup syms ty p (\x -> ParNode M.empty o (TypeRef nms x))
+    _  -> Left [IRErr p $ pack "Unrecognized node"]
 
 
 
@@ -280,7 +244,11 @@ modelNode syms (PI_Node p outs call ins) =
 
 
 
---typeLookup :: IRSymbols -> Text -> IRPos -> (TyId -> a) -> Either [IRErr] a
+typeLookup :: IRSymbols -> Text -> IRPos -> (TyId -> a) -> Either [IRErr] a
+typeLookup (IRSymbols _ _ tys _ _ _ _ _ _) tyid p fn =
+  case (M.lookup tyid tys) of
+    Just x  -> Right $ fn x
+    Nothing -> Left  [IRErr p $ append tyid $ pack " is not recognized as a defined type."]
 
 
 
