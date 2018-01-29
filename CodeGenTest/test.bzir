@@ -37,7 +37,7 @@ $link 'stdio\n'
 
 	#2 #3 divmod #0 #1
 	#4 cast F32 #2
-	#5 case F32 #3
+	#5 cast F32 #3
 
 	#6 output F32 #4
 	#7 output F32 #5
