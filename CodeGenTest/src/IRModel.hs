@@ -303,58 +303,76 @@ getSymbols ((PI_FnDef p fnid _ _):irs) =
       errs' = ife (top /= top') errs ((IRErr p $ append fnid $ pack " defined multiple times."):errs)
   in  (errs', (IRSymbols nfns nfns' tys tys' ats ats' cns cns' top'))
 
-getSymbols ((PI_TyDef _ tyid _ _):irs) =
+getSymbols ((PI_TyDef p tyid _ _):irs) =
   let (errs, (IRSymbols fns fns'  tys  tys' ats ats' cns cns'  top)) = getSymbols irs
-      ntys' = M.insert (top + 1) tyid tys'
-      ntys  = M.insert tyid (top + 1) tys
-  in  (errs, (IRSymbols fns fns' ntys ntys' ats ats' cns cns' (top+1)))
+      top'  = ife (isJust $ M.lookup tyid tys) top (top+1)
+      ntys' = M.insert top' tyid tys'
+      ntys  = M.insert tyid top' tys
+      errs' = ife (top /= top') errs ((IRErr p $ append tyid $ pack " defined multiple times."):errs)
+  in  (errs', (IRSymbols fns fns' ntys ntys' ats ats' cns cns' (top+1)))
 
-getSymbols ((PI_PrDef _ fnid _ _ _ _):irs) =
+getSymbols ((PI_PrDef p fnid _ _ _ _):irs) =
   let (errs, (IRSymbols  fns  fns' tys tys' ats ats' cns cns'  top)) = getSymbols irs
-      nfns' = M.insert (top + 1) fnid fns'
-      nfns  = M.insert fnid (top + 1) fns
-  in  (errs, (IRSymbols nfns nfns' tys tys' ats ats' cns cns' (top+1)))
+      top'  = ife (isJust $ M.lookup fnid fns) top (top+1)
+      nfns' = M.insert top' fnid fns'
+      nfns  = M.insert fnid top' fns
+      errs' = ife (top /= top') errs ((IRErr p $ append fnid $ pack " defined multiple times."):errs)
+  in  (errs', (IRSymbols nfns nfns' tys tys' ats ats' cns cns' (top+1)))
 
-getSymbols ((PI_ExDef _ fnid _ _ _ _):irs) =
+getSymbols ((PI_ExDef p fnid _ _ _ _):irs) =
   let (errs, (IRSymbols  fns  fns' tys tys' ats ats' cns cns'  top)) = getSymbols irs
-      nfns' = M.insert (top + 1) fnid fns'
-      nfns  = M.insert fnid (top + 1) fns
-  in  (errs, (IRSymbols nfns nfns' tys tys' ats ats' cns cns' (top+1)))
+      top'  = ife (isJust $ M.lookup fnid fns) top (top+1)
+      nfns' = M.insert top' fnid fns'
+      nfns  = M.insert fnid top' fns
+      errs' = ife (top /= top') errs ((IRErr p $ append fnid $ pack " defined multiple times."):errs)
+  in  (errs', (IRSymbols nfns nfns' tys tys' ats ats' cns cns' (top+1)))
 
-getSymbols ((PI_Const _ cid):irs) =
+getSymbols ((PI_Const p cid):irs) =
   let (errs, (IRSymbols fns fns' tys tys' ats ats'  cns  cns'  top)) = getSymbols irs
-      ncns' = M.insert (top + 1) cid cns'
-      ncns  = M.insert cid (top + 1) cns
-  in  (errs, (IRSymbols fns fns' tys tys' ats ats' ncns ncns' (top+1)))
+      top'  = ife (isJust $ M.lookup cid cns) top (top+1)
+      ncns' = M.insert top' cid cns'
+      ncns  = M.insert cid top' cns
+      errs' = ife (top /= top') errs ((IRErr p $ append cid $ pack " defined multiple times."):errs)
+  in  (errs', (IRSymbols fns fns' tys tys' ats ats' ncns ncns' (top+1)))
 
-getSymbols ((PI_ConstInt _ cid _):irs) =
+getSymbols ((PI_ConstInt p cid _):irs) =
   let (errs, (IRSymbols fns fns' tys tys' ats ats'  cns  cns'  top)) = getSymbols irs
-      ncns' = M.insert (top + 1) cid cns'
-      ncns  = M.insert cid (top + 1) cns
-  in  (errs, (IRSymbols fns fns' tys tys' ats ats' ncns ncns' (top+1)))
+      top'  = ife (isJust $ M.lookup cid cns) top (top+1)
+      ncns' = M.insert top' cid cns'
+      ncns  = M.insert cid top' cns
+      errs' = ife (top /= top') errs ((IRErr p $ append cid $ pack " defined multiple times."):errs)
+  in  (errs', (IRSymbols fns fns' tys tys' ats ats' ncns ncns' (top+1)))
 
-getSymbols ((PI_ConstStr _ cid _):irs) =
+getSymbols ((PI_ConstStr p cid _):irs) =
   let (errs, (IRSymbols fns fns' tys tys' ats ats'  cns  cns'  top)) = getSymbols irs
-      ncns' = M.insert (top + 1) cid cns'
-      ncns  = M.insert cid (top + 1) cns
-  in  (errs, (IRSymbols fns fns' tys tys' ats ats' ncns ncns' (top+1)))
+      top'  = ife (isJust $ M.lookup cid cns) top (top+1)
+      ncns' = M.insert top' cid cns'
+      ncns  = M.insert cid top' cns
+      errs' = ife (top /= top') errs ((IRErr p $ append cid $ pack " defined multiple times."):errs)
+  in  (errs', (IRSymbols fns fns' tys tys' ats ats' ncns ncns' (top+1)))
 
-getSymbols ((PI_Attr _ aid):irs) =
+getSymbols ((PI_Attr p aid):irs) =
   let (errs, (IRSymbols fns fns' tys tys'  ats  ats' cns cns'  top)) = getSymbols irs
+      top'  = ife (isJust $ M.lookup aid ats) top (top+1)
       nats' = M.insert (top + 1) aid ats'
       nats  = M.insert aid (top + 1) ats
-  in  (errs, (IRSymbols fns fns' tys tys' nats nats' cns cns' (top+1)))
+      errs' = ife (top /= top') errs ((IRErr p $ append aid $ pack " defined multiple times."):errs)
+  in  (errs', (IRSymbols fns fns' tys tys' nats nats' cns cns' (top+1)))
 
-getSymbols ((PI_AttrInt _ aid _):irs) =
+getSymbols ((PI_AttrInt p aid _):irs) =
   let (errs, (IRSymbols fns fns' tys tys'  ats  ats' cns cns'  top)) = getSymbols irs
+      top'  = ife (isJust $ M.lookup aid ats) top (top+1)
       nats' = M.insert (top + 1) aid ats'
       nats  = M.insert aid (top + 1) ats
-  in  (errs, (IRSymbols fns fns' tys tys' nats nats' cns cns' (top+1)))
+      errs' = ife (top /= top') errs ((IRErr p $ append aid $ pack " defined multiple times."):errs)
+  in  (errs', (IRSymbols fns fns' tys tys' nats nats' cns cns' (top+1)))
 
-getSymbols ((PI_AttrStr _ aid _):irs) =
+getSymbols ((PI_AttrStr p aid _):irs) =
   let (errs, (IRSymbols fns fns' tys tys'  ats  ats' cns cns'  top)) = getSymbols irs
+      top'  = ife (isJust $ M.lookup aid ats) top (top+1)
       nats' = M.insert (top + 1) aid ats'
       nats  = M.insert aid (top + 1) ats
-  in  (errs, (IRSymbols fns fns' tys tys' nats nats' cns cns' (top+1)))
+      errs' = ife (top /= top') errs ((IRErr p $ append aid $ pack " defined multiple times."):errs)
+  in  (errs', (IRSymbols fns fns' tys tys' nats nats' cns cns' (top+1)))
 
 getSymbols (_:irs) = getSymbols irs

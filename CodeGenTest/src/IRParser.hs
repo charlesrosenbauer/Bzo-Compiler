@@ -239,7 +239,7 @@ irParseIter fname tokens ((PI_NL p2)
                    :(PI_Token p0 (ConstToken _ cid))  : stk) = irParseIter fname tokens ((PI_ConstStr p0 cid str)      :stk)
 
 irParseIter fname tokens ((PI_NL p2)
-                   :(PI_Token p1 (NumToken _ num))
+                   :(PI_NS    p1 [num])
                    :(PI_Token p0 (ConstToken _ cid))  : stk) = irParseIter fname tokens ((PI_ConstInt p0 cid num)      :stk)
 
 
@@ -250,7 +250,7 @@ irParseIter fname tokens ((PI_NL p2)
                    :(PI_Token p0 (HintToken _ hid))   : stk) = irParseIter fname tokens ((PI_HintStr p0 hid str)       :stk)
 
 irParseIter fname tokens ((PI_NL p2)
-                   :(PI_Token p1 (NumToken _ num))
+                   :(PI_NS    p1 [num])
                    :(PI_Token p0 (HintToken _ hid))   : stk) = irParseIter fname tokens ((PI_HintInt p0 hid num)       :stk)
 
 
