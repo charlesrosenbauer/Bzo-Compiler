@@ -232,7 +232,32 @@ modelIR irs =
 modelNode :: IRSymbols -> IRParseItem -> Either [IRErr] Node
 modelNode syms (PI_Node p outs call ins) =
   case (outs, unpack call, ins) of
-    ([o], "input", [PI_Type p nms ty]) -> typeLookup syms ty p (\x -> ParNode M.empty o (TypeRef nms x))
+    ([o],  "input", [ PI_Type p nms ty ])               -> typeLookup syms ty p (\x -> ParNode M.empty o (TypeRef nms x))
+    ([o], "output", [(PI_Int _ n), (PI_Type p nms ty)]) -> typeLookup syms ty p (\x -> RetNode M.empty o (TypeRef nms x) n)
+    ([o],   "iadd", [(PI_Int _ b), (PI_Int _ a)])       -> Right $ BinopNode M.empty o IAddOp a b
+    ([o],   "isub", [(PI_Int _ b), (PI_Int _ a)])       -> Right $ BinopNode M.empty o ISubOp a b
+    ([o],   "imul", [(PI_Int _ b), (PI_Int _ a)])       -> Right $ BinopNode M.empty o IMulOp a b
+    ([o],   "idiv", [(PI_Int _ b), (PI_Int _ a)])       -> Right $ BinopNode M.empty o IDivOp a b
+    ([o],   "imod", [(PI_Int _ b), (PI_Int _ a)])       -> Right $ BinopNode M.empty o IModOp a b
+    ([o],   "icmp", [(PI_Int _ b), (PI_Int _ a)])       -> Right $ BinopNode M.empty o ICmpOp a b
+    ([o],   "uadd", [(PI_Int _ b), (PI_Int _ a)])       -> Right $ BinopNode M.empty o UAddOp a b
+    ([o],   "usub", [(PI_Int _ b), (PI_Int _ a)])       -> Right $ BinopNode M.empty o USubOp a b
+    ([o],   "umul", [(PI_Int _ b), (PI_Int _ a)])       -> Right $ BinopNode M.empty o UMulOp a b
+    ([o],   "udiv", [(PI_Int _ b), (PI_Int _ a)])       -> Right $ BinopNode M.empty o UDivOp a b
+    ([o],   "umod", [(PI_Int _ b), (PI_Int _ a)])       -> Right $ BinopNode M.empty o UModOp a b
+    ([o],   "ucmp", [(PI_Int _ b), (PI_Int _ a)])       -> Right $ BinopNode M.empty o UCmpOp a b
+    ([o],   "fadd", [(PI_Int _ b), (PI_Int _ a)])       -> Right $ BinopNode M.empty o FAddOp a b
+    ([o],   "fsub", [(PI_Int _ b), (PI_Int _ a)])       -> Right $ BinopNode M.empty o FSubOp a b
+    ([o],   "fmul", [(PI_Int _ b), (PI_Int _ a)])       -> Right $ BinopNode M.empty o FMulOp a b
+    ([o],   "fdiv", [(PI_Int _ b), (PI_Int _ a)])       -> Right $ BinopNode M.empty o FDivOp a b
+    ([o],   "fmod", [(PI_Int _ b), (PI_Int _ a)])       -> Right $ BinopNode M.empty o FModOp a b
+    ([o],   "fcmp", [(PI_Int _ b), (PI_Int _ a)])       -> Right $ BinopNode M.empty o FCmpOp a b
+    ([o],   "nadd", [(PI_Int _ b), (PI_Int _ a)])       -> Right $ BinopNode M.empty o NAddOp a b
+    ([o],   "nsub", [(PI_Int _ b), (PI_Int _ a)])       -> Right $ BinopNode M.empty o NSubOp a b
+    ([o],   "nmul", [(PI_Int _ b), (PI_Int _ a)])       -> Right $ BinopNode M.empty o NMulOp a b
+    ([o],   "ndiv", [(PI_Int _ b), (PI_Int _ a)])       -> Right $ BinopNode M.empty o NDivOp a b
+    ([o],   "nmod", [(PI_Int _ b), (PI_Int _ a)])       -> Right $ BinopNode M.empty o NModOp a b
+    ([o],   "ncmp", [(PI_Int _ b), (PI_Int _ a)])       -> Right $ BinopNode M.empty o NCmpOp a b
     _  -> Left [IRErr p $ pack "Unrecognized node"]
 
 
