@@ -162,7 +162,7 @@ data Node
   | RetNode   AttrSet  Int  TypeRef   Int
   | CallNode  AttrSet [Int] FnId     [Int]
   | HOFNode   AttrSet  Int  HOFCode  [Int]
-  | PhiNode   AttrSet  Int  CondCode  Int  Int
+  | PhiNode   AttrSet  Int  CondCode  Int  Int  Int
   | FuncNode  AttrSet  Int  FnId
   | TypeNode  AttrSet  Int  TyId
   deriving Show
@@ -234,8 +234,17 @@ modelIR irs =
 modelNode :: IRSymbols -> IRParseItem -> Either [IRErr] Node
 modelNode syms (PI_Node p outs call ins) =
   case (outs, unpack call, ins) of
-    ([o],  "input", [ PI_Type p nms ty ])               -> typeLookup syms ty p (\x -> ParNode M.empty o (TypeRef nms x))
-    ([o], "output", [(PI_Int _ n), (PI_Type p nms ty)]) -> typeLookup syms ty p (\x -> RetNode M.empty o (TypeRef nms x) n)
+    ([o],  "input", [ PI_Type p nms ty ])               -> typeLookup syms ty p (\x -> ParNode  M.empty o (TypeRef nms x))
+    ([o], "output", [(PI_Int _ n), (PI_Type p nms ty)]) -> typeLookup syms ty p (\x -> RetNode  M.empty o (TypeRef nms x) n)
+    ([o],   "cast", [(PI_Int _ n), (PI_Type p nms ty)]) -> typeLookup syms ty p (\x -> CastNode M.empty o (TypeRef nms x) n)
+    ([o],  "phiLS", [(PI_Int _ c), (PI_Int _ b), (PI_Int _ a)])             -> Right $ PhiNode  M.empty o  LSCond a b c
+    ([o],  "phiGT", [(PI_Int _ c), (PI_Int _ b), (PI_Int _ a)])             -> Right $ PhiNode  M.empty o  GTCond a b c
+    ([o],  "phiEQ", [(PI_Int _ c), (PI_Int _ b), (PI_Int _ a)])             -> Right $ PhiNode  M.empty o  EQCond a b c
+    ([o],  "phiNE", [(PI_Int _ c), (PI_Int _ b), (PI_Int _ a)])             -> Right $ PhiNode  M.empty o  NECond a b c
+    ([o],  "phiLE", [(PI_Int _ c), (PI_Int _ b), (PI_Int _ a)])             -> Right $ PhiNode  M.empty o  LECond a b c
+    ([o],  "phiGE", [(PI_Int _ c), (PI_Int _ b), (PI_Int _ a)])             -> Right $ PhiNode  M.empty o  GECond a b c
+    ([o],  "phiNZ", [(PI_Int _ c), (PI_Int _ b), (PI_Int _ a)])             -> Right $ PhiNode  M.empty o  NZCond a b c
+    ([o],  "phiEZ", [(PI_Int _ c), (PI_Int _ b), (PI_Int _ a)])             -> Right $ PhiNode  M.empty o  EZCond a b c
     ([o],   "iadd", [(PI_Int _ b), (PI_Int _ a)])       -> Right $ BinopNode M.empty o  IAddOp a b
     ([o],   "isub", [(PI_Int _ b), (PI_Int _ a)])       -> Right $ BinopNode M.empty o  ISubOp a b
     ([o],   "imul", [(PI_Int _ b), (PI_Int _ a)])       -> Right $ BinopNode M.empty o  IMulOp a b
