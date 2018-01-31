@@ -3,6 +3,7 @@ import Data.Text
 import Data.List as L
 import Data.Map.Strict as M
 import Data.Maybe
+import Data.Either
 import IRParser
 import IRLexer
 
@@ -156,13 +157,13 @@ data IRSymbols
 
 data Node
   = CastNode  AttrSet  Int  TypeRef   Int
-  | BinopNode AttrSet  Int  BinopCode Int  Int
+  | BinopNode AttrSet  Int  BinopCode Int   Int
   | OpNode    AttrSet  Int  OpCode    Int
   | ParNode   AttrSet  Int  TypeRef
   | RetNode   AttrSet  Int  TypeRef   Int
-  | CallNode  AttrSet [Int] FnId     [Int]
+  | CallNode  AttrSet [Int] CallCode  FnId [Int]
   | HOFNode   AttrSet  Int  HOFCode  [Int]
-  | PhiNode   AttrSet  Int  CondCode  Int  Int  Int
+  | PhiNode   AttrSet  Int  CondCode  Int   Int   Int
   | FuncNode  AttrSet  Int  FnId
   | TypeNode  AttrSet  Int  TyId
   deriving Show
@@ -201,6 +202,9 @@ data CondCode   = LSCond | GTCond | EQCond | NECond | LECond | GECond |
                   NZCond | EZCond
                   deriving Show
 
+data CallCode   = FnCall | ExCall | PrCall
+                  deriving Show
+
 
 
 
@@ -233,58 +237,58 @@ modelIR irs =
 
 modelNode :: IRSymbols -> IRParseItem -> Either [IRErr] Node
 modelNode syms (PI_Node p outs call ins) =
-  case (outs, unpack call, ins) of
+  case (outs, unpack call, L.reverse ins) of
     ([o],  "input", [ PI_Type p nms ty ])               -> typeLookup syms ty p (\x -> ParNode  M.empty o (TypeRef nms x))
-    ([o], "output", [(PI_Int _ n), (PI_Type p nms ty)]) -> typeLookup syms ty p (\x -> RetNode  M.empty o (TypeRef nms x) n)
-    ([o],   "cast", [(PI_Int _ n), (PI_Type p nms ty)]) -> typeLookup syms ty p (\x -> CastNode M.empty o (TypeRef nms x) n)
-    ([o],  "phiLS", [(PI_Int _ c), (PI_Int _ b), (PI_Int _ a)])             -> Right $ PhiNode  M.empty o  LSCond a b c
-    ([o],  "phiGT", [(PI_Int _ c), (PI_Int _ b), (PI_Int _ a)])             -> Right $ PhiNode  M.empty o  GTCond a b c
-    ([o],  "phiEQ", [(PI_Int _ c), (PI_Int _ b), (PI_Int _ a)])             -> Right $ PhiNode  M.empty o  EQCond a b c
-    ([o],  "phiNE", [(PI_Int _ c), (PI_Int _ b), (PI_Int _ a)])             -> Right $ PhiNode  M.empty o  NECond a b c
-    ([o],  "phiLE", [(PI_Int _ c), (PI_Int _ b), (PI_Int _ a)])             -> Right $ PhiNode  M.empty o  LECond a b c
-    ([o],  "phiGE", [(PI_Int _ c), (PI_Int _ b), (PI_Int _ a)])             -> Right $ PhiNode  M.empty o  GECond a b c
-    ([o],  "phiNZ", [(PI_Int _ c), (PI_Int _ b), (PI_Int _ a)])             -> Right $ PhiNode  M.empty o  NZCond a b c
-    ([o],  "phiEZ", [(PI_Int _ c), (PI_Int _ b), (PI_Int _ a)])             -> Right $ PhiNode  M.empty o  EZCond a b c
-    ([o],   "iadd", [(PI_Int _ b), (PI_Int _ a)])       -> Right $ BinopNode M.empty o  IAddOp a b
-    ([o],   "isub", [(PI_Int _ b), (PI_Int _ a)])       -> Right $ BinopNode M.empty o  ISubOp a b
-    ([o],   "imul", [(PI_Int _ b), (PI_Int _ a)])       -> Right $ BinopNode M.empty o  IMulOp a b
-    ([o],   "idiv", [(PI_Int _ b), (PI_Int _ a)])       -> Right $ BinopNode M.empty o  IDivOp a b
-    ([o],   "imod", [(PI_Int _ b), (PI_Int _ a)])       -> Right $ BinopNode M.empty o  IModOp a b
-    ([o],   "icmp", [(PI_Int _ b), (PI_Int _ a)])       -> Right $ BinopNode M.empty o  ICmpOp a b
-    ([o],   "uadd", [(PI_Int _ b), (PI_Int _ a)])       -> Right $ BinopNode M.empty o  UAddOp a b
-    ([o],   "usub", [(PI_Int _ b), (PI_Int _ a)])       -> Right $ BinopNode M.empty o  USubOp a b
-    ([o],   "umul", [(PI_Int _ b), (PI_Int _ a)])       -> Right $ BinopNode M.empty o  UMulOp a b
-    ([o],   "udiv", [(PI_Int _ b), (PI_Int _ a)])       -> Right $ BinopNode M.empty o  UDivOp a b
-    ([o],   "umod", [(PI_Int _ b), (PI_Int _ a)])       -> Right $ BinopNode M.empty o  UModOp a b
-    ([o],   "ucmp", [(PI_Int _ b), (PI_Int _ a)])       -> Right $ BinopNode M.empty o  UCmpOp a b
-    ([o],   "fadd", [(PI_Int _ b), (PI_Int _ a)])       -> Right $ BinopNode M.empty o  FAddOp a b
-    ([o],   "fsub", [(PI_Int _ b), (PI_Int _ a)])       -> Right $ BinopNode M.empty o  FSubOp a b
-    ([o],   "fmul", [(PI_Int _ b), (PI_Int _ a)])       -> Right $ BinopNode M.empty o  FMulOp a b
-    ([o],   "fdiv", [(PI_Int _ b), (PI_Int _ a)])       -> Right $ BinopNode M.empty o  FDivOp a b
-    ([o],   "fmod", [(PI_Int _ b), (PI_Int _ a)])       -> Right $ BinopNode M.empty o  FModOp a b
-    ([o],   "fcmp", [(PI_Int _ b), (PI_Int _ a)])       -> Right $ BinopNode M.empty o  FCmpOp a b
-    ([o],   "nadd", [(PI_Int _ b), (PI_Int _ a)])       -> Right $ BinopNode M.empty o  NAddOp a b
-    ([o],   "nsub", [(PI_Int _ b), (PI_Int _ a)])       -> Right $ BinopNode M.empty o  NSubOp a b
-    ([o],   "nmul", [(PI_Int _ b), (PI_Int _ a)])       -> Right $ BinopNode M.empty o  NMulOp a b
-    ([o],   "ndiv", [(PI_Int _ b), (PI_Int _ a)])       -> Right $ BinopNode M.empty o  NDivOp a b
-    ([o],   "nmod", [(PI_Int _ b), (PI_Int _ a)])       -> Right $ BinopNode M.empty o  NModOp a b
-    ([o],   "ncmp", [(PI_Int _ b), (PI_Int _ a)])       -> Right $ BinopNode M.empty o  NCmpOp a b
-    ([o],     "or", [(PI_Int _ b), (PI_Int _ a)])       -> Right $ BinopNode M.empty o    OrOp a b
-    ([o],    "and", [(PI_Int _ b), (PI_Int _ a)])       -> Right $ BinopNode M.empty o   AndOp a b
-    ([o],    "xor", [(PI_Int _ b), (PI_Int _ a)])       -> Right $ BinopNode M.empty o   XorOp a b
-    ([o],    "lor", [(PI_Int _ b), (PI_Int _ a)])       -> Right $ BinopNode M.empty o   LOrOp a b
-    ([o],   "land", [(PI_Int _ b), (PI_Int _ a)])       -> Right $ BinopNode M.empty o  LAndOp a b
-    ([o],   "lxor", [(PI_Int _ b), (PI_Int _ a)])       -> Right $ BinopNode M.empty o  LXorOp a b
-    ([o],   "lshl", [(PI_Int _ b), (PI_Int _ a)])       -> Right $ BinopNode M.empty o  LShLOp a b
-    ([o],   "lshr", [(PI_Int _ b), (PI_Int _ a)])       -> Right $ BinopNode M.empty o  LShROp a b
-    ([o],   "ashr", [(PI_Int _ b), (PI_Int _ a)])       -> Right $ BinopNode M.empty o  AShROp a b
-    ([o],   "nlog", [(PI_Int _ b), (PI_Int _ a)])       -> Right $ BinopNode M.empty o  NLogOp a b
-    ([o],  "nroot", [(PI_Int _ b), (PI_Int _ a)])       -> Right $ BinopNode M.empty o NRootOp a b
-    ([o],   "nexp", [(PI_Int _ b), (PI_Int _ a)])       -> Right $ BinopNode M.empty o  NExpOp a b
-    ([o],   "flog", [(PI_Int _ b), (PI_Int _ a)])       -> Right $ BinopNode M.empty o  FLogOp a b
-    ([o],  "froot", [(PI_Int _ b), (PI_Int _ a)])       -> Right $ BinopNode M.empty o FRootOp a b
-    ([o],   "fexp", [(PI_Int _ b), (PI_Int _ a)])       -> Right $ BinopNode M.empty o  FExpOp a b
-    ([o],    "pow", [(PI_Int _ b), (PI_Int _ a)])       -> Right $ BinopNode M.empty o   PowOp a b
+    ([o], "output", [(PI_Type p nms ty), (PI_Int _ n)]) -> typeLookup syms ty p (\x -> RetNode  M.empty o (TypeRef nms x) n)
+    ([o],   "cast", [(PI_Type p nms ty), (PI_Int _ n)]) -> typeLookup syms ty p (\x -> CastNode M.empty o (TypeRef nms x) n)
+    ([o],  "phiLS", [(PI_Int _ a), (PI_Int _ b), (PI_Int _ c)])             -> Right $ PhiNode  M.empty o  LSCond a b c
+    ([o],  "phiGT", [(PI_Int _ a), (PI_Int _ b), (PI_Int _ c)])             -> Right $ PhiNode  M.empty o  GTCond a b c
+    ([o],  "phiEQ", [(PI_Int _ a), (PI_Int _ b), (PI_Int _ c)])             -> Right $ PhiNode  M.empty o  EQCond a b c
+    ([o],  "phiNE", [(PI_Int _ a), (PI_Int _ b), (PI_Int _ c)])             -> Right $ PhiNode  M.empty o  NECond a b c
+    ([o],  "phiLE", [(PI_Int _ a), (PI_Int _ b), (PI_Int _ c)])             -> Right $ PhiNode  M.empty o  LECond a b c
+    ([o],  "phiGE", [(PI_Int _ a), (PI_Int _ b), (PI_Int _ c)])             -> Right $ PhiNode  M.empty o  GECond a b c
+    ([o],  "phiNZ", [(PI_Int _ a), (PI_Int _ b), (PI_Int _ c)])             -> Right $ PhiNode  M.empty o  NZCond a b c
+    ([o],  "phiEZ", [(PI_Int _ a), (PI_Int _ b), (PI_Int _ c)])             -> Right $ PhiNode  M.empty o  EZCond a b c
+    ([o],   "iadd", [(PI_Int _ a), (PI_Int _ b)])       -> Right $ BinopNode M.empty o  IAddOp a b
+    ([o],   "isub", [(PI_Int _ a), (PI_Int _ b)])       -> Right $ BinopNode M.empty o  ISubOp a b
+    ([o],   "imul", [(PI_Int _ a), (PI_Int _ b)])       -> Right $ BinopNode M.empty o  IMulOp a b
+    ([o],   "idiv", [(PI_Int _ a), (PI_Int _ b)])       -> Right $ BinopNode M.empty o  IDivOp a b
+    ([o],   "imod", [(PI_Int _ a), (PI_Int _ b)])       -> Right $ BinopNode M.empty o  IModOp a b
+    ([o],   "icmp", [(PI_Int _ a), (PI_Int _ b)])       -> Right $ BinopNode M.empty o  ICmpOp a b
+    ([o],   "uadd", [(PI_Int _ a), (PI_Int _ b)])       -> Right $ BinopNode M.empty o  UAddOp a b
+    ([o],   "usub", [(PI_Int _ a), (PI_Int _ b)])       -> Right $ BinopNode M.empty o  USubOp a b
+    ([o],   "umul", [(PI_Int _ a), (PI_Int _ b)])       -> Right $ BinopNode M.empty o  UMulOp a b
+    ([o],   "udiv", [(PI_Int _ a), (PI_Int _ b)])       -> Right $ BinopNode M.empty o  UDivOp a b
+    ([o],   "umod", [(PI_Int _ a), (PI_Int _ b)])       -> Right $ BinopNode M.empty o  UModOp a b
+    ([o],   "ucmp", [(PI_Int _ a), (PI_Int _ b)])       -> Right $ BinopNode M.empty o  UCmpOp a b
+    ([o],   "fadd", [(PI_Int _ a), (PI_Int _ b)])       -> Right $ BinopNode M.empty o  FAddOp a b
+    ([o],   "fsub", [(PI_Int _ a), (PI_Int _ b)])       -> Right $ BinopNode M.empty o  FSubOp a b
+    ([o],   "fmul", [(PI_Int _ a), (PI_Int _ b)])       -> Right $ BinopNode M.empty o  FMulOp a b
+    ([o],   "fdiv", [(PI_Int _ a), (PI_Int _ b)])       -> Right $ BinopNode M.empty o  FDivOp a b
+    ([o],   "fmod", [(PI_Int _ a), (PI_Int _ b)])       -> Right $ BinopNode M.empty o  FModOp a b
+    ([o],   "fcmp", [(PI_Int _ a), (PI_Int _ b)])       -> Right $ BinopNode M.empty o  FCmpOp a b
+    ([o],   "nadd", [(PI_Int _ a), (PI_Int _ b)])       -> Right $ BinopNode M.empty o  NAddOp a b
+    ([o],   "nsub", [(PI_Int _ a), (PI_Int _ b)])       -> Right $ BinopNode M.empty o  NSubOp a b
+    ([o],   "nmul", [(PI_Int _ a), (PI_Int _ b)])       -> Right $ BinopNode M.empty o  NMulOp a b
+    ([o],   "ndiv", [(PI_Int _ a), (PI_Int _ b)])       -> Right $ BinopNode M.empty o  NDivOp a b
+    ([o],   "nmod", [(PI_Int _ a), (PI_Int _ b)])       -> Right $ BinopNode M.empty o  NModOp a b
+    ([o],   "ncmp", [(PI_Int _ a), (PI_Int _ b)])       -> Right $ BinopNode M.empty o  NCmpOp a b
+    ([o],     "or", [(PI_Int _ a), (PI_Int _ b)])       -> Right $ BinopNode M.empty o    OrOp a b
+    ([o],    "and", [(PI_Int _ a), (PI_Int _ b)])       -> Right $ BinopNode M.empty o   AndOp a b
+    ([o],    "xor", [(PI_Int _ a), (PI_Int _ b)])       -> Right $ BinopNode M.empty o   XorOp a b
+    ([o],    "lor", [(PI_Int _ a), (PI_Int _ b)])       -> Right $ BinopNode M.empty o   LOrOp a b
+    ([o],   "land", [(PI_Int _ a), (PI_Int _ b)])       -> Right $ BinopNode M.empty o  LAndOp a b
+    ([o],   "lxor", [(PI_Int _ a), (PI_Int _ b)])       -> Right $ BinopNode M.empty o  LXorOp a b
+    ([o],   "lshl", [(PI_Int _ a), (PI_Int _ b)])       -> Right $ BinopNode M.empty o  LShLOp a b
+    ([o],   "lshr", [(PI_Int _ a), (PI_Int _ b)])       -> Right $ BinopNode M.empty o  LShROp a b
+    ([o],   "ashr", [(PI_Int _ a), (PI_Int _ b)])       -> Right $ BinopNode M.empty o  AShROp a b
+    ([o],   "nlog", [(PI_Int _ a), (PI_Int _ b)])       -> Right $ BinopNode M.empty o  NLogOp a b
+    ([o],  "nroot", [(PI_Int _ a), (PI_Int _ b)])       -> Right $ BinopNode M.empty o NRootOp a b
+    ([o],   "nexp", [(PI_Int _ a), (PI_Int _ b)])       -> Right $ BinopNode M.empty o  NExpOp a b
+    ([o],   "flog", [(PI_Int _ a), (PI_Int _ b)])       -> Right $ BinopNode M.empty o  FLogOp a b
+    ([o],  "froot", [(PI_Int _ a), (PI_Int _ b)])       -> Right $ BinopNode M.empty o FRootOp a b
+    ([o],   "fexp", [(PI_Int _ a), (PI_Int _ b)])       -> Right $ BinopNode M.empty o  FExpOp a b
+    ([o],    "pow", [(PI_Int _ a), (PI_Int _ b)])       -> Right $ BinopNode M.empty o   PowOp a b
     ([o],    "abs", [(PI_Int _ a)])                     -> Right $ OpNode    M.empty o   AbsOp a
     ([o],   "trnc", [(PI_Int _ a)])                     -> Right $ OpNode    M.empty o  TrncOp a
     ([o],   "wide", [(PI_Int _ a)])                     -> Right $ OpNode    M.empty o   AbsOp a
@@ -310,7 +314,40 @@ modelNode syms (PI_Node p outs call ins) =
     ([o],   "cttz", [(PI_Int _ a)])                     -> Right $ OpNode    M.empty o  CttzOp a
     ([o],   "ctlz", [(PI_Int _ a)])                     -> Right $ OpNode    M.empty o  CtlzOp a
     ([o],   "pcnt", [(PI_Int _ a)])                     -> Right $ OpNode    M.empty o  PCntOp a
+    ( os, "prcall", ((PI_Proc p fn): pars))         ->
+      let nms = verifyAllNums [] pars
+          fnc = funcLookup syms fn p (\fnid -> CallNode M.empty os PrCall fnid $ L.head $ rights [nms])
+      in case nms of
+          Left er -> Left [er]
+          Right _ -> fnc
+    ( os, "rccall", ((PI_Extn p fn): pars))         ->
+      let nms = verifyAllNums [] pars
+          fnc = funcLookup syms fn p (\fnid -> CallNode M.empty os ExCall fnid $ L.head $ rights [nms])
+      in case nms of
+          Left er -> Left [er]
+          Right _ -> fnc
+    ( os, fn, pars)         ->
+      let nms = verifyAllNums [] pars
+          fnc = funcLookup syms (pack fn) p (\fnid -> CallNode M.empty os FnCall fnid $ L.head $ rights [nms])
+      in case nms of
+          Left er -> Left [er]
+          Right _ -> fnc
+
     _  -> Left [IRErr p $ pack "Unrecognized node"]
+
+
+
+
+
+
+
+
+
+
+verifyAllNums :: [Int] -> [IRParseItem] -> Either IRErr [Int]
+verifyAllNums nums ((PI_Int _ a):irs) = verifyAllNums (nums ++ [a]) irs
+verifyAllNums nums []                 = Right  nums
+verifyAllNums nums (ir:irs)           = Left $ IRErr (ppos ir) $ pack "Invalid parameter to function."
 
 
 
@@ -326,6 +363,21 @@ typeLookup (IRSymbols _ _ tys _ _ _ _ _ _) tyid p fn =
   case (M.lookup tyid tys) of
     Just x  -> Right $ fn x
     Nothing -> Left  [IRErr p $ append tyid $ pack " is not recognized as a defined type."]
+
+
+
+
+
+
+
+
+
+
+funcLookup :: IRSymbols -> Text -> IRPos -> (FnId -> a) -> Either [IRErr] a
+funcLookup (IRSymbols fns _ _ _ _ _ _ _ _) fnid p fn =
+  case (M.lookup fnid fns) of
+    Just x  -> Right $ fn x
+    Nothing -> Left  [IRErr p $ append fnid $ pack " is not recognized as a defined function."]
 
 
 
