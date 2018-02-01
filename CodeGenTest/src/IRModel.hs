@@ -238,9 +238,9 @@ modelIR irs =
 modelNode :: IRSymbols -> IRParseItem -> Either [IRErr] Node
 modelNode syms (PI_Node p outs call ins) =
   case (outs, unpack call, L.reverse ins) of
-    ([o],  "input", [ PI_Type p nms ty ])               -> typeLookup syms ty p (\x -> ParNode  M.empty o (TypeRef nms x))
-    ([o], "output", [(PI_Type p nms ty), (PI_Int _ n)]) -> typeLookup syms ty p (\x -> RetNode  M.empty o (TypeRef nms x) n)
-    ([o],   "cast", [(PI_Type p nms ty), (PI_Int _ n)]) -> typeLookup syms ty p (\x -> CastNode M.empty o (TypeRef nms x) n)
+    ([o],  "input", [ PI_Type p nms ty ])               -> typeLookup syms ty p (\x -> Right $ ParNode  M.empty o (TypeRef nms x))
+    ([o], "output", [(PI_Type p nms ty), (PI_Int _ n)]) -> typeLookup syms ty p (\x -> Right $ RetNode  M.empty o (TypeRef nms x) n)
+    ([o],   "cast", [(PI_Type p nms ty), (PI_Int _ n)]) -> typeLookup syms ty p (\x -> Right $ CastNode M.empty o (TypeRef nms x) n)
     ([o],  "phiLS", [(PI_Int _ a), (PI_Int _ b), (PI_Int _ c)])             -> Right $ PhiNode  M.empty o  LSCond a b c
     ([o],  "phiGT", [(PI_Int _ a), (PI_Int _ b), (PI_Int _ c)])             -> Right $ PhiNode  M.empty o  GTCond a b c
     ([o],  "phiEQ", [(PI_Int _ a), (PI_Int _ b), (PI_Int _ c)])             -> Right $ PhiNode  M.empty o  EQCond a b c
@@ -318,19 +318,19 @@ modelNode syms (PI_Node p outs call ins) =
       let nms = verifyAllNums [] pars
           fnc = funcLookup syms fn p (\fnid -> CallNode M.empty os PrCall fnid $ L.head $ rights [nms])
       in case nms of
-          Left er -> Left [er]
+          Left er -> Left er
           Right _ -> fnc
     ( os, "rccall", ((PI_Extn p fn): pars))         ->
       let nms = verifyAllNums [] pars
           fnc = funcLookup syms fn p (\fnid -> CallNode M.empty os ExCall fnid $ L.head $ rights [nms])
       in case nms of
-          Left er -> Left [er]
+          Left er -> Left er
           Right _ -> fnc
     ( os, fn, pars)         ->
       let nms = verifyAllNums [] pars
           fnc = funcLookup syms (pack fn) p (\fnid -> CallNode M.empty os FnCall fnid $ L.head $ rights [nms])
       in case nms of
-          Left er -> Left [er]
+          Left er -> Left er
           Right _ -> fnc
 
     _  -> Left [IRErr p $ pack "Unrecognized node"]
@@ -344,10 +344,10 @@ modelNode syms (PI_Node p outs call ins) =
 
 
 
-verifyAllNums :: [Int] -> [IRParseItem] -> Either IRErr [Int]
+verifyAllNums :: [Int] -> [IRParseItem] -> Either [IRErr] [Int]
 verifyAllNums nums ((PI_Int _ a):irs) = verifyAllNums (nums ++ [a]) irs
 verifyAllNums nums []                 = Right  nums
-verifyAllNums nums (ir:irs)           = Left $ IRErr (ppos ir) $ pack "Invalid parameter to function."
+verifyAllNums nums (ir:irs)           = Left [IRErr (ppos ir) $ pack "Invalid parameter to function."]
 
 
 
@@ -358,10 +358,25 @@ verifyAllNums nums (ir:irs)           = Left $ IRErr (ppos ir) $ pack "Invalid p
 
 
 
-typeLookup :: IRSymbols -> Text -> IRPos -> (TyId -> a) -> Either [IRErr] a
+verifyAllTyPars :: IRSymbols -> [IRParseItem] -> Either [IRErr] [Int]
+verifyAllTyPars syms ((PI_Type p nms tyid):irs) = typeLookup syms tyid p (\x -> verifyAllTyPars syms irs)
+verifyAllTyPars syms []                         = Right []
+verifyAllTyPars syms (x:irs)                    = Left [IRErr (ppos x) $ pack "Invalid type definition. This probably shouldn't happen."]
+
+
+
+
+
+
+
+
+
+
+
+typeLookup :: IRSymbols -> Text -> IRPos -> (TyId -> Either [IRErr] a) -> Either [IRErr] a
 typeLookup (IRSymbols _ _ tys _ _ _ _ _ _) tyid p fn =
   case (M.lookup tyid tys) of
-    Just x  -> Right $ fn x
+    Just x  -> fn x
     Nothing -> Left  [IRErr p $ append tyid $ pack " is not recognized as a defined type."]
 
 
