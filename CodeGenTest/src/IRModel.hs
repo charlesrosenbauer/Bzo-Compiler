@@ -240,7 +240,8 @@ modelIR irs =
 modelNode :: IRSymbols -> IRParseItem -> Either [IRErr] Node
 modelNode syms (PI_Node p outs call ins) =
   case (outs, unpack call, L.reverse ins) of
-    ([o],  "input", [ PI_Type p nms ty ])               -> typeLookup syms ty p (\x -> Right $ ParNode  M.empty o (TypeRef nms x))
+    ([o],  "input", [ PI_Type  p nms ty ])               -> typeLookup syms ty p (\x -> Right $ ParNode  M.empty o (TypeRef nms x))
+    ([o],  "const", [ PI_Const p cst    ])               -> typeLookup syms ty p (\x -> Right $ ParNode  M.empty o (TypeRef nms x))
     ([o], "output", [(PI_Type p nms ty), (PI_Int _ n)]) -> typeLookup syms ty p (\x -> Right $ RetNode  M.empty o (TypeRef nms x) n)
     ([o],   "cast", [(PI_Type p nms ty), (PI_Int _ n)]) -> typeLookup syms ty p (\x -> Right $ CastNode M.empty o (TypeRef nms x) n)
     ([o],    "get", [(PI_Type p nms ty), (PI_Int _ index), (PI_Int _ offset)])               -> typeLookup syms ty p (\x -> Right $ GetNode  M.empty o (TypeRef nms x) index offset)

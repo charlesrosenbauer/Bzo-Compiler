@@ -291,6 +291,9 @@ irParseIter fname tokens ((PI_Token p1 (ProcToken _ p))
 irParseIter fname tokens ((PI_Token p1 (StrToken _ s))
                    :(PI_Node p0 num fnid pars)        : stk) = irParseIter fname tokens ((PI_Node p0 num fnid ((PI_Str p1 s):pars))  :stk)
 
+irParseIter fname tokens ((PI_Token p1 (ConstToken _ s))
+                   :(PI_Node p0 num fnid pars)        : stk) = irParseIter fname tokens ((PI_Node p0 num fnid ((PI_Const p1 s):pars))  :stk)
+
 irParseIter fname tokens ((PI_Token p1 (NumToken _ n))
                    :(PI_Node p0 num fnid pars)        : stk) = irParseIter fname tokens ((PI_Node p0 num fnid ((PI_Int p1 n):pars))  :stk)
 
