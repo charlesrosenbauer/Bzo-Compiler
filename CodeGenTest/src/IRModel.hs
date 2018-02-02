@@ -157,6 +157,8 @@ data IRSymbols
 
 data Node
   = CastNode  AttrSet  Int  TypeRef   Int
+  | GetNode   AttrSet  Int  TypeRef   Int   Int
+  | SetNode   AttrSet  Int  TypeRef   Int   Int   Int
   | BinopNode AttrSet  Int  BinopCode Int   Int
   | OpNode    AttrSet  Int  OpCode    Int
   | ParNode   AttrSet  Int  TypeRef
@@ -241,6 +243,8 @@ modelNode syms (PI_Node p outs call ins) =
     ([o],  "input", [ PI_Type p nms ty ])               -> typeLookup syms ty p (\x -> Right $ ParNode  M.empty o (TypeRef nms x))
     ([o], "output", [(PI_Type p nms ty), (PI_Int _ n)]) -> typeLookup syms ty p (\x -> Right $ RetNode  M.empty o (TypeRef nms x) n)
     ([o],   "cast", [(PI_Type p nms ty), (PI_Int _ n)]) -> typeLookup syms ty p (\x -> Right $ CastNode M.empty o (TypeRef nms x) n)
+    ([o],    "get", [(PI_Type p nms ty), (PI_Int _ index), (PI_Int _ offset)])               -> typeLookup syms ty p (\x -> Right $ GetNode  M.empty o (TypeRef nms x) index offset)
+    ([o],    "set", [(PI_Type p nms ty), (PI_Int _ index), (PI_Int _ offset), (PI_Int _ a)]) -> typeLookup syms ty p (\x -> Right $ SetNode  M.empty o (TypeRef nms x) index offset a)
     ([o],  "phiLS", [(PI_Int _ a), (PI_Int _ b), (PI_Int _ c)])             -> Right $ PhiNode  M.empty o  LSCond a b c
     ([o],  "phiGT", [(PI_Int _ a), (PI_Int _ b), (PI_Int _ c)])             -> Right $ PhiNode  M.empty o  GTCond a b c
     ([o],  "phiEQ", [(PI_Int _ a), (PI_Int _ b), (PI_Int _ c)])             -> Right $ PhiNode  M.empty o  EQCond a b c
