@@ -21,7 +21,7 @@ import Debug.Trace
 
 
 
-getImportDependencies :: BzoFileModel CallAST -> [String]
+getImportDependencies :: Show a => BzoFileModel a -> [String]
 getImportDependencies fs = nub $ (\(BzoFileModel mn fp dm ast im ln ia la) -> im ++ (map fst ia)) fs
 
 
@@ -33,7 +33,7 @@ getImportDependencies fs = nub $ (\(BzoFileModel mn fp dm ast im ln ia la) -> im
 
 
 
-getLinkDependencies :: [BzoFileModel CallAST] -> [String]
+getLinkDependencies :: Show a => [BzoFileModel a] -> [String]
 getLinkDependencies fs = nub $ concatMap (\(BzoFileModel mn fp dm ast im ln ia la) -> ln ++ (map fst la)) fs
 
 
@@ -45,7 +45,7 @@ getLinkDependencies fs = nub $ concatMap (\(BzoFileModel mn fp dm ast im ln ia l
 
 
 
-orderByImports :: Map String (BzoFileModel CallAST) -> [BzoFileModel CallAST] -> [BzoFileModel CallAST] -> Either [BzoErr] [BzoFileModel CallAST]
+orderByImports :: Show a => Map String (BzoFileModel a) -> [BzoFileModel a] -> [BzoFileModel a] -> Either [BzoErr] [BzoFileModel a]
 orderByImports mp out [] = Right out
 orderByImports mp out fs =
   let (remain, next) = break (\x -> containsManyMembers mp $ getImportDependencies x) fs
@@ -66,7 +66,7 @@ orderByImports mp out fs =
 
 
 
-orderByLinks :: Map String [BzoFileModel CallAST] -> [[BzoFileModel CallAST]] -> [[BzoFileModel CallAST]] -> Either [BzoErr] [[BzoFileModel CallAST]]
+orderByLinks :: Show a => Map String [BzoFileModel a] -> [[BzoFileModel a]] -> [[BzoFileModel a]] -> Either [BzoErr] [[BzoFileModel a]]
 orderByLinks mp out [] = Right out
 orderByLinks mp out fs =
   let (remain, next) = break (\x -> containsManyMembers mp $ getLinkDependencies x) fs
@@ -83,7 +83,7 @@ orderByLinks mp out fs =
 
 
 
-orderFileData :: [BzoFileModel CallAST] -> Either [BzoErr] [BzoFileModel CallAST]
+orderFileData :: Show a => [BzoFileModel a] -> Either [BzoErr] [BzoFileModel a]
 orderFileData fs =
   let f0 = groupWith bfm_domain fs
       f1 = map (orderByImports empty []) f0
