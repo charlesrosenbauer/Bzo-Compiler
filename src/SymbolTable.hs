@@ -15,19 +15,6 @@ import qualified Data.List       as L
 
 
 
--- | Stripped out for now
-extractRecordsEnums :: CallAST -> [T.Text]
-extractRecordsEnums (CA_TypeDefCall _ _ _ _) = []
-extractRecordsEnums _ = []
-
-
-
-
-
-
-
-
-
 
 addFile :: SymbolTable -> T.Text -> SymbolTable
 addFile st@(SymbolTable iids fids itab ftab dmid itop ftop) file =
@@ -60,51 +47,6 @@ addSymbol file st@(SymbolTable iids fids itab ftab dmid itop ftop) symbol =
           Just _  -> st' -- Symbol has been used in the current file. No need for additions
           Nothing ->
             (SymbolTable (M.insert symbol ((fid, itop'+1):xs) iids') fids' (M.insert (itop'+1) (symbol, fid) itab') ftab' dmid' (itop'+1) ftop')
-
-
-
-
-
-
-
-
-
-
-addToTable' :: String -> SymbolTable -> CallAST -> SymbolTable
-addToTable' file st (CA_Calls    _ xs ) = foldl (addToTable' file) st xs
-addToTable' file st (CA_HintCall _ _ _) = st
-addToTable' file st (CA_REPLCall _ _  ) = st
-addToTable' file st ca =
-  case (extractRecordsEnums ca) of
-    [] -> addSymbol (T.pack file) st (T.pack $ ca_id ca)
-    xs -> foldl (addSymbol $ T.pack file) st ((T.pack $ ca_id ca):xs)
-
-
-
-
-
-
-
-
-
-
-addToTable :: SymbolTable -> BzoFileModel CallAST -> SymbolTable
-addToTable st (BzoFileModel mn _ dm ca _ _ _ _) = addToTable' (mn ++ ":" ++ dm) st ca
-
-
-
-
-
-
-
-
-
-
-generateSymbolTable :: [BzoFileModel CallAST] -> SymbolTable
-generateSymbolTable ms =
-  let (SymbolTable iids fids itab ftab dmid itop ftop) = foldl addToTable (SymbolTable (M.empty) (M.empty) (M.empty) (M.empty) (M.empty) 0 0) ms
-      dmids = fromListToListMap $ map (\(a, b) -> (last $ T.splitOn (T.pack ":") b, [a])) $ M.assocs ftab
-  in (SymbolTable iids fids itab ftab dmids itop ftop)
 
 
 
@@ -153,40 +95,3 @@ queryIInt (SymbolTable iids fids itab ftab dmid itop ftop) i = M.lookup i itab
 
 queryFInt :: SymbolTable -> Int64 -> Maybe T.Text
 queryFInt (SymbolTable iids fids itab ftab dmid itop ftop) f = M.lookup f ftab
-
-
-
-
-
-
-
-
-
-{-
-queryType :: TypeTable -> Int64 -> Maybe BzoType
-queryType tt i = M.lookup i tt
-
-
-
-
-
-
-
-
-
-
-adjustType :: (BzoType -> BzoType) -> TypeTable -> Int64 -> TypeTable
-adjustType f tt i = M.adjust f i tt
-
-
-
-
-
-
-
-
-
-
-insertType :: TypeTable -> Int64 -> BzoType -> TypeTable
-insertType tt i t = M.insert i t tt
--}
