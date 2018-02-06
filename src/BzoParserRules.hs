@@ -169,6 +169,16 @@ parserIter fname tokens (xpr@(BzS_Block  p2 _)
                         :(BzS_Token _ (TkLambdaSym p0)):stk)            = parserIter fname tokens ((BzS_Lambda p0 x xpr):stk)
 
 
+
+-- | Function Types
+parserIter fname tokens ((BzS_Statement p1 (BzS_Expr _ [def@(BzS_FnTy _ inty exty)]))
+                        :(BzS_FnHead p0 BzS_Undefined fn BzS_Undefined):stk)    = parserIter fname tokens ((BzS_Calls p0 [BzS_FnTypeDef p0 BzS_Undefined fn def]):stk)
+
+parserIter fname tokens ((BzS_Statement p1 (BzS_Expr _ [def@(BzS_FnTy _ inty exty)]))
+                        :(BzS_FnHead p0 inpars        fn BzS_Undefined):stk)    = parserIter fname tokens ((BzS_Calls p0 [BzS_FnTypeDef p0 inpars fn def]):stk)
+
+
+
 -- | Functions
 parserIter fname tokens ((BzS_Token p0 (TkDefine _))
                         :(BzS_Expr p1 [expar@(BzS_Expr _ _),
@@ -214,12 +224,6 @@ parserIter fname tokens (def@(BzS_Block p1 xs)
 
 parserIter fname tokens (def@(BzS_Statement p1 xs)
                         :(BzS_FnHead p0 ins fn exs)            :stk)    = parserIter fname tokens ((BzS_Calls p0 [BzS_FunDef p0 ins fn exs def]):stk)
-
-
--- | Function Types
-parserIter fname tokens ((BzS_Token  p2 (TkNewline _))
-                        :def@(BzS_FnTy   p1 inty exty)
-                        :(BzS_FnHead p0 BzS_Undefined fn BzS_Undefined):stk)    = parserIter fname tokens ((BzS_Calls p0 [BzS_FnTypeDef p0 fn def]):stk)
 
 -- | Type Definitions
 parserIter fname tokens ((BzS_Token p0 (TkDefine _))
