@@ -27,7 +27,7 @@ executable main
       --   BzoChecker
       -- , BzoChecker
        BzoConfigParser
-      -- , BzoFileSorter
+      , BzoFileSorter
       , BzoLexer
       , BzoParameterParser
       , BzoParser
@@ -36,6 +36,6 @@ executable main
       , BzoTypes
       , Compiler
       , HigherOrder
-      -- , ModelRules
-      -- , SymbolTable
+      , ModelRules
+      , SymbolTable
       , Builtins
