@@ -88,7 +88,7 @@ Do Block
 
 
 expr : Type
-Type Filter
+Type Filter. This is a way of adding constraints to a type, for example that it must be a member of a type class, or that it is one of several options in a polymorphic type. These filters are normally not allowed outside of function/type parameters.
 
 
 ;parameter{definition}
@@ -114,8 +114,15 @@ Simple Type Definition
 Parameterized Type Definition
 
 
+(A') Functor F' :: {
+	map :: (A' F'. (A' ;; B')) ;; B' F'
+}
+Type Class Definition
+
+
 fn :: In ;; Out
-Function Type Definition
+(K':Ord. A') insert :: ((K'. A')Dict. K'. A') ;; (K'. A')Dict
+Function Type Definitions
 
 
 fn :: expr
@@ -133,18 +140,19 @@ Map f to array
 
 x`f
 Partial application of f; behaves like a new function with x applied to the last argument of f.
+Due to ambiguities arising from the type system, all parameters but the first one must be passed in this way.
 
 4 5`+
 Passing 4 into an addition function partially applied with 5. Returns 9.
 
-(a. b) 12`%+
-Here 12 is applied to %+, a modular addition function. This expression is desugared to (a. b. 12) %+.
+a b`12`%+
+Here b and 12 is applied to %+, a modular addition function. This expression is desugared to (a. b. 12) %+.
 
-a 2`12`%+
-A variation on the previous example using multiple partially applied parameters. This desugars to (a. 2. 12) %+
+(a. b) c`%+
+This code is not valid however.
 
-4`+
-This code is not valid however. Bzo does not allow *true* partial application. The resulting function cannot be returned. All inputs must be provided inline. This restriction is due to function overloading / polymorphic tuples.
+a b c`%+
+Neither is this. Only one parameter must remain after partial application.
 
 
 ()
@@ -210,7 +218,7 @@ IO   $import
 
 main :: () ;; ()
 main :: {
-	~io:IO
+	() IO ~io
 	('Hello World!'. ~io) print ~io }
 
 ```
@@ -222,9 +230,9 @@ Following this, we define the type of the main function, such that it takes no i
 main :: () ;; ()
 ```
 
-Then we define main. Inside the do block, the first line defines a mutable variable ~io, and sets the type to IO. IO is a special type, and can only have one instance per function. A variable of the IO type can only be defined once outside of parameters. This is because the IO type is used to keep track of IO side effects; each function that performs IO actions must take it as an input, and return it as an output. This allows the compiler to easily track dependencies between functions for managing side effects, thus making parallelism easier.
+Then we define main. Inside the do block, the first line calls the IO constructor (which takes no parameters, so we just pass in a Nil), and we store it in a mutable variable, ~io. IO is a special type, and can only have one instance per function. A variable of the IO type can only be defined once outside of parameters. This is because the IO type is used to keep track of IO side effects; each function that performs IO actions must take it as an input, and return it as an output. This allows the compiler to easily track dependencies between functions for managing side effects, thus making parallelism easier.
 ```
-~io:IO
+() IO ~io
 ```
 
 The next line calls the print function, passing in a string, and the ~io variable. The print function returns an IO type, and so we store this back in ~io. This is also the end of the do block, and so the main function terminates here.
