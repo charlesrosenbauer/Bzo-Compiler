@@ -114,8 +114,8 @@ Simple Type Definition
 Parameterized Type Definition
 
 
-(A') Functor F' :: {
-	map :: (A' F'. (A' ;; B')) ;; B' F'
+(A') Functor :: {
+	(F':Functor) map :: (A' F'. (A' ;; B')) ;; B' F'
 }
 Type Class Definition
 
