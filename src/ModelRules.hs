@@ -69,6 +69,11 @@ modelFile mn path (errs, defs, syms) ty@(BzS_TypDef p pars tyid def) =
   -- Add Enum and Record Extraction
   in (errs, ty:defs, syms')
 
+modelFile mn path (errs, defs, syms) tc@(BzS_TyClassDef p pars tyid def) =
+  let syms' = addSymbol (pack mn) syms (pack tyid)
+      (errs', defs', syms'') = L.foldl (modelFile mn path) (errs, defs, syms') def
+  in  (errs', tc:defs, syms'')
+
 modelFile mn path (errs, defs, syms) other = (errs, other:defs, syms)
 
 
