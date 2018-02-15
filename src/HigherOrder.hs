@@ -18,16 +18,20 @@ import qualified Data.Map.Strict as Mp hiding (foldl, map)
 
 -- Tomasulo algorithm as a higher order function.
 -- Iterating a function on each element as much as possible before moving on is great for cache performance.
-toma :: [a] -> b -> (b -> a -> (Bool, Either [c] a)) -> (b -> [a] -> (Bool, b)) -> (b, Either [c] [a])
-toma xs b f xs2b =
-  let vals = map (iterErr (f b)) xs
-      errs = L.concat $ E.lefts  vals
-      xs'  = E.rights vals
-      (cont, b') = xs2b b xs'
-  in case (cont, errs) of
-      (True , []) -> toma xs' b' f xs2b
-      (False, []) -> (b', Right xs')
-      (_    , er) -> (b', Left  er )
+toma :: [a] -> b -> (b -> a -> (Bool, Either [c] a)) -> (b -> [a] -> (Bool, b)) -> (b -> a -> Bool) ->  (b, Either [c] [a])
+toma xs b f xs2b try =
+  let vals  = map (\x -> ife (try b x) (True, iterErr (f b) x) (False, Right x)) xs
+      vals' = map snd vals
+      tries = map fst vals
+      errs  = L.concat $ E.lefts $ vals'
+      xs'   = E.rights vals'
+      (cont, b')  = xs2b b xs'
+      satisfiable = L.or tries
+  in case (cont, errs, satisfiable) of
+      (_    , er, False) -> (b', Left er)
+      (True , [],    _ ) -> toma xs' b' f xs2b try
+      (False, [],    _ ) -> (b', Right xs')
+      (_    , er,    _ ) -> (b', Left  er )
 
 
 
