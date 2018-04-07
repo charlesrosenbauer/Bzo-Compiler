@@ -939,7 +939,7 @@ instance (Show a) => Show (Definition a) where show = showDefinition
 
 
 
-
+{-
 data BzoType
   = BT_Int  { bt_hash :: !BzoHash, bt_int :: !Integer }
   | BT_Flt  { bt_hash :: !BzoHash, bt_flt :: !Double }
@@ -1097,3 +1097,4 @@ data Show a => TypeObject a
       tobj_rdeps ::  S.Set Int64,
       tobj_deps  ::  S.Set Int64 }
   deriving Show
+-}

@@ -21,7 +21,7 @@ import Debug.Trace
 
 
 
-
+{-
 data DefState
   = DefState {
       ds_defs    :: [Definition T.Text],
@@ -361,3 +361,4 @@ wrappedGenerateTypes (Left errs0) (Left errs1) = (errs0 ++ errs1, [])
 wrappedGenerateTypes (Left  errs) (Right _   ) = (errs, [])
 wrappedGenerateTypes (Right _   ) (Left  errs) = (errs, [])
 wrappedGenerateTypes (Right st  ) (Right fms) = trace (show st) $ generateTypes st fms-}
+-}
