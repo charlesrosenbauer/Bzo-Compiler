@@ -488,7 +488,7 @@ instance (Show a) => Show (BzoFileModel a) where show = showBzoFileModel
 
 
 
-
+{-
 data TypeAST
       = TA_Cmpd {
           ta_pos :: !BzoPos,
@@ -859,7 +859,57 @@ showExprModel (EM_ExTyp  _ i  l ) = " <ExTy: " ++ i ++ " from " ++ l ++ "> "
 showExprModel (EM_Wildcard _    ) = " _ "
 showExprModel (EM_Nil      _    ) = " () "
 instance Show ExprModel where show = showExprModel
+-}
 
+
+
+
+
+
+
+
+
+
+data Atom
+  = Atm_Id  [Int64]
+  | Atm_Ty  [Int64]
+  | Atm_Mut  Int64
+  | Atm_TVr  Int64
+  | Atm_BIF  Int64
+  | Atm_BIT  Int64
+  | Atm_Nil
+  | Atm_Wild
+
+
+
+
+
+
+
+
+
+
+data Decor
+  = Dcr_Curry  (Atom, [Atom ])
+  | Dcr_Array  (Atom, [Int64])
+  | Dcr_Map     Atom
+  | Dcr_Filter (Atom, Expr)
+
+
+
+
+
+
+
+
+
+
+data Expr
+  = Exp_Dec   Decor
+  | Exp_Atm   Atom
+  | Exp_Cmpd  [Expr]
+  | Exp_Poly  [Expr]
+  | Exp_Block [Expr]
 
 
 
@@ -888,7 +938,7 @@ data SymbolTable
 
 
 
-
+{-
 data Show a => Definition a
   = FnDefinition {
       def_ftdefs :: ![(TypeAST,   TypeAST  ,            BzoPos)],  -- InType, ExType, Pos
@@ -930,7 +980,7 @@ showDefinition (TyDefinition (tp, t, _) tyid) =
 showDefinition (HintDefinition (ps, _) h)  = "Hint Definition : " ++ (show h) ++ " { " ++ (concatMap (\x -> (show x) ++ ", ") ps) ++ " }\n"
 showDefinition (NilDefinition) = "NilDefinition\n\n"
 instance (Show a) => Show (Definition a) where show = showDefinition
-
+-}
 
 
 
