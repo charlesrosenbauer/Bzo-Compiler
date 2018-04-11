@@ -889,11 +889,47 @@ data Atom
 
 
 
+showAtom :: Atom -> String
+showAtom (Atm_Id  ids) = " <Atm_Id  " ++ (show ids) ++ "> "
+showAtom (Atm_Ty  ids) = " <Atm_Ty  " ++ (show ids) ++ "> "
+showAtom (Atm_Mut idx) = " <Atm_Mut " ++ (show idx) ++ "> "
+showAtom (Atm_TVr idx) = " <Atm_TVr " ++ (show idx) ++ "> "
+showAtom (Atm_BIF idx) = " <Atm_BIF " ++ (show idx) ++ "> "
+showAtom (Atm_BIT idx) = " <Atm_BIT " ++ (show idx) ++ "> "
+showAtom (Atm_BIF idx) = " <Atm_Nil > "
+showAtom (Atm_BIF idx) = " <Atm_Wild > "
+instance Show Atom where show = showAtom
+
+
+
+
+
+
+
+
+
+
 data Decor
   = Dcr_Curry  (Atom, [Atom ])
   | Dcr_Array  (Atom, [Int64])
   | Dcr_Map     Atom
   | Dcr_Filter (Atom, Expr)
+
+
+
+
+
+
+
+
+
+
+showDecor :: Decor -> String
+showDecor (Dcr_Curry  (atm, atms)) = " <Dcr_Curry " ++ (show atm) ++ " <- { " ++ (show atms) ++ " }> "
+showDecor (Dcr_Array  (atm, szs )) = " <Dcr_Array " ++ (show atm) ++ " of size [ " ++ (show szs) ++ " ]> "
+showDecor (Dcr_Map     atm       ) = " <Dcr_Map   " ++ (show atm) ++ " }> "
+showDecor (Dcr_Filter (atm, expr)) = " <Dcr_Filt  " ++ (show atm) ++ " : " ++ (show expr) ++ " > "
+instance Show Decor where show = showDecor
 
 
 
@@ -910,6 +946,23 @@ data Expr
   | Exp_Cmpd  [Expr]
   | Exp_Poly  [Expr]
   | Exp_Block [Expr]
+
+
+
+
+
+
+
+
+
+
+showExpr :: Expr -> String
+showExpr (Exp_Dec   dec) = " <Expr_Dec   "  ++ (show dec) ++  "> "
+showExpr (Exp_Atm   atm) = " <Expr_Atm   "  ++ (show atm) ++  "> "
+showExpr (Exp_Cmpd  xps) = " <Expr_Cmpd  (" ++ (show xps) ++ ")> "
+showExpr (Exp_Poly  xps) = " <Expr_Poly  (" ++ (show xps) ++ ")> "
+showExpr (Exp_Block xps) = " <Expr_Block {" ++ (show xps) ++ "}> "
+instance Show Expr where show = showExpr
 
 
 
