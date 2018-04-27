@@ -705,68 +705,6 @@ data ExprModel
 
 
 
-data CallAST
-    = CA_TypeDefCall {
-        ca_pos     :: !BzoPos,
-        ca_id      :: !String,
-        ca_pars    :: !TParModel,
-        ca_tydef   :: !TypeAST }
-    | CA_FTDefCall {
-        ca_pos     :: !BzoPos,
-        ca_id      :: !String,
-        ca_intype  :: !TypeAST,
-        ca_extype  :: !TypeAST }
-    | CA_FnDefCall {
-        ca_pos     :: !BzoPos,
-        ca_id      :: !String,
-        ca_in      :: !FParModel,
-        ca_ex      :: !FParModel,
-        ca_fndef   :: !ExprModel }
-    | CA_HintCall {
-        ca_pos     :: !BzoPos,
-        ca_hint    :: !String,
-        ca_hpars   :: ![ExprModel] }
-    | CA_REPLCall {
-        ca_pos     :: !BzoPos,
-        ca_exdef   :: !ExprModel }
-    | CA_Calls {
-        ca_pos     :: !BzoPos,
-        ca_calls   :: ![CallAST] }
-
-
-
-
-
-
-
-
-
-
-showCallAST :: CallAST -> String
-showCallAST (CA_TypeDefCall          p i s t) = " {TyDefCall: " ++ i ++
-                                            "\n   PARS: " ++ (show s) ++
-                                            "\n   DEF : " ++ (show t) ++ " }\n"
-showCallAST (CA_FTDefCall            p x i o) = " {FnTyDefCall: " ++ x ++
-                                            "\n   INPUT : " ++ (show i) ++
-                                            "\n   OUTPUT: " ++ (show o) ++ " }\n"
-showCallAST (CA_FnDefCall          p f i e d) = " {FnDefCall: " ++ f ++
-                                            "\n   IN  PARS : " ++ (show i) ++
-                                            "\n   OUT PARS : " ++ (show e) ++
-                                            "\n   DEF      : " ++ (show d) ++ " }\n"
-showCallAST (CA_HintCall             p h xs) = " {HintCall: " ++ h ++ "\n" ++
-                                            "\n   PARS     : " ++ (show xs) ++ " }\n"
-showCallAST (CA_REPLCall             p   xs) = " {REPL CALL:\n" ++ (show xs) ++ "\n}\n"
-showCallAST (CA_Calls                p   xs) = " Modelled Calls:\n" ++ (Prelude.concatMap (\x -> (show x) ++ "\n") xs) ++ "\n"
-instance Show CallAST where show = showCallAST
-
-
-
-
-
-
-
-
-
 
 showTParModel :: TParModel -> String
 showTParModel (TParModel p ps  ) = " ( " ++ (Prelude.concatMap show ps) ++ " ) "
@@ -870,6 +808,69 @@ instance Show ExprModel where show = showExprModel
 
 
 
+data CallAST
+    = CA_TypeDefCall {
+        ca_pos     :: !BzoPos,
+        ca_id      :: !String,
+        ca_pars    :: !Expr,
+        ca_tydef   :: !Expr }
+    | CA_FTDefCall {
+        ca_pos     :: !BzoPos,
+        ca_id      :: !String,
+        ca_intype  :: !Expr,
+        ca_extype  :: !Expr }
+    | CA_FnDefCall {
+        ca_pos     :: !BzoPos,
+        ca_id      :: !String,
+        ca_in      :: !Expr,
+        ca_ex      :: !Expr,
+        ca_fndef   :: !Expr }
+    | CA_HintCall {
+        ca_pos     :: !BzoPos,
+        ca_hint    :: !String,
+        ca_hpars   :: ![Expr] }
+    | CA_REPLCall {
+        ca_pos     :: !BzoPos,
+        ca_exdef   :: !Expr }
+    | CA_Calls {
+        ca_pos     :: !BzoPos,
+        ca_calls   :: ![CallAST] }
+
+
+
+
+
+
+
+
+
+
+showCallAST :: CallAST -> String
+showCallAST (CA_TypeDefCall          p i s t) = " {TyDefCall: " ++ i ++
+                                            "\n   PARS: " ++ (show s) ++
+                                            "\n   DEF : " ++ (show t) ++ " }\n"
+showCallAST (CA_FTDefCall            p x i o) = " {FnTyDefCall: " ++ x ++
+                                            "\n   INPUT : " ++ (show i) ++
+                                            "\n   OUTPUT: " ++ (show o) ++ " }\n"
+showCallAST (CA_FnDefCall          p f i e d) = " {FnDefCall: " ++ f ++
+                                            "\n   IN  PARS : " ++ (show i) ++
+                                            "\n   OUT PARS : " ++ (show e) ++
+                                            "\n   DEF      : " ++ (show d) ++ " }\n"
+showCallAST (CA_HintCall             p h xs) = " {HintCall: " ++ h ++ "\n" ++
+                                            "\n   PARS     : " ++ (show xs) ++ " }\n"
+showCallAST (CA_REPLCall             p   xs) = " {REPL CALL:\n" ++ (show xs) ++ "\n}\n"
+showCallAST (CA_Calls                p   xs) = " Modelled Calls:\n" ++ (Prelude.concatMap (\x -> (show x) ++ "\n") xs) ++ "\n"
+instance Show CallAST where show = showCallAST
+
+
+
+
+
+
+
+
+
+
 data Atom
   = Atm_Id  [Int64]
   | Atm_Ty  [Int64]
@@ -896,8 +897,8 @@ showAtom (Atm_Mut idx) = " <Atm_Mut " ++ (show idx) ++ "> "
 showAtom (Atm_TVr idx) = " <Atm_TVr " ++ (show idx) ++ "> "
 showAtom (Atm_BIF idx) = " <Atm_BIF " ++ (show idx) ++ "> "
 showAtom (Atm_BIT idx) = " <Atm_BIT " ++ (show idx) ++ "> "
-showAtom (Atm_BIF idx) = " <Atm_Nil > "
-showAtom (Atm_BIF idx) = " <Atm_Wild > "
+showAtom (Atm_Nil    ) = " <Atm_Nil > "
+showAtom (Atm_Wild   ) = " <Atm_Wild > "
 instance Show Atom where show = showAtom
 
 
