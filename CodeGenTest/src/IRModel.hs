@@ -190,11 +190,44 @@ modelIR :: IRParseItem -> Either [IRErr] (IRSymbols,
                                           Map CnstId ConstantData,
                                           [Hint])
 modelIR irs =
-  let (errs, syms) = getSymbols [irs]
+  let (errs, syms) = getSymbols   [irs]
+      fns          = getFunctions [irs]
+      tys          = getTypes     [irs]
   in case errs of
       [] -> Right (syms, M.empty, M.empty, M.empty, [])
       er -> Left er
 
+
+
+
+
+
+
+
+
+
+getFunctions :: [IRParseItem] -> [IRParseItem]
+getFunctions [] = []
+getFunctions ((PI_Defs _ defs)          :irs) = getFunctions (irs ++ defs)
+getFunctions (fn@(PI_FnDef _ _ _ _    ) :irs) = fn : (getFunctions irs)
+getFunctions (fn@(PI_PrDef _ _ _ _ _ _) :irs) = fn : (getFunctions irs)
+getFunctions (fn@(PI_ExDef _ _ _ _ _ _) :irs) = fn : (getFunctions irs)
+getFunctions (x                         :irs) =      (getFunctions irs)
+
+
+
+
+
+
+
+
+
+
+getTypes :: [IRParseItem] -> [IRParseItem]
+getTypes [] = []
+getTypes ((PI_Defs _ defs)      :irs) = getTypes (irs ++ defs)
+getTypes (fn@(PI_TyDef _ _ _ _) :irs) = fn : (getTypes irs)
+getTypes (x                     :irs) =      (getTypes irs)
 
 
 
