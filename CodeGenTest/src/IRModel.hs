@@ -193,6 +193,8 @@ modelIR irs =
   let (errs, syms) = getSymbols   [irs]
       fns          = getFunctions [irs]
       tys          = getTypes     [irs]
+      cts          = getConstants [irs]
+      cts'         = modelConst    cts
   in case errs of
       [] -> Right (syms, M.empty, M.empty, M.empty, [])
       er -> Left er
@@ -228,6 +230,39 @@ getTypes [] = []
 getTypes ((PI_Defs _ defs)      :irs) = getTypes (irs ++ defs)
 getTypes (fn@(PI_TyDef _ _ _ _) :irs) = fn : (getTypes irs)
 getTypes (x                     :irs) =      (getTypes irs)
+
+
+
+
+
+
+
+
+
+
+getConstants :: [IRParseItem] -> [IRParseItem]
+getConstants [] = []
+getConstants ((PI_Defs _ defs)       :irs) = getTypes (irs ++ defs)
+getConstants (fn@(PI_Const    _ _  ) :irs) = fn : (getTypes irs)
+getConstants (fn@(PI_ConstInt _ _ _) :irs) = fn : (getTypes irs)
+getConstants (fn@(PI_ConstStr _ _ _) :irs) = fn : (getTypes irs)
+getConstants (x                      :irs) =      (getTypes irs)
+
+
+
+
+
+
+
+
+
+
+modelConst :: [IRParseItem] -> IRSymbols -> [ConstantData]
+modelConst [] syms = []
+modelConst ((PI_Const    p x  ):irs) syms = (ConstBool   ((cnstSymbols syms) ! x)  ) : (modelConst irs syms)
+modelConst ((PI_ConstStr p x s):irs) syms = (ConstString ((cnstSymbols syms) ! x) s) : (modelConst irs syms)
+modelConst ((PI_ConstInt p x n):irs) syms = (ConstInt    ((cnstSymbols syms) ! x) n) : (modelConst irs syms)
+modelConst (_                  :irs) syms = modelConst irs syms
 
 
 
