@@ -6,6 +6,7 @@ import Data.Maybe
 import Data.Either
 import IRParser
 import IRLexer
+import Debug.Trace
 
 
 
@@ -263,6 +264,40 @@ modelConst ((PI_Const    p x  ):irs) syms = (ConstBool   ((cnstSymbols syms) ! x
 modelConst ((PI_ConstStr p x s):irs) syms = (ConstString ((cnstSymbols syms) ! x) s) : (modelConst irs syms)
 modelConst ((PI_ConstInt p x n):irs) syms = (ConstInt    ((cnstSymbols syms) ! x) n) : (modelConst irs syms)
 modelConst (_                  :irs) syms = modelConst irs syms
+
+
+
+
+
+
+
+
+
+
+modelFunc :: [IRParseItem] -> IRSymbols -> ([IRErr], [FuncData])
+modelFunc [] syms = ([], [])
+modelFunc ((PI_FnDef  p fnid pars def):irs) syms =
+  let fnid' = (funcSymbols syms) ! fnid
+      -- Model Parameters
+      -- Model Contents
+      (ers, fns) = modelFunc irs syms
+  in (ers, (FuncType PureFn [] [] [] [] fnid'):fns)
+
+modelFunc ((PI_PrDef  p fnid pars iefx oefx def):irs) syms =
+  let fnid' = (funcSymbols syms) ! fnid
+      -- Model Parameters
+      -- Model Effects
+      -- Model Contents
+      (ers, fns) = modelFunc irs syms
+  in (ers, (FuncType ProcFn [] [] [] [] fnid'):fns)
+
+modelFunc ((PI_ExDef  p fnid pars iefx oefx def):irs) syms =
+  let fnid' = (funcSymbols syms) ! fnid
+      -- Model Parameters
+      -- Model Effects
+      -- Model Contents
+      (ers, fns) = modelFunc irs syms
+  in (ers, (FuncType ExtrFn [] [] [] [] fnid'):fns)
 
 
 
