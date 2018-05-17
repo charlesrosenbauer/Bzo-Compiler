@@ -287,26 +287,38 @@ modelFunc ((PI_FnDef  p fnid pars def):irs) syms =
   let fnid' = (funcSymbols syms) ! fnid
       -- Model Parameters
       -- Model Contents
+
+      -- Model the rest of the list
       (ers, fns) = modelFunc irs syms
   in (ers, ((FuncType PureFn [] [] [] [] [] [] fnid'):fns))
 
 modelFunc ((PI_PrDef  p fnid pars refx wefx def):irs) syms =
   let fnid' = (funcSymbols syms) ! fnid
       -- Model Parameters
+
+      -- Model Effect Types
       ermsg = " is an undefined type, and cannot be used as an effect.\n"
       (er1, rfx) = undefTypes ermsg syms refx
       (er2, wfx) = undefTypes ermsg syms wefx
+
       -- Model Contents
+
+      -- Model the rest of the list
       (ers, fns) = modelFunc irs syms
   in (ers ++ er1 ++ er2, (FuncType ProcFn [] [] rfx wfx [] [] fnid'):fns)
 
 modelFunc ((PI_ExDef  p fnid pars refx wefx def):irs) syms =
   let fnid' = (funcSymbols syms) ! fnid
       -- Model Parameters
+
+      -- Model Effect Types
       ermsg = " is an undefined type, and cannot be used as an effect.\n"
       (er1, rfx) = undefTypes ermsg syms refx
       (er2, wfx) = undefTypes ermsg syms wefx
+
       -- Model Contents
+
+      -- Model the rest of the list
       (ers, fns) = modelFunc irs syms
   in (ers ++ er1 ++ er2, (FuncType ExtrFn [] [] rfx wfx [] [] fnid'):fns)
 
@@ -322,12 +334,14 @@ modelFunc ((PI_ExDef  p fnid pars refx wefx def):irs) syms =
 -- | Assumes [IRParseItem] is [PI_Type]
 undefTypes :: String -> IRSymbols -> [IRParseItem] -> ([IRErr], [TyId])
 undefTypes ermsg syms []      = ([], [])
-undefTypes ermsg syms (x:irs) =
+undefTypes ermsg syms (x@(PI_Type p _ t):irs) =
   let (ers, ids) = undefTypes ermsg syms irs
-      tyid       = M.lookup (txt0 x) $ typeSymbols syms
+      tyid       = M.lookup t $ typeSymbols syms
   in case tyid of
-      Nothing -> ((IRErr (ppos x) $ pack $ (unpack $ txt0 x) ++ ermsg):ers, ids)
+      Nothing -> ((IRErr p $ pack $ (unpack $ t) ++ ermsg):ers, ids)
       Just ty -> (ers, ty:ids)
+
+undefTypes ermsg syms (_:irs) = undefTypes ermsg syms irs
 
 
 
