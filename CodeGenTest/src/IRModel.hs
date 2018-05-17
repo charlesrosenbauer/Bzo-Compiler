@@ -34,6 +34,8 @@ data FuncData = FuncType{
   funcKind    :: FunctionKind,
   inputTypes  :: [TypeData],
   outputTypes :: [TypeData],
+  readEffects :: [TyId],
+  writeEffects:: [TyId],
   funchints   :: [Hint],
   funcNodes   :: [Node],
   funcId      :: FnId }
@@ -54,11 +56,15 @@ type FnId = Int
 
 
 data TypeData = TypeData{
+  typeKind    :: TypeKind,
   typeNodes   :: [([Int], TyId)],
   typehints   :: [Hint]  }
   deriving Show
 
 data TypeRef = TypeRef [Int] TyId
+  deriving Show
+
+data TypeKind = PureTy | FXTy_SRSW | FXTy_PRSW | FXTy_SRPW | FXTy_PRPW
   deriving Show
 
 type TyId = Int
@@ -195,8 +201,9 @@ modelIR irs =
       fns          = getFunctions [irs]
       tys          = getTypes     [irs]
       cts          = getConstants [irs]
-      cts'         = modelConst    cts
-  in case errs of
+      cts'         = modelConst    cts syms
+      (fers, fns') = modelFunc     fns syms
+  in case (fers ++ errs) of
       [] -> Right (syms, M.empty, M.empty, M.empty, [])
       er -> Left er
 
@@ -281,23 +288,46 @@ modelFunc ((PI_FnDef  p fnid pars def):irs) syms =
       -- Model Parameters
       -- Model Contents
       (ers, fns) = modelFunc irs syms
-  in (ers, (FuncType PureFn [] [] [] [] fnid'):fns)
+  in (ers, ((FuncType PureFn [] [] [] [] [] [] fnid'):fns))
 
-modelFunc ((PI_PrDef  p fnid pars iefx oefx def):irs) syms =
+modelFunc ((PI_PrDef  p fnid pars refx wefx def):irs) syms =
   let fnid' = (funcSymbols syms) ! fnid
       -- Model Parameters
-      -- Model Effects
+      ermsg = " is an undefined type, and cannot be used as an effect.\n"
+      (er1, rfx) = undefTypes ermsg syms refx
+      (er2, wfx) = undefTypes ermsg syms wefx
       -- Model Contents
       (ers, fns) = modelFunc irs syms
-  in (ers, (FuncType ProcFn [] [] [] [] fnid'):fns)
+  in (ers ++ er1 ++ er2, (FuncType ProcFn [] [] rfx wfx [] [] fnid'):fns)
 
-modelFunc ((PI_ExDef  p fnid pars iefx oefx def):irs) syms =
+modelFunc ((PI_ExDef  p fnid pars refx wefx def):irs) syms =
   let fnid' = (funcSymbols syms) ! fnid
       -- Model Parameters
-      -- Model Effects
+      ermsg = " is an undefined type, and cannot be used as an effect.\n"
+      (er1, rfx) = undefTypes ermsg syms refx
+      (er2, wfx) = undefTypes ermsg syms wefx
       -- Model Contents
       (ers, fns) = modelFunc irs syms
-  in (ers, (FuncType ExtrFn [] [] [] [] fnid'):fns)
+  in (ers ++ er1 ++ er2, (FuncType ExtrFn [] [] rfx wfx [] [] fnid'):fns)
+
+
+
+
+
+
+
+
+
+
+-- | Assumes [IRParseItem] is [PI_Type]
+undefTypes :: String -> IRSymbols -> [IRParseItem] -> ([IRErr], [TyId])
+undefTypes ermsg syms []      = ([], [])
+undefTypes ermsg syms (x:irs) =
+  let (ers, ids) = undefTypes ermsg syms irs
+      tyid       = M.lookup (txt0 x) $ typeSymbols syms
+  in case tyid of
+      Nothing -> ((IRErr (ppos x) $ pack $ (unpack $ txt0 x) ++ ermsg):ers, ids)
+      Just ty -> (ers, ty:ids)
 
 
 
