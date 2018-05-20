@@ -30,6 +30,57 @@ ife False a b = b
 
 
 
+appendPair :: ([a], [b]) -> ([a], [b]) -> ([a], [b])
+appendPair (x0, y0) (x1, y1) = (x0 ++ x1, y0 ++ y1)
+
+
+
+
+
+
+
+
+
+
+appendEither :: Either a b -> ([a], [b]) -> ([a], [b])
+appendEither (Left  x) (xs, ys) = (x:xs,   ys)
+appendEither (Right y) (xs, ys) = (  xs, y:ys)
+
+
+
+
+
+
+
+
+
+
+onLeft  :: (a -> c) -> Either a b -> Either c b
+onLeft f (Left  l) = Left (f l)
+onLeft f (Right r) = Right r
+
+
+
+
+
+
+
+
+
+
+onRight :: (b -> c) -> Either a b -> Either a c
+onRight f (Right r) = Right (f r)
+onRight f (Left  l) = Left l
+
+
+
+
+
+
+
+
+
+
 data FuncData = FuncType{
   funcKind    :: FunctionKind,
   inputTypes  :: [TypeData],
@@ -342,6 +393,40 @@ undefTypes ermsg syms (x@(PI_Type p _ t):irs) =
       Just ty -> (ers, ty:ids)
 
 undefTypes ermsg syms (_:irs) = undefTypes ermsg syms irs
+
+
+
+
+
+
+
+
+
+
+modelNode :: IRSymbols -> ([IRErr], [Node]) -> IRParseItem -> ([IRErr], [Node])
+modelNode syms state (PI_Node p ns op pars) =
+  case (ns, unpack op, pars) of
+    ([n], "input" , [t@(PI_Type tps tns tid)])                  -> appendEither (onRight       (ParNode n)      (makeTypeRef syms t)) state
+    ([n], "output", [(PI_Int ips ix), t@(PI_Type tps tns tid)]) -> appendEither (onRight (\x -> RetNode n x ix) (makeTypeRef syms t)) state
+    (_  , _       , _                                         ) -> appendEither (Left (IRErr p $ pack "Unrecognized operation.\n")) state
+
+
+
+
+
+
+
+
+
+
+makeTypeRef :: IRSymbols -> IRParseItem -> Either IRErr TypeRef
+makeTypeRef syms (PI_Type tps tns tid) =
+  case (M.lookup tid $ typeSymbols syms) of
+    Just tx -> Right $ TypeRef tns tx
+    Nothing -> Left  $ IRErr   tps $ append tid $ pack " is an undefined type.\n"
+
+
+
 
 
 
