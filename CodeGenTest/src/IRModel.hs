@@ -338,10 +338,11 @@ modelFunc ((PI_FnDef  p fnid pars def):irs) syms =
   let fnid' = (funcSymbols syms) ! fnid
       -- Model Parameters
       -- Model Contents
+      (er0, nds) = modelNodes syms def
 
       -- Model the rest of the list
       (ers, fns) = modelFunc irs syms
-  in (ers, ((FuncType PureFn [] [] [] [] [] [] fnid'):fns))
+  in (er0 ++ ers, ((FuncType PureFn [] [] [] [] [] nds fnid'):fns))
 
 modelFunc ((PI_PrDef  p fnid pars refx wefx def):irs) syms =
   let fnid' = (funcSymbols syms) ! fnid
@@ -393,6 +394,23 @@ undefTypes ermsg syms (x@(PI_Type p _ t):irs) =
       Just ty -> (ers, ty:ids)
 
 undefTypes ermsg syms (_:irs) = undefTypes ermsg syms irs
+
+
+
+
+
+
+
+
+
+
+modelNodes :: IRSymbols -> [IRParseItem] -> ([IRErr], [Node])
+modelNodes syms irs =
+  let (ers, nds) = L.foldl (modelNode syms) ([], []) irs
+
+      -- TODO: Verify that all the nodes fit together nicely
+
+  in (ers, nds)
 
 
 
