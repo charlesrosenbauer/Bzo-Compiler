@@ -4,6 +4,7 @@ import Data.List as L
 import Data.Map.Strict as M
 import Data.Maybe
 import Data.Either
+import Data.Tuple
 import IRParser
 import IRLexer
 import Debug.Trace
@@ -452,11 +453,34 @@ makeTypeRef syms (PI_Type tps tns tid) =
 
 
 
+initialSymbolTable :: IRSymbols
+initialSymbolTable =
+  let typeList :: [(Text, Int)]
+      typeList = L.map (\(a, b) -> (pack a, fromIntegral b)) (
+                 [("I8",   1), ("I16",  2), ("I32",  3), ("I64",  4),
+                  ("U8",   5), ("U16",  6), ("U32",  7), ("U64",  8),
+                  ("N16",  9), ("N32", 10), ("N64", 11),
+                  ("F16", 12), ("F32", 13), ("F64", 14),
+                  ("ASCII", 15), ("UTF8", 16), ("UTF16", 17), ("UTF32", 18),
+                  ("Char",  19), ("UChar",20), ("Bl",    21)])
+      typeList' = L.map swap typeList
+
+  in IRSymbols M.empty M.empty (M.fromDistinctAscList typeList) (M.fromDistinctAscList typeList') M.empty M.empty 22
+
+
+
+
+
+
+
+
+
+
 
 
 
 getSymbols :: [IRParseItem] -> ([IRErr], IRSymbols)
-getSymbols [] = ([], (IRSymbols M.empty M.empty M.empty M.empty M.empty M.empty 0))
+getSymbols [] = ([], initialSymbolTable)
 
 getSymbols ((PI_Defs _ defs):irs) = getSymbols (irs ++ defs)
 
