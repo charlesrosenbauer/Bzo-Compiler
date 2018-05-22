@@ -427,7 +427,12 @@ modelNode syms state (PI_Node p ns op pars) =
   case (ns, unpack op, pars) of
     ([n], "input" , [t@(PI_Type tps tns tid)])                  -> appendEither (onRight       (ParNode n)      (makeTypeRef syms t)) state
     ([n], "output", [(PI_Int ips ix), t@(PI_Type tps tns tid)]) -> appendEither (onRight (\x -> RetNode n x ix) (makeTypeRef syms t)) state
-    (_  , _       , _                                         ) -> appendEither (Left (IRErr p $ pack "Unrecognized operation.\n")) state
+    ([n], "iadd"  , [(PI_Int ips ix), (PI_Int jps jx)])         -> appendEither (Right (BinopNode n IAddOp ix jx)) state
+    ([n], "isub"  , [(PI_Int ips ix), (PI_Int jps jx)])         -> appendEither (Right (BinopNode n IAddOp ix jx)) state
+    ([n], "imul"  , [(PI_Int ips ix), (PI_Int jps jx)])         -> appendEither (Right (BinopNode n ISubOp ix jx)) state
+    ([n], "idiv"  , [(PI_Int ips ix), (PI_Int jps jx)])         -> appendEither (Right (BinopNode n IDivOp ix jx)) state
+    ([n], "imod"  , [(PI_Int ips ix), (PI_Int jps jx)])         -> appendEither (Right (BinopNode n IModOp ix jx)) state
+    (_  , _       , _                                         ) -> appendEither (Left  (IRErr p $ pack "Unrecognized operation.\n")) state
 
 
 
