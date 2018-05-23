@@ -16,7 +16,10 @@ import IRModel
 main :: IO()
 main = do
   fcontents <- readFile "test.bzir"
-  putStrLn (fcontents ++ "\n\n" ++ (show $ eitherWraps modelIR $ eitherWrap (irParse "test.bzir") $ lexFile "test.bzir" fcontents))
+  putStrLn (fcontents ++ "\n\n" ++ (
+    case (eitherWraps modelIR $ eitherWrap (irParse "test.bzir") $ lexFile "test.bzir" fcontents) of
+      Right x -> "Success:\n----------\n" ++ show x
+      Left er -> "Errors: \n----------\n" ++ (concat $ reverse $ map (\x -> (show x) ++ "\n") er)))
 
 
 
