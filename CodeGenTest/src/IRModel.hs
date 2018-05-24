@@ -82,6 +82,56 @@ onRight f (Left  l) = Left l
 
 
 
+getRights :: Either a [b] -> [b]
+getRights (Left  x) = []
+getRights (Right r) = r
+
+
+
+
+
+
+
+
+
+
+getLefts  :: Either [a] b -> [a]
+getLefts  (Left  x) = x
+getLefts  (Right r) = []
+
+
+
+
+
+
+
+
+
+
+justRight :: Either a b -> b
+justRight (Right x) = x
+
+
+
+
+
+
+
+
+
+
+justLeft  :: Either a b -> a
+justLeft  (Left  x) = x
+
+
+
+
+
+
+
+
+
+
 data FuncData = FuncType{
   funcKind    :: FunctionKind,
   inputTypes  :: [TypeData],
@@ -435,10 +485,10 @@ modelNodes syms irs =
 
 modelNode :: IRSymbols -> ([IRErr], [Node]) -> IRParseItem -> ([IRErr], [Node])
 modelNode syms state (PI_Node p ns op pars) =
-  case (ns, unpack op, pars) of
+  case (ns, unpack op, L.reverse pars) of
     ([n], "input" , [t@(PI_Type tps tns tid)])                  -> appendEither (onRight       (ParNode  n)      (makeTypeRef syms t)) state
-    ([n], "output", [(PI_Int ips ix), t@(PI_Type tps tns tid)]) -> appendEither (onRight (\x -> RetNode  n x ix) (makeTypeRef syms t)) state
-    ([n], "cast"  , [(PI_Int ips ix), t@(PI_Type tps tns tid)]) -> appendEither (onRight (\x -> CastNode n x ix) (makeTypeRef syms t)) state
+    ([n], "output", [t@(PI_Type tps tns tid), (PI_Int ips ix)]) -> appendEither (onRight (\x -> RetNode  n x ix) (makeTypeRef syms t)) state
+    ([n], "cast"  , [t@(PI_Type tps tns tid), (PI_Int ips ix)]) -> appendEither (onRight (\x -> CastNode n x ix) (makeTypeRef syms t)) state
     ([n], "iadd"  , [(PI_Int ips ix), (PI_Int jps jx)])         -> appendEither (Right (BinopNode n IAddOp ix jx)) state
     ([n], "isub"  , [(PI_Int ips ix), (PI_Int jps jx)])         -> appendEither (Right (BinopNode n ISubOp ix jx)) state
     ([n], "imul"  , [(PI_Int ips ix), (PI_Int jps jx)])         -> appendEither (Right (BinopNode n IMulOp ix jx)) state
@@ -465,10 +515,83 @@ modelNode syms state (PI_Node p ns op pars) =
     ([n], "lor"   , [(PI_Int ips ix), (PI_Int jps jx)])         -> appendEither (Right (BinopNode n LOrOp  ix jx)) state
     ([n], "land"  , [(PI_Int ips ix), (PI_Int jps jx)])         -> appendEither (Right (BinopNode n LAndOp ix jx)) state
     ([n], "lxor"  , [(PI_Int ips ix), (PI_Int jps jx)])         -> appendEither (Right (BinopNode n LXorOp ix jx)) state
+    (ns , "call"  , f@(PI_Func ps fn):xs)                       ->
+      let fnid = getFnid syms f
+          pars = makeIntList xs
+          ers  = (getLefts pars) ++ (lefts [fnid])
+          ret  = (CallNode ns FnCall (justRight fnid) $ getRights pars)
+          (errs, nods) = state
+      in case ers of
+          [] -> (ers,   ret:nods)
+          er -> (er ++ ers, nods)
+
+    (ns , "prcall", f@(PI_Proc ps fn):xs)                       ->
+      let fnid = getFnid syms f
+          pars = makeIntList xs
+          ers  = (getLefts pars) ++ (lefts [fnid])
+          ret  = (CallNode ns PrCall (justRight fnid) $ getRights pars)
+          (errs, nods) = state
+      in case ers of
+          [] -> (ers,   ret:nods)
+          er -> (er ++ ers, nods)
+
+    (ns , "excall", f@(PI_Extn ps fn):xs)                       ->
+      let fnid = getFnid syms f
+          pars = makeIntList xs
+          ers  = (getLefts pars) ++ (lefts [fnid])
+          ret  = (CallNode ns ExCall (justRight fnid) $ getRights pars)
+          (errs, nods) = state
+      in case ers of
+          [] -> (ers,   ret:nods)
+          er -> (er ++ ers, nods)
+
     (_  , _       , _                                         ) -> appendEither (Left  (IRErr p $ pack "Unrecognized operation.\n")) state
 
 
 
+
+
+
+
+
+
+
+makeIntList :: [IRParseItem] -> Either [IRErr] [Int]
+makeIntList []                  = Right []
+makeIntList ((PI_Int ips ix):irs) =
+  case (makeIntList irs) of
+    Left ers -> Left ers
+    Right xs -> Right (ix:xs)
+
+makeIntList (ir:irs) =
+  case (makeIntList irs) of
+    Left ers -> Left ((IRErr (ppos ir) $ pack "Invalid operand.\n"):ers)
+    Right xs -> Left [IRErr (ppos ir) $ pack "Invalid operand.\n"]
+
+
+
+
+
+
+
+
+
+
+getFnid :: IRSymbols -> IRParseItem -> Either IRErr FnId
+getFnid syms (PI_Func fps fid) =
+  case (M.lookup fid $ funcSymbols syms) of
+    Just fx -> Right fx
+    Nothing -> Left  $ IRErr fps $ append fid $ pack " is an undefined function.\n"
+
+getFnid syms (PI_Proc fps fid) =
+  case (M.lookup fid $ funcSymbols syms) of
+    Just fx -> Right fx
+    Nothing -> Left  $ IRErr fps $ append fid $ pack " is an undefined procedure.\n"
+
+getFnid syms (PI_Extn fps fid) =
+  case (M.lookup fid $ funcSymbols syms) of
+    Just fx -> Right fx
+    Nothing -> Left  $ IRErr fps $ append fid $ pack " is an undefined external function.\n"
 
 
 
