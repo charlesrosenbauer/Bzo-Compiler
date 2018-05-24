@@ -416,10 +416,11 @@ modelFunc ((PI_PrDef  p fnid pars refx wefx def):irs) syms =
       (er2, wfx) = undefTypes ermsg syms wefx
 
       -- Model Contents
+      (er0, nds) = modelNodes syms def
 
       -- Model the rest of the list
       (ers, fns) = modelFunc irs syms
-  in (ers ++ er1 ++ er2, (FuncType ProcFn [] [] rfx wfx [] [] fnid'):fns)
+  in (ers ++ er1 ++ er2, (FuncType ProcFn [] [] rfx wfx [] nds fnid'):fns)
 
 modelFunc ((PI_ExDef  p fnid pars refx wefx def):irs) syms =
   let fnid' = (funcSymbols syms) ! fnid
@@ -431,10 +432,11 @@ modelFunc ((PI_ExDef  p fnid pars refx wefx def):irs) syms =
       (er2, wfx) = undefTypes ermsg syms wefx
 
       -- Model Contents
+      (er0, nds) = modelNodes syms def
 
       -- Model the rest of the list
       (ers, fns) = modelFunc irs syms
-  in (ers ++ er1 ++ er2, (FuncType ExtrFn [] [] rfx wfx [] [] fnid'):fns)
+  in (ers ++ er1 ++ er2, (FuncType ExtrFn [] [] rfx wfx [] nds fnid'):fns)
 
 
 
@@ -546,6 +548,8 @@ modelNode syms state (PI_Node p ns op pars) =
           er -> (er ++ ers, nods)
 
     (_  , _       , _                                         ) -> appendEither (Left  (IRErr p $ pack "Unrecognized operation.\n")) state
+
+modelNode syms state _ = ([], [])
 
 
 
