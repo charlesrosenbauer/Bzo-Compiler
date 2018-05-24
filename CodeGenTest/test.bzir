@@ -3,7 +3,6 @@ $link 'stdio\n'
 .hello 'Hello World!'
 
 
-
 @ add3 (I32 I32 I32 > I32) {
 	#0 input  I32
 	#1 input  I32
@@ -35,13 +34,12 @@ $link 'stdio\n'
 	#0 input  I32
 	#1 input  I32
 
-	#2 #3 divmod #0 #1
+	#2 #3 call divmod #0 #1
 	#4 cast F32 #2
 	#5 cast F32 #3
 
-	#6 output F32 #4
-	#7 output F32 #5
-
+	#6 output F16 #4
+	#7 output F64 #5
 }
 
 
