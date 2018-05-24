@@ -1,7 +1,7 @@
 module IRModel where
 import Data.Text
 import Data.List as L
-import Data.Map.Strict as M
+import Data.Map as M
 import Data.Maybe
 import Data.Either
 import Data.Tuple
@@ -256,9 +256,20 @@ modelIR irs =
       cts'         = modelConst    cts syms
       (fers, fns') = modelFunc     fns syms
   in case (fers ++ errs) of
-      [] -> Right (syms, M.empty, M.empty, M.empty, [])
+      [] -> Right (syms, (makeFuncMap fns'), M.empty, M.empty, [])
       er -> Left er
 
+
+
+
+
+
+
+
+
+
+makeFuncMap :: [FuncData] -> Map FnId FuncData
+makeFuncMap fs = M.fromList $ L.map (\f@(FuncType _ _ _ _ _ _ _ fnid) -> (fnid, f)) fs
 
 
 
@@ -425,13 +436,35 @@ modelNodes syms irs =
 modelNode :: IRSymbols -> ([IRErr], [Node]) -> IRParseItem -> ([IRErr], [Node])
 modelNode syms state (PI_Node p ns op pars) =
   case (ns, unpack op, pars) of
-    ([n], "input" , [t@(PI_Type tps tns tid)])                  -> appendEither (onRight       (ParNode n)      (makeTypeRef syms t)) state
-    ([n], "output", [(PI_Int ips ix), t@(PI_Type tps tns tid)]) -> appendEither (onRight (\x -> RetNode n x ix) (makeTypeRef syms t)) state
+    ([n], "input" , [t@(PI_Type tps tns tid)])                  -> appendEither (onRight       (ParNode  n)      (makeTypeRef syms t)) state
+    ([n], "output", [(PI_Int ips ix), t@(PI_Type tps tns tid)]) -> appendEither (onRight (\x -> RetNode  n x ix) (makeTypeRef syms t)) state
+    ([n], "cast"  , [(PI_Int ips ix), t@(PI_Type tps tns tid)]) -> appendEither (onRight (\x -> CastNode n x ix) (makeTypeRef syms t)) state
     ([n], "iadd"  , [(PI_Int ips ix), (PI_Int jps jx)])         -> appendEither (Right (BinopNode n IAddOp ix jx)) state
-    ([n], "isub"  , [(PI_Int ips ix), (PI_Int jps jx)])         -> appendEither (Right (BinopNode n IAddOp ix jx)) state
-    ([n], "imul"  , [(PI_Int ips ix), (PI_Int jps jx)])         -> appendEither (Right (BinopNode n ISubOp ix jx)) state
+    ([n], "isub"  , [(PI_Int ips ix), (PI_Int jps jx)])         -> appendEither (Right (BinopNode n ISubOp ix jx)) state
+    ([n], "imul"  , [(PI_Int ips ix), (PI_Int jps jx)])         -> appendEither (Right (BinopNode n IMulOp ix jx)) state
     ([n], "idiv"  , [(PI_Int ips ix), (PI_Int jps jx)])         -> appendEither (Right (BinopNode n IDivOp ix jx)) state
     ([n], "imod"  , [(PI_Int ips ix), (PI_Int jps jx)])         -> appendEither (Right (BinopNode n IModOp ix jx)) state
+    ([n], "uadd"  , [(PI_Int ips ix), (PI_Int jps jx)])         -> appendEither (Right (BinopNode n UAddOp ix jx)) state
+    ([n], "usub"  , [(PI_Int ips ix), (PI_Int jps jx)])         -> appendEither (Right (BinopNode n USubOp ix jx)) state
+    ([n], "umul"  , [(PI_Int ips ix), (PI_Int jps jx)])         -> appendEither (Right (BinopNode n UMulOp ix jx)) state
+    ([n], "udiv"  , [(PI_Int ips ix), (PI_Int jps jx)])         -> appendEither (Right (BinopNode n UDivOp ix jx)) state
+    ([n], "umod"  , [(PI_Int ips ix), (PI_Int jps jx)])         -> appendEither (Right (BinopNode n UModOp ix jx)) state
+    ([n], "fadd"  , [(PI_Int ips ix), (PI_Int jps jx)])         -> appendEither (Right (BinopNode n FAddOp ix jx)) state
+    ([n], "fsub"  , [(PI_Int ips ix), (PI_Int jps jx)])         -> appendEither (Right (BinopNode n FSubOp ix jx)) state
+    ([n], "fmul"  , [(PI_Int ips ix), (PI_Int jps jx)])         -> appendEither (Right (BinopNode n FMulOp ix jx)) state
+    ([n], "fdiv"  , [(PI_Int ips ix), (PI_Int jps jx)])         -> appendEither (Right (BinopNode n FDivOp ix jx)) state
+    ([n], "fmod"  , [(PI_Int ips ix), (PI_Int jps jx)])         -> appendEither (Right (BinopNode n FModOp ix jx)) state
+    ([n], "nadd"  , [(PI_Int ips ix), (PI_Int jps jx)])         -> appendEither (Right (BinopNode n NAddOp ix jx)) state
+    ([n], "nsub"  , [(PI_Int ips ix), (PI_Int jps jx)])         -> appendEither (Right (BinopNode n NSubOp ix jx)) state
+    ([n], "nmul"  , [(PI_Int ips ix), (PI_Int jps jx)])         -> appendEither (Right (BinopNode n NMulOp ix jx)) state
+    ([n], "ndiv"  , [(PI_Int ips ix), (PI_Int jps jx)])         -> appendEither (Right (BinopNode n NDivOp ix jx)) state
+    ([n], "nmod"  , [(PI_Int ips ix), (PI_Int jps jx)])         -> appendEither (Right (BinopNode n NModOp ix jx)) state
+    ([n], "or"    , [(PI_Int ips ix), (PI_Int jps jx)])         -> appendEither (Right (BinopNode n OrOp   ix jx)) state
+    ([n], "xor"   , [(PI_Int ips ix), (PI_Int jps jx)])         -> appendEither (Right (BinopNode n AndOp  ix jx)) state
+    ([n], "and"   , [(PI_Int ips ix), (PI_Int jps jx)])         -> appendEither (Right (BinopNode n XorOp  ix jx)) state
+    ([n], "lor"   , [(PI_Int ips ix), (PI_Int jps jx)])         -> appendEither (Right (BinopNode n LOrOp  ix jx)) state
+    ([n], "land"  , [(PI_Int ips ix), (PI_Int jps jx)])         -> appendEither (Right (BinopNode n LAndOp ix jx)) state
+    ([n], "lxor"  , [(PI_Int ips ix), (PI_Int jps jx)])         -> appendEither (Right (BinopNode n LXorOp ix jx)) state
     (_  , _       , _                                         ) -> appendEither (Left  (IRErr p $ pack "Unrecognized operation.\n")) state
 
 
@@ -470,7 +503,7 @@ initialSymbolTable =
                   ("Char",  19), ("UChar",20), ("Bl",    21)])
       typeList' = L.map swap typeList
 
-  in IRSymbols M.empty M.empty (M.fromDistinctAscList typeList) (M.fromDistinctAscList typeList') M.empty M.empty 22
+  in IRSymbols M.empty M.empty (M.fromList typeList) (M.fromList typeList') M.empty M.empty 22
 
 
 
