@@ -241,7 +241,7 @@ data Node
   | RetNode      Int  TypeRef   Int
   | CallNode    [Int] CallCode  FnId [Int]
   | HOFNode      Int  HOFCode  [Int]
-  | PhiNode      Int  CondCode  Int   Int   Int
+  | PhiNode     [Int] CondCode  Int   FnId  FnId [Int]
   | FuncNode     Int  FnId
   | TypeNode     Int  TyId
   deriving Show
@@ -552,6 +552,95 @@ modelNode syms state (PI_Node p ns op pars) =
     ([n], "cttz"  , [(PI_Int ips ix)])                          -> appendEither (Right (OpNode    n CttzOp  ix   )) state
     ([n], "ctlz"  , [(PI_Int ips ix)])                          -> appendEither (Right (OpNode    n CtlzOp  ix   )) state
     ([n], "pcnt"  , [(PI_Int ips ix)])                          -> appendEither (Right (OpNode    n PCntOp  ix   )) state
+
+    (ns,  "lsphi" , f@(PI_Func p0 fn):g@(PI_Func p1 gn):(PI_Int ips ix):xs) ->
+      let fnid = getFnid syms f
+          gnid = getFnid syms g
+          pars = makeIntList xs
+          ers = (getLefts pars) ++ (lefts [fnid]) ++ (lefts [gnid])
+          ret = (PhiNode ns LSCond ix (justRight fnid) (justRight gnid) (getRights pars))
+          (errs, nods) = state
+      in case ers of
+          [] -> (ers,   ret:nods)
+          er -> (er ++ ers, nods)
+
+    (ns,  "gtphi" , f@(PI_Func p0 fn):g@(PI_Func p1 gn):(PI_Int ips ix):xs) ->
+      let fnid = getFnid syms f
+          gnid = getFnid syms g
+          pars = makeIntList xs
+          ers = (getLefts pars) ++ (lefts [fnid]) ++ (lefts [gnid])
+          ret = (PhiNode ns GTCond ix (justRight fnid) (justRight gnid) (getRights pars))
+          (errs, nods) = state
+      in case ers of
+          [] -> (ers,   ret:nods)
+          er -> (er ++ ers, nods)
+
+    (ns,  "eqphi" , f@(PI_Func p0 fn):g@(PI_Func p1 gn):(PI_Int ips ix):xs) ->
+      let fnid = getFnid syms f
+          gnid = getFnid syms g
+          pars = makeIntList xs
+          ers = (getLefts pars) ++ (lefts [fnid]) ++ (lefts [gnid])
+          ret = (PhiNode ns EQCond ix (justRight fnid) (justRight gnid) (getRights pars))
+          (errs, nods) = state
+      in case ers of
+          [] -> (ers,   ret:nods)
+          er -> (er ++ ers, nods)
+
+    (ns,  "nephi" , f@(PI_Func p0 fn):g@(PI_Func p1 gn):(PI_Int ips ix):xs) ->
+      let fnid = getFnid syms f
+          gnid = getFnid syms g
+          pars = makeIntList xs
+          ers = (getLefts pars) ++ (lefts [fnid]) ++ (lefts [gnid])
+          ret = (PhiNode ns NECond ix (justRight fnid) (justRight gnid) (getRights pars))
+          (errs, nods) = state
+      in case ers of
+          [] -> (ers,   ret:nods)
+          er -> (er ++ ers, nods)
+
+    (ns,  "lephi" , f@(PI_Func p0 fn):g@(PI_Func p1 gn):(PI_Int ips ix):xs) ->
+      let fnid = getFnid syms f
+          gnid = getFnid syms g
+          pars = makeIntList xs
+          ers = (getLefts pars) ++ (lefts [fnid]) ++ (lefts [gnid])
+          ret = (PhiNode ns LECond ix (justRight fnid) (justRight gnid) (getRights pars))
+          (errs, nods) = state
+      in case ers of
+          [] -> (ers,   ret:nods)
+          er -> (er ++ ers, nods)
+
+    (ns,  "gephi" , f@(PI_Func p0 fn):g@(PI_Func p1 gn):(PI_Int ips ix):xs) ->
+      let fnid = getFnid syms f
+          gnid = getFnid syms g
+          pars = makeIntList xs
+          ers = (getLefts pars) ++ (lefts [fnid]) ++ (lefts [gnid])
+          ret = (PhiNode ns GECond ix (justRight fnid) (justRight gnid) (getRights pars))
+          (errs, nods) = state
+      in case ers of
+          [] -> (ers,   ret:nods)
+          er -> (er ++ ers, nods)
+
+    (ns,  "nzphi" , f@(PI_Func p0 fn):g@(PI_Func p1 gn):(PI_Int ips ix):xs) ->
+      let fnid = getFnid syms f
+          gnid = getFnid syms g
+          pars = makeIntList xs
+          ers = (getLefts pars) ++ (lefts [fnid]) ++ (lefts [gnid])
+          ret = (PhiNode ns NZCond ix (justRight fnid) (justRight gnid) (getRights pars))
+          (errs, nods) = state
+      in case ers of
+          [] -> (ers,   ret:nods)
+          er -> (er ++ ers, nods)
+
+    (ns,  "ezphi" , f@(PI_Func p0 fn):g@(PI_Func p1 gn):(PI_Int ips ix):xs) ->
+      let fnid = getFnid syms f
+          gnid = getFnid syms g
+          pars = makeIntList xs
+          ers = (getLefts pars) ++ (lefts [fnid]) ++ (lefts [gnid])
+          ret = (PhiNode ns EZCond ix (justRight fnid) (justRight gnid) (getRights pars))
+          (errs, nods) = state
+      in case ers of
+          [] -> (ers,   ret:nods)
+          er -> (er ++ ers, nods)
+
     (ns , "call"  , f@(PI_Func ps fn):xs)                       ->
       let fnid = getFnid syms f
           pars = makeIntList xs
