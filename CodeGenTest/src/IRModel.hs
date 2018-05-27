@@ -232,18 +232,18 @@ data IRSymbols
 
 
 data Node
-  = CastNode     Int  TypeRef   Int
-  | GetNode      Int  TypeRef   Int   Int
-  | SetNode      Int  TypeRef   Int   Int   Int
-  | BinopNode    Int  BinopCode Int   Int
-  | OpNode       Int  OpCode    Int
-  | ParNode      Int  TypeRef
-  | RetNode      Int  TypeRef   Int
-  | CallNode    [Int] CallCode  FnId [Int]
-  | HOFNode      Int  HOFCode  [Int]
-  | PhiNode     [Int] CondCode  Int   FnId  FnId [Int]
-  | FuncNode     Int  FnId
-  | TypeNode     Int  TyId
+  = CastNode   { nout:: Int , ntyp:: TypeRef,   npar:: Int }
+  | GetNode    { nout:: Int , ntyp:: TypeRef,   npr0:: Int , npr1:: Int }
+  | SetNode    { nout:: Int , ntyp:: TypeRef,   npr0:: Int , npr1:: Int , npr2:: Int }
+  | BinopNode  { nout:: Int , nbop:: BinopCode, npr0:: Int , npr1:: Int }
+  | OpNode     { nout:: Int , nop :: OpCode,    npar:: Int }
+  | ParNode    { nout:: Int , ntyp:: TypeRef }
+  | RetNode    { nout:: Int , ntyp:: TypeRef ,  npar:: Int }
+  | CallNode   { nots::[Int], ncal:: CallCode,  nfid:: FnId, nprs::[Int]}
+  | HOFNode    { nout:: Int , nhof:: HOFCode ,  nrts:: [Int] }
+  | PhiNode    { nots::[Int], ncnd:: CondCode,  npar:: Int , nfn0:: FnId, nfn1:: FnId, nrts:: [Int] }
+  | FuncNode   { nout:: Int , nfid:: FnId }
+  | TypeNode   { nout:: Int , ntid:: TyId }
   deriving Show
 
 
@@ -473,6 +473,7 @@ modelNodes syms irs =
   let (ers, nds) = L.foldl (modelNode syms) ([], []) irs
 
       -- TODO: Verify that all the nodes fit together nicely
+      outs = ()
 
   in (ers, nds)
 
