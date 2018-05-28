@@ -400,7 +400,7 @@ modelFunc ((PI_FnDef  p fnid pars def):irs) syms =
   let fnid' = (funcSymbols syms) ! fnid
       -- Model Parameters
       -- Model Contents
-      (er0, nds) = modelNodes syms def
+      (er0, nds) = modelNodes p syms def
 
       -- Model the rest of the list
       (ers, fns) = modelFunc irs syms
@@ -416,7 +416,7 @@ modelFunc ((PI_PrDef  p fnid pars refx wefx def):irs) syms =
       (er2, wfx) = undefTypes ermsg syms wefx
 
       -- Model Contents
-      (er0, nds) = modelNodes syms def
+      (er0, nds) = modelNodes p syms def
 
       -- Model the rest of the list
       (ers, fns) = modelFunc irs syms
@@ -432,7 +432,7 @@ modelFunc ((PI_ExDef  p fnid pars refx wefx def):irs) syms =
       (er2, wfx) = undefTypes ermsg syms wefx
 
       -- Model Contents
-      (er0, nds) = modelNodes syms def
+      (er0, nds) = modelNodes p syms def
 
       -- Model the rest of the list
       (ers, fns) = modelFunc irs syms
@@ -468,15 +468,21 @@ undefTypes ermsg syms (_:irs) = undefTypes ermsg syms irs
 
 
 
-modelNodes :: IRSymbols -> [IRParseItem] -> ([IRErr], [Node])
-modelNodes syms irs =
+modelNodes :: IRPos -> IRSymbols -> [IRParseItem] -> ([IRErr], [Node])
+modelNodes ps syms irs =
   let (ers, nds) = L.foldl (modelNode syms) ([], []) irs
 
       -- TODO: Verify that all the nodes fit together nicely
-      outs = ()
-
-  in (ers, nds)
-
+      outs = L.concatMap getOuts nds
+      outs'= L.nub outs
+      er = if outs /= outs'
+            then [(IRErr ps $ pack $ "Function contains repeated SSA variables: " ++ (show $ L.map (\x -> "#" ++ (show x)) (outs L.\\ outs')) ++ "\n")]
+            else []
+  in (er++ers, nds)
+  where getOuts :: Node -> [Int]
+        getOuts (CallNode os _ _ _    ) = os
+        getOuts (PhiNode  os _ _ _ _ _) = os
+        getOuts n                       = [nout n]
 
 
 
