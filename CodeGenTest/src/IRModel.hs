@@ -241,9 +241,10 @@ data Node
   | RetNode    { nout:: Int , ntyp:: TypeRef ,  npar:: Int }
   | CallNode   { nots::[Int], ncal:: CallCode,  nfid:: FnId, nprs::[Int]}
   | HOFNode    { nout:: Int , nhof:: HOFCode ,  nrts:: [Int] }
-  | PhiNode    { nots::[Int], ncnd:: CondCode,  npar:: Int , nfn0:: FnId, nfn1:: FnId, nrts:: [Int] }
+  | PhiNode    { nots::[Int], npar:: Int     , nfn0:: FnId, nfn1:: FnId, nrts:: [Int] }
   | FuncNode   { nout:: Int , nfid:: FnId }
   | TypeNode   { nout:: Int , ntid:: TyId }
+  | CondNode   { nout:: Int , ncnd:: CondCode,  npr0:: Int , npr1:: Int }
   deriving Show
 
 
@@ -480,8 +481,8 @@ modelNodes ps syms irs =
             else []
   in (er++ers, nds)
   where getOuts :: Node -> [Int]
-        getOuts (CallNode os _ _ _    ) = os
-        getOuts (PhiNode  os _ _ _ _ _) = os
+        getOuts (CallNode os _ _ _  ) = os
+        getOuts (PhiNode  os _ _ _ _) = os
         getOuts n                       = [nout n]
 
 
@@ -524,6 +525,14 @@ modelNode syms state (PI_Node p ns op pars) =
     ([n], "lor"   , [(PI_Int ips ix), (PI_Int jps jx)])         -> appendEither (Right (BinopNode n LOrOp   ix jx)) state
     ([n], "land"  , [(PI_Int ips ix), (PI_Int jps jx)])         -> appendEither (Right (BinopNode n LAndOp  ix jx)) state
     ([n], "lxor"  , [(PI_Int ips ix), (PI_Int jps jx)])         -> appendEither (Right (BinopNode n LXorOp  ix jx)) state
+    ([n], "ls"    , [(PI_Int ips ix), (PI_Int jps jx)])         -> appendEither (Right (CondNode  n LSCond  ix jx)) state
+    ([n], "gt"    , [(PI_Int ips ix), (PI_Int jps jx)])         -> appendEither (Right (CondNode  n GTCond  ix jx)) state
+    ([n], "leq"   , [(PI_Int ips ix), (PI_Int jps jx)])         -> appendEither (Right (CondNode  n LECond  ix jx)) state
+    ([n], "geq"   , [(PI_Int ips ix), (PI_Int jps jx)])         -> appendEither (Right (CondNode  n GECond  ix jx)) state
+    ([n], "eq"    , [(PI_Int ips ix), (PI_Int jps jx)])         -> appendEither (Right (CondNode  n EQCond  ix jx)) state
+    ([n], "neq"   , [(PI_Int ips ix), (PI_Int jps jx)])         -> appendEither (Right (CondNode  n NECond  ix jx)) state
+    ([n], "ez"    , [(PI_Int ips ix), (PI_Int jps jx)])         -> appendEither (Right (CondNode  n EZCond  ix jx)) state
+    ([n], "nz"    , [(PI_Int ips ix), (PI_Int jps jx)])         -> appendEither (Right (CondNode  n NZCond  ix jx)) state
     ([n], "lshl"  , [(PI_Int ips ix), (PI_Int jps jx)])         -> appendEither (Right (BinopNode n LShLOp  ix jx)) state
     ([n], "lshr"  , [(PI_Int ips ix), (PI_Int jps jx)])         -> appendEither (Right (BinopNode n LShROp  ix jx)) state
     ([n], "ashr"  , [(PI_Int ips ix), (PI_Int jps jx)])         -> appendEither (Right (BinopNode n AShROp  ix jx)) state
@@ -560,89 +569,12 @@ modelNode syms state (PI_Node p ns op pars) =
     ([n], "ctlz"  , [(PI_Int ips ix)])                          -> appendEither (Right (OpNode    n CtlzOp  ix   )) state
     ([n], "pcnt"  , [(PI_Int ips ix)])                          -> appendEither (Right (OpNode    n PCntOp  ix   )) state
 
-    (ns,  "lsphi" , f@(PI_Func p0 fn):g@(PI_Func p1 gn):(PI_Int ips ix):xs) ->
+    (ns,  "phi" , f@(PI_Func p0 fn):g@(PI_Func p1 gn):(PI_Int ips ix):xs) ->
       let fnid = getFnid syms f
           gnid = getFnid syms g
           pars = makeIntList xs
           ers = (getLefts pars) ++ (lefts [fnid]) ++ (lefts [gnid])
-          ret = (PhiNode ns LSCond ix (justRight fnid) (justRight gnid) (getRights pars))
-          (errs, nods) = state
-      in case ers of
-          [] -> (ers,   ret:nods)
-          er -> (er ++ ers, nods)
-
-    (ns,  "gtphi" , f@(PI_Func p0 fn):g@(PI_Func p1 gn):(PI_Int ips ix):xs) ->
-      let fnid = getFnid syms f
-          gnid = getFnid syms g
-          pars = makeIntList xs
-          ers = (getLefts pars) ++ (lefts [fnid]) ++ (lefts [gnid])
-          ret = (PhiNode ns GTCond ix (justRight fnid) (justRight gnid) (getRights pars))
-          (errs, nods) = state
-      in case ers of
-          [] -> (ers,   ret:nods)
-          er -> (er ++ ers, nods)
-
-    (ns,  "eqphi" , f@(PI_Func p0 fn):g@(PI_Func p1 gn):(PI_Int ips ix):xs) ->
-      let fnid = getFnid syms f
-          gnid = getFnid syms g
-          pars = makeIntList xs
-          ers = (getLefts pars) ++ (lefts [fnid]) ++ (lefts [gnid])
-          ret = (PhiNode ns EQCond ix (justRight fnid) (justRight gnid) (getRights pars))
-          (errs, nods) = state
-      in case ers of
-          [] -> (ers,   ret:nods)
-          er -> (er ++ ers, nods)
-
-    (ns,  "nephi" , f@(PI_Func p0 fn):g@(PI_Func p1 gn):(PI_Int ips ix):xs) ->
-      let fnid = getFnid syms f
-          gnid = getFnid syms g
-          pars = makeIntList xs
-          ers = (getLefts pars) ++ (lefts [fnid]) ++ (lefts [gnid])
-          ret = (PhiNode ns NECond ix (justRight fnid) (justRight gnid) (getRights pars))
-          (errs, nods) = state
-      in case ers of
-          [] -> (ers,   ret:nods)
-          er -> (er ++ ers, nods)
-
-    (ns,  "lephi" , f@(PI_Func p0 fn):g@(PI_Func p1 gn):(PI_Int ips ix):xs) ->
-      let fnid = getFnid syms f
-          gnid = getFnid syms g
-          pars = makeIntList xs
-          ers = (getLefts pars) ++ (lefts [fnid]) ++ (lefts [gnid])
-          ret = (PhiNode ns LECond ix (justRight fnid) (justRight gnid) (getRights pars))
-          (errs, nods) = state
-      in case ers of
-          [] -> (ers,   ret:nods)
-          er -> (er ++ ers, nods)
-
-    (ns,  "gephi" , f@(PI_Func p0 fn):g@(PI_Func p1 gn):(PI_Int ips ix):xs) ->
-      let fnid = getFnid syms f
-          gnid = getFnid syms g
-          pars = makeIntList xs
-          ers = (getLefts pars) ++ (lefts [fnid]) ++ (lefts [gnid])
-          ret = (PhiNode ns GECond ix (justRight fnid) (justRight gnid) (getRights pars))
-          (errs, nods) = state
-      in case ers of
-          [] -> (ers,   ret:nods)
-          er -> (er ++ ers, nods)
-
-    (ns,  "nzphi" , f@(PI_Func p0 fn):g@(PI_Func p1 gn):(PI_Int ips ix):xs) ->
-      let fnid = getFnid syms f
-          gnid = getFnid syms g
-          pars = makeIntList xs
-          ers = (getLefts pars) ++ (lefts [fnid]) ++ (lefts [gnid])
-          ret = (PhiNode ns NZCond ix (justRight fnid) (justRight gnid) (getRights pars))
-          (errs, nods) = state
-      in case ers of
-          [] -> (ers,   ret:nods)
-          er -> (er ++ ers, nods)
-
-    (ns,  "ezphi" , f@(PI_Func p0 fn):g@(PI_Func p1 gn):(PI_Int ips ix):xs) ->
-      let fnid = getFnid syms f
-          gnid = getFnid syms g
-          pars = makeIntList xs
-          ers = (getLefts pars) ++ (lefts [fnid]) ++ (lefts [gnid])
-          ret = (PhiNode ns EZCond ix (justRight fnid) (justRight gnid) (getRights pars))
+          ret = (PhiNode ns ix (justRight fnid) (justRight gnid) (getRights pars))
           (errs, nods) = state
       in case ers of
           [] -> (ers,   ret:nods)
