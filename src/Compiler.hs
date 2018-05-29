@@ -1,5 +1,6 @@
 module Compiler where
 import Data.Tuple
+import Data.List
 import BzoTypes
 import BzoPreprocessor
 import BzoParameterParser
@@ -56,8 +57,24 @@ showOutput (Right outs) = show outs
 showOutput (Left [err]) =
   "Compilation Failed. Errors:\n\n" ++ show err ++ "\n\n1 error total."
 showOutput (Left  errs) =
-  "Compilation Failed. Errors:\n\n" ++ concatMap (\x -> show x ++ "\n\n") errs ++ "\n\n" ++ (show $ length errs) ++ " errors total."
+  "Compilation Failed. Errors:\n\n" ++ concatMap (\x -> show x ++ "\n\n") (sortErrs $ errs) ++ "\n\n" ++ (show $ length errs) ++ " errors total."
 
+
+
+
+
+
+
+
+
+
+sortErrs :: [BzoErr] -> [BzoErr]
+sortErrs = sortBy (\a b->
+  case (compare (fileName $ position a) (fileName $ position b)) of
+    EQ -> case (compare (line $ position a) (line $ position b)) of
+            EQ -> (compare (column $ position a) (column $ position b))
+            x  -> x
+    x  -> x )
 
 
 
