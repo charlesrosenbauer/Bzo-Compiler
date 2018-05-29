@@ -260,14 +260,13 @@ data OpCode     = AbsOp  | TrncOp | WideOp | NegOp  | NotOp  | LNotOp |
                   SqrtOp | CbrtOp | Lg2Op  | Lg10Op | SinOp  | CosOp  |
                   TanOp  | AsinOp | AcosOp | AtanOp | SinhOp | CoshOp |
                   TanhOp | AsinhOp| AcoshOp| AtanhOp| CttzOp | CtlzOp |
+                  CeilOp | FloorOp|
                   PCntOp |
                   CnstOp
                   deriving Show
 
-data BinopCode  = IAddOp | ISubOp | IMulOp | IDivOp | IModOp | ICmpOp |   -- Integer Ops
-                  UAddOp | USubOp | UMulOp | UDivOp | UModOp | UCmpOp |   -- Unsigned Integer Ops
-                  FAddOp | FSubOp | FMulOp | FDivOp | FModOp | FCmpOp |   -- Float Ops
-                  NAddOp | NSubOp | NMulOp | NDivOp | NModOp | NCmpOp |   -- Unum Ops
+data BinopCode  = IAddOp | ISubOp | IMulOp | IDivOp | IModOp | ICmpOp | IMinOp | IMaxOp |  -- Integer Ops
+                  FAddOp | FSubOp | FMulOp | FDivOp | FModOp | FCmpOp | FMinOp | FMaxOp |  -- Float Ops
                   OrOp   | AndOp  | XorOp  | LOrOp  | LAndOp | LXorOp |
                   LShLOp | LShROp | AShROp |
                   FLogOp | FRootOp| FExpOp |
@@ -504,21 +503,15 @@ modelNode syms state (PI_Node p ns op pars) =
     ([n], "imul"  , [(PI_Int ips ix), (PI_Int jps jx)])         -> appendEither (Right (BinopNode n IMulOp  ix jx)) state
     ([n], "idiv"  , [(PI_Int ips ix), (PI_Int jps jx)])         -> appendEither (Right (BinopNode n IDivOp  ix jx)) state
     ([n], "imod"  , [(PI_Int ips ix), (PI_Int jps jx)])         -> appendEither (Right (BinopNode n IModOp  ix jx)) state
-    ([n], "uadd"  , [(PI_Int ips ix), (PI_Int jps jx)])         -> appendEither (Right (BinopNode n UAddOp  ix jx)) state
-    ([n], "usub"  , [(PI_Int ips ix), (PI_Int jps jx)])         -> appendEither (Right (BinopNode n USubOp  ix jx)) state
-    ([n], "umul"  , [(PI_Int ips ix), (PI_Int jps jx)])         -> appendEither (Right (BinopNode n UMulOp  ix jx)) state
-    ([n], "udiv"  , [(PI_Int ips ix), (PI_Int jps jx)])         -> appendEither (Right (BinopNode n UDivOp  ix jx)) state
-    ([n], "umod"  , [(PI_Int ips ix), (PI_Int jps jx)])         -> appendEither (Right (BinopNode n UModOp  ix jx)) state
+    ([n], "imax"  , [(PI_Int ips ix), (PI_Int jps jx)])         -> appendEither (Right (BinopNode n IMaxOp  ix jx)) state
+    ([n], "imin"  , [(PI_Int ips ix), (PI_Int jps jx)])         -> appendEither (Right (BinopNode n IMinOp  ix jx)) state
     ([n], "fadd"  , [(PI_Int ips ix), (PI_Int jps jx)])         -> appendEither (Right (BinopNode n FAddOp  ix jx)) state
     ([n], "fsub"  , [(PI_Int ips ix), (PI_Int jps jx)])         -> appendEither (Right (BinopNode n FSubOp  ix jx)) state
     ([n], "fmul"  , [(PI_Int ips ix), (PI_Int jps jx)])         -> appendEither (Right (BinopNode n FMulOp  ix jx)) state
     ([n], "fdiv"  , [(PI_Int ips ix), (PI_Int jps jx)])         -> appendEither (Right (BinopNode n FDivOp  ix jx)) state
     ([n], "fmod"  , [(PI_Int ips ix), (PI_Int jps jx)])         -> appendEither (Right (BinopNode n FModOp  ix jx)) state
-    ([n], "nadd"  , [(PI_Int ips ix), (PI_Int jps jx)])         -> appendEither (Right (BinopNode n NAddOp  ix jx)) state
-    ([n], "nsub"  , [(PI_Int ips ix), (PI_Int jps jx)])         -> appendEither (Right (BinopNode n NSubOp  ix jx)) state
-    ([n], "nmul"  , [(PI_Int ips ix), (PI_Int jps jx)])         -> appendEither (Right (BinopNode n NMulOp  ix jx)) state
-    ([n], "ndiv"  , [(PI_Int ips ix), (PI_Int jps jx)])         -> appendEither (Right (BinopNode n NDivOp  ix jx)) state
-    ([n], "nmod"  , [(PI_Int ips ix), (PI_Int jps jx)])         -> appendEither (Right (BinopNode n NModOp  ix jx)) state
+    ([n], "fmax"  , [(PI_Int ips ix), (PI_Int jps jx)])         -> appendEither (Right (BinopNode n FMaxOp  ix jx)) state
+    ([n], "fmin"  , [(PI_Int ips ix), (PI_Int jps jx)])         -> appendEither (Right (BinopNode n FMinOp  ix jx)) state
     ([n], "or"    , [(PI_Int ips ix), (PI_Int jps jx)])         -> appendEither (Right (BinopNode n OrOp    ix jx)) state
     ([n], "xor"   , [(PI_Int ips ix), (PI_Int jps jx)])         -> appendEither (Right (BinopNode n AndOp   ix jx)) state
     ([n], "and"   , [(PI_Int ips ix), (PI_Int jps jx)])         -> appendEither (Right (BinopNode n XorOp   ix jx)) state
@@ -565,6 +558,8 @@ modelNode syms state (PI_Node p ns op pars) =
     ([n], "asinh" , [(PI_Int ips ix)])                          -> appendEither (Right (OpNode    n AsinhOp ix   )) state
     ([n], "acosh" , [(PI_Int ips ix)])                          -> appendEither (Right (OpNode    n AcoshOp ix   )) state
     ([n], "atanh" , [(PI_Int ips ix)])                          -> appendEither (Right (OpNode    n AtanhOp ix   )) state
+    ([n], "ceil"  , [(PI_Int ips ix)])                          -> appendEither (Right (OpNode    n CeilOp  ix   )) state
+    ([n], "floor" , [(PI_Int ips ix)])                          -> appendEither (Right (OpNode    n FloorOp ix   )) state
     ([n], "cttz"  , [(PI_Int ips ix)])                          -> appendEither (Right (OpNode    n CttzOp  ix   )) state
     ([n], "ctlz"  , [(PI_Int ips ix)])                          -> appendEither (Right (OpNode    n CtlzOp  ix   )) state
     ([n], "pcnt"  , [(PI_Int ips ix)])                          -> appendEither (Right (OpNode    n PCntOp  ix   )) state
