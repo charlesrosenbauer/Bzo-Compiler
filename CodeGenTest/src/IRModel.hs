@@ -236,6 +236,7 @@ data Node
   | GetNode    { nout:: Int , ntyp:: TypeRef,   npr0:: Int , npr1:: Int }
   | SetNode    { nout:: Int , ntyp:: TypeRef,   npr0:: Int , npr1:: Int , npr2:: Int }
   | BinopNode  { nout:: Int , nbop:: BinopCode, npr0:: Int , npr1:: Int }
+  | TrinopNode { nout:: Int , ntop:: TrinopCode,npr0:: Int , npr1:: Int , npr2:: Int }
   | OpNode     { nout:: Int , nop :: OpCode,    npar:: Int }
   | ParNode    { nout:: Int , ntyp:: TypeRef }
   | RetNode    { nout:: Int , ntyp:: TypeRef ,  npar:: Int }
@@ -260,7 +261,7 @@ data OpCode     = AbsOp  | TrncOp | WideOp | NegOp  | NotOp  | LNotOp |
                   SqrtOp | CbrtOp | Lg2Op  | Lg10Op | SinOp  | CosOp  |
                   TanOp  | AsinOp | AcosOp | AtanOp | SinhOp | CoshOp |
                   TanhOp | AsinhOp| AcoshOp| AtanhOp| CttzOp | CtlzOp |
-                  CeilOp | FloorOp|
+                  CeilOp | FloorOp| RoundOp|
                   PCntOp |
                   CnstOp
                   deriving Show
@@ -271,6 +272,9 @@ data BinopCode  = IAddOp | ISubOp | IMulOp | IDivOp | IModOp | ICmpOp | IMinOp |
                   LShLOp | LShROp | AShROp |
                   FLogOp | FRootOp| FExpOp |
                   NLogOp | NRootOp| NExpOp | PowOp
+                  deriving Show
+
+data TrinopCode = FFMAOp | FFMSOp | IFMAOp | IFMSOp
                   deriving Show
 
 data HOFCode    = MapHF  | FoldHF | RedcHF | ZipHF  | UZipHF | ScanHF |
@@ -498,6 +502,12 @@ modelNode syms state (PI_Node p ns op pars) =
     ([n], "input" , [t@(PI_Type tps tns tid)])                  -> appendEither (onRight       (ParNode  n)      (makeTypeRef syms t)) state
     ([n], "output", [t@(PI_Type tps tns tid), (PI_Int ips ix)]) -> appendEither (onRight (\x -> RetNode  n x ix) (makeTypeRef syms t)) state
     ([n], "cast"  , [t@(PI_Type tps tns tid), (PI_Int ips ix)]) -> appendEither (onRight (\x -> CastNode n x ix) (makeTypeRef syms t)) state
+
+    ([n], "ifma"  , [(PI_Int ips ix), (PI_Int jps jx), (PI_Int kps kx)]) -> appendEither (Right (TrinopNode n IFMAOp  ix jx kx)) state
+    ([n], "ifms"  , [(PI_Int ips ix), (PI_Int jps jx), (PI_Int kps kx)]) -> appendEither (Right (TrinopNode n IFMSOp  ix jx kx)) state
+    ([n], "ffma"  , [(PI_Int ips ix), (PI_Int jps jx), (PI_Int kps kx)]) -> appendEither (Right (TrinopNode n FFMAOp  ix jx kx)) state
+    ([n], "ffms"  , [(PI_Int ips ix), (PI_Int jps jx), (PI_Int kps kx)]) -> appendEither (Right (TrinopNode n FFMSOp  ix jx kx)) state
+
     ([n], "iadd"  , [(PI_Int ips ix), (PI_Int jps jx)])         -> appendEither (Right (BinopNode n IAddOp  ix jx)) state
     ([n], "isub"  , [(PI_Int ips ix), (PI_Int jps jx)])         -> appendEither (Right (BinopNode n ISubOp  ix jx)) state
     ([n], "imul"  , [(PI_Int ips ix), (PI_Int jps jx)])         -> appendEither (Right (BinopNode n IMulOp  ix jx)) state
@@ -512,6 +522,7 @@ modelNode syms state (PI_Node p ns op pars) =
     ([n], "fmod"  , [(PI_Int ips ix), (PI_Int jps jx)])         -> appendEither (Right (BinopNode n FModOp  ix jx)) state
     ([n], "fmax"  , [(PI_Int ips ix), (PI_Int jps jx)])         -> appendEither (Right (BinopNode n FMaxOp  ix jx)) state
     ([n], "fmin"  , [(PI_Int ips ix), (PI_Int jps jx)])         -> appendEither (Right (BinopNode n FMinOp  ix jx)) state
+
     ([n], "or"    , [(PI_Int ips ix), (PI_Int jps jx)])         -> appendEither (Right (BinopNode n OrOp    ix jx)) state
     ([n], "xor"   , [(PI_Int ips ix), (PI_Int jps jx)])         -> appendEither (Right (BinopNode n AndOp   ix jx)) state
     ([n], "and"   , [(PI_Int ips ix), (PI_Int jps jx)])         -> appendEither (Right (BinopNode n XorOp   ix jx)) state
@@ -529,6 +540,10 @@ modelNode syms state (PI_Node p ns op pars) =
     ([n], "lshl"  , [(PI_Int ips ix), (PI_Int jps jx)])         -> appendEither (Right (BinopNode n LShLOp  ix jx)) state
     ([n], "lshr"  , [(PI_Int ips ix), (PI_Int jps jx)])         -> appendEither (Right (BinopNode n LShROp  ix jx)) state
     ([n], "ashr"  , [(PI_Int ips ix), (PI_Int jps jx)])         -> appendEither (Right (BinopNode n AShROp  ix jx)) state
+    ([n], "cttz"  , [(PI_Int ips ix)])                          -> appendEither (Right (OpNode    n CttzOp  ix   )) state
+    ([n], "ctlz"  , [(PI_Int ips ix)])                          -> appendEither (Right (OpNode    n CtlzOp  ix   )) state
+    ([n], "pcnt"  , [(PI_Int ips ix)])                          -> appendEither (Right (OpNode    n PCntOp  ix   )) state
+
     ([n], "logf"  , [(PI_Int ips ix), (PI_Int jps jx)])         -> appendEither (Right (BinopNode n FLogOp  ix jx)) state
     ([n], "rtf"   , [(PI_Int ips ix), (PI_Int jps jx)])         -> appendEither (Right (BinopNode n FRootOp ix jx)) state
     ([n], "expf"  , [(PI_Int ips ix), (PI_Int jps jx)])         -> appendEither (Right (BinopNode n FExpOp  ix jx)) state
@@ -537,6 +552,7 @@ modelNode syms state (PI_Node p ns op pars) =
     ([n], "expn"  , [(PI_Int ips ix), (PI_Int jps jx)])         -> appendEither (Right (BinopNode n NExpOp  ix jx)) state
     ([n], "pow"   , [(PI_Int ips ix), (PI_Int jps jx)])         -> appendEither (Right (BinopNode n PowOp   ix jx)) state
     ([n], "abs"   , [(PI_Int ips ix)])                          -> appendEither (Right (OpNode    n AbsOp   ix   )) state
+
     ([n], "trnc"  , [(PI_Int ips ix)])                          -> appendEither (Right (OpNode    n TrncOp  ix   )) state
     ([n], "wide"  , [(PI_Int ips ix)])                          -> appendEither (Right (OpNode    n WideOp  ix   )) state
     ([n], "neg"   , [(PI_Int ips ix)])                          -> appendEither (Right (OpNode    n NegOp   ix   )) state
@@ -560,9 +576,7 @@ modelNode syms state (PI_Node p ns op pars) =
     ([n], "atanh" , [(PI_Int ips ix)])                          -> appendEither (Right (OpNode    n AtanhOp ix   )) state
     ([n], "ceil"  , [(PI_Int ips ix)])                          -> appendEither (Right (OpNode    n CeilOp  ix   )) state
     ([n], "floor" , [(PI_Int ips ix)])                          -> appendEither (Right (OpNode    n FloorOp ix   )) state
-    ([n], "cttz"  , [(PI_Int ips ix)])                          -> appendEither (Right (OpNode    n CttzOp  ix   )) state
-    ([n], "ctlz"  , [(PI_Int ips ix)])                          -> appendEither (Right (OpNode    n CtlzOp  ix   )) state
-    ([n], "pcnt"  , [(PI_Int ips ix)])                          -> appendEither (Right (OpNode    n PCntOp  ix   )) state
+    ([n], "round" , [(PI_Int ips ix)])                          -> appendEither (Right (OpNode    n RoundOp ix   )) state
 
     (ns,  "phi" , f@(PI_Func p0 fn):g@(PI_Func p1 gn):(PI_Int ips ix):xs) ->
       let fnid = getFnid syms f
