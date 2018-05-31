@@ -262,7 +262,7 @@ data OpCode     = AbsOp  | TrncOp | WideOp | NegOp  | NotOp  | LNotOp |
                   TanOp  | AsinOp | AcosOp | AtanOp | SinhOp | CoshOp |
                   TanhOp | AsinhOp| AcoshOp| AtanhOp| CttzOp | CtlzOp |
                   CeilOp | FloorOp| RoundOp|
-                  PCntOp |
+                  PCntOp | BRevsOp| BSwapOp|
                   CnstOp
                   deriving Show
 
@@ -543,6 +543,8 @@ modelNode syms state (PI_Node p ns op pars) =
     ([n], "cttz"  , [(PI_Int ips ix)])                          -> appendEither (Right (OpNode    n CttzOp  ix   )) state
     ([n], "ctlz"  , [(PI_Int ips ix)])                          -> appendEither (Right (OpNode    n CtlzOp  ix   )) state
     ([n], "pcnt"  , [(PI_Int ips ix)])                          -> appendEither (Right (OpNode    n PCntOp  ix   )) state
+    ([n], "brev"  , [(PI_Int ips ix)])                          -> appendEither (Right (OpNode    n BRevsOp ix   )) state
+    ([n], "bswap" , [(PI_Int ips ix)])                          -> appendEither (Right (OpNode    n BSwapOp ix   )) state
 
     ([n], "logf"  , [(PI_Int ips ix), (PI_Int jps jx)])         -> appendEither (Right (BinopNode n FLogOp  ix jx)) state
     ([n], "rtf"   , [(PI_Int ips ix), (PI_Int jps jx)])         -> appendEither (Right (BinopNode n FRootOp ix jx)) state
