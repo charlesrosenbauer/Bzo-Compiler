@@ -233,8 +233,8 @@ data IRSymbols
 
 data Node
   = CastNode   { nout:: Int , ntyp:: TypeRef,   npar:: Int }
-  | GetNode    { nout:: Int , ntyp:: TypeRef,   npr0:: Int , npr1:: Int }
-  | SetNode    { nout:: Int , ntyp:: TypeRef,   npr0:: Int , npr1:: Int , npr2:: Int }
+  | GetNode    { nout:: Int , ntyp:: TypeRef,   npar:: Int }
+  | SetNode    { nout:: Int , ntyp:: TypeRef,   npr0:: Int , npr1:: Int }
   | BinopNode  { nout:: Int , nbop:: BinopCode, npr0:: Int , npr1:: Int }
   | TrinopNode { nout:: Int , ntop:: TrinopCode,npr0:: Int , npr1:: Int , npr2:: Int }
   | OpNode     { nout:: Int , nop :: OpCode,    npar:: Int }
@@ -502,6 +502,9 @@ modelNode syms state (PI_Node p ns op pars) =
     ([n], "input" , [t@(PI_Type tps tns tid)])                  -> appendEither (onRight       (ParNode  n)      (makeTypeRef syms t)) state
     ([n], "output", [t@(PI_Type tps tns tid), (PI_Int ips ix)]) -> appendEither (onRight (\x -> RetNode  n x ix) (makeTypeRef syms t)) state
     ([n], "cast"  , [t@(PI_Type tps tns tid), (PI_Int ips ix)]) -> appendEither (onRight (\x -> CastNode n x ix) (makeTypeRef syms t)) state
+
+    ([n], "load"  , [t@(PI_Type tps tns tid), (PI_Int ips ix)                 ]) -> appendEither (onRight (\x -> GetNode n x ix   ) (makeTypeRef syms t)) state
+    ([n], "stor"  , [t@(PI_Type tps tns tid), (PI_Int ips ix), (PI_Int jps jx)]) -> appendEither (onRight (\x -> SetNode n x ix jx) (makeTypeRef syms t)) state
 
     ([n], "ifma"  , [(PI_Int ips ix), (PI_Int jps jx), (PI_Int kps kx)]) -> appendEither (Right (TrinopNode n IFMAOp  ix jx kx)) state
     ([n], "ifms"  , [(PI_Int ips ix), (PI_Int jps jx), (PI_Int kps kx)]) -> appendEither (Right (TrinopNode n IFMSOp  ix jx kx)) state
