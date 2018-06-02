@@ -243,8 +243,6 @@ data Node
   | CallNode   { nots::[Int], ncal:: CallCode,  nfid:: FnId, nprs::[Int]}
   | HOFNode    { nout:: Int , nhof:: HOFCode ,  nrts:: [Int] }
   | PhiNode    { nots::[Int], npar:: Int     , nfn0:: FnId, nfn1:: FnId, nrts:: [Int] }
-  | FuncNode   { nout:: Int , nfid:: FnId }
-  | TypeNode   { nout:: Int , ntid:: TyId }
   | CondNode   { nout:: Int , ncnd:: CondCode,  npr0:: Int , npr1:: Int }
   deriving Show
 
@@ -477,16 +475,45 @@ modelNodes ps syms irs =
   let (ers, nds) = L.foldl (modelNode syms) ([], []) irs
 
       -- TODO: Verify that all the nodes fit together nicely
-      outs = L.concatMap getOuts nds
+      (outss, inss) = L.unzip $ L.map (\nd -> (getOuts nd, getIns nd)) nds
+      outs = L.concat outss
       outs'= L.nub outs
-      er = if outs /= outs'
-            then [(IRErr ps $ pack $ "Function contains repeated SSA variables: " ++ (show $ L.map (\x -> "#" ++ (show x)) (outs L.\\ outs')) ++ "\n")]
-            else []
-  in (er++ers, nds)
+      er0  = if outs /= outs'
+              then [(IRErr ps $ pack $ "Function contains repeated SSA variables: " ++ (show $ L.map (\x -> "#" ++ (show x)) (outs L.\\ outs')) ++ "\n")]
+              else []
+
+      iopairs = L.zip inss outss
+      er1  = catMaybes $ L.map (\(i, o) -> checkIns ps (o, i, outs)) iopairs
+  in (er0++er1++ers, nds)
   where getOuts :: Node -> [Int]
         getOuts (CallNode os _ _ _  ) = os
         getOuts (PhiNode  os _ _ _ _) = os
         getOuts n                       = [nout n]
+
+        getIns  :: Node -> [Int]
+        getIns  (SetNode   _ _   p0 p1   ) = [p0, p1]
+        getIns  (BinopNode   _ _ p0 p1   ) = [p0, p1]
+        getIns  (TrinopNode  _ _ p0 p1 p2) = [p0, p1, p2]
+        getIns  (ParNode     _ _)          = []
+        getIns  (CallNode  _ _ _ ps)       = ps
+        getIns  (HOFNode   _ _ ps)         = ps
+        getIns  (PhiNode   _ p0 _ _ ps)    = (p0:ps)
+        getIns  (CondNode  _ _ p0 p1)      = [p0, p1]
+        getIns  node                       = [npar node]
+
+        checkIns :: IRPos -> ([Int], [Int], [Int]) -> Maybe IRErr
+        checkIns ps ([],  _,  _) = Nothing
+        checkIns ps (os, is, xs) =
+          let osmin   = L.minimum os
+              isfail0 = L.filter (\x -> x >= osmin) is
+              isfail1 = L.filter (\x -> L.notElem x xs) is
+          in case (isfail0, isfail1) of
+              ([], []) -> Nothing
+              -- These error messages suck, but IR code isn't meant to be a serious language, so who cares?
+              (f0, []) -> Just $ IRErr ps $ pack ("Cyclical dependencies in function definition, involving variables " ++ (show f0) ++ "\n")
+              ([], f1) -> Just $ IRErr ps $ pack ("Calls to undefined variables in function definition: " ++ (show f1) ++ "\n")
+              (f0, f1) -> Just $ IRErr ps $ pack ("Cyclical dependencies, and calls to undefined variables in function definition: " ++ (show f1) ++ "\n")
+
 
 
 
