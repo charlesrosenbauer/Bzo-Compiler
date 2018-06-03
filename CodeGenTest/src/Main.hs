@@ -19,7 +19,7 @@ main = do
   putStrLn (fcontents ++ "\n\n" ++ (
     case (eitherWraps modelIR $ eitherWrap (irParse "test.bzir") $ lexFile "test.bzir" fcontents) of
       Right x -> "Success:\n----------\n" ++ show x
-      Left er -> "Errors: \n----------\n" ++ (concat $ reverse $ map (\x -> (show x) ++ "\n") er)))
+      Left er -> "Errors: \n----------\n" ++ (concat $ map (\x -> (show x) ++ "\n") er)))
 
 
 
