@@ -220,7 +220,23 @@ data IRSymbols
     cnstSymbols  :: Map Text   CnstId,
     cnstSymbols' :: Map CnstId Text,
     idTop        :: Int }
-    deriving Show
+
+
+
+
+
+
+
+
+
+
+showIRSym :: IRSymbols -> String
+showIRSym (IRSymbols fs fs' ts ts' cs cs' top) =
+    "Func  Symbols: " ++ (show fs) ++ "\n\n" ++
+    "Type  Symbols: " ++ (show ts) ++ "\n\n" ++
+    "Const Symbols: " ++ (show cs) ++ "\n\n" ++
+    "Id# top: " ++ (show top) ++ "\n\n\n"
+instance Show IRSymbols where show = showIRSym
 
 
 
