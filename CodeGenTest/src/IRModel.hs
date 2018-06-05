@@ -291,8 +291,10 @@ data BinopCode  = IAddOp | ISubOp | IMulOp | IDivOp | IModOp | ICmpOp | IMinOp |
 data TrinopCode = FFMAOp | FFMSOp | IFMAOp | IFMSOp
                   deriving Show
 
-data HOFCode    = MapHF  | FoldHF | RedcHF | ZipHF  | UZipHF | ScanHF |
-                  ChnHF  | FiltHF
+data HOFCode    = MapHF  | SFoldHF| PFoldHF| SScanHF| PScanHF| ZipHF  | UnzipHF| FilterHF|
+                  RevsHF | SortHF | TakeHF | ReptHF | ConctHF| AppndHF| ArrayHF| SliceHF |
+                  AdjstHF| SplitHF| RmovHF | DropHF | TailHF | AnyHF  | AllHF  | NoneHF  |
+                  InsrtHF| IndexHF| IterHF
                   deriving Show
 
 data CondCode   = LSCond | GTCond | EQCond | NECond | LECond | GECond |
