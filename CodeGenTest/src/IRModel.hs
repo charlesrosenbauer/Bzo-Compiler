@@ -292,6 +292,7 @@ data BinopCode  = IAddOp | ISubOp | IMulOp | IDivOp | IModOp | ICmpOp | IMinOp |
 data TrinopCode = FFMAOp | FFMSOp | IFMAOp | IFMSOp
                   deriving Show
 
+-- Some of these *technically* aren't higher-order functions, but I'm including them anyway.
 data HOFCode    = MapHF  | SFoldHF| PFoldHF| SScanHF| PScanHF| ZipHF  | UnzipHF| FilterHF|
                   RevsHF | SortHF | TakeHF | ReptHF | ConctHF| AppndHF| ArrayHF| SliceHF |
                   AdjstHF| SplitHF| RmovHF | DropHF | TailHF | AnyHF  | AllHF  | NoneHF  |
@@ -633,6 +634,10 @@ modelNode syms state (PI_Node p ns op pars) =
 
     ([n], "const" , [c@(PI_Const _ cid)])                       -> appendEither (onRight (\x -> ConstNode n UndefType x) (getConstId syms c)) state
 
+    ([n]  , "zip"   , [(PI_Int ips ix)])                          -> appendEither (Right (HOFNode    [  n] [] ZipHF   [ix] [])) state
+    ([m,n], "unzip" , [(PI_Int ips ix)])                          -> appendEither (Right (HOFNode    [m,n] [] UnzipHF [ix] [])) state
+    ([n]  , "revs"  , [(PI_Int ips ix)])                          -> appendEither (Right (HOFNode    [  n] [] RevsHF  [ix] [])) state
+
     ([n], "map"   , [f@(PI_Func p0 fn), (PI_Int p1 ix)])          ->
       let fnid = getFnid syms f
           ers = lefts [fnid]
@@ -642,7 +647,53 @@ modelNode syms state (PI_Node p ns op pars) =
           [] -> (ers,   ret:nods)
           er -> (er ++ ers, nods)
 
-    (ns,  "phi" , f@(PI_Func p0 fn):g@(PI_Func p1 gn):(PI_Int ips ix):xs) ->
+    ([n], "sfold" , [f@(PI_Func p0 fn), (PI_Int p1 ix), (PI_Int p2 jx)]) ->
+      let fnid = getFnid syms f
+          ers = lefts [fnid]
+          ret = (HOFNode [n] [] SFoldHF [ix, jx] [justRight fnid])
+          (errs, nods) = state
+      in case ers of
+          [] -> (ers,   ret:nods)
+          er -> (er ++ ers, nods)
+
+    ([n], "pfold" , [f@(PI_Func p0 fn), (PI_Int p1 ix)]) ->
+      let fnid = getFnid syms f
+          ers = lefts [fnid]
+          ret = (HOFNode [n] [] PFoldHF [ix] [justRight fnid])
+          (errs, nods) = state
+      in case ers of
+          [] -> (ers,   ret:nods)
+          er -> (er ++ ers, nods)
+
+    ([n], "sscan" , [f@(PI_Func p0 fn), (PI_Int p1 ix), (PI_Int p2 jx)]) ->
+      let fnid = getFnid syms f
+          ers = lefts [fnid]
+          ret = (HOFNode [n] [] SFoldHF [ix, jx] [justRight fnid])
+          (errs, nods) = state
+      in case ers of
+          [] -> (ers,   ret:nods)
+          er -> (er ++ ers, nods)
+
+    ([n], "pscan" , [f@(PI_Func p0 fn), (PI_Int p1 ix)]) ->
+      let fnid = getFnid syms f
+          ers = lefts [fnid]
+          ret = (HOFNode [n] [] PFoldHF [ix] [justRight fnid])
+          (errs, nods) = state
+      in case ers of
+          [] -> (ers,   ret:nods)
+          er -> (er ++ ers, nods)
+
+    ([n], "filter" , [f@(PI_Func p0 fn), (PI_Int p1 ix)]) ->
+      let fnid = getFnid syms f
+          ers = lefts [fnid]
+          ret = (HOFNode [n] [] FilterHF [ix] [justRight fnid])
+          (errs, nods) = state
+      in case ers of
+          [] -> (ers,   ret:nods)
+          er -> (er ++ ers, nods)
+
+
+    (ns,  "phi"   , f@(PI_Func p0 fn):g@(PI_Func p1 gn):(PI_Int ips ix):xs) ->
       let fnid = getFnid syms f
           gnid = getFnid syms g
           pars = makeIntList xs
@@ -652,6 +703,7 @@ modelNode syms state (PI_Node p ns op pars) =
       in case ers of
           [] -> (ers,   ret:nods)
           er -> (er ++ ers, nods)
+
 
     (ns , "call"  , f@(PI_Func ps fn):xs)                       ->
       let fnid = getFnid syms f
