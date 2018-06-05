@@ -258,8 +258,8 @@ data Node
   | ParNode    { nout:: Int , ntyp:: TypeRef }
   | RetNode    { nout:: Int , ntyp:: TypeRef ,  npar:: Int }
   | CallNode   { nots::[Int], ntps::[TypeRef],  ncal:: CallCode,  nfid:: FnId, nprs::[Int]}
-  | HOFNode    { nout:: Int , ntyp:: TypeRef,   nhof:: HOFCode ,  nrts:: [Int] }
-  | PhiNode    { nots::[Int], ntps::[TypeRef],   npar:: Int     , nfn0:: FnId, nfn1:: FnId, nrts:: [Int] }
+  | HOFNode    { nots::[Int], ntps::[TypeRef],  nhof:: HOFCode ,  nrts:: [Int],nfns::[FnId]}
+  | PhiNode    { nots::[Int], ntps::[TypeRef],  npar:: Int     , nfn0:: FnId, nfn1:: FnId, nrts:: [Int] }
   | CondNode   { nout:: Int , ncnd:: CondCode,  npr0:: Int , npr1:: Int }
   deriving Show
 
@@ -507,6 +507,7 @@ modelNodes ps syms irs =
   where getOuts :: Node -> [Int]
         getOuts (CallNode os _ _ _ _  ) = os
         getOuts (PhiNode  os _ _ _ _ _) = os
+        getOuts (HOFNode  os _ _ _ _)   = os
         getOuts n                       = [nout n]
 
         getIns  :: Node -> [Int]
@@ -516,7 +517,7 @@ modelNodes ps syms irs =
         getIns  (ParNode     _ _)            = []
         getIns  (ConstNode _ _ _)            = []
         getIns  (CallNode  _ _ _ _ ps)       = ps
-        getIns  (HOFNode   _ _ _ ps)         = ps
+        getIns  (HOFNode   _ _ _ ps _)       = ps
         getIns  (PhiNode   _ _ p0 _ _ ps)    = (p0:ps)
         getIns  (CondNode  _ _ p0 p1)        = [p0, p1]
         getIns  node                         = [npar node]
@@ -631,6 +632,15 @@ modelNode syms state (PI_Node p ns op pars) =
     ([n], "round" , [(PI_Int ips ix)])                          -> appendEither (Right (OpNode    n UndefType RoundOp ix   )) state
 
     ([n], "const" , [c@(PI_Const _ cid)])                       -> appendEither (onRight (\x -> ConstNode n UndefType x) (getConstId syms c)) state
+
+    ([n], "map"   , [f@(PI_Func p0 fn), (PI_Int p1 ix)])          ->
+      let fnid = getFnid syms f
+          ers = lefts [fnid]
+          ret = (HOFNode [n] [] MapHF [ix] [justRight fnid])
+          (errs, nods) = state
+      in case ers of
+          [] -> (ers,   ret:nods)
+          er -> (er ++ ers, nods)
 
     (ns,  "phi" , f@(PI_Func p0 fn):g@(PI_Func p1 gn):(PI_Int ips ix):xs) ->
       let fnid = getFnid syms f
