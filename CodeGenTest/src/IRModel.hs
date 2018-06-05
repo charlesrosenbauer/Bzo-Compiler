@@ -181,9 +181,9 @@ type TyId = Int
 
 
 data ConstantData
-  = ConstString CnstId Text
-  | ConstInt    CnstId Int
-  | ConstBool   CnstId
+  = ConstStr  CnstId Text
+  | ConstInt  CnstId Int
+  | ConstBool CnstId      -- Probably going to remove this later
   deriving Show
 
 type CnstId = Int
@@ -249,6 +249,7 @@ instance Show IRSymbols where show = showIRSym
 
 data Node
   = CastNode   { nout:: Int , ntyp:: TypeRef,   npar:: Int }
+  | ConstNode  { nout:: Int , ntyp:: TypeRef,   csid:: CnstId }
   | GetNode    { nout:: Int , ntyp:: TypeRef,   npar:: Int }
   | SetNode    { nout:: Int , ntyp:: TypeRef,   npr0:: Int , npr1:: Int }
   | BinopNode  { nout:: Int , ntyp:: TypeRef,   nbop:: BinopCode, npr0:: Int , npr1:: Int }
@@ -400,9 +401,9 @@ getConstants (x                      :irs) =      (getTypes irs)
 
 modelConst :: [IRParseItem] -> IRSymbols -> [ConstantData]
 modelConst [] syms = []
-modelConst ((PI_Const    p x  ):irs) syms = (ConstBool   ((cnstSymbols syms) ! x)  ) : (modelConst irs syms)
-modelConst ((PI_ConstStr p x s):irs) syms = (ConstString ((cnstSymbols syms) ! x) s) : (modelConst irs syms)
-modelConst ((PI_ConstInt p x n):irs) syms = (ConstInt    ((cnstSymbols syms) ! x) n) : (modelConst irs syms)
+modelConst ((PI_Const    p x  ):irs) syms = (ConstBool ((cnstSymbols syms) ! x)  ) : (modelConst irs syms)
+modelConst ((PI_ConstStr p x s):irs) syms = (ConstStr  ((cnstSymbols syms) ! x) s) : (modelConst irs syms)
+modelConst ((PI_ConstInt p x n):irs) syms = (ConstInt  ((cnstSymbols syms) ! x) n) : (modelConst irs syms)
 modelConst (_                  :irs) syms = modelConst irs syms
 
 
@@ -513,6 +514,7 @@ modelNodes ps syms irs =
         getIns  (BinopNode _ _ _   p0 p1   ) = [p0, p1]
         getIns  (TrinopNode  _ _ _ p0 p1 p2) = [p0, p1, p2]
         getIns  (ParNode     _ _)            = []
+        getIns  (ConstNode _ _ _)            = []
         getIns  (CallNode  _ _ _ _ ps)       = ps
         getIns  (HOFNode   _ _ _ ps)         = ps
         getIns  (PhiNode   _ _ p0 _ _ ps)    = (p0:ps)
@@ -628,6 +630,8 @@ modelNode syms state (PI_Node p ns op pars) =
     ([n], "floor" , [(PI_Int ips ix)])                          -> appendEither (Right (OpNode    n UndefType FloorOp ix   )) state
     ([n], "round" , [(PI_Int ips ix)])                          -> appendEither (Right (OpNode    n UndefType RoundOp ix   )) state
 
+    ([n], "const" , [c@(PI_Const _ cid)])                       -> appendEither (onRight (\x -> ConstNode n UndefType x) (getConstId syms c)) state
+
     (ns,  "phi" , f@(PI_Func p0 fn):g@(PI_Func p1 gn):(PI_Int ips ix):xs) ->
       let fnid = getFnid syms f
           gnid = getFnid syms g
@@ -730,6 +734,21 @@ makeTypeRef syms (PI_Type tps tns tid) =
   case (M.lookup tid $ typeSymbols syms) of
     Just tx -> Right $ TypeRef tns tx
     Nothing -> Left  $ IRErr   tps $ append tid $ pack " is an undefined type.\n"
+
+
+
+
+
+
+
+
+
+
+getConstId :: IRSymbols -> IRParseItem -> Either IRErr CnstId
+getConstId syms (PI_Const cps cid) =
+  case (M.lookup cid $ cnstSymbols syms) of
+    Just cx -> Right $ cx
+    Nothing -> Left  $ IRErr   cps $ append cid $ pack " is an undefined constant.\n"
 
 
 
