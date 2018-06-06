@@ -634,9 +634,14 @@ modelNode syms state (PI_Node p ns op pars) =
 
     ([n], "const" , [c@(PI_Const _ cid)])                       -> appendEither (onRight (\x -> ConstNode n UndefType x) (getConstId syms c)) state
 
-    ([n]  , "zip"   , [(PI_Int ips ix)])                          -> appendEither (Right (HOFNode    [  n] [] ZipHF   [ix] [])) state
-    ([m,n], "unzip" , [(PI_Int ips ix)])                          -> appendEither (Right (HOFNode    [m,n] [] UnzipHF [ix] [])) state
-    ([n]  , "revs"  , [(PI_Int ips ix)])                          -> appendEither (Right (HOFNode    [  n] [] RevsHF  [ix] [])) state
+    ([n]  , "zip"   , [(PI_Int ips ix), (PI_Int jps jx)])         -> appendEither (Right (HOFNode    [  n] [] ZipHF   [ix, jx] [])) state
+    ([m,n], "unzip" , [(PI_Int ips ix)])                          -> appendEither (Right (HOFNode    [m,n] [] UnzipHF [ix    ] [])) state
+    ([n]  , "revs"  , [(PI_Int ips ix)])                          -> appendEither (Right (HOFNode    [  n] [] RevsHF  [ix    ] [])) state
+    ([n]  , "sort"  , [(PI_Int ips ix)])                          -> appendEither (Right (HOFNode    [  n] [] SortHF  [ix    ] [])) state
+    ([n]  , "take"  , [(PI_Int ips ix), (PI_Int jps jx)])         -> appendEither (Right (HOFNode    [  n] [] TakeHF  [ix, jx] [])) state
+    ([n]  , "rept"  , [(PI_Int ips ix), (PI_Int jps jx)])         -> appendEither (Right (HOFNode    [  n] [] ReptHF  [ix, jx] [])) state
+    ([n]  , "concat", [(PI_Int ips ix), (PI_Int jps jx)])         -> appendEither (Right (HOFNode    [  n] [] ConctHF [ix, jx] [])) state
+    ([n]  , "append", [(PI_Int ips ix), (PI_Int jps jx)])         -> appendEither (Right (HOFNode    [  n] [] AppndHF [ix, jx] [])) state
 
     ([n], "map"   , [f@(PI_Func p0 fn), (PI_Int p1 ix)])          ->
       let fnid = getFnid syms f
