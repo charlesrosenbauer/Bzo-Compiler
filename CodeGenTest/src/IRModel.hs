@@ -180,6 +180,37 @@ type TyId = Int
 
 
 
+data TypeNode
+  = ElemNode      { tidx :: Int,      ttyp :: TypeRef }
+  | Contain1Node  { tcn1 :: Contain1, tty0 :: TypeRef }
+  | Contain2Node  { tcn2 :: Contain2, tty0 :: TypeRef, tty1 :: TypeRef }
+  deriving Show
+
+
+
+
+
+
+
+
+
+
+data Contain1 = ListCont | SetCont  | BSetCont | RRBCont  |
+                BoxCont  | QCont    | StkCont  | HeapCont
+                deriving Show
+
+data Contain2 = DictCont | HMapCont | AVLCont
+                deriving Show
+
+
+
+
+
+
+
+
+
+
 data ConstantData
   = ConstStr  CnstId Text
   | ConstInt  CnstId Int
@@ -422,7 +453,7 @@ modelFunc ((PI_FnDef  p fnid pars def):irs) syms =
   let fnid' = (funcSymbols syms) ! fnid
       -- Model Parameters
       -- Model Contents
-      (er0, nds) = modelNodes p syms def
+      (er0, nds) = modelFuncNodes p syms def
 
       -- Model the rest of the list
       (ers, fns) = modelFunc irs syms
@@ -438,7 +469,7 @@ modelFunc ((PI_PrDef  p fnid pars refx wefx def):irs) syms =
       (er2, wfx) = undefTypes ermsg syms wefx
 
       -- Model Contents
-      (er0, nds) = modelNodes p syms def
+      (er0, nds) = modelFuncNodes p syms def
 
       -- Model the rest of the list
       (ers, fns) = modelFunc irs syms
@@ -454,7 +485,7 @@ modelFunc ((PI_ExDef  p fnid pars refx wefx def):irs) syms =
       (er2, wfx) = undefTypes ermsg syms wefx
 
       -- Model Contents
-      (er0, nds) = modelNodes p syms def
+      (er0, nds) = modelFuncNodes p syms def
 
       -- Model the rest of the list
       (ers, fns) = modelFunc irs syms
@@ -490,9 +521,9 @@ undefTypes ermsg syms (_:irs) = undefTypes ermsg syms irs
 
 
 
-modelNodes :: IRPos -> IRSymbols -> [IRParseItem] -> ([IRErr], [Node])
-modelNodes ps syms irs =
-  let (ers, nds) = L.foldl (modelNode syms) ([], []) irs
+modelFuncNodes :: IRPos -> IRSymbols -> [IRParseItem] -> ([IRErr], [Node])
+modelFuncNodes ps syms irs =
+  let (ers, nds) = L.foldl (modelFuncNode syms) ([], []) irs
 
       -- TODO: Verify that all the nodes fit together nicely
       (outss, inss) = L.unzip $ L.map (\nd -> (getOuts nd, getIns nd)) nds
@@ -545,8 +576,8 @@ modelNodes ps syms irs =
 
 
 
-modelNode :: IRSymbols -> ([IRErr], [Node]) -> IRParseItem -> ([IRErr], [Node])
-modelNode syms state (PI_Node p ns op pars) =
+modelFuncNode :: IRSymbols -> ([IRErr], [Node]) -> IRParseItem -> ([IRErr], [Node])
+modelFuncNode syms state (PI_Node p ns op pars) =
   case (ns, unpack op, L.reverse pars) of
     ([n], "input" , [t@(PI_Type tps tns tid)])                  -> appendEither (onRight       (ParNode  n)      (makeTypeRef syms t)) state
     ([n], "output", [t@(PI_Type tps tns tid), (PI_Int ips ix)]) -> appendEither (onRight (\x -> RetNode  n x ix) (makeTypeRef syms t)) state
@@ -854,6 +885,17 @@ getConstId syms (PI_Const cps cid) =
   case (M.lookup cid $ cnstSymbols syms) of
     Just cx -> Right $ cx
     Nothing -> Left  $ IRErr   cps $ append cid $ pack " is an undefined constant.\n"
+
+
+
+
+
+
+
+
+
+
+--modelTypeNode :: IRSymbols -> ([IRErr], [Node]) -> IRParseItem -> ([IRErr], [Node])
 
 
 
