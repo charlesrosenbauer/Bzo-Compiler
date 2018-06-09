@@ -181,9 +181,10 @@ type TyId = Int
 
 
 data TypeNode
-  = ElemNode      { tidx :: Int,      ttyp :: TypeRef }
-  | Contain1Node  { tcn1 :: Contain1, tty0 :: TypeRef }
-  | Contain2Node  { tcn2 :: Contain2, tty0 :: TypeRef, tty1 :: TypeRef }
+  = ElemNode      { tidx :: Int, ttyp :: TypeRef }
+  | Contain1Node  { tidx :: Int, tcn1 :: Contain1, tty0 :: TypeRef }
+  | Contain2Node  { tidx :: Int, tcn2 :: Contain2, tty0 :: TypeRef, tty1 :: TypeRef }
+  | ImplNode      { tidx :: Int, timp :: ImplCode, tfnc :: FnId }
   deriving Show
 
 
@@ -200,6 +201,11 @@ data Contain1 = ListCont | SetCont  | BSetCont | RRBCont  |
                 deriving Show
 
 data Contain2 = DictCont | HMapCont | AVLCont
+                deriving Show
+
+data ImplCode = ImplMap  | ImplSplit| ImplSFold| ImplPFold|
+                ImplSScan| ImplPScan| ImplZip  | ImplUZip |
+                ImplNext | ImplIndex
                 deriving Show
 
 
