@@ -921,151 +921,33 @@ modelTypeNode syms state (PI_Node p ns op pars) =
     --([n], "conthmap", [t0@(PI_Type _ _ _), t1@(PI_Type _ _ _)])   -> appendEither (onRight       (Contain2Node n HeapCont t0 t1) (makeTypeRef syms t)) state
     --([n], "contavl" , [t0@(PI_Type _ _ _), t1@(PI_Type _ _ _)])   -> appendEither (onRight       (Contain2Node n HeapCont t0 t1) (makeTypeRef syms t)) state
 
-    -- The following should probably be simplified with some abstractionss
-    ([n], "implmap" , [f@(PI_Func p0 fn)])          ->
-      let fnid = getFnid syms f
-          ers = lefts [fnid]
-          ret = (ImplNode n ImplMap (justRight fnid))
-          (errs, nods) = state
-      in case ers of
-          [] -> (ers,   ret:nods)
-          er -> (er ++ ers, nods)
-
-    ([n], "implsplit", [f@(PI_Func p0 fn)])          ->
-      let fnid = getFnid syms f
-          ers = lefts [fnid]
-          ret = (ImplNode n ImplSplit (justRight fnid))
-          (errs, nods) = state
-      in case ers of
-          [] -> (ers,   ret:nods)
-          er -> (er ++ ers, nods)
-
-    ([n], "implsfold", [f@(PI_Func p0 fn)])          ->
-      let fnid = getFnid syms f
-          ers = lefts [fnid]
-          ret = (ImplNode n ImplSFold (justRight fnid))
-          (errs, nods) = state
-      in case ers of
-          [] -> (ers,   ret:nods)
-          er -> (er ++ ers, nods)
-
-    ([n], "implpfold" , [f@(PI_Func p0 fn)])          ->
-      let fnid = getFnid syms f
-          ers = lefts [fnid]
-          ret = (ImplNode n ImplPFold (justRight fnid))
-          (errs, nods) = state
-      in case ers of
-          [] -> (ers,   ret:nods)
-          er -> (er ++ ers, nods)
-
-    ([n], "implsscan" , [f@(PI_Func p0 fn)])          ->
-      let fnid = getFnid syms f
-          ers = lefts [fnid]
-          ret = (ImplNode n ImplSScan (justRight fnid))
-          (errs, nods) = state
-      in case ers of
-          [] -> (ers,   ret:nods)
-          er -> (er ++ ers, nods)
-
-    ([n], "implpscan" , [f@(PI_Func p0 fn)])          ->
-      let fnid = getFnid syms f
-          ers = lefts [fnid]
-          ret = (ImplNode n ImplPScan (justRight fnid))
-          (errs, nods) = state
-      in case ers of
-          [] -> (ers,   ret:nods)
-          er -> (er ++ ers, nods)
-
-    ([n], "implzip" , [f@(PI_Func p0 fn)])          ->
-      let fnid = getFnid syms f
-          ers = lefts [fnid]
-          ret = (ImplNode n ImplZip (justRight fnid))
-          (errs, nods) = state
-      in case ers of
-          [] -> (ers,   ret:nods)
-          er -> (er ++ ers, nods)
-
-    ([n], "impluzip" , [f@(PI_Func p0 fn)])          ->
-      let fnid = getFnid syms f
-          ers = lefts [fnid]
-          ret = (ImplNode n ImplUZip (justRight fnid))
-          (errs, nods) = state
-      in case ers of
-          [] -> (ers,   ret:nods)
-          er -> (er ++ ers, nods)
-
-    ([n], "implnext" , [f@(PI_Func p0 fn)])          ->
-      let fnid = getFnid syms f
-          ers = lefts [fnid]
-          ret = (ImplNode n ImplNext (justRight fnid))
-          (errs, nods) = state
-      in case ers of
-          [] -> (ers,   ret:nods)
-          er -> (er ++ ers, nods)
-
-    ([n], "implindex" , [f@(PI_Func p0 fn)])          ->
-      let fnid = getFnid syms f
-          ers = lefts [fnid]
-          ret = (ImplNode n ImplIndex (justRight fnid))
-          (errs, nods) = state
-      in case ers of
-          [] -> (ers,   ret:nods)
-          er -> (er ++ ers, nods)
-
-    ([n], "implhash" , [f@(PI_Func p0 fn)])          ->
-      let fnid = getFnid syms f
-          ers = lefts [fnid]
-          ret = (ImplNode n ImplHash (justRight fnid))
-          (errs, nods) = state
-      in case ers of
-          [] -> (ers,   ret:nods)
-          er -> (er ++ ers, nods)
-
-    ([n], "impleq" , [f@(PI_Func p0 fn)])          ->
-      let fnid = getFnid syms f
-          ers = lefts [fnid]
-          ret = (ImplNode n ImplEq (justRight fnid))
-          (errs, nods) = state
-      in case ers of
-          [] -> (ers,   ret:nods)
-          er -> (er ++ ers, nods)
-
-    ([n], "implcmp" , [f@(PI_Func p0 fn)])          ->
-      let fnid = getFnid syms f
-          ers = lefts [fnid]
-          ret = (ImplNode n ImplCmp (justRight fnid))
-          (errs, nods) = state
-      in case ers of
-          [] -> (ers,   ret:nods)
-          er -> (er ++ ers, nods)
+    ([n], "implmap"   , [f@(PI_Func _ _)]) -> modelImpl syms state f (ImplNode n ImplMap)
+    ([n], "implsplit" , [f@(PI_Func _ _)]) -> modelImpl syms state f (ImplNode n ImplSplit)
+    ([n], "implsfold" , [f@(PI_Func _ _)]) -> modelImpl syms state f (ImplNode n ImplSFold)
+    ([n], "implpfold" , [f@(PI_Func _ _)]) -> modelImpl syms state f (ImplNode n ImplPFold)
+    ([n], "implsscan" , [f@(PI_Func _ _)]) -> modelImpl syms state f (ImplNode n ImplSScan)
+    ([n], "implpscan" , [f@(PI_Func _ _)]) -> modelImpl syms state f (ImplNode n ImplPScan)
+    ([n], "implzip"   , [f@(PI_Func _ _)]) -> modelImpl syms state f (ImplNode n ImplZip)
+    ([n], "impluzip"  , [f@(PI_Func _ _)]) -> modelImpl syms state f (ImplNode n ImplUZip)
+    ([n], "implnext"  , [f@(PI_Func _ _)]) -> modelImpl syms state f (ImplNode n ImplNext)
+    ([n], "implindex" , [f@(PI_Func _ _)]) -> modelImpl syms state f (ImplNode n ImplIndex)
+    ([n], "implhash"  , [f@(PI_Func _ _)]) -> modelImpl syms state f (ImplNode n ImplHash)
+    ([n], "impleq"    , [f@(PI_Func _ _)]) -> modelImpl syms state f (ImplNode n ImplEq)
+    ([n], "implcmp"   , [f@(PI_Func _ _)]) -> modelImpl syms state f (ImplNode n ImplCmp)
     -- Serialize
-    ([n], "implserl" , [f@(PI_Func p0 fn)])          ->
-      let fnid = getFnid syms f
-          ers = lefts [fnid]
-          ret = (ImplNode n ImplSerl (justRight fnid))
-          (errs, nods) = state
-      in case ers of
-          [] -> (ers,   ret:nods)
-          er -> (er ++ ers, nods)
+    ([n], "implserl"  , [f@(PI_Func _ _)]) -> modelImpl syms state f (ImplNode n ImplSerl)
     -- Deserialize
-    ([n], "impldserl" , [f@(PI_Func p0 fn)])          ->
-      let fnid = getFnid syms f
-          ers = lefts [fnid]
-          ret = (ImplNode n ImplDSerl (justRight fnid))
-          (errs, nods) = state
-      in case ers of
-          [] -> (ers,   ret:nods)
-          er -> (er ++ ers, nods)
+    ([n], "impldserl" , [f@(PI_Func _ _)]) -> modelImpl syms state f (ImplNode n ImplDSerl)
+    ([n], "implsize"  , [f@(PI_Func _ _)]) -> modelImpl syms state f (ImplNode n ImplSize)
 
-    ([n], "implsize" , [f@(PI_Func p0 fn)])          ->
-      let fnid = getFnid syms f
-          ers = lefts [fnid]
-          ret = (ImplNode n ImplSize (justRight fnid))
-          (errs, nods) = state
-      in case ers of
-          [] -> (ers,   ret:nods)
-          er -> (er ++ ers, nods)
-
+  where modelImpl :: IRSymbols -> ([IRErr], [TypeNode]) -> IRParseItem -> (FnId -> TypeNode) -> ([IRErr], [TypeNode])
+        modelImpl syms (errs, nods) f@(PI_Func p0 fn) makeNode =
+          let fnid = getFnid syms f
+              ers  = lefts [fnid]
+              ret  = makeNode (justRight fnid)
+          in case ers of
+              [] -> (ers,   ret:nods)
+              er -> (er ++ ers, nods)
 
 
 
