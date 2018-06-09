@@ -159,7 +159,8 @@ type FnId = Int
 
 data TypeData = TypeData{
   typeKind    :: TypeKind,
-  typeNodes   :: [([Int], TyId)],
+  typeNodes   :: [TypeNode],
+  typeSize    :: Int,
   typehints   :: [Hint]  }
   deriving Show
 
@@ -181,7 +182,7 @@ type TyId = Int
 
 
 data TypeNode
-  = ElemNode      { tidx :: Int, ttyp :: TypeRef }
+  = ElemNode      { tidx :: Int, tbyt :: Int,      ttyp :: TypeRef }
   | Contain1Node  { tidx :: Int, tcn1 :: Contain1, tty0 :: TypeRef }
   | Contain2Node  { tidx :: Int, tcn2 :: Contain2, tty0 :: TypeRef, tty1 :: TypeRef }
   | ImplNode      { tidx :: Int, timp :: ImplCode, tfnc :: FnId }
@@ -205,7 +206,8 @@ data Contain2 = DictCont | HMapCont | AVLCont
 
 data ImplCode = ImplMap  | ImplSplit| ImplSFold| ImplPFold|
                 ImplSScan| ImplPScan| ImplZip  | ImplUZip |
-                ImplNext | ImplIndex
+                ImplNext | ImplIndex| ImplHash | ImplEq   |
+                ImplCmp  | ImplSerl | ImplDSerl| ImplSize
                 deriving Show
 
 
@@ -901,7 +903,168 @@ getConstId syms (PI_Const cps cid) =
 
 
 
---modelTypeNode :: IRSymbols -> ([IRErr], [Node]) -> IRParseItem -> ([IRErr], [Node])
+modelTypeNode :: IRSymbols -> ([IRErr], [TypeNode]) -> IRParseItem -> ([IRErr], [TypeNode])
+modelTypeNode syms state (PI_Node p ns op pars) =
+  case (ns, unpack op, L.reverse pars) of
+    ([n], "element" , [t@(PI_Type _ _ _)])                        -> appendEither (onRight       (ElemNode     n 0        ) (makeTypeRef syms t)) state
+    ([n], "contlist", [t@(PI_Type _ _ _)])                        -> appendEither (onRight       (Contain1Node n ListCont ) (makeTypeRef syms t)) state
+    ([n], "contset" , [t@(PI_Type _ _ _)])                        -> appendEither (onRight       (Contain1Node n SetCont  ) (makeTypeRef syms t)) state
+    ([n], "contbset", [t@(PI_Type _ _ _)])                        -> appendEither (onRight       (Contain1Node n BSetCont ) (makeTypeRef syms t)) state
+    ([n], "contrrb" , [t@(PI_Type _ _ _)])                        -> appendEither (onRight       (Contain1Node n RRBCont  ) (makeTypeRef syms t)) state
+    ([n], "contbox" , [t@(PI_Type _ _ _)])                        -> appendEither (onRight       (Contain1Node n BoxCont  ) (makeTypeRef syms t)) state
+    ([n], "contq"   , [t@(PI_Type _ _ _)])                        -> appendEither (onRight       (Contain1Node n QCont    ) (makeTypeRef syms t)) state
+    ([n], "contstk" , [t@(PI_Type _ _ _)])                        -> appendEither (onRight       (Contain1Node n StkCont  ) (makeTypeRef syms t)) state
+    ([n], "contheap", [t@(PI_Type _ _ _)])                        -> appendEither (onRight       (Contain1Node n HeapCont ) (makeTypeRef syms t)) state
+
+    -- TODO: Get multiple types working
+    --([n], "contdict", [t0@(PI_Type _ _ _), t1@(PI_Type _ _ _)])   -> appendEither (onRight       (Contain2Node n HeapCont t0 t1) (makeTypeRef syms t)) state
+    --([n], "conthmap", [t0@(PI_Type _ _ _), t1@(PI_Type _ _ _)])   -> appendEither (onRight       (Contain2Node n HeapCont t0 t1) (makeTypeRef syms t)) state
+    --([n], "contavl" , [t0@(PI_Type _ _ _), t1@(PI_Type _ _ _)])   -> appendEither (onRight       (Contain2Node n HeapCont t0 t1) (makeTypeRef syms t)) state
+
+    -- The following should probably be simplified with some abstractionss
+    ([n], "implmap" , [f@(PI_Func p0 fn)])          ->
+      let fnid = getFnid syms f
+          ers = lefts [fnid]
+          ret = (ImplNode n ImplMap (justRight fnid))
+          (errs, nods) = state
+      in case ers of
+          [] -> (ers,   ret:nods)
+          er -> (er ++ ers, nods)
+
+    ([n], "implsplit", [f@(PI_Func p0 fn)])          ->
+      let fnid = getFnid syms f
+          ers = lefts [fnid]
+          ret = (ImplNode n ImplSplit (justRight fnid))
+          (errs, nods) = state
+      in case ers of
+          [] -> (ers,   ret:nods)
+          er -> (er ++ ers, nods)
+
+    ([n], "implsfold", [f@(PI_Func p0 fn)])          ->
+      let fnid = getFnid syms f
+          ers = lefts [fnid]
+          ret = (ImplNode n ImplSFold (justRight fnid))
+          (errs, nods) = state
+      in case ers of
+          [] -> (ers,   ret:nods)
+          er -> (er ++ ers, nods)
+
+    ([n], "implpfold" , [f@(PI_Func p0 fn)])          ->
+      let fnid = getFnid syms f
+          ers = lefts [fnid]
+          ret = (ImplNode n ImplPFold (justRight fnid))
+          (errs, nods) = state
+      in case ers of
+          [] -> (ers,   ret:nods)
+          er -> (er ++ ers, nods)
+
+    ([n], "implsscan" , [f@(PI_Func p0 fn)])          ->
+      let fnid = getFnid syms f
+          ers = lefts [fnid]
+          ret = (ImplNode n ImplSScan (justRight fnid))
+          (errs, nods) = state
+      in case ers of
+          [] -> (ers,   ret:nods)
+          er -> (er ++ ers, nods)
+
+    ([n], "implpscan" , [f@(PI_Func p0 fn)])          ->
+      let fnid = getFnid syms f
+          ers = lefts [fnid]
+          ret = (ImplNode n ImplPScan (justRight fnid))
+          (errs, nods) = state
+      in case ers of
+          [] -> (ers,   ret:nods)
+          er -> (er ++ ers, nods)
+
+    ([n], "implzip" , [f@(PI_Func p0 fn)])          ->
+      let fnid = getFnid syms f
+          ers = lefts [fnid]
+          ret = (ImplNode n ImplZip (justRight fnid))
+          (errs, nods) = state
+      in case ers of
+          [] -> (ers,   ret:nods)
+          er -> (er ++ ers, nods)
+
+    ([n], "impluzip" , [f@(PI_Func p0 fn)])          ->
+      let fnid = getFnid syms f
+          ers = lefts [fnid]
+          ret = (ImplNode n ImplUZip (justRight fnid))
+          (errs, nods) = state
+      in case ers of
+          [] -> (ers,   ret:nods)
+          er -> (er ++ ers, nods)
+
+    ([n], "implnext" , [f@(PI_Func p0 fn)])          ->
+      let fnid = getFnid syms f
+          ers = lefts [fnid]
+          ret = (ImplNode n ImplNext (justRight fnid))
+          (errs, nods) = state
+      in case ers of
+          [] -> (ers,   ret:nods)
+          er -> (er ++ ers, nods)
+
+    ([n], "implindex" , [f@(PI_Func p0 fn)])          ->
+      let fnid = getFnid syms f
+          ers = lefts [fnid]
+          ret = (ImplNode n ImplIndex (justRight fnid))
+          (errs, nods) = state
+      in case ers of
+          [] -> (ers,   ret:nods)
+          er -> (er ++ ers, nods)
+
+    ([n], "implhash" , [f@(PI_Func p0 fn)])          ->
+      let fnid = getFnid syms f
+          ers = lefts [fnid]
+          ret = (ImplNode n ImplHash (justRight fnid))
+          (errs, nods) = state
+      in case ers of
+          [] -> (ers,   ret:nods)
+          er -> (er ++ ers, nods)
+
+    ([n], "impleq" , [f@(PI_Func p0 fn)])          ->
+      let fnid = getFnid syms f
+          ers = lefts [fnid]
+          ret = (ImplNode n ImplEq (justRight fnid))
+          (errs, nods) = state
+      in case ers of
+          [] -> (ers,   ret:nods)
+          er -> (er ++ ers, nods)
+
+    ([n], "implcmp" , [f@(PI_Func p0 fn)])          ->
+      let fnid = getFnid syms f
+          ers = lefts [fnid]
+          ret = (ImplNode n ImplCmp (justRight fnid))
+          (errs, nods) = state
+      in case ers of
+          [] -> (ers,   ret:nods)
+          er -> (er ++ ers, nods)
+    -- Serialize
+    ([n], "implserl" , [f@(PI_Func p0 fn)])          ->
+      let fnid = getFnid syms f
+          ers = lefts [fnid]
+          ret = (ImplNode n ImplSerl (justRight fnid))
+          (errs, nods) = state
+      in case ers of
+          [] -> (ers,   ret:nods)
+          er -> (er ++ ers, nods)
+    -- Deserialize
+    ([n], "impldserl" , [f@(PI_Func p0 fn)])          ->
+      let fnid = getFnid syms f
+          ers = lefts [fnid]
+          ret = (ImplNode n ImplDSerl (justRight fnid))
+          (errs, nods) = state
+      in case ers of
+          [] -> (ers,   ret:nods)
+          er -> (er ++ ers, nods)
+
+    ([n], "implsize" , [f@(PI_Func p0 fn)])          ->
+      let fnid = getFnid syms f
+          ers = lefts [fnid]
+          ret = (ImplNode n ImplSize (justRight fnid))
+          (errs, nods) = state
+      in case ers of
+          [] -> (ers,   ret:nods)
+          er -> (er ++ ers, nods)
 
 
 
