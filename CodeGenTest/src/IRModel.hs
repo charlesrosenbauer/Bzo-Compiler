@@ -819,7 +819,7 @@ modelFuncNode syms state (PI_Node p ns op pars) =
 
     (_  , _       , _                                         ) -> appendEither (Left  (IRErr p $ pack "Unrecognized operation.\n")) state
 
-modelNode syms state _ = ([], [])
+modelFuncNode syms state _ = state
 
 
 
@@ -949,6 +949,7 @@ modelTypeNode syms state (PI_Node p ns op pars) =
               [] -> (ers,   ret:nods)
               er -> (er ++ ers, nods)
 
+modelTypeNode syms state _ = state
 
 
 
