@@ -846,10 +846,9 @@ modelTypeNode syms state (PI_Node p ns op pars) =
     ([n], "contstk" , [t@(PI_Type _ _ _)])                        -> appendEither (onRight       (Contain1Node n StkCont  ) (makeTypeRef syms t)) state
     ([n], "contheap", [t@(PI_Type _ _ _)])                        -> appendEither (onRight       (Contain1Node n HeapCont ) (makeTypeRef syms t)) state
 
-    -- TODO: Get multiple types working
-    --([n], "contdict", [t0@(PI_Type _ _ _), t1@(PI_Type _ _ _)])   -> appendEither (onRight       (Contain2Node n HeapCont t0 t1) (makeTypeRef syms t)) state
-    --([n], "conthmap", [t0@(PI_Type _ _ _), t1@(PI_Type _ _ _)])   -> appendEither (onRight       (Contain2Node n HeapCont t0 t1) (makeTypeRef syms t)) state
-    --([n], "contavl" , [t0@(PI_Type _ _ _), t1@(PI_Type _ _ _)])   -> appendEither (onRight       (Contain2Node n HeapCont t0 t1) (makeTypeRef syms t)) state
+    ([n], "contdict", [t0@(PI_Type _ _ _), t1@(PI_Type _ _ _)])   -> model2Node syms state t0 t1 (Contain2Node n DictCont)
+    ([n], "conthmap", [t0@(PI_Type _ _ _), t1@(PI_Type _ _ _)])   -> model2Node syms state t0 t1 (Contain2Node n HMapCont)
+    ([n], "contavl" , [t0@(PI_Type _ _ _), t1@(PI_Type _ _ _)])   -> model2Node syms state t0 t1 (Contain2Node n AVLCont )
 
     ([n], "implmap"   , [f@(PI_Func _ _)]) -> modelImpl syms state f (ImplNode n ImplMap)
     ([n], "implsplit" , [f@(PI_Func _ _)]) -> modelImpl syms state f (ImplNode n ImplSplit)
@@ -876,6 +875,17 @@ modelTypeNode syms state (PI_Node p ns op pars) =
           in case ers of
               [] -> (errs,   ret:nods)
               er -> (er ++ errs, nods)
+
+
+        model2Node :: IRSymbols -> ([IRErr], [TypeNode]) -> IRParseItem -> IRParseItem -> (TypeRef -> TypeRef -> TypeNode) -> ([IRErr], [TypeNode])
+        model2Node syms (errs, nods) t0 t1 makeNode =
+          let t0' = makeTypeRef syms t0
+              t1' = makeTypeRef syms t1
+          in case (t0', t1') of
+              (Right a, Right b) -> (errs, (makeNode a b):nods)
+              (Right a, Left  b) -> (b:errs,              nods)
+              (Left  a, Right b) -> (a:errs,              nods)
+              (Left  a, Left  b) -> (a:b:errs,            nods)
 
 modelTypeNode syms state _ = state
 
