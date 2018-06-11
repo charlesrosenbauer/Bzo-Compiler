@@ -685,25 +685,15 @@ modelFuncNode syms state (PI_Node p ns op pars) =
     ([n]  , "append", [(PI_Int ips ix), (PI_Int jps jx)])         -> appendEither (Right (HOFNode    [  n] [] AppndHF [ix, jx] [])) state
 
     ([n], "map"   , [f@(PI_Func p0 fn), (PI_Int p1 ix)])                 -> hofmodel syms state [f] (HOFNode [n] [] MapHF [ix])
-
     ([n], "sfold" , [f@(PI_Func p0 fn), (PI_Int p1 ix), (PI_Int p2 jx)]) -> hofmodel syms state [f] (HOFNode [n] [] SFoldHF [ix, jx])
-
     ([n], "pfold" , [f@(PI_Func p0 fn), (PI_Int p1 ix)])                 -> hofmodel syms state [f] (HOFNode [n] [] PFoldHF [ix])
-
     ([n], "sscan" , [f@(PI_Func p0 fn), (PI_Int p1 ix), (PI_Int p2 jx)]) -> hofmodel syms state [f] (HOFNode [n] [] SScanHF [ix, jx])
-
     ([n], "pscan" , [f@(PI_Func p0 fn), (PI_Int p1 ix)])                 -> hofmodel syms state [f] (HOFNode [n] [] PScanHF [ix])
-
     ([n], "filter" , [f@(PI_Func p0 fn), (PI_Int p1 ix)])                -> hofmodel syms state [f] (HOFNode [n] [] FilterHF [ix])
-
     ([n], "any"   , [f@(PI_Func p0 fn), (PI_Int p1 ix)])                 -> hofmodel syms state [f] (HOFNode [n] [] AnyHF [ix])
-
     ([n], "all"   , [f@(PI_Func p0 fn), (PI_Int p1 ix)])                 -> hofmodel syms state [f] (HOFNode [n] [] AllHF [ix])
-
     ([n], "none"  , [f@(PI_Func p0 fn), (PI_Int p1 ix)])                 -> hofmodel syms state [f] (HOFNode [n] [] NoneHF [ix])
-
     ([n], "iter"  , [f@(PI_Func p0 fn), (PI_Int p1 ix), (PI_Int p2 jx)]) -> hofmodel syms state [f] (HOFNode [n] [] IterHF [ix, jx])
-
 
     (ns,  "phi"   , f@(PI_Func p0 fn):g@(PI_Func p1 gn):(PI_Int ips ix):xs) ->
       let fnid = getFnid syms f
@@ -874,10 +864,8 @@ modelTypeNode syms state (PI_Node p ns op pars) =
     ([n], "implhash"  , [f@(PI_Func _ _)]) -> modelImpl syms state f (ImplNode n ImplHash)
     ([n], "impleq"    , [f@(PI_Func _ _)]) -> modelImpl syms state f (ImplNode n ImplEq)
     ([n], "implcmp"   , [f@(PI_Func _ _)]) -> modelImpl syms state f (ImplNode n ImplCmp)
-    -- Serialize
-    ([n], "implserl"  , [f@(PI_Func _ _)]) -> modelImpl syms state f (ImplNode n ImplSerl)
-    -- Deserialize
-    ([n], "impldserl" , [f@(PI_Func _ _)]) -> modelImpl syms state f (ImplNode n ImplDSerl)
+    ([n], "implserl"  , [f@(PI_Func _ _)]) -> modelImpl syms state f (ImplNode n ImplSerl)    -- Serialize
+    ([n], "impldserl" , [f@(PI_Func _ _)]) -> modelImpl syms state f (ImplNode n ImplDSerl)   -- Deserialize
     ([n], "implsize"  , [f@(PI_Func _ _)]) -> modelImpl syms state f (ImplNode n ImplSize)
 
   where modelImpl :: IRSymbols -> ([IRErr], [TypeNode]) -> IRParseItem -> (FnId -> TypeNode) -> ([IRErr], [TypeNode])
