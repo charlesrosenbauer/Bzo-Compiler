@@ -684,95 +684,25 @@ modelFuncNode syms state (PI_Node p ns op pars) =
     ([n]  , "concat", [(PI_Int ips ix), (PI_Int jps jx)])         -> appendEither (Right (HOFNode    [  n] [] ConctHF [ix, jx] [])) state
     ([n]  , "append", [(PI_Int ips ix), (PI_Int jps jx)])         -> appendEither (Right (HOFNode    [  n] [] AppndHF [ix, jx] [])) state
 
-    ([n], "map"   , [f@(PI_Func p0 fn), (PI_Int p1 ix)])          ->
-      let fnid = getFnid syms f
-          ers = lefts [fnid]
-          ret = (HOFNode [n] [] MapHF [ix] [justRight fnid])
-          (errs, nods) = state
-      in case ers of
-          [] -> (ers,   ret:nods)
-          er -> (er ++ ers, nods)
+    ([n], "map"   , [f@(PI_Func p0 fn), (PI_Int p1 ix)])                 -> hofmodel syms state [f] (HOFNode [n] [] MapHF [ix])
 
-    ([n], "sfold" , [f@(PI_Func p0 fn), (PI_Int p1 ix), (PI_Int p2 jx)]) ->
-      let fnid = getFnid syms f
-          ers = lefts [fnid]
-          ret = (HOFNode [n] [] SFoldHF [ix, jx] [justRight fnid])
-          (errs, nods) = state
-      in case ers of
-          [] -> (ers,   ret:nods)
-          er -> (er ++ ers, nods)
+    ([n], "sfold" , [f@(PI_Func p0 fn), (PI_Int p1 ix), (PI_Int p2 jx)]) -> hofmodel syms state [f] (HOFNode [n] [] SFoldHF [ix, jx])
 
-    ([n], "pfold" , [f@(PI_Func p0 fn), (PI_Int p1 ix)]) ->
-      let fnid = getFnid syms f
-          ers = lefts [fnid]
-          ret = (HOFNode [n] [] PFoldHF [ix] [justRight fnid])
-          (errs, nods) = state
-      in case ers of
-          [] -> (ers,   ret:nods)
-          er -> (er ++ ers, nods)
+    ([n], "pfold" , [f@(PI_Func p0 fn), (PI_Int p1 ix)])                 -> hofmodel syms state [f] (HOFNode [n] [] PFoldHF [ix])
 
-    ([n], "sscan" , [f@(PI_Func p0 fn), (PI_Int p1 ix), (PI_Int p2 jx)]) ->
-      let fnid = getFnid syms f
-          ers = lefts [fnid]
-          ret = (HOFNode [n] [] SFoldHF [ix, jx] [justRight fnid])
-          (errs, nods) = state
-      in case ers of
-          [] -> (ers,   ret:nods)
-          er -> (er ++ ers, nods)
+    ([n], "sscan" , [f@(PI_Func p0 fn), (PI_Int p1 ix), (PI_Int p2 jx)]) -> hofmodel syms state [f] (HOFNode [n] [] SScanHF [ix, jx])
 
-    ([n], "pscan" , [f@(PI_Func p0 fn), (PI_Int p1 ix)]) ->
-      let fnid = getFnid syms f
-          ers = lefts [fnid]
-          ret = (HOFNode [n] [] PFoldHF [ix] [justRight fnid])
-          (errs, nods) = state
-      in case ers of
-          [] -> (ers,   ret:nods)
-          er -> (er ++ ers, nods)
+    ([n], "pscan" , [f@(PI_Func p0 fn), (PI_Int p1 ix)])                 -> hofmodel syms state [f] (HOFNode [n] [] PScanHF [ix])
 
-    ([n], "filter" , [f@(PI_Func p0 fn), (PI_Int p1 ix)]) ->
-      let fnid = getFnid syms f
-          ers = lefts [fnid]
-          ret = (HOFNode [n] [] FilterHF [ix] [justRight fnid])
-          (errs, nods) = state
-      in case ers of
-          [] -> (ers,   ret:nods)
-          er -> (er ++ ers, nods)
+    ([n], "filter" , [f@(PI_Func p0 fn), (PI_Int p1 ix)])                -> hofmodel syms state [f] (HOFNode [n] [] FilterHF [ix])
 
-    ([n], "any"   , [f@(PI_Func p0 fn), (PI_Int p1 ix)]) ->
-      let fnid = getFnid syms f
-          ers = lefts [fnid]
-          ret = (HOFNode [n] [] AnyHF [ix] [justRight fnid])
-          (errs, nods) = state
-      in case ers of
-          [] -> (ers,   ret:nods)
-          er -> (er ++ ers, nods)
+    ([n], "any"   , [f@(PI_Func p0 fn), (PI_Int p1 ix)])                 -> hofmodel syms state [f] (HOFNode [n] [] AnyHF [ix])
 
-    ([n], "all"   , [f@(PI_Func p0 fn), (PI_Int p1 ix)]) ->
-      let fnid = getFnid syms f
-          ers = lefts [fnid]
-          ret = (HOFNode [n] [] AllHF [ix] [justRight fnid])
-          (errs, nods) = state
-      in case ers of
-          [] -> (ers,   ret:nods)
-          er -> (er ++ ers, nods)
+    ([n], "all"   , [f@(PI_Func p0 fn), (PI_Int p1 ix)])                 -> hofmodel syms state [f] (HOFNode [n] [] AllHF [ix])
 
-    ([n], "none"  , [f@(PI_Func p0 fn), (PI_Int p1 ix)]) ->
-      let fnid = getFnid syms f
-          ers = lefts [fnid]
-          ret = (HOFNode [n] [] NoneHF [ix] [justRight fnid])
-          (errs, nods) = state
-      in case ers of
-          [] -> (ers,   ret:nods)
-          er -> (er ++ ers, nods)
+    ([n], "none"  , [f@(PI_Func p0 fn), (PI_Int p1 ix)])                 -> hofmodel syms state [f] (HOFNode [n] [] NoneHF [ix])
 
-    ([n], "iter"   , [f@(PI_Func p0 fn), (PI_Int p1 ix), (PI_Int p2 jx)]) ->
-      let fnid = getFnid syms f
-          ers = lefts [fnid]
-          ret = (HOFNode [n] [] IterHF [ix, jx] [justRight fnid])
-          (errs, nods) = state
-      in case ers of
-          [] -> (ers,   ret:nods)
-          er -> (er ++ ers, nods)
+    ([n], "iter"  , [f@(PI_Func p0 fn), (PI_Int p1 ix), (PI_Int p2 jx)]) -> hofmodel syms state [f] (HOFNode [n] [] IterHF [ix, jx])
 
 
     (ns,  "phi"   , f@(PI_Func p0 fn):g@(PI_Func p1 gn):(PI_Int ips ix):xs) ->
@@ -818,6 +748,16 @@ modelFuncNode syms state (PI_Node p ns op pars) =
           er -> (er ++ ers, nods)
 
     (_  , _       , _                                         ) -> appendEither (Left  (IRErr p $ pack "Unrecognized operation.\n")) state
+
+  where hofmodel :: IRSymbols -> ([IRErr], [Node]) -> [IRParseItem] -> ([FnId] -> Node) -> ([IRErr], [Node])
+        hofmodel syms (errs, nods) fs makeNode =
+          let fnids = L.map (getFnid syms) fs
+              ers = lefts fnids
+              ret = makeNode (rights fnids)
+          in case ers of
+              [] -> (ers,   ret:nods)
+              er -> (er ++ ers, nods)
+
 
 modelFuncNode syms state _ = state
 
