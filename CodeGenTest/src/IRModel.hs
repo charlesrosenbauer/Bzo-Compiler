@@ -745,8 +745,8 @@ modelFuncNode syms state (PI_Node p ns op pars) =
               ers = lefts fnids
               ret = makeNode (rights fnids)
           in case ers of
-              [] -> (ers,   ret:nods)
-              er -> (er ++ ers, nods)
+              [] -> (errs,   ret:nods)
+              er -> (er ++ errs, nods)
 
 
 modelFuncNode syms state _ = state
@@ -869,13 +869,13 @@ modelTypeNode syms state (PI_Node p ns op pars) =
     ([n], "implsize"  , [f@(PI_Func _ _)]) -> modelImpl syms state f (ImplNode n ImplSize)
 
   where modelImpl :: IRSymbols -> ([IRErr], [TypeNode]) -> IRParseItem -> (FnId -> TypeNode) -> ([IRErr], [TypeNode])
-        modelImpl syms (errs, nods) f@(PI_Func p0 fn) makeNode =
+        modelImpl syms (errs, nods) f makeNode =
           let fnid = getFnid syms f
               ers  = lefts [fnid]
               ret  = makeNode (justRight fnid)
           in case ers of
-              [] -> (ers,   ret:nods)
-              er -> (er ++ ers, nods)
+              [] -> (errs,   ret:nods)
+              er -> (er ++ errs, nods)
 
 modelTypeNode syms state _ = state
 
