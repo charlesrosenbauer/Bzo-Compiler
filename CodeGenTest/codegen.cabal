@@ -26,3 +26,8 @@ executable main
       , IRLexer
       , IRParser
       , IRModel
+      , HigherOrder
+      , IRFuncModel
+      , IRTypeModel
+      , IRTypes
+      , IRModelAbstract

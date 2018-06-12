@@ -2,54 +2,8 @@ module IRParser where
 import IRLexer
 import Data.List as L
 import Data.Text
+import IRTypes
 import Debug.Trace
-
-
-
-
-
-
-
-
-
-
-data IRParseItem
-  = PI_FnHeader {ppos :: IRPos, txt0 :: Text, par0 :: IRParseItem}
-  | PI_FnDef    {ppos :: IRPos, txt0 :: Text, par0 :: IRParseItem, pars :: [IRParseItem]}
-  | PI_TyHeader {ppos :: IRPos, txt0 :: Text, num0 :: Int}
-  | PI_TyDef    {ppos :: IRPos, txt0 :: Text, num0 :: Int, pars :: [IRParseItem]}
-  | PI_PrHeader {ppos :: IRPos, txt0 :: Text, par0 :: IRParseItem, pars0 :: [IRParseItem], pars1 :: [IRParseItem]}
-  | PI_PrDef    {ppos :: IRPos, txt0 :: Text, par0 :: IRParseItem, pars0 :: [IRParseItem], pars1 :: [IRParseItem], pars :: [IRParseItem]}
-  | PI_ExHeader {ppos :: IRPos, txt0 :: Text, par0 :: IRParseItem, pars0 :: [IRParseItem], pars1 :: [IRParseItem]}
-  | PI_ExDef    {ppos :: IRPos, txt0 :: Text, par0 :: IRParseItem, pars0 :: [IRParseItem], pars1 :: [IRParseItem], pars :: [IRParseItem]}
-  | PI_NL       {ppos :: IRPos}
-  | PI_Arr      {ppos :: IRPos, num0 :: Int}
-  | PI_FTyPart0 {ppos :: IRPos, pars :: [IRParseItem]}
-  | PI_FTyPart1 {ppos :: IRPos, pars0:: [IRParseItem], pars1:: [IRParseItem]}
-  | PI_FTy      {ppos :: IRPos, pars0:: [IRParseItem], pars1:: [IRParseItem]}
-  | PI_EffPart0 {ppos :: IRPos, pars :: [IRParseItem]}
-  | PI_EffPart1 {ppos :: IRPos, pars0:: [IRParseItem], pars1:: [IRParseItem]}
-  | PI_Effects  {ppos :: IRPos, pars0:: [IRParseItem], pars1:: [IRParseItem]}
-  | PI_Type     {ppos :: IRPos, nums :: [Int], txt0 :: Text}
-  | PI_Node     {ppos :: IRPos, nums :: [Int], txt0 :: Text, pars :: [IRParseItem]}
-  | PI_NS       {ppos :: IRPos, nums :: [Int]}
-  | PI_Nodes    {ppos :: IRPos, pars :: [IRParseItem]}
-  | PI_Defs     {ppos :: IRPos, pars :: [IRParseItem]}
-  | PI_Const    {ppos :: IRPos, txt0 :: Text}
-  | PI_ConstInt {ppos :: IRPos, txt0 :: Text, num0 :: Int}
-  | PI_ConstStr {ppos :: IRPos, txt0 :: Text, txt1 :: Text}
-  | PI_HintInt  {ppos :: IRPos, txt0 :: Text, num0 :: Int}
-  | PI_HintStr  {ppos :: IRPos, txt0 :: Text, txt1 :: Text}
-  | PI_AttrStr  {ppos :: IRPos, txt0 :: Text, txt1 :: Text}
-  | PI_AttrInt  {ppos :: IRPos, txt0 :: Text, num0 :: Int}
-  | PI_Attr     {ppos :: IRPos, txt0 :: Text}
-  | PI_Str      {ppos :: IRPos, txt0 :: Text}
-  | PI_Int      {ppos :: IRPos, num0 :: Int}
-  | PI_Func     {ppos :: IRPos, txt0 :: Text}
-  | PI_Proc     {ppos :: IRPos, txt0 :: Text}
-  | PI_Extn     {ppos :: IRPos, txt0 :: Text}
-  | PI_Token    {ppos :: IRPos, tkn :: IRToken}
-  deriving (Eq, Show)
 
 
 
