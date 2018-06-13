@@ -35,8 +35,9 @@ modelIR irs =
       cts          = getConstants [irs]
       cts'         = modelConst    cts syms
       (fers, fns') = modelFunc     fns syms
+      (ters, tys') = modelType     tys syms
   in case (fers ++ errs) of
-      [] -> Right (syms, (makeFuncMap fns'), M.empty, M.empty, [])
+      [] -> Right (syms, (makeFuncMap fns'), (makeTypeMap tys'), M.empty, [])
       er -> Left er
 
 
@@ -50,6 +51,18 @@ modelIR irs =
 
 makeFuncMap :: [FuncData] -> Map FnId FuncData
 makeFuncMap fs = M.fromList $ L.map (\f@(FuncType _ _ _ _ _ _ _ fnid) -> (fnid, f)) fs
+
+
+
+
+
+
+
+
+
+
+makeTypeMap :: [TypeData] -> Map TyId TypeData
+makeTypeMap ts = M.fromList $ L.map (\t@(TypeData _ _ _ _ tyid) -> (tyid, t)) ts
 
 
 

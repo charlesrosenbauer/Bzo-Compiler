@@ -19,18 +19,18 @@ import Debug.Trace
 
 
 
-{-
--- TODO: Figure this out later
+
 modelType :: [IRParseItem] -> IRSymbols -> ([IRErr], [TypeData])
 modelType [] syms = ([], [])
 modelType ((PI_TyDef  p tyid parnum def):irs) syms =
   let tyid' = (typeSymbols syms) ! tyid
-      (er0, nds) = modelTypeNode syms ([], []) def
+
+      -- Model Contents
+      (er0, nds) = L.foldl (modelTypeNodes syms) ([], []) def
 
       -- Model the rest of the list
-      (ers, fns) = modelFunc irs syms
-  in (er0 ++ ers, ((FuncType PureFn [] [] [] [] [] nds fnid'):fns))
--}
+      (ers, tys) = modelType irs syms
+  in (er0 ++ ers, ((TypeData PureTy nds 0 [] tyid'):tys))
 
 
 
@@ -40,8 +40,9 @@ modelType ((PI_TyDef  p tyid parnum def):irs) syms =
 
 
 
-modelTypeNode :: IRSymbols -> ([IRErr], [TypeNode]) -> IRParseItem -> ([IRErr], [TypeNode])
-modelTypeNode syms state (PI_Node p ns op pars) =
+
+modelTypeNodes :: IRSymbols -> ([IRErr], [TypeNode]) -> IRParseItem -> ([IRErr], [TypeNode])
+modelTypeNodes syms state (PI_Node p ns op pars) =
   case (ns, unpack op, L.reverse pars) of
     ([n], "element" , [t@(PI_Type _ _ _)])                        -> appendEither (onRight       (ElemNode     n 0        ) (makeTypeRef syms t)) state
     ([n], "contlist", [t@(PI_Type _ _ _)])                        -> appendEither (onRight       (Contain1Node n ListCont ) (makeTypeRef syms t)) state
@@ -94,7 +95,7 @@ modelTypeNode syms state (PI_Node p ns op pars) =
               (Left  a, Right b) -> (a:errs,              nods)
               (Left  a, Left  b) -> (a:b:errs,            nods)
 
-modelTypeNode syms state _ = state
+modelTypeNodes syms state _ = state
 
 
 

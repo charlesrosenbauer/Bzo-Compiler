@@ -225,7 +225,8 @@ data TypeData = TypeData{
   typeKind    :: TypeKind,
   typeNodes   :: [TypeNode],
   typeSize    :: Int,
-  typehints   :: [Hint]  }
+  typehints   :: [Hint],
+  typeId      :: TyId }
   deriving Show
 
 data TypeRef = TypeRef [Int] TyId | UndefType
