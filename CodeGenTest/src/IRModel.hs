@@ -36,7 +36,7 @@ modelIR irs =
       cts'         = modelConst    cts syms
       (fers, fns') = modelFunc     fns syms
       (ters, tys') = modelType     tys syms
-  in case (fers ++ errs) of
+  in case (fers ++ ters ++ errs) of
       [] -> Right (syms, (makeFuncMap fns'), (makeTypeMap tys'), M.empty, [])
       er -> Left er
 

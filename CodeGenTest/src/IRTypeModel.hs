@@ -28,6 +28,9 @@ modelType ((PI_TyDef  p tyid parnum def):irs) syms =
       -- Model Contents
       (er0, nds) = L.foldl (modelTypeNodes syms) ([], []) def
 
+      -- Model Attributes
+
+
       -- Model the rest of the list
       (ers, tys) = modelType irs syms
   in (er0 ++ ers, ((TypeData PureTy nds 0 [] tyid'):tys))
@@ -42,7 +45,7 @@ modelType ((PI_TyDef  p tyid parnum def):irs) syms =
 
 
 modelTypeNodes :: IRSymbols -> ([IRErr], [TypeNode]) -> IRParseItem -> ([IRErr], [TypeNode])
-modelTypeNodes syms state (PI_Node p ns op pars) =
+modelTypeNodes syms state n@(PI_Node p ns op pars) =
   case (ns, unpack op, L.reverse pars) of
     ([n], "element" , [t@(PI_Type _ _ _)])                        -> appendEither (onRight       (ElemNode     n 0        ) (makeTypeRef syms t)) state
     ([n], "contlist", [t@(PI_Type _ _ _)])                        -> appendEither (onRight       (Contain1Node n ListCont ) (makeTypeRef syms t)) state
@@ -74,6 +77,8 @@ modelTypeNodes syms state (PI_Node p ns op pars) =
     ([n], "implserl"  , [f@(PI_Func _ _)]) -> modelImpl syms state f (ImplNode n ImplSerl)    -- Serialize
     ([n], "impldserl" , [f@(PI_Func _ _)]) -> modelImpl syms state f (ImplNode n ImplDSerl)   -- Deserialize
     ([n], "implsize"  , [f@(PI_Func _ _)]) -> modelImpl syms state f (ImplNode n ImplSize)
+
+    (_  , _           , _)                 -> appendPair ([IRErr p $ pack "Invalid Type Node.\n"], []) state
 
   where modelImpl :: IRSymbols -> ([IRErr], [TypeNode]) -> IRParseItem -> (FnId -> TypeNode) -> ([IRErr], [TypeNode])
         modelImpl syms (errs, nods) f makeNode =
