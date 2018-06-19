@@ -96,7 +96,9 @@ modelFuncNodes ps syms irs =
         getOuts n                       = [nout n]
 
         getIns  :: Node -> [Int]
-        getIns  (SetNode   _ _     p0 p1   ) = [p0, p1]
+        getIns  (SetNode   _ _     p0 p1 _)  = [p0, p1]     -- The last element references type-local variables, not scope-local ones
+        getIns  (GetNode   _ _     p0 _   )  = [p0]         --   "
+        getIns  (StoreNode _ _     p0 p1   ) = [p0, p1]
         getIns  (BinopNode _ _ _   p0 p1   ) = [p0, p1]
         getIns  (TrinopNode  _ _ _ p0 p1 p2) = [p0, p1, p2]
         getIns  (ParNode     _ _)            = []
@@ -136,8 +138,12 @@ modelFuncNode syms state (PI_Node p ns op pars) =
     ([n], "output", [t@(PI_Type tps tns tid), (PI_Int ips ix)]) -> appendEither (onRight (\x -> RetNode  n x ix) (makeTypeRef syms t)) state
     ([n], "cast"  , [t@(PI_Type tps tns tid), (PI_Int ips ix)]) -> appendEither (onRight (\x -> CastNode n x ix) (makeTypeRef syms t)) state
 
-    ([n], "load"  , [t@(PI_Type tps tns tid), (PI_Int ips ix)                 ]) -> appendEither (onRight (\x -> GetNode n x ix   ) (makeTypeRef syms t)) state
-    ([n], "stor"  , [t@(PI_Type tps tns tid), (PI_Int ips ix), (PI_Int jps jx)]) -> appendEither (onRight (\x -> SetNode n x ix jx) (makeTypeRef syms t)) state
+    ([n], "load"  , [t@(PI_Type tps tns tid), (PI_Int ips ix)                 ]) -> appendEither (onRight (\x -> LoadNode  n x ix   ) (makeTypeRef syms t)) state
+    ([n], "stor"  , [t@(PI_Type tps tns tid), (PI_Int ips ix), (PI_Int jps jx)]) -> appendEither (onRight (\x -> StoreNode n x ix jx) (makeTypeRef syms t)) state
+
+    -- These need to be tweaked a bit; I need some way to properly represent value indices that are independent of local variables
+    ([n], "get"   , [t@(PI_Type tps tns tid), (PI_Int ips ix), (PI_Int jps jx)                 ]) -> appendEither (onRight (\x -> GetNode n x ix jx   ) (makeTypeRef syms t)) state
+    ([n], "set"   , [t@(PI_Type tps tns tid), (PI_Int ips ix), (PI_Int jps jx), (PI_Int kps kx)]) -> appendEither (onRight (\x -> SetNode n x ix jx kx) (makeTypeRef syms t)) state
 
     ([n], "ifma"  , [(PI_Int ips ix), (PI_Int jps jx), (PI_Int kps kx)]) -> appendEither (Right (TrinopNode n UndefType IFMAOp  ix jx kx)) state
     ([n], "ifms"  , [(PI_Int ips ix), (PI_Int jps jx), (PI_Int kps kx)]) -> appendEither (Right (TrinopNode n UndefType IFMSOp  ix jx kx)) state

@@ -156,8 +156,10 @@ type FnId = Int
 data Node
   = CastNode   { nout:: Int , ntyp:: TypeRef,   npar:: Int }
   | ConstNode  { nout:: Int , ntyp:: TypeRef,   csid:: CnstId }
-  | GetNode    { nout:: Int , ntyp:: TypeRef,   npar:: Int }
-  | SetNode    { nout:: Int , ntyp:: TypeRef,   npr0:: Int , npr1:: Int }
+  | GetNode    { nout:: Int , ntyp:: TypeRef,   npr0:: Int , npr1:: Int }
+  | SetNode    { nout:: Int , ntyp:: TypeRef,   npr0:: Int , npr1:: Int, npr2::Int }
+  | LoadNode   { nout:: Int , ntyp:: TypeRef,   npar:: Int }
+  | StoreNode  { nout:: Int , ntyp:: TypeRef,   npr0:: Int , npr1:: Int }
   | BinopNode  { nout:: Int , ntyp:: TypeRef,   nbop:: BinopCode, npr0:: Int , npr1:: Int }
   | TrinopNode { nout:: Int , ntyp:: TypeRef,   ntop:: TrinopCode,npr0:: Int , npr1:: Int , npr2:: Int }
   | OpNode     { nout:: Int , ntyp:: TypeRef,   nop :: OpCode,    npar:: Int }
