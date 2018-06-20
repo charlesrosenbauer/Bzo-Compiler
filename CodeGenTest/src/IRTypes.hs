@@ -185,14 +185,14 @@ data OpCode     = AbsOp  | TrncOp | WideOp | NegOp  | NotOp  | LNotOp |
                   TanOp  | AsinOp | AcosOp | AtanOp | SinhOp | CoshOp |
                   TanhOp | AsinhOp| AcoshOp| AtanhOp| CttzOp | CtlzOp |
                   CeilOp | FloorOp| RoundOp|
-                  PCntOp | BRevsOp| BSwapOp|
+                  PCntOp | BRevsOp| BSwapOp| LSBFillOp | LCBFillOp |
                   CnstOp
                   deriving Show
 
 data BinopCode  = IAddOp | ISubOp | IMulOp | IDivOp | IModOp | ICmpOp | IMinOp | IMaxOp |  -- Integer Ops
                   FAddOp | FSubOp | FMulOp | FDivOp | FModOp | FCmpOp | FMinOp | FMaxOp |  -- Float Ops
                   OrOp   | AndOp  | XorOp  | LOrOp  | LAndOp | LXorOp |
-                  LShLOp | LShROp | AShROp |
+                  LShLOp | LShROp | AShROp | RRotOp | LRotOp | BDepOp | BExtOp |
                   FLogOp | FRootOp| FExpOp |
                   NLogOp | NRootOp| NExpOp | PowOp
                   deriving Show

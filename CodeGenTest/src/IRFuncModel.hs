@@ -182,6 +182,12 @@ modelFuncNode syms state (PI_Node p ns op pars) =
     ([n], "lshl"  , [(PI_Int ips ix), (PI_Int jps jx)])         -> appendEither (Right (BinopNode n UndefType LShLOp  ix jx)) state
     ([n], "lshr"  , [(PI_Int ips ix), (PI_Int jps jx)])         -> appendEither (Right (BinopNode n UndefType LShROp  ix jx)) state
     ([n], "ashr"  , [(PI_Int ips ix), (PI_Int jps jx)])         -> appendEither (Right (BinopNode n UndefType AShROp  ix jx)) state
+    ([n], "rotr"  , [(PI_Int ips ix), (PI_Int jps jx)])         -> appendEither (Right (BinopNode n UndefType RRotOp  ix jx)) state
+    ([n], "rotl"  , [(PI_Int ips ix), (PI_Int jps jx)])         -> appendEither (Right (BinopNode n UndefType LRotOp  ix jx)) state
+    ([n], "bdep"  , [(PI_Int ips ix), (PI_Int jps jx)])         -> appendEither (Right (BinopNode n UndefType BExtOp  ix jx)) state
+    ([n], "bext"  , [(PI_Int ips ix), (PI_Int jps jx)])         -> appendEither (Right (BinopNode n UndefType BDepOp  ix jx)) state
+    ([n], "lsbfill",[(PI_Int ips ix)])                          -> appendEither (Right (OpNode    n UndefType LSBFillOp ix   )) state
+    ([n], "lcbfill",[(PI_Int ips ix)])                          -> appendEither (Right (OpNode    n UndefType LCBFillOp ix   )) state
     ([n], "cttz"  , [(PI_Int ips ix)])                          -> appendEither (Right (OpNode    n UndefType CttzOp  ix   )) state
     ([n], "ctlz"  , [(PI_Int ips ix)])                          -> appendEither (Right (OpNode    n UndefType CtlzOp  ix   )) state
     ([n], "pcnt"  , [(PI_Int ips ix)])                          -> appendEither (Right (OpNode    n UndefType PCntOp  ix   )) state
