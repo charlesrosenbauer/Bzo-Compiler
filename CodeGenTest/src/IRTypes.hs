@@ -229,7 +229,7 @@ data TypeData = TypeData{
   typeSize    :: Int,
   typehints   :: [Hint],
   typeId      :: TyId }
-  deriving Show
+  deriving (Show, Eq)
 
 data TypeRef = TypeRef [Int] TyId | UndefType
   deriving (Show, Eq)
@@ -253,7 +253,7 @@ data TypeNode
   | Contain1Node  { tidx :: Int, tcn1 :: Contain1, tty0 :: TypeRef }
   | Contain2Node  { tidx :: Int, tcn2 :: Contain2, tty0 :: TypeRef, tty1 :: TypeRef }
   | ImplNode      { tidx :: Int, timp :: ImplCode, tfnc :: FnId }
-  deriving Show
+  deriving (Show, Eq)
 
 
 
@@ -266,16 +266,16 @@ data TypeNode
 
 data Contain1 = ListCont | SetCont  | BSetCont | RRBCont  |
                 BoxCont  | QCont    | StkCont  | HeapCont
-                deriving Show
+                deriving (Show, Eq)
 
 data Contain2 = DictCont | HMapCont | AVLCont
-                deriving Show
+                deriving (Show, Eq)
 
 data ImplCode = ImplMap  | ImplSplit| ImplSFold| ImplPFold|
                 ImplSScan| ImplPScan| ImplZip  | ImplUZip |
                 ImplNext | ImplIndex| ImplHash | ImplEq   |
                 ImplCmp  | ImplSerl | ImplDSerl| ImplSize
-                deriving Show
+                deriving (Show, Eq)
 
 
 
@@ -306,7 +306,7 @@ type CnstId = Int
 data Hint
   = HintInt Text Int
   | HintStr Text Text
-  deriving Show
+  deriving (Show, Eq)
 
 
 
