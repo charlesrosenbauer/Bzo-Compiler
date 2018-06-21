@@ -22,7 +22,7 @@ import Debug.Trace
 
 modelType :: [IRParseItem] -> IRSymbols -> ([IRErr], [TypeData])
 modelType [] syms = ([], [])
-modelType ((PI_TyDef  p tyid parnum def):irs) syms =
+modelType (t@(PI_TyDef  p tyid parnum def):irs) syms =
   let tyid' = (typeSymbols syms) ! tyid
 
       -- Model Contents
@@ -30,10 +30,32 @@ modelType ((PI_TyDef  p tyid parnum def):irs) syms =
 
       -- Model Attributes
 
+      -- Validate Contents
+      er1 = L.concatMap (validateTypeNode t) nds
+      nds' = L.nub nds
+      er2 = if nds /= nds'
+              then [(IRErr p $ pack $ "Type contains repeated element ids: " ++ (show $ L.map (\x -> "#" ++ (show x)) (nds L.\\ nds')) ++ "\n")]
+              else []
 
       -- Model the rest of the list
       (ers, tys) = modelType irs syms
-  in (er0 ++ ers, ((TypeData PureTy nds 0 [] tyid'):tys))
+  in (er0 ++ er1 ++ er2 ++ ers, ((TypeData PureTy nds 0 [] tyid'):tys))
+
+
+
+
+
+
+
+
+
+
+validateTypeNode :: IRParseItem -> TypeNode -> [IRErr]
+validateTypeNode (PI_TyDef p tyid parnum def) (ElemNode n _ _) = ife ((0 Prelude.<= n) && (n < parnum))
+                                                                     []
+                                                                     [IRErr p $ pack $ "Type definition contains invalid element node number: " ++ (show n)]
+validateTypeNode _ _ = []  -- For now
+
 
 
 

@@ -232,10 +232,10 @@ data TypeData = TypeData{
   deriving Show
 
 data TypeRef = TypeRef [Int] TyId | UndefType
-  deriving Show
+  deriving (Show, Eq)
 
 data TypeKind = PureTy | FXTy_SRSW | FXTy_PRSW | FXTy_SRPW | FXTy_PRPW
-  deriving Show
+  deriving (Show, Eq)
 
 type TyId = Int
 
