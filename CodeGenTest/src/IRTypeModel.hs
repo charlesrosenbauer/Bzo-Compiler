@@ -32,9 +32,10 @@ modelType (t@(PI_TyDef  p tyid parnum def):irs) syms =
 
       -- Validate Contents
       er1 = L.concatMap (validateTypeNode t) nds
-      nds' = L.nub nds
-      er2 = if nds /= nds'
-              then [(IRErr p $ pack $ "Type contains repeated element ids: " ++ (show $ L.map (\x -> "#" ++ (show x)) (nds L.\\ nds')) ++ "\n")]
+      ns  = L.map tidx nds
+      ns' = L.nub $ ns
+      er2 = if ns /= ns'
+              then [(IRErr p $ pack $ "Type contains repeated element ids: " ++ (show $ L.map (\x -> "#" ++ (show x)) (ns L.\\ ns')) ++ "\n")]
               else []
 
       -- Model the rest of the list
