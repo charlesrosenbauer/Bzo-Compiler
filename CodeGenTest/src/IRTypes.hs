@@ -136,7 +136,10 @@ data FuncData = FuncType{
   writeEffects:: [TyId],
   funchints   :: [Hint],
   funcNodes   :: [Node],
-  funcId      :: FnId }
+  funcId      :: FnId,
+  fnNodes     :: Map Int Node,
+  fnFromOuts  :: Map Int Int,
+  nodeCount   :: Int }
   deriving Show
 
 data FunctionKind = PureFn | ProcFn | ExtrFn

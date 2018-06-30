@@ -30,7 +30,7 @@ modelFunc ((PI_FnDef  p fnid pars def):irs) syms =
 
       -- Model the rest of the list
       (ers, fns) = modelFunc irs syms
-  in (er0 ++ ers, ((FuncType PureFn [] [] [] [] [] nds fnid'):fns))
+  in (er0 ++ ers, ((FuncType PureFn [] [] [] [] [] nds fnid' M.empty M.empty 0):fns))
 
 modelFunc ((PI_PrDef  p fnid pars refx wefx def):irs) syms =
   let fnid' = (funcSymbols syms) ! fnid
@@ -46,7 +46,7 @@ modelFunc ((PI_PrDef  p fnid pars refx wefx def):irs) syms =
 
       -- Model the rest of the list
       (ers, fns) = modelFunc irs syms
-  in (ers ++ er1 ++ er2, (FuncType ProcFn [] [] rfx wfx [] nds fnid'):fns)
+  in (ers ++ er1 ++ er2, (FuncType ProcFn [] [] rfx wfx [] nds fnid' M.empty M.empty 0):fns)
 
 modelFunc ((PI_ExDef  p fnid pars refx wefx def):irs) syms =
   let fnid' = (funcSymbols syms) ! fnid
@@ -62,7 +62,7 @@ modelFunc ((PI_ExDef  p fnid pars refx wefx def):irs) syms =
 
       -- Model the rest of the list
       (ers, fns) = modelFunc irs syms
-  in (ers ++ er1 ++ er2, (FuncType ExtrFn [] [] rfx wfx [] nds fnid'):fns)
+  in (ers ++ er1 ++ er2, (FuncType ExtrFn [] [] rfx wfx [] nds fnid' M.empty M.empty 0):fns)
 
 
 

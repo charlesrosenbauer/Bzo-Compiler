@@ -50,7 +50,7 @@ modelIR irs =
 
 
 makeFuncMap :: [FuncData] -> Map FnId FuncData
-makeFuncMap fs = M.fromList $ L.map (\f@(FuncType _ _ _ _ _ _ _ fnid) -> (fnid, f)) fs
+makeFuncMap fs = M.fromList $ L.map (\f@(FuncType _ _ _ _ _ _ _ fnid _ _ _) -> (fnid, f)) fs
 
 
 
