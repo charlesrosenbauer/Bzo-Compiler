@@ -89,21 +89,7 @@ modelFuncNodes ps syms irs =
       iopairs = L.zip inss outss
       er1  = catMaybes $ L.map (\(i, o) -> checkIns ps (o, i, outs)) iopairs
   in (er0++er1++ers, nds)
-  where getIns  :: Node -> [Int]
-        getIns  (SetNode   _ _     p0 p1 _)  = [p0, p1]     -- The last element references type-local variables, not scope-local ones
-        getIns  (GetNode   _ _     p0 _   )  = [p0]         --   "
-        getIns  (StoreNode _ _     p0 p1   ) = [p0, p1]
-        getIns  (BinopNode _ _ _   p0 p1   ) = [p0, p1]
-        getIns  (TrinopNode  _ _ _ p0 p1 p2) = [p0, p1, p2]
-        getIns  (ParNode     _ _)            = []
-        getIns  (ConstNode _ _ _)            = []
-        getIns  (CallNode  _ _ _ _ ps)       = ps
-        getIns  (HOFNode   _ _ _ ps _)       = ps
-        getIns  (PhiNode   _ _ p0 _ _ ps)    = (p0:ps)
-        getIns  (CondNode  _ _ p0 p1)        = [p0, p1]
-        getIns  node                         = [npar node]
-
-        checkIns :: IRPos -> ([Int], [Int], [Int]) -> Maybe IRErr
+  where checkIns :: IRPos -> ([Int], [Int], [Int]) -> Maybe IRErr
         checkIns ps ([],  _,  _) = Nothing
         checkIns ps (os, is, xs) =
           let osmin   = L.minimum os

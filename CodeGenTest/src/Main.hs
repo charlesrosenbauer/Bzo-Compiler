@@ -3,6 +3,7 @@ import System.IO
 import IRLexer
 import IRParser
 import IRModel
+import NodeOps
 import qualified Data.Map.Strict as M
 
 

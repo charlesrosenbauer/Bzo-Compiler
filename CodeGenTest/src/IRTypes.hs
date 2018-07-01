@@ -198,6 +198,29 @@ nodeOuts nd = [nout nd]
 
 
 
+getIns  :: Node -> [Int]
+getIns  (SetNode   _ _     p0 p1 _)  = [p0, p1]     -- The last element references type-local variables, not scope-local ones
+getIns  (GetNode   _ _     p0 _   )  = [p0]         --   "
+getIns  (StoreNode _ _     p0 p1   ) = [p0, p1]
+getIns  (BinopNode _ _ _   p0 p1   ) = [p0, p1]
+getIns  (TrinopNode  _ _ _ p0 p1 p2) = [p0, p1, p2]
+getIns  (ParNode     _ _)            = []
+getIns  (ConstNode _ _ _)            = []
+getIns  (CallNode  _ _ _ _ ps)       = ps
+getIns  (HOFNode   _ _ _ ps _)       = ps
+getIns  (PhiNode   _ _ p0 _ _ ps)    = (p0:ps)
+getIns  (CondNode  _ _ p0 p1)        = [p0, p1]
+getIns  node                         = [npar node]
+
+
+
+
+
+
+
+
+
+
 data OpCode     = AbsOp  | TrncOp | WideOp | NegOp  | NotOp  | LNotOp |
                   SqrtOp | CbrtOp | Lg2Op  | Lg10Op | SinOp  | CosOp  |
                   TanOp  | AsinOp | AcosOp | AtanOp | SinhOp | CoshOp |

@@ -31,3 +31,4 @@ executable main
       , IRTypeModel
       , IRTypes
       , IRModelAbstract
+      , NodeOps
