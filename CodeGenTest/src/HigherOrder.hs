@@ -1,4 +1,5 @@
 module HigherOrder where
+import Data.Map as M
 
 
 
@@ -128,3 +129,15 @@ justRight (Right x) = x
 
 justLeft  :: Either a b -> a
 justLeft  (Left  x) = x
+
+
+
+
+
+
+
+
+
+
+insertMany :: Ord k => M.Map k a -> [(k, a)] -> M.Map k a
+insertMany m xs = Prelude.foldl (\mp (k, a) -> M.insert k a mp) m xs

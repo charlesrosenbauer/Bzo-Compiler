@@ -30,7 +30,7 @@ modelFunc ((PI_FnDef  p fnid pars def):irs) syms =
 
       -- Model the rest of the list
       (ers, fns) = modelFunc irs syms
-  in (er0 ++ ers, ((FuncType PureFn [] [] [] [] [] nds fnid' M.empty M.empty 0):fns))
+  in (er0 ++ ers, L.map buildFuncNodeModel $ ((FuncType PureFn [] [] [] [] [] nds fnid' M.empty M.empty 0):fns))
 
 modelFunc ((PI_PrDef  p fnid pars refx wefx def):irs) syms =
   let fnid' = (funcSymbols syms) ! fnid
@@ -46,7 +46,7 @@ modelFunc ((PI_PrDef  p fnid pars refx wefx def):irs) syms =
 
       -- Model the rest of the list
       (ers, fns) = modelFunc irs syms
-  in (ers ++ er1 ++ er2, (FuncType ProcFn [] [] rfx wfx [] nds fnid' M.empty M.empty 0):fns)
+  in (ers ++ er1 ++ er2, L.map buildFuncNodeModel $ (FuncType ProcFn [] [] rfx wfx [] nds fnid' M.empty M.empty 0):fns)
 
 modelFunc ((PI_ExDef  p fnid pars refx wefx def):irs) syms =
   let fnid' = (funcSymbols syms) ! fnid
@@ -62,7 +62,7 @@ modelFunc ((PI_ExDef  p fnid pars refx wefx def):irs) syms =
 
       -- Model the rest of the list
       (ers, fns) = modelFunc irs syms
-  in (ers ++ er1 ++ er2, (FuncType ExtrFn [] [] rfx wfx [] nds fnid' M.empty M.empty 0):fns)
+  in (ers ++ er1 ++ er2, L.map buildFuncNodeModel $ (FuncType ExtrFn [] [] rfx wfx [] nds fnid' M.empty M.empty 0):fns)
 
 
 
@@ -79,7 +79,7 @@ modelFuncNodes ps syms irs =
   let (ers, nds) = L.foldl (modelFuncNode syms) ([], []) irs
 
       -- TODO: Verify that all the nodes fit together nicely
-      (outss, inss) = L.unzip $ L.map (\nd -> (getOuts nd, getIns nd)) nds
+      (outss, inss) = L.unzip $ L.map (\nd -> (nodeOuts nd, getIns nd)) nds
       outs = L.concat outss
       outs'= L.nub outs
       er0  = if outs /= outs'
@@ -89,13 +89,7 @@ modelFuncNodes ps syms irs =
       iopairs = L.zip inss outss
       er1  = catMaybes $ L.map (\(i, o) -> checkIns ps (o, i, outs)) iopairs
   in (er0++er1++ers, nds)
-  where getOuts :: Node -> [Int]
-        getOuts (CallNode os _ _ _ _  ) = os
-        getOuts (PhiNode  os _ _ _ _ _) = os
-        getOuts (HOFNode  os _ _ _ _)   = os
-        getOuts n                       = [nout n]
-
-        getIns  :: Node -> [Int]
+  where getIns  :: Node -> [Int]
         getIns  (SetNode   _ _     p0 p1 _)  = [p0, p1]     -- The last element references type-local variables, not scope-local ones
         getIns  (GetNode   _ _     p0 _   )  = [p0]         --   "
         getIns  (StoreNode _ _     p0 p1   ) = [p0, p1]
@@ -307,3 +301,19 @@ modelFuncNode syms state (PI_Node p ns op pars) =
 
 
 modelFuncNode syms state _ = state
+
+
+
+
+
+
+
+
+
+
+buildFuncNodeModel :: FuncData -> FuncData
+buildFuncNodeModel (FuncType fk its ots res wes hs nds fnid _ _ _) =
+  let (fnds, fots, ct) = L.foldl (\(ns, os, c) nd -> (M.insert (c+1) nd ns,
+                                                      insertMany os (L.zip (nodeOuts nd) $ L.repeat (c+1)),
+                                                      c+1)) (M.empty, M.empty, 0) nds
+  in (FuncType fk its ots res wes hs nds fnid fnds fots ct)

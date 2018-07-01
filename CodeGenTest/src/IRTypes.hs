@@ -183,6 +183,21 @@ data Node
 
 
 
+nodeOuts :: Node -> [Int]
+nodeOuts (CallNode ots _ _ _ _  ) = ots
+nodeOuts (HOFNode  ots _ _ _ _  ) = ots
+nodeOuts (PhiNode  ots _ _ _ _ _) = ots
+nodeOuts nd = [nout nd]
+
+
+
+
+
+
+
+
+
+
 data OpCode     = AbsOp  | TrncOp | WideOp | NegOp  | NotOp  | LNotOp |
                   SqrtOp | CbrtOp | Lg2Op  | Lg10Op | SinOp  | CosOp  |
                   TanOp  | AsinOp | AcosOp | AtanOp | SinhOp | CoshOp |
