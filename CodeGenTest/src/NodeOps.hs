@@ -41,7 +41,7 @@ getTypes :: Node -> [TypeRef]
 getTypes (CallNode _ ts _ _ _  ) = ts
 getTypes (HOFNode  _ ts _ _ _  ) = ts
 getTypes (PhiNode  _ ts _ _ _ _) = ts
-getTypes (CondNode _ _ _ _)      = []   -- TODO: Change later to Bool
+getTypes (CondNode _ _ _ _)      = [typeBool]
 getTypes nd = [ntyp nd]
 
 

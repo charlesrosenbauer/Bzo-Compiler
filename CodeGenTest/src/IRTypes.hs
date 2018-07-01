@@ -327,6 +327,94 @@ data ImplCode = ImplMap  | ImplSplit| ImplSFold| ImplPFold|
 
 
 
+typeI8    = TypeRef [] 1
+typeI16   = TypeRef [] 2
+typeI32   = TypeRef [] 3
+typeI64   = TypeRef [] 4
+typeU8    = TypeRef [] 5
+typeU16   = TypeRef [] 6
+typeU32   = TypeRef [] 7
+typeU64   = TypeRef [] 8
+typeN16   = TypeRef [] 9
+typeN32   = TypeRef [] 10
+typeN64   = TypeRef [] 11
+typeF16   = TypeRef [] 12
+typeF32   = TypeRef [] 13
+typeF64   = TypeRef [] 14
+typeASCII = TypeRef [] 15
+typeUTF8  = TypeRef [] 16
+typeUTF16 = TypeRef [] 17
+typeUTF32 = TypeRef [] 18
+typeChar  = TypeRef [] 19
+typeUChar = TypeRef [] 20
+typeBool  = TypeRef [] 21
+typeI8v2  = TypeRef [] 22
+typeI16v2 = TypeRef [] 23
+typeI32v2 = TypeRef [] 24
+typeI64v2 = TypeRef [] 25
+typeU8v2  = TypeRef [] 26
+typeU16v2 = TypeRef [] 27
+typeU32v2 = TypeRef [] 28
+typeU64v2 = TypeRef [] 29
+typeN16v2 = TypeRef [] 30
+typeN32v2 = TypeRef [] 31
+typeN64v2 = TypeRef [] 32
+typeF16v2 = TypeRef [] 33
+typeF32v2 = TypeRef [] 34
+typeF64v2 = TypeRef [] 35
+typeI8v4  = TypeRef [] 36
+typeI16v4 = TypeRef [] 37
+typeI32v4 = TypeRef [] 38
+typeI64v4 = TypeRef [] 39
+typeU8v4  = TypeRef [] 40
+typeU16v4 = TypeRef [] 41
+typeU32v4 = TypeRef [] 42
+typeU64v4 = TypeRef [] 43
+typeN16v4 = TypeRef [] 44
+typeN32v4 = TypeRef [] 45
+typeN64v4 = TypeRef [] 46
+typeF16v4 = TypeRef [] 47
+typeF32v4 = TypeRef [] 48
+typeF64v4 = TypeRef [] 49
+typeI8v8  = TypeRef [] 50
+typeI16v8 = TypeRef [] 51
+typeI32v8 = TypeRef [] 52
+typeI64v8 = TypeRef [] 53
+typeU8v8  = TypeRef [] 54
+typeU16v8 = TypeRef [] 55
+typeU32v8 = TypeRef [] 56
+typeU64v8 = TypeRef [] 57
+typeN16v8 = TypeRef [] 58
+typeN32v8 = TypeRef [] 59
+typeN64v8 = TypeRef [] 60
+typeF16v8 = TypeRef [] 61
+typeF32v8 = TypeRef [] 62
+typeF64v8 = TypeRef [] 63
+typeI8v16 = TypeRef [] 64
+typeI16v16= TypeRef [] 65
+typeI32v16= TypeRef [] 66
+typeI64v16= TypeRef [] 67
+typeU8v16 = TypeRef [] 68
+typeU16v16= TypeRef [] 69
+typeU32v16= TypeRef [] 70
+typeU64v16= TypeRef [] 71
+typeN16v16= TypeRef [] 72
+typeN32v16= TypeRef [] 73
+typeN64v16= TypeRef [] 74
+typeF16v16= TypeRef [] 75
+typeF32v16= TypeRef [] 76
+typeF64v16= TypeRef [] 77
+
+
+
+
+
+
+
+
+
+
+
 data ConstantData
   = ConstStr  CnstId Text
   | ConstInt  CnstId Int
