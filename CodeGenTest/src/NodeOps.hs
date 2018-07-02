@@ -86,7 +86,13 @@ getNodeFromRet fdata ret = (M.lookup ret (fnFromOuts fdata)) >>= (\x -> M.lookup
 
 
 
---calls :: FuncData -> [FnId]
+calls :: FuncData -> [FnId]
+calls fd = concatMap getCalls $ M.elems $ fnNodes fd
+  where getCalls :: Node -> [FnId]
+        getCalls (CallNode _ _ _ f _  ) = [f]
+        getCalls (PhiNode  _ _ _ f g _) = [f,g]
+        getCalls (HOFNode  _ _ _ _ fs ) =  fs
+        getCalls _ = []
 
 
 
