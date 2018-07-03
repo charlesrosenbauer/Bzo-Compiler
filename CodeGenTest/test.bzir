@@ -9,9 +9,9 @@ $link 'stdio\n'
 	#2 input  I32
 
 	#3 iadd #0 #1
-	#4 iadd #4 #2
+	#4 iadd #3 #2
 
-	#5 output I32 #5
+	#5 output I32 #4
 }
 
 
@@ -52,6 +52,13 @@ $link 'stdio\n'
 
 % IO 0 {
 	-effectSRSW
+}
+
+
+
+
+% AVL 1 {
+	#0 contavl I32 ASCII
 }
 
 
