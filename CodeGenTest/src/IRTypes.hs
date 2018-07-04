@@ -230,12 +230,11 @@ data OpCode     = AbsOp  | TrncOp | WideOp | NegOp  | NotOp  | LNotOp |
                   CnstOp
                   deriving Show
 
-data BinopCode  = IAddOp | ISubOp | IMulOp | IDivOp | IModOp | ICmpOp | IMinOp | IMaxOp |  -- Integer Ops
-                  FAddOp | FSubOp | FMulOp | FDivOp | FModOp | FCmpOp | FMinOp | FMaxOp |  -- Float Ops
+data BinopCode  = IAddOp | ISubOp | IMulOp | IDivOp | IModOp | IMinOp | IMaxOp |  -- Integer Ops
+                  FAddOp | FSubOp | FMulOp | FDivOp | FModOp | FMinOp | FMaxOp |  -- Float Ops
                   OrOp   | AndOp  | XorOp  | LOrOp  | LAndOp | LXorOp |
                   LShLOp | LShROp | AShROp | RRotOp | LRotOp | BDepOp | BExtOp |
-                  FLogOp | FRootOp| FExpOp |
-                  NLogOp | NRootOp| NExpOp | PowOp
+                  FLogOp | FRootOp| FExpOp | PowOp
                   deriving Show
 
 data TrinopCode = FFMAOp | FFMSOp | IFMAOp | IFMSOp
@@ -254,6 +253,147 @@ data CondCode   = LSCond | GTCond | EQCond | NECond | LECond | GECond |
 
 data CallCode   = FnCall | ExCall | PrCall
                   deriving Show
+
+
+
+
+
+
+
+
+
+
+intCompatOp :: OpCode -> Bool
+intCompatOp AbsOp     = True
+intCompatOp TrncOp    = True
+intCompatOp WideOp    = True
+intCompatOp NegOp     = True
+intCompatOp NotOp     = True
+intCompatOp Lg2Op     = True
+intCompatOp CttzOp    = True
+intCompatOp CtlzOp    = True
+intCompatOp PCntOp    = True
+intCompatOp BRevsOp   = True
+intCompatOp BSwapOp   = True
+intCompatOp LSBFillOp = True
+intCompatOp LCBFillOp = True
+intCompatOp CnstOp    = True
+intCompatOp _         = False
+
+
+
+
+
+
+
+
+
+
+intCompatBinop :: BinopCode -> Bool
+intCompatBinop IAddOp   = True
+intCompatBinop ISubOp   = True
+intCompatBinop IMulOp   = True
+intCompatBinop IDivOp   = True
+intCompatBinop IModOp   = True
+intCompatBinop IMinOp   = True
+intCompatBinop IMaxOp   = True
+intCompatBinop OrOp     = True
+intCompatBinop AndOp    = True
+intCompatBinop XorOp    = True
+intCompatBinop LShLOp   = True
+intCompatBinop LShROp   = True
+intCompatBinop AShROp   = True
+intCompatBinop RRotOp   = True
+intCompatBinop LRotOp   = True
+intCompatBinop BDepOp   = True
+intCompatBinop BExtOp   = True
+intCompatBinop PowOp    = True
+intCompatBinop _        = False
+
+
+
+
+
+
+
+
+
+
+intCompatTrinop :: TrinopCode -> Bool
+intCompatTrinop IFMAOp = True
+intCompatTrinop IFMSOp = True
+intCompatTrinop _      = False
+
+
+
+
+
+
+
+
+
+
+fltCompatOp :: OpCode -> Bool
+fltCompatOp AbsOp     = True
+fltCompatOp TrncOp    = True
+fltCompatOp WideOp    = True
+fltCompatOp NegOp     = True
+fltCompatOp Lg2Op     = True
+fltCompatOp Lg10Op    = True
+fltCompatOp SinOp     = True
+fltCompatOp CosOp     = True
+fltCompatOp TanOp     = True
+fltCompatOp AsinOp    = True
+fltCompatOp AcosOp    = True
+fltCompatOp AtanOp    = True
+fltCompatOp SinhOp    = True
+fltCompatOp CoshOp    = True
+fltCompatOp TanhOp    = True
+fltCompatOp AsinhOp   = True
+fltCompatOp AcoshOp   = True
+fltCompatOp AtanhOp   = True
+fltCompatOp CeilOp    = True
+fltCompatOp FloorOp   = True
+fltCompatOp RoundOp   = True
+fltCompatOp CnstOp    = True
+fltCompatOp _         = False
+
+
+
+
+
+
+
+
+
+
+fltCompatBinop :: BinopCode -> Bool
+fltCompatBinop FAddOp   = True
+fltCompatBinop FSubOp   = True
+fltCompatBinop FMulOp   = True
+fltCompatBinop FDivOp   = True
+fltCompatBinop FModOp   = True
+fltCompatBinop FMinOp   = True
+fltCompatBinop FMaxOp   = True
+fltCompatBinop FLogOp   = True
+fltCompatBinop FRootOp  = True
+fltCompatBinop FExpOp   = True
+fltCompatBinop PowOp    = True
+fltCompatBinop _        = False
+
+
+
+
+
+
+
+
+
+
+fltCompatTrinop :: TrinopCode -> Bool
+fltCompatTrinop FFMAOp = True
+fltCompatTrinop FFMSOp = True
+fltCompatTrinop _      = False
 
 
 

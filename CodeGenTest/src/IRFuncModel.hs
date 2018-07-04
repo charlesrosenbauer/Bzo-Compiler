@@ -177,9 +177,6 @@ modelFuncNode syms state (PI_Node p ns op pars) =
     ([n], "logf"  , [(PI_Int ips ix), (PI_Int jps jx)])         -> appendEither (Right (BinopNode n UndefType FLogOp  ix jx)) state
     ([n], "rtf"   , [(PI_Int ips ix), (PI_Int jps jx)])         -> appendEither (Right (BinopNode n UndefType FRootOp ix jx)) state
     ([n], "expf"  , [(PI_Int ips ix), (PI_Int jps jx)])         -> appendEither (Right (BinopNode n UndefType FExpOp  ix jx)) state
-    ([n], "logn"  , [(PI_Int ips ix), (PI_Int jps jx)])         -> appendEither (Right (BinopNode n UndefType NLogOp  ix jx)) state
-    ([n], "rtn"   , [(PI_Int ips ix), (PI_Int jps jx)])         -> appendEither (Right (BinopNode n UndefType NRootOp ix jx)) state
-    ([n], "expn"  , [(PI_Int ips ix), (PI_Int jps jx)])         -> appendEither (Right (BinopNode n UndefType NExpOp  ix jx)) state
     ([n], "pow"   , [(PI_Int ips ix), (PI_Int jps jx)])         -> appendEither (Right (BinopNode n UndefType PowOp   ix jx)) state
     ([n], "abs"   , [(PI_Int ips ix)])                          -> appendEither (Right (OpNode    n UndefType AbsOp   ix   )) state
 
