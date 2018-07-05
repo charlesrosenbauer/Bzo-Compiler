@@ -1,0 +1,15 @@
+TODO:
+
+
+
+
+
+
+
+----IRTypes.hs----
+
+* Factor vector types into isIntType, isFltType, etc.
+
+* Factor vector types into compatibility checks
+
+* Above, but with text and bool types too.
