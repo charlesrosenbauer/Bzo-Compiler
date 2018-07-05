@@ -404,6 +404,59 @@ fltCompatTrinop _      = False
 
 
 
+isIntType :: TypeRef -> Bool
+isIntType ty
+  | ty == typeI8  = True
+  | ty == typeI16 = True
+  | ty == typeI32 = True
+  | ty == typeI64 = True
+  | ty == typeU8  = True
+  | ty == typeU16 = True
+  | ty == typeU32 = True
+  | ty == typeU64 = True
+  | otherwise     = False
+
+
+
+
+
+
+
+
+
+
+isFltType :: TypeRef -> Bool
+isFltType ty
+  | ty == typeF16 = True
+  | ty == typeF32 = True
+  | ty == typeF64 = True
+  | otherwise     = False
+
+
+
+
+
+
+
+
+
+
+isUnmType :: TypeRef -> Bool
+isUnmType ty
+  | ty == typeN16 = True
+  | ty == typeN32 = True
+  | ty == typeN64 = True
+  | otherwise     = False
+
+
+
+
+
+
+
+
+
+
 data TypeData = TypeData{
   typeKind    :: TypeKind,
   typeNodes   :: [TypeNode],
