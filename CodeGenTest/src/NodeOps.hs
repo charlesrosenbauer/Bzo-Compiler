@@ -1,5 +1,6 @@
 module NodeOps where
 import Data.Map as M
+import Data.List as L
 import IRTypes
 
 
@@ -114,18 +115,11 @@ calls fd = concatMap getCalls $ M.elems $ fnNodes fd
 
 
 
---deriveTypes :: FuncData -> Either [Int] FuncData
-
-
-
-
-
-
-
-
-
-
---isValid :: FuncData -> [Int]
+isValid :: FuncData -> [Int]
+isValid fdata =
+  let allIns = L.nub $ L.concat $ L.map getIns   $ funcNodes fdata
+      allOts = L.nub $ L.concat $ L.map nodeOuts $ funcNodes fdata
+  in L.intersect (allIns L.\\ allOts) allIns
 
 
 
