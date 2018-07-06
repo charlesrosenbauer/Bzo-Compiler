@@ -457,6 +457,38 @@ isUnmType ty
 
 
 
+isTextType :: TypeRef -> Bool
+isTextType ty
+  | ty == typeASCII = True
+  | ty == typeUTF8  = True
+  | ty == typeUTF16 = True
+  | ty == typeUTF32 = True
+  | otherwise       = False
+
+
+
+
+
+
+
+
+
+
+isCharType :: TypeRef -> Bool
+isCharType ty
+  | ty == typeChar  = True
+  | ty == typeUChar = True
+  | otherwise       = False
+
+
+
+
+
+
+
+
+
+
 data TypeData = TypeData{
   typeKind    :: TypeKind,
   typeNodes   :: [TypeNode],
