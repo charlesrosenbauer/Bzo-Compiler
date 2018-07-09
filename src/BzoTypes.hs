@@ -98,7 +98,7 @@ instance Show BzoErr where show = showBzErr
 
 
 showErrPos :: BzoPos -> String
-showErrPos p = "In file \"" ++ (fileName p) ++ "\", at " ++ (show $ line p) ++ ":" ++ (show $ column p) ++ " ::\n"
+showErrPos p = "In file \"" ++ (fileName p) ++ "\", at line " ++ (show $ line p) ++ ", column " ++ (show $ column p) ++ " ::\n"
 
 
 
