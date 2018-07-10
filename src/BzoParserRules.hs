@@ -99,15 +99,15 @@ parserIter fname tokens ((BzS_Statement p1 x)
                         :(BzS_BlockHead p0 xs):stk)                     = parserIter fname tokens ((BzS_BlockHead p0 (x:xs)):stk)
 
 parserIter fname tokens ((BzS_Token _ (TkEndDo p1))
-                        :(BzS_BlockHead p0 xs):stk)                     = parserIter fname tokens ((BzS_Block p0 xs):stk)
+                        :(BzS_BlockHead p0 xs):stk)                     = parserIter fname tokens ((BzS_Expr p0 [BzS_Block p0 xs]):stk)
 
 parserIter fname tokens ((BzS_Token _ (TkEndDo p2))
                         :x@(BzS_Expr p1 _)
-                        :(BzS_BlockHead p0 xs):stk)                     = parserIter fname tokens ((BzS_Block p0 (x:xs)):stk)
+                        :(BzS_BlockHead p0 xs):stk)                     = parserIter fname tokens ((BzS_Expr p0 [BzS_Block p0 (x:xs)]):stk)
 
 parserIter fname tokens ((BzS_Token _ (TkEndDo p2))
                         :x@(BzS_Expr p1 _)
-                        :(BzS_Token _ (TkStartDo p0)):stk)              = parserIter fname tokens ((BzS_Block p0 [x]):stk)
+                        :(BzS_Token _ (TkStartDo p0)):stk)              = parserIter fname tokens ((BzS_Expr p0 [BzS_Block p0 [x]]):stk)
 
 
 
@@ -154,15 +154,15 @@ parserIter fname tokens ((BzS_Expr p1 [x])
 
 
 -- | Lambda Expressions
-parserIter fname tokens (xpr@(BzS_Block p2 _)
+parserIter fname tokens ((BzS_Expr _ [xpr@(BzS_Block p2 _)])
                         :(BzS_Expr _ [x@(BzS_Expr p1 _)])
                         :(BzS_Token _ (TkLambdaSym p0)):stk)            = parserIter fname tokens ((BzS_Lambda p0 x xpr):stk)
 
-parserIter fname tokens (xpr@(BzS_Block p2 _)
+parserIter fname tokens ((BzS_Expr _ [xpr@(BzS_Block p2 _)])
                         :x@(BzS_Expr p1 [_])
                         :(BzS_Token _ (TkLambdaSym p0)):stk)            = parserIter fname tokens ((BzS_Lambda p0 x xpr):stk)
 
-parserIter fname tokens (xpr@(BzS_Block  p2 _)
+parserIter fname tokens ((BzS_Expr _ [xpr@(BzS_Block  p2 _)])
                         :x@(BzS_Cmpd p1 pars)
                         :(BzS_Token _ (TkLambdaSym p0)):stk)            = parserIter fname tokens ((BzS_Lambda p0 x xpr):stk)
 
@@ -217,7 +217,7 @@ parserIter fname tokens ((BzS_Token p0 (TkDefine _))
 parserIter fname tokens ((BzS_Token p0 (TkDefine _))
                         :(BzS_Expr p1 [(BzS_Id _ fn )])        :stk)    = parserIter fname tokens ((BzS_FnHead p0 BzS_Undefined fn BzS_Undefined):stk)
 
-parserIter fname tokens (def@(BzS_Block p1 xs)
+parserIter fname tokens ((BzS_Expr _ [def@(BzS_Block p1 xs)])
                         :(BzS_FnHead p0 ins fn exs)            :stk)    = parserIter fname tokens ((BzS_Calls p0 [BzS_FunDef p0 ins fn exs def]):stk)
 
 parserIter fname tokens (def@(BzS_Statement p1 xs)
