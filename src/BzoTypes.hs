@@ -439,6 +439,11 @@ showAST (BzS_Include   _ fn fr)            = "    -- Include " ++ fn ++ " as " +
 showAST (BzS_File      _ mn fn ins ims dfs)= "\n-- (File, Module): (" ++ fn ++ ", " ++ mn ++ ")\nIncludes:\n" ++ (concatMap show ins) ++ "\nImports:\n" ++ (concatMap show ims) ++ "\nDefs:\n" ++ (concatMap show dfs)
 
 showAST (BzS_Undefined)                    = " UNDEFINED "
+
+showAST (BzS_BlockHead _ _)                = "BLKHEAD "
+showAST (BzS_CmpdHead  _ _)                = "CMPDHEAD "
+showAST (BzS_PolyHead  _ _)                = "POLYHEAD "
+showAST (BzS_FnHead _ _ _ _)               = "FNHEAD "
 showAST _                                  = " <???> "
 instance Show BzoSyntax where show = showAST
 
