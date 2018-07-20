@@ -154,17 +154,14 @@ parserIter fname tokens ((BzS_Expr p1 [x])
 
 
 -- | Lambda Expressions
-parserIter fname tokens ((BzS_Expr _ [xpr@(BzS_Block p2 _)])
-                        :(BzS_Expr _ [x@(BzS_Expr p1 _)])
-                        :(BzS_Token _ (TkLambdaSym p0)):stk)            = parserIter fname tokens ((BzS_Lambda p0 x xpr):stk)
+parserIter fname tokens ((BzS_Expr _ [xpr@(BzS_Block p2 _), x@(BzS_Expr p1 _)])
+                        :(BzS_Token _ (TkLambdaSym p0)):stk)            = parserIter fname tokens ((BzS_Expr p0 [BzS_Lambda p0 x xpr]):stk)
 
-parserIter fname tokens ((BzS_Expr _ [xpr@(BzS_Block p2 _)])
-                        :x@(BzS_Expr p1 [_])
-                        :(BzS_Token _ (TkLambdaSym p0)):stk)            = parserIter fname tokens ((BzS_Lambda p0 x xpr):stk)
+parserIter fname tokens ((BzS_Expr _ [xpr@(BzS_Block p2 _), x])
+                        :(BzS_Token _ (TkLambdaSym p0)):stk)            = parserIter fname tokens ((BzS_Expr p0 [BzS_Lambda p0 x xpr]):stk)
 
-parserIter fname tokens ((BzS_Expr _ [xpr@(BzS_Block  p2 _)])
-                        :x@(BzS_Cmpd p1 pars)
-                        :(BzS_Token _ (TkLambdaSym p0)):stk)            = parserIter fname tokens ((BzS_Lambda p0 x xpr):stk)
+parserIter fname tokens ((BzS_Expr _ [xpr@(BzS_Block  p2 _), x@(BzS_Cmpd p1 pars)])
+                        :(BzS_Token _ (TkLambdaSym p0)):stk)            = parserIter fname tokens ((BzS_Expr p0 [BzS_Lambda p0 x xpr]):stk)
 
 
 
