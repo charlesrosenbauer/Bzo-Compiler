@@ -533,15 +533,59 @@ data Definition
 
 
 
--- Better define these later
+
+type FnId = Int64   -- Function Id
+type TyId = Int64   -- Type Id
+type VrId = Int64   -- Variable Id
+type TVId = Int64   -- Type Variable Id
+type LcId = Int64   -- Local Id
+
+
+
+
+
+
+
+
+
+
 data Expr
-  = MatchExpr { }
-  | LetExpr   { }
-  | ParamExpr { }
-  | PipeExpr  { }
-  | CaseExpr  { }
-  | ForkExpr  { }
-  | CallExpr  { }
+  = MatchExpr BzoPos [(Pattern, Expr)]
+  | LetExpr   BzoPos [(Int, Expr)]
+  | ParamExpr BzoPos Pattern
+  | PipeExpr  BzoPos [Expr]
+  | CaseExpr  BzoPos [Expr]
+  | ForkExpr  BzoPos [Expr]
+  | CmpdExpr  BzoPos [Expr]
+  | PolyExpr  BzoPos [Expr]
+  | FuncAtom  BzoPos FnId
+  | TypeAtom  BzoPos TyId
+  | IntAtom   BzoPos Integer
+  | StrAtom   BzoPos T.Text
+  | FltAtom   BzoPos Double
+  | VarAtom   BzoPos VrId
+  | MutAtom   BzoPos VrId
+  | UnresExpr BzoSyntax
+  deriving (Show, Eq)
+
+
+
+
+
+
+
+
+
+
+data Pattern
+  = CmpdPtrn  BzoPos [Pattern]
+  | FiltPtrn  BzoPos [(Pattern, Int64)]
+  | PipePtrn  BzoPos [Pattern]
+  | TVarPtrn  BzoPos TVId
+  | VarPtrn   BzoPos VrId
+  | WildPtrn  BzoPos
+  | UnresPtrn BzoSyntax
+  deriving (Show, Eq)
 
 
 
@@ -553,8 +597,28 @@ data Expr
 
 
 data Type
-  = UndefType
-  | ParamType { }
-  | CmpdType  { }
-  | PolyType  { }
-  | MakeType  { }
+  = UnresType BzoSyntax
+  | ParamType BzoPos Pattern
+  | CmpdType  BzoPos [Type]
+  | PolyType  BzoPos [Type]
+  | MakeType  BzoPos [Type]
+  | VoidType  BzoPos
+  deriving (Show, Eq)
+
+
+
+
+
+
+
+
+
+
+data Context
+  = Context {
+      cx_tvars :: M.Map TVId ([TyId], T.Text),
+      cx_vars  :: M.Map TVId ([TyId], T.Text),
+      cx_types :: M.Map TyId   TyId,
+      cx_funcs :: M.Map FnId   FnId,
+      cx_top   :: Int64 }
+  deriving Show
