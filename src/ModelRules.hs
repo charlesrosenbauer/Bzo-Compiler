@@ -183,4 +183,21 @@ getTypes _                          = []
 
 
 
---makeContext :: BzoSyntax -> Context
+divideIntoDefs :: [BzoSyntax] -> [Definition]
+divideIntoDefs [BzS_Calls _ cs] = divideIntoDefs cs
+divideIntoDefs [BzS_File  _ _ _ _ _ dfs] = divideIntoDefs dfs
+divideIntoDefs asts = L.foldl divideDefStep [] asts
+  where divideDefStep :: [Definition] -> BzoSyntax -> [Definition]
+        divideDefStep (f@(FuncSyntax fnid file fty fdfs):defs) fd@(BzS_FunDef p _ fnid' _ _) =
+          if fnid == (pack fnid')
+            then ((FuncSyntax       fnid   file fty (fd:fdfs)):defs)
+            else ((FuncSyntax (pack fnid') (pack $ fileName p) BzS_Undefined [fd]):f:defs)
+
+        divideDefStep (f@(FuncSyntax fnid file fty fdfs):defs) fd@(BzS_FnTypeDef p _ fnid' _) =
+          ((FuncSyntax (pack fnid') (pack $ fileName p) fd []):f:defs)
+
+        divideDefStep defs td@(BzS_TypDef p _ tyid _) =
+          ((TypeSyntax (pack tyid) (pack $ fileName p) td):defs)
+
+        divideDefStep defs td@(BzS_TyClassDef p _ tyid _) =
+          ((TyClassSyntax (pack tyid) (pack $ fileName p) td):defs)

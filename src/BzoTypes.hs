@@ -523,6 +523,19 @@ data Definition
     identifier :: T.Text,
     hostfile   :: T.Text,
     typedef    :: Type }
+ | FuncSyntax {
+    identifier :: T.Text,
+    hostfile   :: T.Text,
+    ftyheader  :: BzoSyntax,
+    funcsyntax :: [BzoSyntax] }
+  | TypeSyntax {
+    identifier :: T.Text,
+    hostfile   :: T.Text,
+    typesyntax :: BzoSyntax }
+  | TyClassSyntax {
+    identifier :: T.Text,
+    hostfile   :: T.Text,
+    typesyntax :: BzoSyntax }
 
 
 
