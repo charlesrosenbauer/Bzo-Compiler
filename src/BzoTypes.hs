@@ -494,26 +494,6 @@ instance (Show a) => Show (BzoFileModel a) where show = showBzoFileModel
 
 
 
-data SymbolTable
-  = SymbolTable {
-      st_iids   :: !(M.Map T.Text [(Int64, Int64)]),   -- To look up if an Identifier exists, and if so, what are the Table Indices(snd) and Files(fst)?
-      st_fids   :: !(M.Map T.Text Int64),              -- To look up if a File Identifier exists, and if so, what is the Table Index?
-      st_itable :: !(M.Map Int64 (T.Text, Int64)),     -- For a given Table Index, what is the associated Identifier, and the file where it's defined?
-      st_ftable :: !(M.Map Int64 T.Text),              -- For a given Table Index, what is the associated File Identifier?
-      st_dmids  :: !(M.Map T.Text [Int64]),            -- For a given File Domain, what are the associated File Indices?
-      st_itop   :: !Int64,                           -- What is the highest used Identifier Table Index?
-      st_ftop   :: !Int64 }                          -- What is the highest used File Table Index?
-  deriving Show
-
-
-
-
-
-
-
-
-
-
 data Definition
  = FuncDef {
     identifier :: T.Text,
@@ -536,6 +516,7 @@ data Definition
     identifier :: T.Text,
     hostfile   :: T.Text,
     typesyntax :: BzoSyntax }
+  deriving Show
 
 
 
@@ -636,4 +617,19 @@ data Context
       cx_types :: M.Map TyId   TyId,
       cx_funcs :: M.Map FnId   FnId,
       cx_top   :: Int64 }
+  deriving Show
+
+
+
+
+
+
+
+
+
+
+data DefinitionTable
+  = DefinitionTable {
+      dt_defs :: M.Map Int64 Definition,
+      dt_top  :: Int64 }
   deriving Show
