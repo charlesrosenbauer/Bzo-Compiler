@@ -550,21 +550,21 @@ type LcId = Int64   -- Local Id
 
 
 data Expr
-  = MatchExpr BzoPos [(Pattern, Expr)]
-  | LetExpr   BzoPos [(Int, Expr)]
-  | ParamExpr BzoPos Pattern
-  | PipeExpr  BzoPos [Expr]
-  | CaseExpr  BzoPos [Expr]
-  | ForkExpr  BzoPos [Expr]
-  | CmpdExpr  BzoPos [Expr]
-  | PolyExpr  BzoPos [Expr]
-  | FuncAtom  BzoPos FnId
-  | TypeAtom  BzoPos TyId
+  = MatchExpr BzoPos Type [(Pattern, Expr)]
+  | LetExpr   BzoPos Type [(Int, Expr)]
+  | ParamExpr BzoPos Type Pattern
+  | PipeExpr  BzoPos Type [Expr]
+  | CaseExpr  BzoPos Type [Expr]
+  | ForkExpr  BzoPos Type [Expr]
+  | CmpdExpr  BzoPos Type [Expr]
+  | PolyExpr  BzoPos Type [Expr]
+  | FuncAtom  BzoPos Type FnId
+  | TypeAtom  BzoPos Type TyId
   | IntAtom   BzoPos Integer
   | StrAtom   BzoPos T.Text
   | FltAtom   BzoPos Double
-  | VarAtom   BzoPos VrId
-  | MutAtom   BzoPos VrId
+  | VarAtom   BzoPos Type VrId
+  | MutAtom   BzoPos Type VrId
   | UnresExpr BzoSyntax
   deriving (Show, Eq)
 
@@ -578,11 +578,11 @@ data Expr
 
 
 data Pattern
-  = CmpdPtrn  BzoPos [Pattern]
-  | FiltPtrn  BzoPos [(Pattern, Int64)]
-  | PipePtrn  BzoPos [Pattern]
-  | TVarPtrn  BzoPos TVId
-  | VarPtrn   BzoPos VrId
+  = CmpdPtrn  BzoPos Type [Pattern]
+  | FiltPtrn  BzoPos Type [(Pattern, Int64)]
+  | PipePtrn  BzoPos Type [Pattern]
+  | TVarPtrn  BzoPos Type TVId
+  | VarPtrn   BzoPos Type VrId
   | WildPtrn  BzoPos
   | UnresPtrn BzoSyntax
   deriving (Show, Eq)
@@ -603,6 +603,8 @@ data Type
   | PolyType  BzoPos [Type]
   | MakeType  BzoPos [Type]
   | VoidType  BzoPos
+  | LtrlType  BzoPos TyId
+  | TVarType  BzoPos TVId
   deriving (Show, Eq)
 
 
