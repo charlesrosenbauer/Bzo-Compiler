@@ -1,6 +1,6 @@
 module BzoChecker where
 import BzoTypes
-import SymbolTable
+import DefinitionTable
 import Data.Int
 import HigherOrder
 import Builtins

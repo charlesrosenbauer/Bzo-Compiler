@@ -8,7 +8,7 @@ import Data.Tuple
 import Data.Int
 import Data.Map.Strict as M
 import Data.List as L
-import SymbolTable
+import DefinitionTable
 import Debug.Trace
 
 
@@ -201,3 +201,14 @@ divideIntoDefs asts = L.foldl divideDefStep [] asts
 
         divideDefStep defs td@(BzS_TyClassDef p _ tyid _) =
           ((TyClassSyntax (pack tyid) (pack $ fileName p) td):defs)
+
+
+
+
+
+
+
+
+
+
+--makeContext :: Definition -> Context

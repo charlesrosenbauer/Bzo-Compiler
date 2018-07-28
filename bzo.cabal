@@ -37,5 +37,5 @@ executable main
       , Compiler
       , HigherOrder
       , ModelRules
-      , SymbolTable
+      , DefinitionTable
       , Builtins

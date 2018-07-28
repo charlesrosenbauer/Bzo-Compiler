@@ -6,7 +6,7 @@ import BzoPreprocessor
 import BzoParameterParser
 import BzoFileSorter
 import ModelRules
-import SymbolTable
+import DefinitionTable
 import BzoChecker
 import HigherOrder
 import Debug.Trace
