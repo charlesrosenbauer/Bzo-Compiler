@@ -211,4 +211,38 @@ divideIntoDefs asts = L.foldl divideDefStep [] asts
 
 
 
---makeContext :: Definition -> Context
+getFnIds :: [Definition] -> [Text]
+getFnIds ((FuncDef    fnid   _ _):defs) = (fnid):(getFnIds defs)
+getFnIds ((FuncSyntax fnid _ _ _):defs) = (fnid):(getFnIds defs)
+getFnIds (_:defs)                    = getFnIds defs
+
+
+
+
+
+
+
+
+
+
+getTyIds :: [Definition] -> [Text]
+getTyIds ((TypeDef       tyid _ _):defs) = (tyid):(getTyIds defs)
+getTyIds ((TypeSyntax    tyid _ _):defs) = (tyid):(getTyIds defs)
+getTyIds ((TyClassSyntax tyid _ _):defs) = (tyid):(getTyIds defs)
+getTyIds (_:defs)                        = getTyIds defs
+
+
+
+
+
+
+
+
+
+{-
+makeContext :: Definition -> Context
+makeContext (FuncSyntax fnid file fty fsyns) =
+  let types = (getTypes fty) ++ (getTypes fsyns)
+      vars  = (getVars fsyns)
+      tvars = (getTVars fty) ++ (getTVars fsyns)
+  in -}
