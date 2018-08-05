@@ -516,7 +516,43 @@ data Definition
     identifier :: T.Text,
     hostfile   :: T.Text,
     typesyntax :: BzoSyntax }
-  deriving Show
+
+
+
+
+
+
+
+
+
+
+showDefinition :: Definition -> String
+showDefinition (FuncDef fnid file defs) = "  FNDEF:\n    " ++
+                                              (show fnid)  ++ "\n    " ++
+                                              (show file)  ++ "\n        " ++
+                                              (show defs)  ++ "\n"
+
+showDefinition (TypeDef tyid file defs) = "  TYDEF:\n    " ++
+                                              (show tyid)  ++ "\n    " ++
+                                              (show file)  ++ "\n        " ++
+                                              (show defs)  ++ "\n"
+--
+showDefinition (FuncSyntax fnid file hedr defs) = "  FNSYN:\n    " ++
+                                              (show fnid)  ++ "\n    " ++
+                                              (show file)  ++ "\n    " ++
+                                              (show hedr)  ++ "\n        " ++
+                                              (show defs)  ++ "\n"
+
+showDefinition (TypeSyntax tyid file defs) = "  TYSYN:\n    " ++
+                                              (show tyid)  ++ "\n    " ++
+                                              (show file)  ++ "\n        " ++
+                                              (show defs)
+--
+showDefinition (TyClassSyntax tyid file defs) = "  TCSYN:\n    " ++
+                                              (show tyid)  ++ "\n    " ++
+                                              (show file)  ++ "\n        " ++
+                                              (show defs)
+instance Show Definition where show = showDefinition
 
 
 
