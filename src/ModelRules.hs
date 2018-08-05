@@ -184,8 +184,8 @@ getTypes _                          = []
 
 
 divideIntoDefs :: [BzoSyntax] -> [Definition]
-divideIntoDefs [BzS_Calls _ cs] = divideIntoDefs cs
-divideIntoDefs [BzS_File  _ _ _ _ _ dfs] = divideIntoDefs dfs
+divideIntoDefs [BzS_Calls _ cs] = divideIntoDefs $ L.reverse cs
+divideIntoDefs [BzS_File  _ _ _ _ _ dfs] = divideIntoDefs $ L.reverse dfs
 divideIntoDefs asts = L.foldl divideDefStep [] asts
   where divideDefStep :: [Definition] -> BzoSyntax -> [Definition]
         divideDefStep (f@(FuncSyntax fnid file fty fdfs):defs) fd@(BzS_FunDef p _ fnid' _ _) =
@@ -195,6 +195,9 @@ divideIntoDefs asts = L.foldl divideDefStep [] asts
 
         divideDefStep (f@(FuncSyntax fnid file fty fdfs):defs) fd@(BzS_FnTypeDef p _ fnid' _) =
           ((FuncSyntax (pack fnid') (pack $ fileName p) fd []):f:defs)
+
+        divideDefStep defs fd@(BzS_FnTypeDef p _ fnid' _) =
+          ((FuncSyntax (pack fnid') (pack $ fileName p) fd []):defs)
 
         divideDefStep defs td@(BzS_TypDef p _ tyid _) =
           ((TypeSyntax (pack tyid) (pack $ fileName p) td):defs)
@@ -230,6 +233,19 @@ getTyIds ((TypeDef       tyid _ _):defs) = (tyid):(getTyIds defs)
 getTyIds ((TypeSyntax    tyid _ _):defs) = (tyid):(getTyIds defs)
 getTyIds ((TyClassSyntax tyid _ _):defs) = (tyid):(getTyIds defs)
 getTyIds (_:defs)                        = getTyIds defs
+
+
+
+
+
+
+
+
+
+
+getDefs :: [BzoFileModel BzoSyntax] -> [BzoFileModel [Definition]]
+getDefs [] = []
+getDefs ((BzoFileModel mn fp dm model is ls ia la):fs) = ((BzoFileModel mn fp dm (divideIntoDefs [model]) is ls ia la):(getDefs fs))
 
 
 

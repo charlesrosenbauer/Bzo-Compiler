@@ -508,11 +508,11 @@ data Definition
     hostfile   :: T.Text,
     ftyheader  :: BzoSyntax,
     funcsyntax :: [BzoSyntax] }
-  | TypeSyntax {
+ | TypeSyntax {
     identifier :: T.Text,
     hostfile   :: T.Text,
     typesyntax :: BzoSyntax }
-  | TyClassSyntax {
+ | TyClassSyntax {
     identifier :: T.Text,
     hostfile   :: T.Text,
     typesyntax :: BzoSyntax }
