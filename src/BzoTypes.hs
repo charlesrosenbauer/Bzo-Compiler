@@ -539,18 +539,18 @@ showDefinition (TypeDef tyid file defs) = "  TYDEF:\n    " ++
 --
 showDefinition (FuncSyntax fnid file hedr defs) = "  FNSYN:\n    " ++
                                               (show fnid)  ++ "\n    " ++
-                                              (show file)  ++ "\n    " ++
-                                              (show hedr)  ++ "\n        " ++
+                                              (show file)  ++ "\n    T:  " ++
+                                              (show hedr)  ++ "\n    D:  " ++
                                               (show defs)  ++ "\n"
 
 showDefinition (TypeSyntax tyid file defs) = "  TYSYN:\n    " ++
                                               (show tyid)  ++ "\n    " ++
-                                              (show file)  ++ "\n        " ++
+                                              (show file)  ++ "\n    D:  " ++
                                               (show defs)
 --
 showDefinition (TyClassSyntax tyid file defs) = "  TCSYN:\n    " ++
                                               (show tyid)  ++ "\n    " ++
-                                              (show file)  ++ "\n        " ++
+                                              (show file)  ++ "\n    D:  " ++
                                               (show defs)
 instance Show Definition where show = showDefinition
 
@@ -667,6 +667,7 @@ data Context
 data DefinitionTable
   = DefinitionTable {
       dt_defs :: M.Map Int64 Definition,
+      dt_files:: [BzoFileModel [Int64]],
       dt_ids  :: M.Map T.Text [Int64],
       dt_top  :: Int64 }
   deriving Show
