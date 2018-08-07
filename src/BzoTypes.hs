@@ -494,6 +494,29 @@ instance (Show a) => Show (BzoFileModel a) where show = showBzoFileModel
 
 
 
+replaceModel :: (Show a, Show b) => BzoFileModel a -> b -> BzoFileModel b
+replaceModel (BzoFileModel mn fp dm _ fi fl ia la) x = (BzoFileModel mn fp dm x fi fl ia la)
+
+
+
+
+
+
+
+
+
+
+adjustModel :: (Show a, Show b) => BzoFileModel a -> (a -> b) -> BzoFileModel b
+adjustModel (BzoFileModel mn fp dm x fi fl ia la) f = (BzoFileModel mn fp dm (f x) fi fl ia la)
+
+
+
+
+
+
+
+
+
 data Definition
  = FuncDef {
     identifier :: T.Text,
