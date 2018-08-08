@@ -255,6 +255,36 @@ getDefs ((BzoFileModel mn fp dm model is ls ia la):fs) = ((BzoFileModel mn fp dm
 
 
 
+
+getDefTable :: [BzoFileModel [Definition]] -> DefinitionTable
+getDefTable files =
+  let defCts  = L.scanl (+) 0 $ L.map (L.length . bfm_fileModel) files
+
+      alldefs :: [(Int64, Definition)]
+      alldefs = L.zip [0..] $ L.concatMap bfm_fileModel files
+      defmap :: Map Int64 Definition
+      defmap  = M.fromList alldefs
+
+      fileIxs = L.map swap alldefs
+      idlists :: [[(Text, Int64)]]
+      idlists = L.groupBy (\(a,_) (b,_) -> a == b) $ L.map (\(a, b) -> (identifier a, b)) fileIxs
+      idmap :: Map Text [Int64]
+      idmap   = M.fromList $ L.map (\xs -> (fst $ L.head xs, L.map (fromIntegral . snd) xs)) $ idlists
+
+      ctranges= L.zip defCts (L.tail defCts)
+      ctspaces :: [[Int64]]
+      ctspaces= L.map (\(a, b) -> L.map (\x -> fromIntegral $ x+a) $ L.take (b-a) [0..]) ctranges
+      filelist= L.map (\(space, f)-> replaceModel f space) $ L.zip ctspaces files
+
+  in (DefinitionTable defmap filelist idmap (fromIntegral $ L.last defCts))
+
+
+
+
+
+
+
+
 {-
 makeContext :: Definition -> Context
 makeContext (FuncSyntax fnid file fty fsyns) =
