@@ -261,7 +261,7 @@ getDefTable files =
   let defCts  = L.scanl (+) 0 $ L.map (L.length . bfm_fileModel) files
 
       alldefs :: [(Int64, Definition)]
-      alldefs = L.zip [0..] $ L.concatMap bfm_fileModel files
+      alldefs = L.zip [0..] $ L.concatMap (L.reverse . bfm_fileModel) files
       defmap :: Map Int64 Definition
       defmap  = M.fromList alldefs
 
