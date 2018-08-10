@@ -690,7 +690,7 @@ data Context
 data DefinitionTable
   = DefinitionTable {
       dt_defs :: M.Map Int64 Definition,
-      dt_files:: [BzoFileModel [Int64]],
+      dt_files:: [BzoFileModel ([Int64], [Int64])],
       dt_ids  :: M.Map T.Text [Int64],
       dt_top  :: Int64 }
   deriving Show

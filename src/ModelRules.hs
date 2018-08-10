@@ -276,7 +276,25 @@ getDefTable files =
       ctspaces= L.map (\(a, b) -> L.map (\x -> fromIntegral $ x+a) $ L.take (b-a) [0..]) ctranges
       filelist= L.map (\(space, f)-> replaceModel f space) $ L.zip ctspaces files
 
-  in (DefinitionTable defmap filelist idmap (fromIntegral $ L.last defCts))
+
+      dmfiles  :: [(Text, [Int64])]
+      dmfiles = L.map (\xs -> (pack $ bfm_domain $ L.head xs, L.concatMap bfm_fileModel xs)) $ L.groupBy (\a b-> (bfm_domain a) == (bfm_domain b)) filelist
+      dmspaces= M.fromList dmfiles
+
+      mdfiles  :: [((Text, Text), [Int64])]
+      mdfiles = L.map (\xs -> ((pack $ bfm_moduleName $ L.head xs, pack $ bfm_domain $ L.head xs), L.concatMap bfm_fileModel xs)) $ L.groupBy (\a b-> (bfm_filepath a) == (bfm_filepath b)) filelist
+      mdspaces= M.fromList mdfiles
+
+
+      filelist' = L.map (\bfm-> let imps = L.map pack $ (bfm_fileImports bfm) ++ (L.map fst $ bfm_fileImportsAs bfm)
+                                    lnks = L.map pack $ (bfm_fileLinks   bfm) ++ (L.map fst $ bfm_fileLinksAs   bfm)
+                                    domn = pack $ bfm_domain bfm
+                                    idefs= catMaybes $ L.map (\k -> M.lookup (k, domn) mdspaces) imps
+                                    ldefs= catMaybes $ L.map (\k -> M.lookup  k        dmspaces) lnks
+                                    model= (bfm_fileModel bfm, L.nub $ L.concat (idefs ++ ldefs ++ [bfm_fileModel bfm]))
+                                in  replaceModel bfm model) filelist
+
+  in (DefinitionTable defmap filelist' idmap (fromIntegral $ L.last defCts))
 
 
 
