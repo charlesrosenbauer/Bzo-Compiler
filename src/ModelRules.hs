@@ -303,10 +303,29 @@ getDefTable files =
 
 
 
-{-
-makeContext :: Definition -> Context
-makeContext (FuncSyntax fnid file fty fsyns) =
-  let types = (getTypes fty) ++ (getTypes fsyns)
-      vars  = (getVars fsyns)
-      tvars = (getTVars fty) ++ (getTVars fsyns)
-  in -}
+-- This doesn't replace lambdas in the AST with anything new
+extractLambda :: BzoSyntax -> [BzoSyntax]
+extractLambda (BzS_Expr       _    expr) = L.concatMap extractLambda expr
+extractLambda (BzS_Box        _    expr) = extractLambda expr
+extractLambda (BzS_Cmpd       _    expr) = L.concatMap extractLambda expr
+extractLambda (BzS_Poly       _    expr) = L.concatMap extractLambda expr
+extractLambda (BzS_Block      _    expr) = L.concatMap extractLambda expr
+extractLambda (BzS_FunDef     _ _ _ _ x) = (extractLambda x)
+extractLambda (BzS_Calls      _      cs) = L.concatMap extractLambda cs
+extractLambda (BzS_ArrayObj   _ expr _ ) = extractLambda expr
+extractLambda (BzS_FilterObj  _ obj  fs) = (extractLambda obj) ++ (L.concatMap extractLambda fs)
+extractLambda (BzS_CurryObj   _ obj  ps) = (extractLambda obj) ++ (L.concatMap extractLambda ps)
+extractLambda (BzS_MapObj     _    expr) = (extractLambda expr)
+extractLambda (BzS_Lambda     p ps expr) = [BzS_FunDef p ps (show p) BzS_Undefined expr] ++ (extractLambda expr)
+extractLambda _                          = []
+
+
+
+
+
+
+
+
+
+
+--modelXForm :: [BzoSyntax] -> [BzoSyntax]
