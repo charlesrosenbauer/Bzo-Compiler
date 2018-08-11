@@ -636,6 +636,9 @@ data Pattern
   | PipePtrn  BzoPos Type [Pattern]
   | TVarPtrn  BzoPos Type TVId
   | VarPtrn   BzoPos Type VrId
+  | IntPtrn   BzoPos Integer
+  | FltPtrn   BzoPos Double
+  | StrPtrn   BzoPos T.Text
   | WildPtrn  BzoPos
   | UnresPtrn BzoSyntax
   deriving (Show, Eq)
@@ -655,6 +658,9 @@ data Type
   | CmpdType  BzoPos [Type]
   | PolyType  BzoPos [Type]
   | MakeType  BzoPos [Type]
+  | IntType   BzoPos Integer
+  | FltType   BzoPos Double
+  | StrType   BzoPos T.Text
   | VoidType  BzoPos
   | LtrlType  BzoPos TyId
   | TVarType  BzoPos TVId
@@ -672,7 +678,7 @@ data Type
 data Context
   = Context {
       cx_tvars :: M.Map TVId ([TyId], T.Text),
-      cx_vars  :: M.Map TVId ([TyId], T.Text),
+      cx_vars  :: M.Map VrId ([TyId], T.Text),
       cx_types :: M.Map TyId   TyId,
       cx_funcs :: M.Map FnId   FnId,
       cx_top   :: Int64 }
