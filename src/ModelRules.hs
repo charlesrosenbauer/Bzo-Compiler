@@ -100,6 +100,7 @@ getTVars :: BzoSyntax -> [Text]
 getTVars (BzS_TyVar      _    tvar) = [pack tvar]
 getTVars (BzS_Expr       _    expr) = L.concatMap getTVars expr
 getTVars (BzS_Box        _    expr) = getTVars expr
+getTVars (BzS_Statement  _    expr) = getTVars expr
 getTVars (BzS_Cmpd       _    expr) = L.concatMap getTVars expr
 getTVars (BzS_Poly       _    expr) = L.concatMap getTVars expr
 getTVars (BzS_FnTy       _   ax bx) = (getTVars ax) ++ (getTVars bx)
@@ -128,6 +129,7 @@ getVars (BzS_MId        _     var) = [pack var]
 getVars (BzS_BId        _     var) = [pack var]
 getVars (BzS_Expr       _    expr) = L.concatMap getVars expr
 getVars (BzS_Box        _    expr) = getVars expr
+getVars (BzS_Statement  _    expr) = getVars expr
 getVars (BzS_Cmpd       _    expr) = L.concatMap getVars expr
 getVars (BzS_Poly       _    expr) = L.concatMap getVars expr
 getVars (BzS_FnTy       _   ax bx) = (getVars ax) ++ (getVars bx)
@@ -158,6 +160,7 @@ getTypes (BzS_TyId       _     var) = [pack var]
 getTypes (BzS_BTId       _     var) = [pack var]
 getTypes (BzS_Expr       _    expr) = L.concatMap getTypes expr
 getTypes (BzS_Box        _    expr) = getTypes expr
+getTypes (BzS_Statement  _    expr) = getTypes expr
 getTypes (BzS_Cmpd       _    expr) = L.concatMap getTypes expr
 getTypes (BzS_Poly       _    expr) = L.concatMap getTypes expr
 getTypes (BzS_FnTy       _   ax bx) = (getTypes ax) ++ (getTypes bx)
@@ -204,6 +207,9 @@ divideIntoDefs asts = L.foldl divideDefStep [] asts
 
         divideDefStep defs td@(BzS_TyClassDef p _ tyid _) =
           ((TyClassSyntax (pack tyid) (pack $ fileName p) td):defs)
+
+        divideDefStep defs fd@(BzS_FunDef p _ fnid' _ _) =
+          ((FuncSyntax (pack fnid') (pack $ fileName p) BzS_Undefined [fd]):defs)
 
 
 
@@ -307,6 +313,7 @@ getDefTable files =
 extractLambda :: BzoSyntax -> [BzoSyntax]
 extractLambda (BzS_Expr       _    expr) = L.concatMap extractLambda expr
 extractLambda (BzS_Box        _    expr) = extractLambda expr
+extractLambda (BzS_Statement  _    expr) = extractLambda expr
 extractLambda (BzS_Cmpd       _    expr) = L.concatMap extractLambda expr
 extractLambda (BzS_Poly       _    expr) = L.concatMap extractLambda expr
 extractLambda (BzS_Block      _    expr) = L.concatMap extractLambda expr
@@ -328,4 +335,34 @@ extractLambda _                          = []
 
 
 
---modelXForm :: [BzoSyntax] -> [BzoSyntax]
+-- This doesn't replace lambdas in the AST with anything new
+replaceLambda :: BzoSyntax -> BzoSyntax
+replaceLambda (BzS_Expr       p    expr) = (BzS_Expr   p (L.map replaceLambda expr))
+replaceLambda (BzS_Box        p    expr) = (BzS_Box    p (replaceLambda expr))
+replaceLambda (BzS_Statement  p    expr) = (BzS_Statement p (replaceLambda expr))
+replaceLambda (BzS_Cmpd       p    expr) = (BzS_Cmpd   p (L.map replaceLambda expr))
+replaceLambda (BzS_Poly       p    expr) = (BzS_Poly   p (L.map replaceLambda expr))
+replaceLambda (BzS_Block      p    expr) = (BzS_Block  p (L.map replaceLambda expr))
+replaceLambda (BzS_FunDef     p i f o x) = (BzS_FunDef p i f o (replaceLambda x))
+replaceLambda (BzS_Calls      p      cs) = (BzS_Calls  p (L.map replaceLambda cs))
+replaceLambda (BzS_ArrayObj   p expr  a) = (BzS_ArrayObj  p (replaceLambda expr) a)
+replaceLambda (BzS_FilterObj  p obj  fs) = (BzS_FilterObj p (replaceLambda obj) (L.map replaceLambda fs))
+replaceLambda (BzS_CurryObj   p obj  ps) = (BzS_CurryObj  p (replaceLambda obj) (L.map replaceLambda ps))
+replaceLambda (BzS_MapObj     p    expr) = (BzS_MapObj p (replaceLambda expr))
+replaceLambda (BzS_Lambda     p ps expr) = (BzS_Id p (show p))
+replaceLambda x                          = x
+
+
+
+
+
+
+
+
+
+
+modelXForm :: BzoSyntax -> BzoSyntax
+modelXForm (BzS_Calls p ast) =
+  let lams = L.concatMap extractLambda ast
+      ast' = L.map replaceLambda ast
+  in (BzS_Calls p (lams ++ ast'))
