@@ -335,7 +335,7 @@ extractLambda _                          = []
 
 
 
--- This doesn't replace lambdas in the AST with anything new
+-- This does replace lambdas in the AST
 replaceLambda :: BzoSyntax -> BzoSyntax
 replaceLambda (BzS_Expr       p    expr) = (BzS_Expr   p (L.map replaceLambda expr))
 replaceLambda (BzS_Box        p    expr) = (BzS_Box    p (replaceLambda expr))
@@ -361,8 +361,66 @@ replaceLambda x                          = x
 
 
 
+-- This doesn't replace Enums in the AST with anything new
+extractEnum :: BzoSyntax -> BzoSyntax -> [BzoSyntax]
+extractEnum ps (BzS_Expr       _    expr) = L.concatMap (extractEnum ps) expr
+extractEnum ps (BzS_Box        _    expr) = trace "\n\n\n\n\n\n\n" $ extractEnum ps expr
+extractEnum ps (BzS_Statement  _    expr) = extractEnum ps expr
+extractEnum ps (BzS_Cmpd       _    expr) = L.concatMap (extractEnum ps) expr
+extractEnum ps (BzS_Block      _    expr) = L.concatMap (extractEnum ps) expr
+extractEnum _  (BzS_TypDef     _ ps  _ x) = (extractEnum ps x)
+extractEnum ps (BzS_Calls      _      cs) = L.concatMap (extractEnum ps) cs
+extractEnum ps (BzS_ArrayObj   _ expr _ ) = extractEnum ps expr
+extractEnum ps (BzS_FilterObj  _ obj  fs) = (extractEnum ps obj) ++ (L.concatMap (extractEnum ps) fs)
+extractEnum ps (BzS_CurryObj   _ obj prs) = (extractEnum ps obj) ++ (L.concatMap (extractEnum ps) prs)
+extractEnum ps (BzS_Poly       _    expr) = L.concatMap (enumOp ps) expr
+  where enumOp :: BzoSyntax -> BzoSyntax -> [BzoSyntax]
+        enumOp ps (BzS_Expr _ [BzS_FilterObj p (BzS_TyId _ t) [tdef]]) = (BzS_TypDef p ps t tdef):(extractEnum ps tdef)
+        enumOp ps x = extractEnum ps x
+extractEnum _  _                          = []
+
+
+
+
+
+
+
+
+
+
+-- This does replace Enums in the AST
+replaceEnum :: BzoSyntax -> BzoSyntax -> BzoSyntax
+replaceEnum ps (BzS_Expr       p    expr) = (BzS_Expr   p (L.map (replaceEnum ps) expr))
+replaceEnum ps (BzS_Box        p    expr) = (BzS_Box    p (replaceEnum ps expr))
+replaceEnum ps (BzS_Statement  p    expr) = (BzS_Statement p (replaceEnum ps expr))
+replaceEnum ps (BzS_Cmpd       p    expr) = (BzS_Cmpd   p (L.map (replaceEnum ps) expr))
+replaceEnum ps (BzS_Block      p    expr) = (BzS_Block  p (L.map (replaceEnum ps) expr))
+replaceEnum _  (BzS_TypDef     p i  t  x) = (BzS_TypDef p i t (replaceEnum i x))
+replaceEnum ps (BzS_Calls      p      cs) = (BzS_Calls  p (L.map (replaceEnum ps) cs))
+replaceEnum ps (BzS_ArrayObj   p expr  a) = (BzS_ArrayObj  p (replaceEnum ps expr) a)
+replaceEnum ps (BzS_FilterObj  p obj  fs) = (BzS_FilterObj p (replaceEnum ps obj) (L.map (replaceEnum ps) fs))
+replaceEnum ps (BzS_CurryObj   p obj prs) = (BzS_CurryObj  p (replaceEnum ps obj) (L.map (replaceEnum ps) prs))
+replaceEnum ps (BzS_Poly       p    expr) = (BzS_Poly   p (L.map (enumOp ps) expr))
+  where enumOp :: BzoSyntax -> BzoSyntax -> BzoSyntax
+        enumOp BzS_Undefined (BzS_Expr _ [BzS_FilterObj p (BzS_TyId _ t) [tdef]]) = (BzS_Expr p ([BzS_TyId p t]))
+        enumOp ps            (BzS_Expr _ [BzS_FilterObj p (BzS_TyId _ t) [tdef]]) = (BzS_Expr p ((BzS_TyId p t):[ps]))
+        enumOp ps x = replaceEnum ps x
+replaceEnum _  x                          = x
+
+
+
+
+
+
+
+
+
+
 modelXForm :: BzoSyntax -> BzoSyntax
 modelXForm (BzS_Calls p ast) =
-  let lams = L.concatMap extractLambda ast
-      ast' = L.map replaceLambda ast
-  in (BzS_Calls p (lams ++ ast'))
+  let lams = L.concatMap  extractLambda ast
+      enms = L.concatMap (extractEnum BzS_Undefined) ast
+
+      allAST  = enms ++ lams ++ ast
+      allAST' = L.map ((replaceEnum BzS_Undefined) . replaceLambda) allAST
+  in (BzS_Calls p allAST')
