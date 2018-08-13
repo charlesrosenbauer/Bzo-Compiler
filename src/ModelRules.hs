@@ -99,7 +99,6 @@ addFunc cx@(Context tvs vs ts fs top) newfun =
 getTVars :: BzoSyntax -> [Text]
 getTVars (BzS_TyVar      _    tvar) = [pack tvar]
 getTVars (BzS_Expr       _    expr) = L.concatMap getTVars expr
-getTVars (BzS_Box        _    expr) = getTVars expr
 getTVars (BzS_Statement  _    expr) = getTVars expr
 getTVars (BzS_Cmpd       _    expr) = L.concatMap getTVars expr
 getTVars (BzS_Poly       _    expr) = L.concatMap getTVars expr
@@ -128,7 +127,6 @@ getVars (BzS_Id         _     var) = [pack var]
 getVars (BzS_MId        _     var) = [pack var]
 getVars (BzS_BId        _     var) = [pack var]
 getVars (BzS_Expr       _    expr) = L.concatMap getVars expr
-getVars (BzS_Box        _    expr) = getVars expr
 getVars (BzS_Statement  _    expr) = getVars expr
 getVars (BzS_Cmpd       _    expr) = L.concatMap getVars expr
 getVars (BzS_Poly       _    expr) = L.concatMap getVars expr
@@ -159,7 +157,6 @@ getTypes :: BzoSyntax -> [Text]
 getTypes (BzS_TyId       _     var) = [pack var]
 getTypes (BzS_BTId       _     var) = [pack var]
 getTypes (BzS_Expr       _    expr) = L.concatMap getTypes expr
-getTypes (BzS_Box        _    expr) = getTypes expr
 getTypes (BzS_Statement  _    expr) = getTypes expr
 getTypes (BzS_Cmpd       _    expr) = L.concatMap getTypes expr
 getTypes (BzS_Poly       _    expr) = L.concatMap getTypes expr
@@ -312,7 +309,6 @@ getDefTable files =
 -- This doesn't replace lambdas in the AST with anything new
 extractLambda :: BzoSyntax -> [BzoSyntax]
 extractLambda (BzS_Expr       _    expr) = L.concatMap extractLambda expr
-extractLambda (BzS_Box        _    expr) = extractLambda expr
 extractLambda (BzS_Statement  _    expr) = extractLambda expr
 extractLambda (BzS_Cmpd       _    expr) = L.concatMap extractLambda expr
 extractLambda (BzS_Poly       _    expr) = L.concatMap extractLambda expr
@@ -338,7 +334,6 @@ extractLambda _                          = []
 -- This does replace lambdas in the AST
 replaceLambda :: BzoSyntax -> BzoSyntax
 replaceLambda (BzS_Expr       p    expr) = (BzS_Expr   p (L.map replaceLambda expr))
-replaceLambda (BzS_Box        p    expr) = (BzS_Box    p (replaceLambda expr))
 replaceLambda (BzS_Statement  p    expr) = (BzS_Statement p (replaceLambda expr))
 replaceLambda (BzS_Cmpd       p    expr) = (BzS_Cmpd   p (L.map replaceLambda expr))
 replaceLambda (BzS_Poly       p    expr) = (BzS_Poly   p (L.map replaceLambda expr))
@@ -364,7 +359,6 @@ replaceLambda x                          = x
 -- This doesn't replace Enums in the AST with anything new
 extractEnum :: BzoSyntax -> BzoSyntax -> [BzoSyntax]
 extractEnum ps (BzS_Expr       _    expr) = L.concatMap (extractEnum ps) expr
-extractEnum ps (BzS_Box        _    expr) = trace "\n\n\n\n\n\n\n" $ extractEnum ps expr
 extractEnum ps (BzS_Statement  _    expr) = extractEnum ps expr
 extractEnum ps (BzS_Cmpd       _    expr) = L.concatMap (extractEnum ps) expr
 extractEnum ps (BzS_Block      _    expr) = L.concatMap (extractEnum ps) expr
@@ -391,7 +385,6 @@ extractEnum _  _                          = []
 -- This does replace Enums in the AST
 replaceEnum :: BzoSyntax -> BzoSyntax -> BzoSyntax
 replaceEnum ps (BzS_Expr       p    expr) = (BzS_Expr   p (L.map (replaceEnum ps) expr))
-replaceEnum ps (BzS_Box        p    expr) = (BzS_Box    p (replaceEnum ps expr))
 replaceEnum ps (BzS_Statement  p    expr) = (BzS_Statement p (replaceEnum ps expr))
 replaceEnum ps (BzS_Cmpd       p    expr) = (BzS_Cmpd   p (L.map (replaceEnum ps) expr))
 replaceEnum ps (BzS_Block      p    expr) = (BzS_Block  p (L.map (replaceEnum ps) expr))
