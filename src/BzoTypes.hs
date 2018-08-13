@@ -1,5 +1,6 @@
 module BzoTypes where
 import Data.Int
+import qualified Data.List as L
 import qualified Data.Text as T
 import qualified Data.Set  as S
 import qualified Data.Map.Strict as M
@@ -408,10 +409,10 @@ showAST (BzS_Namespace _ i)                = " {@ " ++ (show i) ++ "} "
 showAST (BzS_Int _ i)                      = " INT: " ++ (show i)
 showAST (BzS_Flt _ f)                      = " FLT: " ++ (show f)
 showAST (BzS_Str _ s)                      = " STR: " ++ (show s)
-showAST (BzS_Poly _ p)                     = " {POLY: " ++ (Prelude.concatMap showAST p) ++ "} "
-showAST (BzS_Cmpd _ c)                     = " {CMPD: " ++ (Prelude.concatMap showAST c) ++ "} "
+showAST (BzS_Poly _ p)                     = " {POLY: " ++ (L.concat $ L.intersperse " , " $ L.reverse $ Prelude.map showAST p) ++ "} "
+showAST (BzS_Cmpd _ c)                     = " {CMPD: " ++ (L.concat $ L.intersperse " . " $ L.reverse $ Prelude.map showAST c) ++ "} "
 showAST (BzS_Block _ ex)                   = " {BK: " ++ (Prelude.concatMap showAST ex) ++ " } "
-showAST (BzS_Expr _ ex)                    = " (EX: " ++ (Prelude.concatMap showAST ex) ++ " ) "
+showAST (BzS_Expr _ ex)                    = " (EX: " ++ (L.concat $ L.intersperse " >> " $ L.reverse (Prelude.map showAST ex)) ++ " ) "
 showAST (BzS_Statement _ ex)               = " (STMT: " ++ (showAST ex) ++ " ) "
 showAST (BzS_Box  _ ex)                    = " (BX: " ++ (showAST ex) ++ ") "
 showAST (BzS_Calls _ c)                    = Prelude.concatMap (\s -> " CALL:: " ++ (show s) ++ "\n") c
