@@ -236,9 +236,6 @@ data BzoSyntax
     | BzS_Expr {
         pos   :: !BzoPos,
         exprs :: ![BzoSyntax] }
-    -- | BzS_Box {
-    --    pos   :: !BzoPos,
-    --    expr  :: !BzoSyntax }
     | BzS_Poly {
         pos   :: !BzoPos,
         exprs :: ![BzoSyntax] }
@@ -414,7 +411,6 @@ showAST (BzS_Cmpd _ c)                     = " {CMPD: " ++ (L.concat $ L.intersp
 showAST (BzS_Block _ ex)                   = " {BK: " ++ (Prelude.concatMap showAST ex) ++ " } "
 showAST (BzS_Expr _ ex)                    = " (EX: " ++ (L.concat $ L.intersperse " >> " $ L.reverse (Prelude.map showAST ex)) ++ " ) "
 showAST (BzS_Statement _ ex)               = " (STMT: " ++ (showAST ex) ++ " ) "
---showAST (BzS_Box  _ ex)                    = " (BX: " ++ (showAST ex) ++ ") "
 showAST (BzS_Calls _ c)                    = Prelude.concatMap (\s -> " CALL:: " ++ (show s) ++ "\n") c
 showAST (BzS_Wildcard _)                   = " _ "
 showAST (BzS_MapMod _)                     = " .. "
