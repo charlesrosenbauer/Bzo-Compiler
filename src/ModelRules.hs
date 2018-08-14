@@ -395,8 +395,8 @@ replaceEnum ps (BzS_FilterObj  p obj  fs) = (BzS_FilterObj p (replaceEnum ps obj
 replaceEnum ps (BzS_CurryObj   p obj prs) = (BzS_CurryObj  p (replaceEnum ps obj) (L.map (replaceEnum ps) prs))
 replaceEnum ps (BzS_Poly       p    expr) = (BzS_Poly   p (L.map (enumOp ps) expr))
   where enumOp :: BzoSyntax -> BzoSyntax -> BzoSyntax
-        enumOp BzS_Undefined (BzS_Expr _ [BzS_FilterObj p (BzS_TyId _ t) [tdef]]) = (BzS_Expr p ([BzS_TyId p t]))
-        enumOp ps            (BzS_Expr _ [BzS_FilterObj p (BzS_TyId _ t) [tdef]]) = (BzS_Expr p ((BzS_TyId p t):[ps]))
+        enumOp BzS_Undefined (BzS_FilterObj p (BzS_TyId _ t) [tdef]) =  BzS_TyId p t
+        enumOp ps            (BzS_FilterObj p (BzS_TyId _ t) [tdef]) = (BzS_Expr p ((BzS_TyId p t):[ps]))
         enumOp ps x = replaceEnum ps x
 replaceEnum _  x                          = x
 
@@ -409,11 +409,141 @@ replaceEnum _  x                          = x
 
 
 
+
+
+
+
+
+
+
+
+
+
+-- This doesn't replace Records in the AST with anything new
+extractRecord :: BzoSyntax -> Text -> [(Int, Int)] -> BzoSyntax -> [BzoSyntax]
+extractRecord ps tid depth (BzS_Expr       _     expr) = L.concatMap (extractRecord ps tid depth) expr
+extractRecord ps tid depth (BzS_Statement  _     expr) = extractRecord ps tid depth expr
+extractRecord ps tid depth (BzS_Poly       _     expr) = L.concatMap (extractRecord ps tid depth) expr
+extractRecord ps tid depth (BzS_Block      _     expr) = L.concatMap (extractRecord ps tid depth) expr
+extractRecord _  _   depth (BzS_TypDef     _ ps tid x) = (extractRecord ps (pack tid) depth x)
+extractRecord ps tid depth (BzS_Calls      _       cs) = L.concatMap (extractRecord ps tid depth) cs
+extractRecord ps tid depth (BzS_ArrayObj   _  expr _ ) = extractRecord ps tid depth expr
+extractRecord ps tid depth (BzS_FilterObj  _  obj  fs) = (extractRecord ps tid depth obj) ++ (L.concatMap (extractRecord ps tid depth) fs)
+extractRecord ps tid depth (BzS_CurryObj   _  obj prs) = (extractRecord ps tid depth obj) ++ (L.concatMap (extractRecord ps tid depth) prs)
+extractRecord ps tid depth (BzS_Cmpd       _     expr) = L.concatMap (\(d, xpr) -> recordOp ps tid d xpr) $ L.zip (addDepth depth expr) expr
+  where recordOp :: BzoSyntax -> Text -> [(Int, Int)] -> BzoSyntax -> [BzoSyntax]
+        recordOp BzS_Undefined tid depth (BzS_FilterObj p (BzS_Id _ rcid) [tdef]) =
+          [(BzS_FunDef    p (makeDepthPattern p depth) rcid BzS_Undefined (BzS_Id p "x")),
+           (BzS_FnTypeDef p BzS_Undefined rcid (BzS_FnTy p (BzS_TyId p $ unpack tid    )      tdef))]
+
+
+        recordOp ps            tid depth (BzS_FilterObj p (BzS_Id _ rcid) [tdef]) =
+          [(BzS_FunDef    p (makeDepthPattern p depth) rcid BzS_Undefined (BzS_Id p "x")),
+           (BzS_FnTypeDef p BzS_Undefined rcid (BzS_FnTy p (BzS_Expr p [BzS_TyId p $ unpack tid, ps])      tdef))]
+
+        recordOp ps tid depth x = extractRecord ps tid depth x
+extractRecord _ _ _ _                                 = []
+
+
+
+
+
+
+
+
+
+
+-- This does replace Records in the AST
+replaceRecord :: BzoSyntax -> Text -> [(Int, Int)] -> BzoSyntax -> BzoSyntax
+replaceRecord ps tid depth (BzS_Expr       p    expr) = (BzS_Expr   p (L.map (replaceRecord ps tid depth) expr))
+replaceRecord ps tid depth (BzS_Statement  p    expr) = (BzS_Statement p (replaceRecord ps tid depth expr))
+replaceRecord ps tid depth (BzS_Poly       p    expr) = (BzS_Poly   p (L.map (replaceRecord ps tid depth) expr))
+replaceRecord ps tid depth (BzS_Block      p    expr) = (BzS_Block  p (L.map (replaceRecord ps tid depth) expr))
+replaceRecord _  _   depth (BzS_TypDef     p i tid x) = (BzS_TypDef p i tid (replaceRecord i (pack tid) depth x))
+replaceRecord ps tid depth (BzS_Calls      p      cs) = (BzS_Calls  p (L.map (replaceRecord ps tid depth) cs))
+replaceRecord ps tid depth (BzS_ArrayObj   p expr  a) = (BzS_ArrayObj  p (replaceRecord ps tid depth expr) a)
+replaceRecord ps tid depth (BzS_FilterObj  p obj  fs) = (BzS_FilterObj p (replaceRecord ps tid depth obj) (L.map (replaceRecord ps tid depth) fs))
+replaceRecord ps tid depth (BzS_CurryObj   p obj prs) = (BzS_CurryObj  p (replaceRecord ps tid depth obj) (L.map (replaceRecord ps tid depth) prs))
+replaceRecord ps tid depth (BzS_Cmpd       p    expr) = (BzS_Cmpd   p (L.map (\(d, xpr) -> recordOp  ps tid d xpr) $ L.zip (addDepth depth expr) expr))
+  where recordOp :: BzoSyntax -> Text -> [(Int, Int)] -> BzoSyntax -> BzoSyntax
+        recordOp _  tid depth (BzS_FilterObj p (BzS_Id _ rcid) [tdef]) = tdef
+
+        recordOp ps tid depth x = replaceRecord ps tid depth x
+replaceRecord _ _ _  x                                = x
+
+
+
+
+
+
+
+
+
+
+addDepth :: [(Int, Int)] -> [a] -> [[(Int, Int)]]
+addDepth ds xs =
+  let dss = L.repeat ds
+      len = L.length xs
+      xs' = L.take len $ L.zip (L.repeat len) [0..]
+  in L.map (\(d, ds) -> ds ++ [d]) $ L.zip xs' dss
+
+
+
+
+
+
+
+
+
+
+makeDepthPattern :: BzoPos -> [(Int, Int)] -> BzoSyntax
+makeDepthPattern p [] = BzS_Id p "x"
+makeDepthPattern p ((l, x):xs) = (BzS_Cmpd p $ L.take l (L.map (depthStage p x xs) [0..]))
+  where depthStage :: BzoPos -> Int -> [(Int, Int)] -> Int -> BzoSyntax
+        depthStage p x xs n =
+          if x == n
+            then makeDepthPattern p xs
+            else BzS_Wildcard p
+
+
+
+
+
+
+
+
+
+
+removeBoxes :: BzoSyntax -> BzoSyntax
+removeBoxes (BzS_Expr       p   [expr]) = removeBoxes expr
+removeBoxes (BzS_Expr       p    expr ) = (BzS_Expr      p (L.map removeBoxes expr))
+removeBoxes (BzS_Statement  p    expr ) = (BzS_Statement p (removeBoxes expr))
+removeBoxes (BzS_Cmpd       p   [expr]) = removeBoxes expr
+removeBoxes (BzS_Poly       p   [expr]) = removeBoxes expr
+removeBoxes (BzS_Cmpd       p    expr ) = (BzS_Cmpd      p (L.map removeBoxes expr))
+removeBoxes (BzS_Poly       p    expr ) = (BzS_Poly      p (L.map removeBoxes expr))
+removeBoxes (BzS_Block      p    expr ) = (BzS_Block     p (L.map removeBoxes expr))
+removeBoxes (BzS_TypDef     p i  t  x ) = (BzS_TypDef    p i t (removeBoxes x))
+removeBoxes (BzS_Calls      p      cs ) = (BzS_Calls     p (L.map removeBoxes cs))
+removeBoxes (BzS_ArrayObj   p expr  a ) = (BzS_ArrayObj  p (removeBoxes expr) a)
+removeBoxes (BzS_FilterObj  p obj  fs ) = (BzS_FilterObj p (removeBoxes obj) (L.map removeBoxes fs))
+removeBoxes (BzS_CurryObj   p obj prs ) = (BzS_CurryObj  p (removeBoxes obj) (L.map removeBoxes prs))
+removeBoxes x = x
+
+
+
+
+
+
+
+
 modelXForm :: BzoSyntax -> BzoSyntax
 modelXForm (BzS_Calls p ast) =
-  let lams = L.concatMap  extractLambda ast
-      enms = L.concatMap (extractEnum BzS_Undefined) ast
+  let ast' = L.map removeBoxes ast
+      lams = L.concatMap  extractLambda ast
+      enms = L.concatMap (extractEnum   BzS_Undefined             ) ast'
+      rcds = L.concatMap (extractRecord BzS_Undefined (pack "") []) ast'
 
-      allAST  = enms ++ lams ++ ast
-      allAST' = L.map ((replaceEnum BzS_Undefined) . replaceLambda) allAST
+      allAST  = rcds ++ enms ++ lams ++ ast'
+      allAST' = L.map ((replaceRecord BzS_Undefined (pack "") []) . (replaceEnum BzS_Undefined) . replaceLambda) allAST
   in (BzS_Calls p allAST')
