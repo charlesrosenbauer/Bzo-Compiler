@@ -1,0 +1,22 @@
+Let $Module
+
+
+
+
+
+
+
+
+
+
+main :: IO ;; IO
+(~io) main :: {
+  ('String'. ~io) print ~io
+
+  {
+    (3. 4) + x
+    (x. 2) *
+  } v
+
+  (v. ~io) print ~io
+}

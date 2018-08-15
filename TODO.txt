@@ -1,0 +1,6 @@
+TODO:
+  * Fix parser
+  * Fix Config Parser
+  * Fix dependencies on config parser in preprocessor
+  * Fix dependencies on preprocessor in compiler.hs
+  * Change how Enums and Structs are handled

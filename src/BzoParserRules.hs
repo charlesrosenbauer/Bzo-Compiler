@@ -1,6 +1,7 @@
 module BzoParserRules where
-import BzoParser
 import BzoTypes
+import Data.List as L
+import Data.Text
 import Debug.Trace
 
 
@@ -12,195 +13,419 @@ import Debug.Trace
 
 
 
-testParserFail :: Parser
-testParserFail = Parser (\(ParserState f p s i) -> Left [ParseErr p " * Test * "] )
+parserIter :: String -> [BzoSyntax] -> [BzoSyntax] -> Either [BzoErr] BzoSyntax
 
+-- | Nothing to Parse?
+parserIter fname [] [] = Left $ [ParseErr (BzoPos 1 1 fname) "Nothing to Parse?"]
 
 
 
+-- | Simple reductions
+parserIter fname tokens ((BzS_Token _ (TkNil)):stk)                     = parserIter fname tokens stk
 
+parserIter fname tokens ((BzS_Token _ (TkNewline p1))
+                        :(BzS_Token _ (TkNewline p0)):stk)              = parserIter fname tokens ((BzS_Token p0 (TkNewline p0):stk))
 
+parserIter fname tokens ((BzS_Token _ (TkEndTup   p1))
+                        :(BzS_Token _ (TkStartTup p0)):stk)             = parserIter fname tokens ((BzS_Expr p0 [BzS_Nil p0]):stk)
 
+parserIter fname tokens ((BzS_Token _ (TkTupEmpt  p0)):stk)             = parserIter fname tokens ((BzS_Expr p0 [BzS_Nil p0]):stk)
 
+parserIter fname tokens ((BzS_Token _ (TkEndDat   p1))
+                        :(BzS_Token _ (TkStartDat p0)):stk)             = parserIter fname tokens ((BzS_ArrGenMod p0):stk)
 
+parserIter fname tokens ((BzS_Token _ (TkEndDat   p2))
+                        :(BzS_Expr  _ [BzS_Int    p1 sz])
+                        :(BzS_Token _ (TkStartDat p0)):stk)             = parserIter fname tokens ((BzS_ArrSzObj p0 sz):stk)
 
-testParserPass :: Parser
-testParserPass = Parser (\ps ->
-  Right (ParserState "Test" (BzoPos 0 0 "Test") [PI_BzSyn $ BzS_Str mockPos " * Pass * "] [] ) )
+parserIter fname tokens ((BzS_Token _ (TkNewline  p1))
+                        :(BzS_Token _ (TkStartTup p0)):stk)             = parserIter fname tokens ((BzS_Token p0 (TkStartTup p0)):stk)
 
+parserIter fname tokens ((BzS_Token _ (TkNewline  p1))
+                        :(BzS_Token _ (TkStartDo  p0)):stk)             = parserIter fname tokens ((BzS_Token p0 (TkStartDo  p0)):stk)
 
+parserIter fname tokens ((BzS_Token _ (TkEndTup   p1))
+                        :(BzS_Token _ (TkNewline  p0)):stk)             = parserIter fname tokens ((BzS_Token p0 (TkEndTup   p0)):stk)
 
+parserIter fname tokens ((BzS_Token _ (TkEndDo    p1))
+                        :(BzS_Token _ (TkNewline  p0)):stk)             = parserIter fname tokens ((BzS_Token p0 (TkEndDo    p0)):stk)
 
+parserIter fname tokens ((BzS_Token _ (TkNewline  p1))
+                        :(BzS_Token _ (TkSepExpr  p0)):stk)             = parserIter fname tokens ((BzS_Token p0 (TkSepExpr  p0)):stk)
 
+parserIter fname tokens ((BzS_Token _ (TkNewline  p1))
+                        :(BzS_Token _ (TkSepPoly  p0)):stk)             = parserIter fname tokens ((BzS_Token p0 (TkSepPoly  p0)):stk)
 
 
 
+-- | Core expression components
+parserIter fname tokens ((BzS_Token _ (TkId       p0 fnid)) :stk)       = parserIter fname tokens ((BzS_Expr p0 [BzS_Id    p0 fnid]):stk)
 
+parserIter fname tokens ((BzS_Token _ (TkBuiltin  p0 bfid)) :stk)       = parserIter fname tokens ((BzS_Expr p0 [BzS_BId   p0 bfid]):stk)
 
-parsePrimitive0 :: ParserOp
-parsePrimitive0 = genericParseOp [mtk_Id] (\tk ->
-  PI_BzSyn $ BzS_Id (spos $ piTok $ head tk) (valId $ piTok $ head tk))
+parserIter fname tokens ((BzS_Token _ (TkTypeId   p0 tyid)) :stk)       = parserIter fname tokens ((BzS_Expr p0 [BzS_TyId  p0 tyid]):stk)
 
+parserIter fname tokens ((BzS_Token _ (TkBIType   p0 btid)) :stk)       = parserIter fname tokens ((BzS_Expr p0 [BzS_BTId  p0 btid]):stk)
 
+parserIter fname tokens ((BzS_Token _ (TkMutId    p0 mtid)) :stk)       = parserIter fname tokens ((BzS_Expr p0 [BzS_MId   p0 mtid]):stk)
 
+parserIter fname tokens ((BzS_Token _ (TkTyVar    p0 tyvr)) :stk)       = parserIter fname tokens ((BzS_Expr p0 [BzS_TyVar p0 tyvr]):stk)
 
+parserIter fname tokens ((BzS_Token _ (TkInt      p0  num)) :stk)       = parserIter fname tokens ((BzS_Expr p0 [BzS_Int p0 num]):stk)
 
+parserIter fname tokens ((BzS_Token _ (TkFlt      p0  num)) :stk)       = parserIter fname tokens ((BzS_Expr p0 [BzS_Flt p0 num]):stk)
 
+parserIter fname tokens ((BzS_Token _ (TkStr      p0  str)) :stk)       = parserIter fname tokens ((BzS_Expr p0 [BzS_Str p0 str]):stk)
 
+parserIter fname tokens ((BzS_Token _ (TkWildcard p0)) :stk)            = parserIter fname tokens ((BzS_Expr p0 [BzS_Wildcard p0]):stk)
 
+parserIter fname tokens ((BzS_Token _ (TkEndTup p2))
+                        :x@(BzS_Expr p1 _)
+                        :(BzS_Token _ (TkStartTup p0)):stk)             = parserIter fname tokens ((BzS_Expr p0 [x]):stk)
 
 
-parsePrimitive1 :: ParserOp
-parsePrimitive1 = genericParseOp [mtk_MutId] (\tk ->
-  PI_BzSyn $ BzS_MId (spos $ piTok $ head tk) (valId $ piTok $ head tk))
 
+-- | Statements and Blocks
+parserIter fname tokens ((BzS_Token _ (TkNewline p1))
+                        :x@(BzS_Expr p0 _)      :stk)                   = parserIter fname tokens ((BzS_Statement p0 x):stk)
 
+parserIter fname tokens ((BzS_Token _ (TkNewline p1))
+                        :(BzS_Statement p0 x)  :stk)                    = parserIter fname tokens ((BzS_Statement p0 x):stk)
 
+parserIter fname tokens ((BzS_Statement p1 x)
+                        :(BzS_Token _ (TkStartDo p0)):stk)              = parserIter fname tokens ((BzS_BlockHead p0 [x]):stk)
 
+parserIter fname tokens ((BzS_Statement p1 x)
+                        :(BzS_BlockHead p0 xs):stk)                     = parserIter fname tokens ((BzS_BlockHead p0 (x:xs)):stk)
 
+parserIter fname tokens ((BzS_Token _ (TkEndDo p1))
+                        :(BzS_BlockHead p0 xs):stk)                     = parserIter fname tokens ((BzS_Expr p0 [BzS_Block p0 xs]):stk)
 
+parserIter fname tokens ((BzS_Token _ (TkEndDo p2))
+                        :x@(BzS_Expr p1 _)
+                        :(BzS_BlockHead p0 xs):stk)                     = parserIter fname tokens ((BzS_Expr p0 [BzS_Block p0 (x:xs)]):stk)
 
+parserIter fname tokens ((BzS_Token _ (TkEndDo p2))
+                        :x@(BzS_Expr p1 _)
+                        :(BzS_Token _ (TkStartDo p0)):stk)              = parserIter fname tokens ((BzS_Expr p0 [BzS_Block p0 [x]]):stk)
 
 
 
-parsePrimitive2 :: ParserOp
-parsePrimitive2 = genericParseOp [mtk_TypeId] (\tk ->
-  PI_BzSyn $ BzS_TyId (spos $ piTok $ head tk) (valId $ piTok $ head tk))
+-- | Expression Construction
+parserIter fname tokens ((BzS_Token _ (TkSepExpr p2))
+                        :x@(BzS_Expr  p1 _)
+                        :(BzS_Token _ (TkStartTup p0)):stk)             = parserIter fname tokens ((BzS_CmpdHead p0 [x]):stk)
 
+parserIter fname tokens ((BzS_Token _ (TkSepExpr p2))
+                        :x@(BzS_Expr  p1 _)
+                        :(BzS_CmpdHead p0 xs):stk)                      = parserIter fname tokens ((BzS_CmpdHead p0 (x:xs)):stk)
 
+parserIter fname tokens ((BzS_Token _ (TkEndTup p2))
+                        :x@(BzS_Expr  p1 _)
+                        :(BzS_CmpdHead p0 xs):stk)                      = parserIter fname tokens ((BzS_Expr p0 [BzS_Cmpd p0 (x:xs)]):stk)
 
+parserIter fname tokens ((BzS_Token _ (TkSepPoly p2))
+                        :x@(BzS_Expr  p1 _)
+                        :(BzS_Token _ (TkStartTup p0)):stk)             = parserIter fname tokens ((BzS_PolyHead p0 [x]):stk)
 
+parserIter fname tokens ((BzS_Token _ (TkSepPoly p2))
+                        :x@(BzS_Expr  p1 _)
+                        :(BzS_PolyHead p0 xs):stk)                      = parserIter fname tokens ((BzS_PolyHead p0 (x:xs)):stk)
 
+parserIter fname tokens ((BzS_Token _ (TkEndTup p2))
+                        :x@(BzS_Expr  p1 _)
+                        :(BzS_PolyHead p0 xs):stk)                      = parserIter fname tokens ((BzS_Expr p0 [BzS_Poly p0 (x:xs)]):stk)
 
+parserIter fname tokens (ty1@(BzS_Expr  p2 xs1)
+                        :(BzS_Token p1 (TkFnSym _))
+                        :ty0@(BzS_Expr  p0 xs0)  :stk)                  = parserIter fname tokens ((BzS_Expr p0 [BzS_FnTy p0 ty0 ty1]):stk)
 
+parserIter fname tokens ((BzS_Expr p1 xs)
+                        :(BzS_Expr p0 [BzS_FnTy _ t0 (BzS_Expr p t1)])
+                        :stk)                                           = parserIter fname tokens ((BzS_Expr p0 [BzS_FnTy p0 t0 (BzS_Expr p $ t1++xs)]):stk)
 
+parserIter fname tokens ((BzS_Expr p1 [BzS_FnTy _ (BzS_Expr p t0) t1])
+                        :(BzS_Expr p0 xs)
+                        :stk)                                           = parserIter fname tokens ((BzS_Expr p0 [BzS_FnTy p0 (BzS_Expr p $ xs++t0) t1]):stk)
 
+parserIter fname tokens ((BzS_Expr p1 [x])
+                        :(BzS_Expr p0 xs)                   :stk)       = parserIter fname tokens ((BzS_Expr p0 (x:xs)):stk)
 
-parsePrimitive3 :: ParserOp
-parsePrimitive3 = genericParseOp [mtk_Int] (\tk ->
-  PI_BzSyn $ BzS_Int (spos $ piTok $ head tk) (valInt $ piTok $ head tk))
 
 
+-- | Lambda Expressions
+parserIter fname tokens ((BzS_Expr _ [xpr@(BzS_Block p2 _), x@(BzS_Expr p1 _)])
+                        :(BzS_Token _ (TkLambdaSym p0)):stk)            = parserIter fname tokens ((BzS_Expr p0 [BzS_Lambda p0 x xpr]):stk)
 
+parserIter fname tokens ((BzS_Expr _ [xpr@(BzS_Block p2 _), x])
+                        :(BzS_Token _ (TkLambdaSym p0)):stk)            = parserIter fname tokens ((BzS_Expr p0 [BzS_Lambda p0 x xpr]):stk)
 
+parserIter fname tokens ((BzS_Expr _ [xpr@(BzS_Block  p2 _), x@(BzS_Cmpd p1 pars)])
+                        :(BzS_Token _ (TkLambdaSym p0)):stk)            = parserIter fname tokens ((BzS_Expr p0 [BzS_Lambda p0 x xpr]):stk)
 
 
 
+-- | Function Types
+parserIter fname tokens ((BzS_Statement p1 (BzS_Expr _ [def@(BzS_FnTy _ inty exty)]))
+                        :(BzS_FnHead p0 BzS_Undefined fn BzS_Undefined):stk)    = parserIter fname tokens ((BzS_Calls p0 [BzS_FnTypeDef p0 BzS_Undefined fn def]):stk)
 
+parserIter fname tokens ((BzS_Statement p1 (BzS_Expr _ [def@(BzS_FnTy _ inty exty)]))
+                        :(BzS_FnHead p0 inpars        fn BzS_Undefined):stk)    = parserIter fname tokens ((BzS_Calls p0 [BzS_FnTypeDef p0 inpars fn def]):stk)
 
 
-parsePrimitive4 :: ParserOp
-parsePrimitive4 = genericParseOp [mtk_Flt] (\tk ->
-  PI_BzSyn $ BzS_Flt (spos $ piTok $ head tk) (valFlt $ piTok $ head tk))
 
+-- | Functions
+parserIter fname tokens ((BzS_Token p0 (TkDefine _))
+                        :(BzS_Expr p1 [expar@(BzS_Expr _ _),
+                                             (BzS_Id _ fn ),
+                                       inpar@(BzS_Expr _ _)])  :stk)    = parserIter fname tokens ((BzS_FnHead p0 inpar fn expar):stk)
 
+parserIter fname tokens ((BzS_Token p0 (TkDefine _))
+                        :(BzS_Expr p1 [expar@(BzS_Expr _ _),
+                                             (BzS_Id _ fn ),
+                                       inpar@(BzS_Cmpd _ _)])  :stk)    = parserIter fname tokens ((BzS_FnHead p0 inpar fn expar):stk)
 
+parserIter fname tokens ((BzS_Token p0 (TkDefine _))
+                        :(BzS_Expr p1 [expar@(BzS_Cmpd _ _),
+                                             (BzS_Id _ fn ),
+                                       inpar@(BzS_Expr _ _)])  :stk)    = parserIter fname tokens ((BzS_FnHead p0 inpar fn expar):stk)
 
+parserIter fname tokens ((BzS_Token p0 (TkDefine _))
+                        :(BzS_Expr p1 [expar@(BzS_Cmpd _ _),
+                                             (BzS_Id _ fn ),
+                                       inpar@(BzS_Cmpd _ _)])  :stk)    = parserIter fname tokens ((BzS_FnHead p0 inpar fn expar):stk)
 
+parserIter fname tokens ((BzS_Token p0 (TkDefine _))
+                        :(BzS_Expr p1 [      (BzS_Id _ fn ),
+                                       inpar@(BzS_Expr _ _)])  :stk)    = parserIter fname tokens ((BzS_FnHead p0 inpar fn BzS_Undefined):stk)
 
+parserIter fname tokens ((BzS_Token p0 (TkDefine _))
+                        :(BzS_Expr p1 [      (BzS_Id _ fn ),
+                                       inpar@(BzS_Cmpd _ _)])  :stk)    = parserIter fname tokens ((BzS_FnHead p0 inpar fn BzS_Undefined):stk)
 
+parserIter fname tokens ((BzS_Token p0 (TkDefine _))
+                        :(BzS_Expr p1 [expar@(BzS_Cmpd _ _),
+                                             (BzS_Id _ fn )])  :stk)    = parserIter fname tokens ((BzS_FnHead p0 BzS_Undefined fn expar):stk)
 
+parserIter fname tokens ((BzS_Token p0 (TkDefine _))
+                        :(BzS_Expr p1 [expar@(BzS_Expr _ _),
+                                             (BzS_Id _ fn )])  :stk)    = parserIter fname tokens ((BzS_FnHead p0 BzS_Undefined fn expar):stk)
 
+parserIter fname tokens ((BzS_Token p0 (TkDefine _))
+                        :(BzS_Expr p1 [(BzS_Id _ fn )])        :stk)    = parserIter fname tokens ((BzS_FnHead p0 BzS_Undefined fn BzS_Undefined):stk)
 
-parsePrimitive5 :: ParserOp
-parsePrimitive5 = genericParseOp [mtk_Str] (\tk ->
-  PI_BzSyn $ BzS_Str (spos $ piTok $ head tk) (valStr $ piTok $ head tk))
+parserIter fname tokens ((BzS_Expr _ [def@(BzS_Block p1 xs)])
+                        :(BzS_FnHead p0 ins fn exs)            :stk)    = parserIter fname tokens ((BzS_Calls p0 [BzS_FunDef p0 ins fn exs def]):stk)
 
+parserIter fname tokens (def@(BzS_Statement p1 xs)
+                        :(BzS_FnHead p0 ins fn exs)            :stk)    = parserIter fname tokens ((BzS_Calls p0 [BzS_FunDef p0 ins fn exs def]):stk)
 
 
 
+-- | Type Class Definitions
+parserIter fname tokens ((BzS_Token  p1 (TkStartDo _))
+                        :(BzS_TyHead p0 ins ty)                 :stk)   = parserIter fname tokens ((BzS_TyClassHead p0 ins ty []):stk)
 
+parserIter fname tokens ((BzS_Token p1 (TkNewline _))
+                        :tc@(BzS_TyClassHead p0 inpar ty fs)     :stk)  = parserIter fname tokens (tc:stk)
 
+parserIter fname tokens ((BzS_Calls p1 [ft@(BzS_FnTypeDef _ _ _ _)])
+                        :(BzS_TyClassHead p0 inpar ty fs)     :stk)     = parserIter fname tokens ((BzS_TyClassHead p0 inpar ty (ft:fs)):stk)
 
+parserIter fname tokens ((BzS_Token p1 (TkEndDo _))
+                        :(BzS_TyClassHead p0 inpar ty fs)     :stk)     = parserIter fname tokens ((BzS_Calls p0 [BzS_TyClassDef p0 inpar ty fs]):stk)
 
 
 
-parsePrimitive6 :: ParserOp
-parsePrimitive6 = genericParseOp [mtk_Builtin] (\tk ->
-  PI_BzSyn $ BzS_BId (spos $ piTok $ head tk) (valId $ piTok $ head tk))
+-- | Type Definitions
+parserIter fname tokens ((BzS_Token p1 (TkDefine _))
+                        :(BzS_Expr p0 [(BzS_TyId _ ty ),
+                                        inpar@(BzS_Cmpd _ _)]):stk)     = parserIter fname tokens ((BzS_TyHead p0 inpar ty):stk)
 
+parserIter fname tokens ((BzS_Token p1 (TkDefine _))
+                        :(BzS_Expr p0 [(BzS_TyId _ ty ),
+                                       inpar@(BzS_Expr _ _)])  :stk)    = parserIter fname tokens ((BzS_TyHead p0 inpar ty):stk)
 
+parserIter fname tokens ((BzS_Token p1 (TkDefine _))
+                        :(BzS_Expr p0 [(BzS_TyId _ ty )])        :stk)  = parserIter fname tokens ((BzS_TyHead p0 BzS_Undefined ty):stk)
 
+parserIter fname tokens (def@(BzS_Statement p1 xs)
+                        :(BzS_TyHead p0 ins ty)                 :stk)   = parserIter fname tokens ((BzS_Calls p0 [BzS_TypDef p0 ins ty def]):stk)
 
 
 
 
+-- | Miscellaneous Parsing Rules - Curry, Map, Filter, Namespaces
+parserIter fname tokens ((BzS_Token p1 (TkArrMod _))
+                        :(BzS_Expr  p0 (x:xs))                  :stk)   = parserIter fname tokens ((BzS_Expr p0 ((BzS_MapObj (pos x) x):xs)):stk)
 
+parserIter fname tokens ((BzS_Expr  p2 [y])
+                        :(BzS_Token p1 (TkCurrySym _))
+                        :(BzS_Expr  p0 ((BzS_CurryObj p x ys):xs))
+                        :stk)                                           = parserIter fname tokens ((BzS_Expr p0 ((BzS_CurryObj p x (y:ys)):xs)):stk)
 
+parserIter fname tokens ((BzS_Expr  p2 [y])
+                        :(BzS_Token p1 (TkCurrySym _))
+                        :(BzS_Expr  p0 (x:xs))                  :stk)   = parserIter fname tokens ((BzS_Expr p0 ((BzS_CurryObj (pos x) x [y]):xs)):stk)
 
-parsePrimitive7 :: ParserOp
-parsePrimitive7 = genericParseOp [mtk_BIType] (\tk ->
-  PI_BzSyn $ BzS_BTId (spos $ piTok $ head tk) (valId $ piTok $ head tk))
+parserIter fname tokens ((BzS_Expr  p2 [BzS_TyId _ ns])
+                        :(BzS_Token p1 (TkReference _))
+                        :(BzS_Expr  p0 ((BzS_Id p nm):xs))      :stk)   = parserIter fname tokens ((BzS_Expr p0 ((BzS_ExFunObj p nm ns):xs)):stk)
 
+parserIter fname tokens ((BzS_Expr  p2 [BzS_TyId _ ns])
+                        :(BzS_Token p1 (TkReference _))
+                        :(BzS_Expr  p0 ((BzS_TyId p nm):xs))    :stk)   = parserIter fname tokens ((BzS_Expr p0 ((BzS_ExTypObj p nm ns):xs)):stk)
 
+parserIter fname tokens ((BzS_Expr  p2 [BzS_TyId _ ns])
+                        :(BzS_Token p1 (TkReference _))
+                        :(BzS_Expr  p0 ((BzS_FilterObj p x ((BzS_TyId p' nm):ys)):xs))
+                        :stk)                                           = parserIter fname tokens ((BzS_Expr p0 ((BzS_FilterObj p x ((BzS_ExTypObj p' nm ns):ys)):xs)):stk)
 
+parserIter fname tokens ((BzS_Expr  p1 ((BzS_ArrayObj _ x ys):xs))
+                        :(BzS_Token p0 (TkArrGnrl _))           :stk)   = parserIter fname tokens ((BzS_Expr p0 ((BzS_ArrayObj p0 x (0:ys)):xs)):stk)
 
+parserIter fname tokens ((BzS_Expr  p1 ((BzS_ArrayObj _ x ys):xs))
+                        :(BzS_ArrSzObj p0 sz)                   :stk)   = parserIter fname tokens ((BzS_Expr p0 ((BzS_ArrayObj p0 x (sz:ys)):xs)):stk)
 
+parserIter fname tokens ((BzS_Expr  p1 (x:xs))
+                        :(BzS_Token p0 (TkArrGnrl _))           :stk)   = parserIter fname tokens ((BzS_Expr p0 ((BzS_ArrayObj p0 x [0] ):xs)):stk)
 
+parserIter fname tokens ((BzS_Expr  p1 (x:xs))
+                        :(BzS_ArrSzObj p0 sz)                   :stk)   = parserIter fname tokens ((BzS_Expr p0 ((BzS_ArrayObj p0 x [sz]):xs)):stk)
 
+parserIter fname tokens ((BzS_Expr  p2 [y])
+                        :(BzS_Token p1 (TkFilterSym _))
+                        :(BzS_Expr  p0 ((BzS_FilterObj p x tys):xs))
+                        :stk)                                           = parserIter fname tokens ((BzS_Expr p0 ((BzS_FilterObj p x (y:tys)):xs)):stk)
 
+parserIter fname tokens ((BzS_Expr  p2 [y])
+                        :(BzS_Token p1 (TkFilterSym _))
+                        :(BzS_Expr  p0 (x:xs))                  :stk)   = parserIter fname tokens ((BzS_Expr p0 ((BzS_FilterObj p0 x [y]):xs)):stk)
 
 
-parsePrimitive8 :: ParserOp
-parsePrimitive8 = genericParseOp [mtk_Wildcard] (\tk ->
-  PI_BzSyn $ BzS_Wildcard (spos $ piTok $ head tk))
 
+-- | Hints and Headers
+parserIter fname tokens ((BzS_Token  p1 (TkNewline _))
+                        :f@(BzS_File p0 mname _     incs imps df):stk)  = parserIter fname tokens (f:stk)
 
+parserIter fname tokens (f@(BzS_File p1 mname _     incs imps df)
+                        :(BzS_Token  p0 (TkNewline _))           :stk)  = parserIter fname tokens (f:stk)
 
+parserIter fname tokens ((BzS_Statement p0 (BzS_Expr  _ [
+                                            (BzS_TyId _ impas),
+                                            (BzS_BTId _ "$ImportAs"),
+                                            (BzS_TyId _ imp)])) :stk)   = parserIter fname tokens ((BzS_Import p0 imp impas):stk)
 
+parserIter fname tokens ((BzS_Statement p0 (BzS_Expr  _ [
+                                            (BzS_BTId _ "$ImportAs"),
+                                            (BzS_TyId _ imp)])) :stk)   = Left [ParseErr p0 "Attempting to import module with unspecified namespace."]
 
+parserIter fname tokens ((BzS_Statement p0 (BzS_Expr  _ [_,
+                                            (BzS_BTId _ "$ImportAs"),
+                                            (BzS_TyId _ imp)])) :stk)   = Left [ParseErr p0 "Attempting to import module with invalid namespace."]
 
+parserIter fname tokens ((BzS_Statement p0 (BzS_Expr  _ [
+                                            (BzS_BTId _ "$Import"),
+                                            (BzS_TyId _ imp)])) :stk)   = parserIter fname tokens ((BzS_Import p0 imp imp):stk)
 
+parserIter fname tokens ((BzS_Statement p0 (BzS_Expr  _ [_,
+                                            (BzS_BTId _ "$Import"),
+                                            (BzS_TyId _ imp)])) :stk)   = Left [ParseErr p0 "Invalid import call. Did you mean to use $ImportAs?"]
 
+parserIter fname tokens ((BzS_Statement p0 (BzS_Expr  _ [
+                                            (BzS_TyId _ impas),
+                                            (BzS_BTId _ "$IncludeAs"),
+                                            (BzS_TyId _ imp)])) :stk)   = parserIter fname tokens ((BzS_Include p0 imp impas):stk)
 
+parserIter fname tokens ((BzS_Statement p0 (BzS_Expr  _ [
+                                            (BzS_BTId _ "$Include"),
+                                            (BzS_TyId _ imp)])) :stk)   = parserIter fname tokens ((BzS_Include p0 imp imp):stk)
 
-parsePrimitive9 :: ParserOp
-parsePrimitive9 = genericParseOp [mtk_TupEmpt] (\tk ->
-  PI_BzSyn $ BzS_Nil (spos $ piTok $ head tk))
+parserIter fname tokens ((BzS_Statement p0 (BzS_Expr  _ [
+                                            (BzS_BTId _ "$IncludeAs"),
+                                            (BzS_TyId _ imp)])) :stk)   = Left [ParseErr p0 "Attempting to include module with unspecified namespace."]
 
+parserIter fname tokens ((BzS_Statement p0 (BzS_Expr  _ [_,
+                                            (BzS_BTId _ "$IncludeAs"),
+                                            (BzS_TyId _ imp)])) :stk)   = Left [ParseErr p0 "Attempting to include module with invalid namespace."]
 
+parserIter fname tokens ((BzS_Statement p0 (BzS_Expr  _ [_,
+                                            (BzS_BTId _ "$Include"),
+                                            (BzS_TyId _ imp)])) :stk)   = Left [ParseErr p0 "Invalide include call. Did you mean to use $IncludeAs?"]
 
+parserIter fname tokens ((BzS_Statement p0 (BzS_Expr  _ [
+                                            (BzS_BTId _ "$Module"),
+                                            (BzS_TyId _ mname)])):stk)  = parserIter fname tokens ((BzS_File p0 mname fname [] [] []):stk)
 
+parserIter fname tokens (i@(BzS_Include p1 imp impas)
+                        :(BzS_File p0 mname _       incs imps []):stk)  = parserIter fname tokens ((BzS_File p0 mname fname (i:incs) imps []):stk)
 
+parserIter fname tokens (i@(BzS_Include p1 imp impas)
+                        :(BzS_File p0 mname _       incs imps df):stk)  = Left [ParseErr p1 "Include call found outside of file header."]
 
+parserIter fname tokens (i@(BzS_Import p1 imp impas)
+                        :(BzS_File p0 mname _       incs imps []):stk)  = parserIter fname tokens ((BzS_File p0 mname fname incs (i:imps) []):stk)
 
+parserIter fname tokens (i@(BzS_Import p1 imp impas)
+                        :(BzS_File p0 mname _       incs imps []):stk)  = Left [ParseErr p1 "Import call found outside of file header."]
 
+parserIter fname tokens ((BzS_Calls  p1 calls)
+                        :(BzS_File p0 mname _       incs imps df):stk)  = parserIter fname tokens ((BzS_File p0 mname fname incs imps (calls++df)):stk)
 
+parserIter fname tokens ((BzS_Statement p0 (BzS_Expr _ [
+                                              (BzS_BTId _ h)]))  :stk)  = parserIter fname tokens ((BzS_TyHint p0 BzS_Undefined h BzS_Undefined):stk)
 
-parsePrimitive10 :: ParserOp
-parsePrimitive10 = genericParseOp [mtk_ArrMod] (\tk ->
-  PI_BzSyn $ BzS_MapMod (spos $ piTok $ head tk))
+parserIter fname tokens ((BzS_Statement p0 (BzS_Expr _ [
+                                              xprex,
+                                              (BzS_BTId _ h)]))  :stk)  = parserIter fname tokens ((BzS_TyHint p0 BzS_Undefined h xprex):stk)
 
+parserIter fname tokens ((BzS_Statement p0 (BzS_Expr _ [
+                                              (BzS_BTId _ h),
+                                              xprin         ]))  :stk)  = parserIter fname tokens ((BzS_TyHint p0 xprin h BzS_Undefined):stk)
 
+parserIter fname tokens ((BzS_Statement p0 (BzS_Expr _ [
+                                              xprex,
+                                              (BzS_BTId _ h),
+                                              xprin         ]))  :stk)  = parserIter fname tokens ((BzS_TyHint p0 xprin h xprex):stk)
 
+parserIter fname tokens ((BzS_Statement p0 (BzS_Expr _ [
+                                              (BzS_BId  _ h)]))  :stk)  = parserIter fname tokens ((BzS_FnHint p0 BzS_Undefined h BzS_Undefined):stk)
 
+parserIter fname tokens ((BzS_Statement p0 (BzS_Expr _ [
+                                              xprex,
+                                              (BzS_BId  _ h)]))  :stk)  = parserIter fname tokens ((BzS_FnHint p0 BzS_Undefined h xprex):stk)
 
+parserIter fname tokens ((BzS_Statement p0 (BzS_Expr _ [
+                                              (BzS_BId  _ h),
+                                              xprin         ]))  :stk)  = parserIter fname tokens ((BzS_FnHint p0 xprin h BzS_Undefined):stk)
 
+parserIter fname tokens ((BzS_Statement p0 (BzS_Expr _ [
+                                              xprex,
+                                              (BzS_BId  _ h),
+                                              xprin         ]))  :stk)  = parserIter fname tokens ((BzS_FnHint p0 xprin h xprex):stk)
 
 
 
 
-parsePrimitive11 :: ParserOp
-parsePrimitive11 = genericParseOp [mtk_TyVar] (\tk ->
-  PI_BzSyn $ BzS_TyVar (spos $ piTok $ head tk) (valId $ piTok $ head tk))
+-- | Generic Call Rules
+parserIter fname tokens ((BzS_Token  p1 (TkNewline _))
+                        :(BzS_Calls  p0 calls)                 :stk)    = parserIter fname tokens ((BzS_Calls p0 calls):stk)
 
+parserIter fname tokens ((BzS_Calls  p1 calls1)
+                        :(BzS_Calls  p0 calls0)                :stk)    = parserIter fname tokens ((BzS_Calls p0 (calls1++calls0)):stk)
 
 
 
+-- | Control Logic
 
+parserIter fname [] [item]        = Right item
 
+parserIter fname [] (s:stack)     = Left (ParseErr (pos s) ("Parser could not consume entire file.\n"):(parserErr fname (L.reverse (s:stack)) []))
 
+parserIter fname (t:tokens) stack = parserIter fname tokens (t:stack)
 
 
 
-parsePrimitives :: Parser
-parsePrimitives = Parser (\ps ->
-  let parseFn = [parsePrimitive0,  parsePrimitive1,  parsePrimitive2,  parsePrimitive3,
-                 parsePrimitive4,  parsePrimitive5,  parsePrimitive6,  parsePrimitive7,
-                 parsePrimitive8,  parsePrimitive9,  parsePrimitive10, parsePrimitive11]
-  in case tryParsers ps parseFn of
-    Just pst -> Right pst
-    Nothing  -> Left []  )
 
 
 
@@ -208,1678 +433,68 @@ parsePrimitives = Parser (\ps ->
 
 
 
+parserErr :: String -> [BzoSyntax] -> [BzoSyntax] -> [BzoErr]
 
 
+-- | Nothing to Parse?
 
-parseCompound0 :: ParserOp
-parseCompound0 = genericParseOp [MP_Item, mtk_SepExpr] (\psi ->
-  PI_CPX $ BzS_Expr (pos $ piSyn $ head psi) [piSyn $ head psi])
+parserErr fname [] [] = [ParseErr (BzoPos 1 1 fname) "Nothing to Parse?"]
 
+-- | Errors
 
+parserErr fname (n:nxt) stk@((BzS_Token _ (TkSepPoly p2))
+                             :x@(BzS_Expr  p1 _)
+                             :(BzS_CmpdHead p0 xs):_)                = (ParseErr p0 "Unexpected comma (,) in compound tuple."    ):(parserErr fname nxt (n:stk))
 
+parserErr fname (n:nxt) stk@((BzS_Token _ (TkSepExpr p2))
+                             :x@(BzS_Expr  p1 _)
+                             :(BzS_PolyHead p0 xs):_)                = (ParseErr p0 "Unexpected period (.) in polymorphic tuple."):(parserErr fname nxt (n:stk))
 
+parserErr fname (n:nxt) stk@((BzS_Calls p1 calls1)
+                             :xpr:_)                                 = (ParseErr (pos xpr) "Unexpected random expression among calls."):(parserErr fname nxt (n:stk))
 
+parserErr fname (n:nxt) stk@((BzS_Token _ (TkEndDat   p2))
+                             :(BzS_Expr  _ [BzS_Flt    p1 num])
+                             :(BzS_Token _ (TkStartDat p0)):_)       = (ParseErr p1 "Floats cannot be used to denote the size of an array."):(parserErr fname nxt (n:stk))
 
+parserErr fname (n:nxt) stk@((BzS_Token _ (TkEndDat   p2))
+                             :(BzS_Expr  _ [BzS_Str    p1 str])
+                             :(BzS_Token _ (TkStartDat p0)):_)       = (ParseErr p1 "Strings cannot be used to denote the size of an array."):(parserErr fname nxt (n:stk))
 
+parserErr fname (n:nxt) stk@((BzS_Token _ (TkEndDat   p2))
+                             :(BzS_Expr  p x)
+                             :(BzS_Token _ (TkStartDat p0)):_)       = (ParseErr p "Only integers can be used to denote the size of an array."):(parserErr fname nxt (n:stk))
 
+parserErr fname (n:nxt) stk@((BzS_Token p1 (TkArrMod _))
+                             :_)                                     = (ParseErr p1 "Unexpected array modifier (..)."):(parserErr fname nxt (n:stk))
 
+parserErr fname (n:nxt) stk@((BzS_Token p1 (TkLambdaSym _))
+                             :_)                                     = (ParseErr p1 "Unexpected semicolon (;)."):(parserErr fname nxt (n:stk))
 
-parseCompound1 :: ParserOp
-parseCompound1 = genericParseOp [MP_Item, MP_Cpx] (\psi ->
-  PI_CPX $ BzS_Expr (pos $ piSyn $ head psi) ([piSyn $ head psi] ++ (exprs $ piSyn $ (psi !! 1))) )
+parserErr fname (n:nxt) stk@((BzS_Token p1 (TkDefine _))
+                             :_)                                     = (ParseErr p1 "Unexpected definition symbol (::)."):(parserErr fname nxt (n:stk))
 
+parserErr fname (n:nxt) stk@((BzS_Token p1 (TkReference _))
+                             :_)                                     = (ParseErr p1 "Unexpected reference symbol (@)."):(parserErr fname nxt (n:stk))
 
+parserErr fname (n:nxt) stk@((BzS_Token p2 (TkNewline _))
+                             :(BzS_FnHead p1 _ _ _)
+                             :_)                                     = (ParseErr p2 "Newlines are not allowed immediated after a definition symbol (::)."):(parserErr fname nxt (n:stk))
 
+parserErr fname (n:nxt) stk@((BzS_Token p2 (TkNewline _))
+                             :(BzS_TyHead p1 _ _)
+                             :_)                                     = (ParseErr p2 "Newlines are not allowed immediated after a definition symbol (::)."):(parserErr fname nxt (n:stk))
 
+parserErr fname (n:nxt) stk@(_
+                             :(BzS_FnHead p1 _ _ _)
+                             :_)                                     = (ParseErr p1 "Improper definition of function or function type."):(parserErr fname nxt (n:stk))
 
+parserErr fname (n:nxt) stk@(_
+                             :(BzS_TyHead p1 _ _)
+                             :_)                                     = (ParseErr p1 "Improper definition of type."):(parserErr fname nxt (n:stk))
 
+-- | Control Logic
 
+parserErr fname [] (s:stack)     = []
 
-
-
-parseCompound2 :: ParserOp
-parseCompound2 = genericParseOp [MP_Cpx, MP_Cpx] (\psi ->
-  PI_CPXS $ [piSyn $ head psi] ++ [piSyn $ (psi !! 1)] )
-
-
-
-
-
-
-
-
-
-
-parseCompound3 :: ParserOp
-parseCompound3 = genericParseOp [MP_Cpxs, MP_Cpx] (\psi ->
-  PI_CPXS $ (piSyns $ (head psi)) ++ [piSyn $ psi !! 1] )
-
-
-
-
-
-
-
-
-
-
-parseCompound4 :: ParserOp
-parseCompound4 = genericParseOp [mtk_StartTup, MP_Cpx, mtk_EndTup] (\psi ->
-  PI_BzSyn $ BzS_Cmpd (spos $ piTok $ head psi) [piSyn $ psi !! 1] )
-
-
-
-
-
-
-
-
-
-
-parseCompound5 :: ParserOp
-parseCompound5 = genericParseOp [mtk_StartTup, MP_Cpxs, mtk_EndTup] (\psi ->
-  PI_BzSyn $ BzS_Cmpd (spos $ piTok $ head psi) (piSyns $ psi !! 1) )
-
-
-
-
-
-
-
-
-
-
-parseCompound6 :: ParserOp
-parseCompound6 = genericParseOp [mtk_StartTup, MP_Cpxs, MP_Tx] (\psi ->
-  PI_BzSyn $ BzS_Cmpd (spos $ piTok $ head psi) ((piSyns $ psi !! 1) ++ [piSyn $ psi !! 2]) )
-
-
-
-
-
-
-
-
-
-
-parseCompound7 :: ParserOp
-parseCompound7 = genericParseOp [mtk_StartTup, MP_Cpx, MP_Tx] (\psi ->
-  PI_BzSyn $ BzS_Cmpd (spos $ piTok $ head psi) ([piSyn $ psi !! 1] ++ [piSyn $ psi !! 2]) )
-
-
-
-
-
-
-
-
-
-
-parseCompound8 :: ParserOp
-parseCompound8 = genericParseOp [MP_Cpxs, mtk_Newline, MP_Cpx] (\psi ->
-  PI_CPXS $ [piSyn $ psi !! 2] ++ (piSyns $ (head psi)) )
-
-
-
-
-
-
-
-
-
-
-parseCompound9 :: ParserOp
-parseCompound9 = genericParseOp [MP_Cpx, mtk_Newline, MP_Cpx] (\psi ->
-  PI_CPXS $ [piSyn $ head psi] ++ [piSyn $ (psi !! 2)] )
-
-
-
-
-
-
-
-
-
-
-parseCompound10 :: ParserOp
-parseCompound10 = genericParseOp [mtk_StartTup, MP_Cpx, mtk_Newline, MP_Tx] (\psi ->
-  PI_BzSyn $ BzS_Cmpd (spos $ piTok $ head psi) ([piSyn $ psi !! 1] ++ [piSyn $ psi !! 3]) )
-
-
-
-
-
-
-
-
-
-
-parseCompound11 :: ParserOp
-parseCompound11 = genericParseOp [mtk_StartTup, MP_Cpxs, mtk_Newline, MP_Tx] (\psi ->
-  PI_BzSyn $ BzS_Cmpd (spos $ piTok $ head psi) ((piSyns $ psi !! 1) ++ [piSyn $ psi !! 3]) )
-
-
-
-
-
-
-
-
-
-
-parseCompound12 :: ParserOp
-parseCompound12 = genericParseOp [mtk_StartTup, MP_Cpxs, MP_Expr, mtk_EndTup] (\psi ->
-  PI_BzSyn $ BzS_Cmpd (spos $ piTok $ head psi) ((piSyns $ psi !! 1) ++ [piSyn $ psi !! 2]) )
-
-
-
-
-
-
-
-
-
-
-parseCompound13 :: ParserOp
-parseCompound13 = genericParseOp [mtk_StartTup, MP_Cpx, MP_Expr, mtk_EndTup] (\psi ->
-  PI_BzSyn $ BzS_Cmpd (spos $ piTok $ head psi) ([piSyn $ psi !! 1] ++ [piSyn $ psi !! 2]) )
-
-
-
-
-
-
-
-
-
-
-parseCompound14 :: ParserOp
-parseCompound14 = genericParseOp [mtk_StartTup, MP_Cpx, mtk_Newline, MP_Expr, mtk_EndTup] (\psi ->
-  PI_BzSyn $ BzS_Cmpd (spos $ piTok $ head psi) ([piSyn $ psi !! 1] ++ [piSyn $ psi !! 3]) )
-
-
-
-
-
-
-
-
-
-
-parseCompound15 :: ParserOp
-parseCompound15 = genericParseOp [mtk_StartTup, MP_Cpxs, mtk_Newline, MP_Expr, mtk_EndTup] (\psi ->
-  PI_BzSyn $ BzS_Cmpd (spos $ piTok $ head psi) ((piSyns $ psi !! 1) ++ [piSyn $ psi !! 3]) )
-
-
-
-
-
-
-
-
-
-
-parseCompoundErr0 :: ParserOp
-parseCompoundErr0 = genericParseOp [MP_Cpx, MP_Plx] (\psi -> PI_Err $ ParseErr (getPIPos $ head psi) "Invalid combination of polymorphic and compound expressions.")
-
-
-
-
-
-
-
-
-
-
-parseCompoundErr1 :: ParserOp
-parseCompoundErr1 = genericParseOp [MP_Cpxs, MP_Plx] (\psi -> PI_Err $ ParseErr (getPIPos $ head psi) "Invalid combination of polymorphic and compound expressions.")
-
-
-
-
-
-
-
-
-
-
-parseCompoundErr2 :: ParserOp
-parseCompoundErr2 = genericParseOp [MP_Cpx, MP_Plxs] (\psi -> PI_Err $ ParseErr (getPIPos $ head psi) "Invalid combination of polymorphic and compound expressions.")
-
-
-
-
-
-
-
-
-
-
-parseCompoundErr3 :: ParserOp
-parseCompoundErr3 = genericParseOp [MP_Cpxs, MP_Plxs] (\psi -> PI_Err $ ParseErr (getPIPos $ head psi) "Invalid combination of polymorphic and compound expressions.")
-
-
-
-
-
-
-
-
-
-
-parseCompoundErr4 :: ParserOp
-parseCompoundErr4 = genericParseOp [MP_Cpx, mtk_Newline, MP_Plx] (\psi -> PI_Err $ ParseErr (getPIPos $ head psi) "Invalid combination of polymorphic and compound expressions.")
-
-
-
-
-
-
-
-
-
-
-parseCompoundErr5 :: ParserOp
-parseCompoundErr5 = genericParseOp [MP_Cpxs, mtk_Newline, MP_Plx] (\psi -> PI_Err $ ParseErr (getPIPos $ head psi) "Invalid combination of polymorphic and compound expressions.")
-
-
-
-
-
-
-
-
-
-
-parseCompoundErr6 :: ParserOp
-parseCompoundErr6 = genericParseOp [MP_Cpx, mtk_Newline, MP_Plxs] (\psi -> PI_Err $ ParseErr (getPIPos $ head psi) "Invalid combination of polymorphic and compound expressions.")
-
-
-
-
-
-
-
-
-
-
-parseCompoundErr7 :: ParserOp
-parseCompoundErr7 = genericParseOp [MP_Cpxs, mtk_Newline, MP_Plxs] (\psi -> PI_Err $ ParseErr (getPIPos $ head psi) "Invalid combination of polymorphic and compound expressions.")
-
-
-
-
-
-
-
-
-
-
-parseCompound :: Parser
-parseCompound = Parser (\ps ->
-  let parseFn = [parseCompound0,  parseCompound1,  parseCompound2,
-                 parseCompound3,  parseCompound4,  parseCompound5,
-                 parseCompound6,  parseCompound7,  parseCompound8,
-                 parseCompound9,  parseCompound10, parseCompound11,
-                 parseCompound12, parseCompound13, parseCompound14,
-                 parseCompound15]
-      errFn = [parseCompoundErr0, parseCompoundErr1, parseCompoundErr2, parseCompoundErr3,
-               parseCompoundErr4, parseCompoundErr5, parseCompoundErr6, parseCompoundErr7]
-  in case (tryParsers ps parseFn, tryParsers ps errFn) of
-    (Just ps,      _ ) -> Right ps
-    (Nothing, Nothing) -> Left []
-    (Nothing, Just er) -> Left [piErr $ head $ stack er])
-
-
-
-
-
-
-
-
-
-
-parsePolymorph0 :: ParserOp
-parsePolymorph0 = genericParseOp [MP_Item, mtk_SepPoly] (\psi ->
-  PI_PLX $ BzS_Expr (pos $ piSyn $ head psi) [piSyn $ head psi])
-
-
-
-
-
-
-
-
-
-
-parsePolymorph1 :: ParserOp
-parsePolymorph1 = genericParseOp [MP_Item, MP_Plx] (\psi ->
-  PI_PLX $ BzS_Expr (pos $ piSyn $ head psi) ([piSyn $ head psi] ++ (exprs $ piSyn $ (psi !! 1))) )
-
-
-
-
-
-
-
-
-
-
-parsePolymorph2 :: ParserOp
-parsePolymorph2 = genericParseOp [MP_Plx, MP_Plx] (\psi ->
-  PI_PLXS $ [piSyn $ head psi] ++ [piSyn $ (psi !! 1)] )
-
-
-
-
-
-
-
-
-
-
-parsePolymorph3 :: ParserOp
-parsePolymorph3 = genericParseOp [MP_Plxs, MP_Plx] (\psi ->
-  PI_PLXS $ (piSyns $ (head psi)) ++ [piSyn $ psi !! 1] )
-
-
-
-
-
-
-
-
-
-
-parsePolymorph4 :: ParserOp
-parsePolymorph4 = genericParseOp [mtk_StartTup, MP_Plx, mtk_EndTup] (\psi ->
-  PI_BzSyn $ BzS_Poly (spos $ piTok $ head psi) [piSyn $ psi !! 1] )
-
-
-
-
-
-
-
-
-
-
-parsePolymorph5 :: ParserOp
-parsePolymorph5 = genericParseOp [mtk_StartTup, MP_Plxs, mtk_EndTup] (\psi ->
-  PI_BzSyn $ BzS_Poly (spos $ piTok $ head psi) (piSyns $ psi !! 1) )
-
-
-
-
-
-
-
-
-
-
-parsePolymorph6 :: ParserOp
-parsePolymorph6 = genericParseOp [mtk_StartTup, MP_Plxs, MP_Tx] (\psi ->
-  PI_BzSyn $ BzS_Poly (spos $ piTok $ head psi) ((piSyns $ psi !! 1) ++ [piSyn $ psi !! 2]) )
-
-
-
-
-
-
-
-
-
-
-parsePolymorph7 :: ParserOp
-parsePolymorph7 = genericParseOp [mtk_StartTup, MP_Plx, MP_Tx] (\psi ->
-  PI_BzSyn $ BzS_Poly (spos $ piTok $ head psi) ([piSyn $ psi !! 1] ++ [piSyn $ psi !! 2]) )
-
-
-
-
-
-
-
-
-
-
-parsePolymorph8 :: ParserOp
-parsePolymorph8 = genericParseOp [MP_Plxs, mtk_Newline, MP_Plx] (\psi ->
-  PI_PLXS $ [piSyn $ psi !! 2] ++ (piSyns $ (head psi)) )
-
-
-
-
-
-
-
-
-
-
-parsePolymorph9 :: ParserOp
-parsePolymorph9 = genericParseOp [MP_Plx, mtk_Newline, MP_Plx] (\psi ->
-  PI_PLXS $ [piSyn $ head psi] ++ [piSyn $ (psi !! 2)] )
-
-
-
-
-
-
-
-
-
-
-parsePolymorph10 :: ParserOp
-parsePolymorph10 = genericParseOp [mtk_StartTup, MP_Plx, mtk_Newline, MP_Tx] (\psi ->
-  PI_BzSyn $ BzS_Poly (spos $ piTok $ head psi) ([piSyn $ psi !! 1] ++ [piSyn $ psi !! 3]) )
-
-
-
-
-
-
-
-
-
-
-parsePolymorph11 :: ParserOp
-parsePolymorph11 = genericParseOp [mtk_StartTup, MP_Plxs, mtk_Newline, MP_Tx] (\psi ->
-  PI_BzSyn $ BzS_Poly (spos $ piTok $ head psi) ((piSyns $ psi !! 1) ++ [piSyn $ psi !! 3]) )
-
-
-
-
-
-
-
-
-
-
-parsePolymorph12 :: ParserOp
-parsePolymorph12 = genericParseOp [mtk_StartTup, MP_Plxs, MP_Expr, mtk_EndTup] (\psi ->
-  PI_BzSyn $ BzS_Poly (spos $ piTok $ head psi) ((piSyns $ psi !! 1) ++ [piSyn $ psi !! 2]) )
-
-
-
-
-
-
-
-
-
-
-parsePolymorph13 :: ParserOp
-parsePolymorph13 = genericParseOp [mtk_StartTup, MP_Plx, MP_Expr, mtk_EndTup] (\psi ->
-  PI_BzSyn $ BzS_Poly (spos $ piTok $ head psi) ([piSyn $ psi !! 1] ++ [piSyn $ psi !! 2]) )
-
-
-
-
-
-
-
-
-
-
-parsePolymorph14 :: ParserOp
-parsePolymorph14 = genericParseOp [mtk_StartTup, MP_Plx, mtk_Newline, MP_Expr, mtk_EndTup] (\psi ->
-  PI_BzSyn $ BzS_Poly (spos $ piTok $ head psi) ([piSyn $ psi !! 1] ++ [piSyn $ psi !! 3]) )
-
-
-
-
-
-
-
-
-
-
-parsePolymorph15 :: ParserOp
-parsePolymorph15 = genericParseOp [mtk_StartTup, MP_Plxs, mtk_Newline, MP_Expr, mtk_EndTup] (\psi ->
-  PI_BzSyn $ BzS_Poly (spos $ piTok $ head psi) ((piSyns $ psi !! 1) ++ [piSyn $ psi !! 3]) )
-
-
-
-
-
-
-
-
-
-
-parsePolymorphErr0 :: ParserOp
-parsePolymorphErr0 = genericParseOp [MP_Plx, MP_Cpx] (\psi -> PI_Err $ ParseErr (getPIPos $ head psi) "Invalid combination of polymorphic and compound expressions.")
-
-
-
-
-
-
-
-
-
-
-parsePolymorphErr1 :: ParserOp
-parsePolymorphErr1 = genericParseOp [MP_Plxs, MP_Cpx] (\psi -> PI_Err $ ParseErr (getPIPos $ head psi) "Invalid combination of polymorphic and compound expressions.")
-
-
-
-
-
-
-
-
-
-
-parsePolymorphErr2 :: ParserOp
-parsePolymorphErr2 = genericParseOp [MP_Plx, MP_Cpxs] (\psi -> PI_Err $ ParseErr (getPIPos $ head psi) "Invalid combination of polymorphic and compound expressions.")
-
-
-
-
-
-
-
-
-
-
-parsePolymorphErr3 :: ParserOp
-parsePolymorphErr3 = genericParseOp [MP_Plxs, MP_Cpxs] (\psi -> PI_Err $ ParseErr (getPIPos $ head psi) "Invalid combination of polymorphic and compound expressions.")
-
-
-
-
-
-
-
-
-
-
-parsePolymorphErr4 :: ParserOp
-parsePolymorphErr4 = genericParseOp [MP_Plx, mtk_Newline, MP_Cpx] (\psi -> PI_Err $ ParseErr (getPIPos $ head psi) "Invalid combination of polymorphic and compound expressions.")
-
-
-
-
-
-
-
-
-
-
-parsePolymorphErr5 :: ParserOp
-parsePolymorphErr5 = genericParseOp [MP_Plxs, mtk_Newline, MP_Cpx] (\psi -> PI_Err $ ParseErr (getPIPos $ head psi) "Invalid combination of polymorphic and compound expressions.")
-
-
-
-
-
-
-
-
-
-
-parsePolymorphErr6 :: ParserOp
-parsePolymorphErr6 = genericParseOp [MP_Plx, mtk_Newline, MP_Cpxs] (\psi -> PI_Err $ ParseErr (getPIPos $ head psi) "Invalid combination of polymorphic and compound expressions.")
-
-
-
-
-
-
-
-
-
-
-parsePolymorphErr7 :: ParserOp
-parsePolymorphErr7 = genericParseOp [MP_Plxs, mtk_Newline, MP_Cpxs] (\psi -> PI_Err $ ParseErr (getPIPos $ head psi) "Invalid combination of polymorphic and compound expressions.")
-
-
-
-
-
-
-
-
-
-
-parsePolymorph :: Parser
-parsePolymorph = Parser (\ps ->
-  let parseFn = [parsePolymorph0,  parsePolymorph1,  parsePolymorph2,
-                 parsePolymorph3,  parsePolymorph4,  parsePolymorph5,
-                 parsePolymorph6,  parsePolymorph7,  parsePolymorph8,
-                 parsePolymorph9,  parsePolymorph10, parsePolymorph11,
-                 parsePolymorph12, parsePolymorph13, parsePolymorph14,
-                 parsePolymorph15]
-      errFn   = [parsePolymorphErr0, parsePolymorphErr1, parsePolymorphErr2, parsePolymorphErr3,
-                 parsePolymorphErr4, parsePolymorphErr5, parsePolymorphErr6, parsePolymorphErr7]
-  in case (tryParsers ps parseFn, tryParsers ps errFn) of
-    (Just ps,      _ ) -> Right ps
-    (Nothing, Nothing) -> Left []
-    (Nothing, Just er) -> Left [piErr $ head $ stack er])
-
-
-
-
-
-
-
-
-
-
-parseTupleEtc0 :: ParserOp
-parseTupleEtc0 = genericParseOp [MP_Item, mtk_EndTup] (\psi ->
-  PI_TX $ BzS_Expr (pos $ piSyn $ head psi) [piSyn $ head psi] )
-
-
-
-
-
-
-
-
-
-
-parseTupleEtc1 :: ParserOp
-parseTupleEtc1 = genericParseOp [MP_Item, MP_Tx] (\psi ->
-  PI_TX $ BzS_Expr (pos $ piSyn $ head psi) ([piSyn $ head psi] ++ (exprs $ piSyn $ psi !! 1)) )
-
-
-
-
-
-
-
-
-
-
-parseTupleEtc2 :: ParserOp
-parseTupleEtc2 = genericParseOp [mtk_StartTup, MP_Tx] (\psi ->
-  PI_BzSyn $ BzS_Box (spos $ piTok $ head psi) (piSyn $ psi !! 1) )
-
-
-
-
-
-
-
-
-
-
-parseTupleEtc3 :: ParserOp
-parseTupleEtc3 = genericParseOp [mtk_StartTup, MP_FnTy, mtk_EndTup] (\psi ->
-  PI_BzSyn $ BzS_Box (spos $ piTok $ head psi) (piSyn $ psi !! 1) )
-
-
-
-
-
-
-
-
-
-
-parseTupleEtc4 :: ParserOp
-parseTupleEtc4 = genericParseOp [MP_Item, mtk_Newline, mtk_EndTup] (\psi ->
-  PI_TX $ BzS_Expr (pos $ piSyn $ head psi) [piSyn $ head psi] )
-
-
-
-
-
-
-
-
-
-
-parseTupleEtc :: Parser
-parseTupleEtc = Parser (\ps ->
-  let parseFn = [parseTupleEtc0, parseTupleEtc1, parseTupleEtc2, parseTupleEtc3,
-                 parseTupleEtc4]
-  in case tryParsers ps parseFn of
-    Just ps -> Right ps
-    Nothing -> Left  [] )
-
-
-
-
-
-
-
-
-
-
-parseSimplify0 :: ParserOp
-parseSimplify0 = genericParseOp [mtk_Newline, mtk_EndTup] (\psi ->
-  PI_Token $ TkEndTup (spos $ piTok $ psi !! 1) )
-
-
-
-
-
-
-
-
-
-
-parseSimplify1 :: ParserOp
-parseSimplify1 = genericParseOp [mtk_StartTup, mtk_Newline] (\psi ->
-  PI_Token $ TkStartTup (spos $ piTok $ psi !! 0) )
-
-
-
-
-
-
-
-
-
-
-parseSimplify2 :: ParserOp
-parseSimplify2 = genericParseOp [mtk_StartTup, mtk_EndTup] (\psi ->
-  PI_Token $ TkTupEmpt (spos $ piTok $ psi !! 1) )
-
-
-
-
-
-
-
-
-
-
-parseSimplify3 :: ParserOp
-parseSimplify3 = genericParseOp [mtk_StartTup, mtk_Newline, mtk_EndTup] (\psi ->
-  PI_Token $ TkTupEmpt (spos $ piTok $ psi !! 0) )
-
-
-
-
-
-
-
-
-
-
-parseSimplify4 :: ParserOp
-parseSimplify4 = genericParseOp [mtk_StartDat, mtk_EndDat] (\psi ->
-  PI_Token $ TkArrGnrl (spos $ piTok $ psi !! 0) )
-
-
-
-
-
-
-
-
-
-
-parseSimplify5 :: ParserOp
-parseSimplify5 = genericParseOp [mtk_StartDat, mtk_Newline, mtk_EndDat] (\psi ->
-  PI_Token $ TkArrGnrl (spos $ piTok $ psi !! 0) )
-
-
-
-
-
-
-
-
-
-
-parseSimplify6 :: ParserOp
-parseSimplify6 = genericParseOp [mtk_StartDat, mtk_Newline] (\psi ->
-  PI_Token $ TkStartDat (spos $ piTok $ psi !! 0) )
-
-
-
-
-
-
-
-
-
-
-parseSimplify7 :: ParserOp
-parseSimplify7 = genericParseOp [mtk_Newline, mtk_EndDat] (\psi ->
-  PI_Token $ TkEndDat (spos $ piTok $ psi !! 1) )
-
-
-
-
-
-
-
-
-
-
-parseSimplify8 :: ParserOp
-parseSimplify8 = genericParseOp [mtk_StartDo, mtk_Newline] (\psi ->
-  PI_Token $ TkStartDo (spos $ piTok $ psi !! 0) )
-
-
-
-
-
-
-
-
-
-
-parseSimplify9 :: ParserOp
-parseSimplify9 = genericParseOp [mtk_Newline, mtk_EndDo] (\psi ->
-  PI_Token $ TkEndDo (spos $ piTok $ psi !! 1) )
-
-
-
-
-
-
-
-
-
-
-parseSimplify :: Parser
-parseSimplify = Parser (\ps ->
-  let parseFn = [parseSimplify0, parseSimplify1, parseSimplify2, parseSimplify3,
-                 parseSimplify4, parseSimplify5, parseSimplify6, parseSimplify7,
-                 parseSimplify8, parseSimplify9 ]
-  in case tryParsers ps parseFn of
-    Just pst -> Right pst
-    Nothing  -> Left [] )
-
-
-
-
-
-
-
-
-
-
-parseExpr0 :: ParserOp
-parseExpr0 = genericParseOp [MP_Item, mtk_Newline] (\psi ->
-  PI_BzSyn $ BzS_Expr (pos $ piSyn $ head psi) [piSyn $ head psi] )
-
-
-
-
-
-
-
-
-
-
-parseExpr1 :: ParserOp
-parseExpr1 = genericParseOp [MP_Item, MP_Expr] (\psi ->
-  PI_BzSyn $ BzS_Expr (pos $ piSyn $ head psi) ([piSyn $ head psi] ++ (exprs $ piSyn $ psi !! 1)) )
-
-
-
-
-
-
-
-
-
-
-parseExpr :: Parser
-parseExpr = Parser (\ps ->
-  let parseFn = [parseExpr0, parseExpr1]
-  in case tryParsers ps parseFn of
-    Just pst -> Right pst
-    Nothing  -> Left [] )
-
-
-
-
-
-
-
-
-
-
-parseFilter :: ParserOp
-parseFilter = genericParseOp [mtk_FilterSym, MP_Item] (\psi ->
-  PI_BzSyn $ BzS_Filter (spos $ piTok $ head psi) (piSyn $ psi !! 1) )
-
-
-
-
-
-
-
-
-
-
-parseName :: ParserOp
-parseName = genericParseOp [mtk_Reference, MP_TId] (\psi ->
-  PI_BzSyn $ BzS_Namespace (spos $ piTok $ head psi) (sid $ piSyn $ psi !! 1) )
-
-
-
-
-
-
-
-
-
-
-parseCurry :: ParserOp
-parseCurry = genericParseOp [MP_Item, mtk_CurrySym] (\psi ->
-  PI_BzSyn $ BzS_Curry (pos $ piSyn $ head psi) (piSyn $ head psi))
-
-
-
-
-
-
-
-
-
-
-parseNameErr :: ParserOp
-parseNameErr = genericParseOp [mtk_Reference, MP_Any] (\psi -> PI_Err $ ParseErr (getPIPos $ head psi) "Invalid Namespace Identifier" )
-
-
-
-
-
-
-
-
-
-
-parseCurryErr :: ParserOp
-parseCurryErr = genericParseOp [mtk_CurrySym] (\psi -> PI_Err $ ParseErr (getPIPos $ head psi) "Invalid Syntax with Curry Operator")
-
-
-
-
-
-
-
-
-
-
-parseMisc :: Parser
-parseMisc = Parser (\ps ->
-  let parseFn = [parseFilter, parseName, parseCurry]
-      errFn   = [parseNameErr, parseCurryErr]
-  in case (tryParsers ps parseFn, tryParsers ps errFn) of
-    (Just pst,      _ ) -> Right pst
-    (Nothing , Nothing) -> Left []
-    (Nothing , Just er) -> Left [piErr $ head $ stack er] )
-
-
-
-
-
-
-
-
-
-
-parseTypeCall0 :: ParserOp
-parseTypeCall0 = genericParseOp [MP_Tup, MP_TId, mtk_Define, MP_Expr] (\psi ->
-  PI_BzSyn $ BzS_TypDef (pos $ piSyn $ head psi) (piSyn $ head psi) (sid $ piSyn $ psi !! 1) (piSyn $ psi !! 3) )
-
-
-
-
-
-
-
-
-
-
-parseTypeCall1 :: ParserOp
-parseTypeCall1 = genericParseOp [MP_TId, mtk_Define, MP_Expr] (\psi ->
-  PI_BzSyn $ BzS_TypDef (pos $ piSyn $ head psi) (BzS_Undefined) (sid $ piSyn $ head psi) (piSyn $ psi !! 2) )
-
-
-
-
-
-
-
-
-
-
-parseTypeCallErr :: ParserOp    -- | Not currently working. Not sure why
-parseTypeCallErr = genericParseOp [MP_Any, MP_TId, mtk_Define, MP_Expr] (\psi ->
-  PI_Err $ ParseErr (getPIPos $ head psi) "Invalid Parameter to Type Definition" )
-
-
-
-
-
-
-
-
-
-
-parseTypeCall :: Parser
-parseTypeCall = Parser (\ps ->
-  let parseFn = [parseTypeCall0, parseTypeCall1]
-      errFn   = [parseTypeCallErr]
-  in case (tryParsers ps parseFn, tryParsers ps errFn) of
-    (Just pst,      _ ) -> Right pst
-    (Nothing , Nothing) -> Left []
-    (Nothing , Just er) -> Left [piErr $ head $ stack er] )
-
-
-
-
-
-
-
-
-
-
-parseFnCall0 :: ParserOp
-parseFnCall0 = genericParseOp [MP_Tup, MP_Id, MP_Tup, mtk_Define, MP_Expr] (\psi ->
-  PI_BzSyn $ BzS_FunDef (pos $ piSyn $ head psi) (piSyn $ head psi) (sid $ piSyn $ psi !! 1) (piSyn $ psi !! 2) (piSyn $ psi !! 4) )
-
-
-
-
-
-
-
-
-
-
-parseFnCall1 :: ParserOp
-parseFnCall1 = genericParseOp [MP_Tup, MP_Id, mtk_Define, MP_Expr] (\psi ->
-  PI_BzSyn $ BzS_FunDef (pos $ piSyn $ head psi) (piSyn $ head psi) (sid $ piSyn $ psi !! 1) (BzS_Undefined) (piSyn $ psi !! 3) )
-
-
-
-
-
-
-
-
-
-
-parseFnCall2 :: ParserOp
-parseFnCall2 = genericParseOp [MP_Id, MP_Tup, mtk_Define, MP_Expr] (\psi ->
-  PI_BzSyn $ BzS_FunDef (pos $ piSyn $ head psi) (BzS_Undefined) (sid $ piSyn $ head psi) (piSyn $ psi !! 1) (piSyn $ psi !! 3) )
-
-
-
-
-
-
-
-
-
-
-parseFnCall3 :: ParserOp
-parseFnCall3 = genericParseOp [MP_Id, mtk_Define, MP_Expr] (\psi ->
-  PI_BzSyn $ BzS_FunDef (pos $ piSyn $ head psi) (BzS_Undefined) (sid $ piSyn $ head psi) (BzS_Undefined) (piSyn $ psi !! 2) )
-
-
-
-
-
-
-
-
-
-
-parseFnCall4 :: ParserOp
-parseFnCall4 = genericParseOp [MP_Tup, MP_Id, MP_Tup, mtk_Define, MP_Blck, mtk_Newline] (\psi ->
-  PI_BzSyn $ BzS_FunDef (pos $ piSyn $ head psi) (piSyn $ head psi) (sid $ piSyn $ psi !! 1) (piSyn $ psi !! 2) (piSyn $ psi !! 4) )
-
-
-
-
-
-
-
-
-
-
-parseFnCall5 :: ParserOp
-parseFnCall5 = genericParseOp [MP_Tup, MP_Id, mtk_Define, MP_Blck, mtk_Newline] (\psi ->
-  PI_BzSyn $ BzS_FunDef (pos $ piSyn $ head psi) (piSyn $ head psi) (sid $ piSyn $ psi !! 1) (BzS_Undefined) (piSyn $ psi !! 3) )
-
-
-
-
-
-
-
-
-
-
-parseFnCall6 :: ParserOp
-parseFnCall6 = genericParseOp [MP_Id, MP_Tup, mtk_Define, MP_Blck, mtk_Newline] (\psi ->
-  PI_BzSyn $ BzS_FunDef (pos $ piSyn $ head psi) (BzS_Undefined) (sid $ piSyn $ head psi) (piSyn $ psi !! 1) (piSyn $ psi !! 3) )
-
-
-
-
-
-
-
-
-
-
-parseFnCall7 :: ParserOp
-parseFnCall7 = genericParseOp [MP_Id, mtk_Define, MP_Blck, mtk_Newline] (\psi ->
-  PI_BzSyn $ BzS_FunDef (pos $ piSyn $ head psi) (BzS_Undefined) (sid $ piSyn $ head psi) (BzS_Undefined) (piSyn $ psi !! 2) )
-
-
-
-
-
-
-
-
-
-
-parseFnCall :: Parser
-parseFnCall = Parser (\ps ->
-  let parseFn = [parseFnCall0, parseFnCall1, parseFnCall2, parseFnCall3,
-                 parseFnCall4, parseFnCall5, parseFnCall6, parseFnCall7]
-  in case tryParsers ps parseFn of
-    Just pst -> Right pst
-    Nothing  -> Left [] )
-
-
-
-
-
-
-
-
-
-
-parseModifiers0 :: ParserOp
-parseModifiers0 = genericParseOp [mtk_ArrGnrl] (\psi ->
-  PI_BzSyn $ BzS_ArrGenMod (spos $ piTok $ head psi) )
-
-
-
-
-
-
-
-
-
-
-parseModifiers1 :: ParserOp
-parseModifiers1 = genericParseOp [mtk_StartDat, MP_Int, mtk_EndDat] (\psi ->
-  PI_BzSyn $ BzS_ArrSzMod (spos $ piTok $ head psi) (sint $ piSyn $ psi !! 1) )
-
-
-
-
-
-
-
-
-
-
-parseModifiers2 :: ParserOp
-parseModifiers2 = genericParseOp [MP_Item, mtk_EndDat] (\psi ->
-  PI_RX $ BzS_Expr (pos $ piSyn $ head psi) [piSyn $ head psi] )
-
-
-
-
-
-
-
-
-
-
-parseModifiers3 :: ParserOp
-parseModifiers3 = genericParseOp [MP_Item, MP_Rx] (\psi ->
-  PI_RX $ BzS_Expr (pos $ piSyn $ head psi) ([piSyn $ head psi] ++ (exprs $ piSyn $ psi !! 1)) )
-
-
-
-
-
-
-
-
-
-
-parseModifiers4 :: ParserOp
-parseModifiers4 = genericParseOp [mtk_StartDat, MP_Rx] (\psi ->
-  PI_BzSyn $ BzS_ArrExprMod (spos $ piTok $ head psi) (piSyn $ psi !! 1) )
-
-
-
-
-
-
-
-
-
-
-parseModifiers5 :: ParserOp
-parseModifiers5 = genericParseOp [MP_Mod, MP_Mod] (\psi ->
-  PI_MS $ BzS_Expr (pos $ piSyn $ head psi) ([piSyn $ head psi]++[piSyn $ psi !! 1]) )
-
-
-
-
-
-
-
-
-
-
-parseModifiers6 :: ParserOp
-parseModifiers6 = genericParseOp [MP_Ms, MP_Mod] (\psi ->
-  PI_MS $ BzS_Expr (pos $ piSyn $ head psi) ((exprs $ piSyn $ head psi) ++ [piSyn $ psi !! 1]) )
-
-
-
-
-
-
-
-
-
-
-parseModifiers7 :: ParserOp
-parseModifiers7 = genericParseOp [MP_Ms, MP_Item] (\psi ->
-  PI_MX $ BzS_Expr (pos $ piSyn $ head psi) ((exprs $ piSyn $ head psi) ++ [piSyn $ psi !! 1]) )
-
-
-
-
-
-
-
-
-
-
-parseModifiers8 :: ParserOp
-parseModifiers8 = genericParseOp [MP_Mod, MP_Item] (\psi ->
-  PI_MX $ BzS_Expr (pos $ piSyn $ head psi) ([piSyn $ head psi] ++ [piSyn $ psi !! 1]) )
-
-
-
-
-
-
-
-
-
-parseModifiers :: Parser
-parseModifiers = Parser (\ps ->
-  let parseFn = [parseModifiers0, parseModifiers1, parseModifiers2, parseModifiers3,
-                 parseModifiers4, parseModifiers5, parseModifiers6, parseModifiers7,
-                 parseModifiers8 ]
-  in case tryParsers ps parseFn of
-    Just pst -> Right pst
-    Nothing  -> Left [] )
-
-
-
-
-
-
-
-
-
-
-parseFnTy0 :: ParserOp
-parseFnTy0 = genericParseOp [MP_Typ, mtk_FnSym, MP_Typ] (\psi ->
-  PI_BzSyn $ BzS_FnTy (pos $ piSyn $ head psi) (piSyn $ head psi) (piSyn $ psi !! 2) )
-
-
-
-
-
-
-
-
-
-
-parseFnTyErr :: ParserOp -- Not currently working. MP_Parse appears to trigger from Modifiers
-parseFnTyErr = genericParseOp [MP_Any, mtk_FnSym, MP_Parse] (\psi ->
-  PI_Err $ ParseErr (getPIPos $ head psi) "Invalid parameters to Function Type" )
-
-
-
-
-
-
-
-
-
-
-parseFnTy :: Parser
-parseFnTy = Parser (\ps ->
-  let parseFn = [parseFnTy0]
-      errFn   = [parseFnTyErr]
-  in case (tryParsers ps parseFn, {-tryParsers ps errFn-}Nothing) of
-    (Just pst,      _ ) -> Right pst
-    (Nothing , Just er) -> Left  [piErr $ head $ stack er]
-    (Nothing , Nothing) -> Left  [] )
-
-
-
-
-
-
-
-
-
-
-parseFnTyDef0 :: ParserOp
-parseFnTyDef0 = genericParseOp [MP_Id, mtk_Define, MP_FnTy, mtk_Newline] (\psi ->
-  PI_BzSyn $ BzS_FnTypeDef (pos $ piSyn $ head psi) (sid $ piSyn $ head psi) (piSyn $ psi !! 2))
-
-
-
-
-
-
-
-
-
-
-parseFnTyDef :: Parser
-parseFnTyDef = Parser (\ps ->
-  case tryParsers ps [parseFnTyDef0] of
-    Just pst -> Right pst
-    Nothing  -> Left [] )
-
-
-
-
-
-
-
-
-
-
-parseLambda0 :: ParserOp
-parseLambda0 = genericParseOp [mtk_LamdaSym, MP_Vr, mtk_Define, MP_Def] (\psi ->
-  PI_BzSyn $ BzS_Lambda (spos $ piTok $ head psi) (piSyn $ psi !! 1) (piSyn $ psi !! 3) )
-
-
-
-
-
-
-
-
-
-
-parseLambda1 :: ParserOp
-parseLambda1 = genericParseOp [mtk_LamdaSym, MP_Vr, mtk_Define, MP_Cpx] (\psi ->
-  PI_BzSyn $ BzS_Lambda (spos $ piTok $ head psi) (piSyn $ psi !! 1) (piSyn $ psi !! 3) )
-
-
-
-
-
-
-
-
-
-
-parseLambda2 :: ParserOp
-parseLambda2 = genericParseOp [mtk_StartTup, mtk_LamdaSym, MP_Vr, mtk_Define, MP_Tx] (\psi ->
-  PI_BzSyn $ BzS_Box (spos $ piTok $ head psi) (BzS_Lambda (spos $ piTok $ psi !! 1) (piSyn $ psi !! 2) (piSyn $ psi !! 4)) )
-
-
-
-
-
-
-
-
-
-
-parseLambda :: Parser
-parseLambda = Parser (\ps ->
-  let parseFn = [parseLambda0, parseLambda1, parseLambda2]
-  in case tryParsers ps parseFn of
-    Just pst -> Right pst
-    Nothing  -> Left [] )
-
-
-
-
-
-
-
-
-
-
-
-parseBlock0 :: ParserOp
-parseBlock0 = genericParseOp [mtk_StartDo, mtk_EndDo] (\psi ->
-  PI_BzSyn $ BzS_Block (spos $ piTok $ head psi) [] )
-
-
-
-
-
-
-
-
-
-
-parseBlock1 :: ParserOp
-parseBlock1 = genericParseOp [MP_Item, mtk_EndDo] (\psi ->
-  PI_BKX $ BzS_Expr (pos $ piSyn $ head psi) [piSyn $ head psi] )
-
-
-
-
-
-
-
-
-
-
-parseBlock2 :: ParserOp
-parseBlock2 = genericParseOp [MP_Item, MP_Bkx] (\psi ->
-  PI_BKX $ BzS_Expr (pos $ piSyn $ head psi) ([piSyn $ head psi] ++ (exprs $ piSyn $ psi !! 1)) )
-
-
-
-
-
-
-
-
-
-
-parseBlock3 :: ParserOp
-parseBlock3 = genericParseOp [MP_Expr, MP_Expr] (\psi ->
-  PI_Exs $ [piSyn $ head psi] ++ [piSyn $ psi !! 1] )
-
-
-
-
-
-
-
-
-
-
-parseBlock4 :: ParserOp
-parseBlock4 = genericParseOp [MP_Exs, MP_Expr] (\psi ->
-  PI_Exs $ (piSyns $ head psi) ++ [piSyn $ psi !! 1] )
-
-
-
-
-
-
-
-
-
-
-parseBlock5 :: ParserOp
-parseBlock5 = genericParseOp [mtk_StartDo, MP_Expr, mtk_EndDo] (\psi ->
-  PI_BzSyn $ BzS_Block (spos $ piTok $ head psi) [piSyn $ psi !! 1] )
-
-
-
-
-
-
-
-
-
-
-parseBlock6 :: ParserOp
-parseBlock6 = genericParseOp [mtk_StartDo, MP_Exs, mtk_EndDo] (\psi ->
-  PI_BzSyn $ BzS_Block (spos $ piTok $ head psi) (piSyns $ psi !! 1) )
-
-
-
-
-
-
-
-
-
-
-parseBlock7 :: ParserOp
-parseBlock7 = genericParseOp [mtk_StartDo, MP_Exs, MP_Bkx] (\psi ->
-  PI_BzSyn $ BzS_Block (spos $ piTok $ head psi) ((piSyns $ psi !! 1) ++ [piSyn $ psi !! 2]) )
-
-
-
-
-
-
-
-
-
-
-parseBlock8 :: ParserOp
-parseBlock8 = genericParseOp [mtk_StartDo, MP_Expr, MP_Bkx] (\psi ->
-  PI_BzSyn $ BzS_Block (spos $ piTok $ head psi) ([piSyn $ psi !! 1] ++ [piSyn $ psi !! 2]) )
-
-
-
-
-
-
-
-
-
-
-parseBlock9 :: ParserOp
-parseBlock9 = genericParseOp [mtk_StartDo, MP_Bkx] (\psi ->
-  PI_BzSyn $ BzS_Block (spos $ piTok $ head psi) [piSyn $ psi !! 1] )
-
-
-
-
-
-
-
-
-
-
-parseBlock :: Parser
-parseBlock = Parser (\ps ->
-  let parseFn = [parseBlock0 , parseBlock1 , parseBlock2 , parseBlock3 , parseBlock4 ,
-                 parseBlock5 , parseBlock6 , parseBlock7 , parseBlock8 , parseBlock9 ]
-  in case tryParsers ps parseFn of
-    Just pst -> Right pst
-    Nothing  -> Left [] )
-
-
-
-
-
-
-
-
-
-
-parseCallFuse0 :: ParserOp
-parseCallFuse0 = genericParseOp [MP_SOF, MP_CallItem] (\psi ->
-  PI_BzSyn $ BzS_Calls (pos $ piSyn $ psi !! 1) [piSyn $ psi !! 1] )
-
-
-
-
-
-
-
-
-
-
-parseCallFuse1 :: ParserOp
-parseCallFuse1 = genericParseOp [MP_Calls, MP_CallItem] (\psi ->
-  PI_BzSyn $ BzS_Calls (pos $ piSyn $ psi !! 1) ((calls $ piSyn $ head psi) ++ [piSyn $ psi !! 1]) )
-
-
-
-
-
-
-
-
-
-
-parseCallFuse2 :: ParserOp
-parseCallFuse2 = genericParseOp [MP_Calls, MP_Exs] (\psi ->
-  PI_BzSyn $ BzS_Calls (pos $ piSyn $ psi !! 1) ((calls $ piSyn $ head psi) ++ (piSyns $ psi !! 1)) )
-
-
-
-
-
-
-
-
-
-
-parseCallFuse3 :: ParserOp
-parseCallFuse3 = genericParseOp [MP_SOF, mtk_Newline] (\psi -> PI_SOF)
-
-
-
-
-
-
-
-
-
-
-parseCallFuse :: Parser
-parseCallFuse = Parser (\ps ->
-  let parseFn = [parseCallFuse0, parseCallFuse1, parseCallFuse2, parseCallFuse3]
-  in case tryParsers ps parseFn of
-    Just pst -> Right pst
-    Nothing  -> Left  [] )
-
-
-
-
-
-
-
-
-
-
-parseCalls :: Parser
-parseCalls = Parser (\ps ->
-  case (runParsers ps [parseModifiers, parsePrimitives, parseSimplify, parseTupleEtc,
-                       parseCompound, parsePolymorph, parseExpr, parseMisc,
-                       parseTypeCall, parseLambda, parseFnCall, parseFnTy,
-                       parseFnTyDef, parseBlock, parseCallFuse ]) of
-    Left []   -> Left []
-    Left err  -> Left err
-    Right ps' -> Right ps' )
+parserErr fname (s:nxt) stack    = parserErr fname nxt (s:stack)

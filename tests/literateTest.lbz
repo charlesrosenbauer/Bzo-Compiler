@@ -11,13 +11,13 @@ This is great for walking the reader through hard-to-understand code.
 Here we initialize the file:
 
 > LiterateTest $Module
-> Math         $link
+> Math         $Import
 
 
 Here we define a function:
 
 > ! :: Integer ;; Integer
-> (x) ! :: (x -?. 0. (x. x -1 !))?
+> (x) ! :: (x -?. 0. (x. x pred !))?
 > (1) ! :: 1
 > (0) ! :: 1
 

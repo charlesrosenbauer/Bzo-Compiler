@@ -3,6 +3,12 @@ import BzoTypes
 import HigherOrder
 import Data.Either
 import Data.Maybe
+import Data.Text
+import Data.Tuple
+import Data.Int
+import Data.Map.Strict as M
+import Data.List as L
+import DefinitionTable
 import Debug.Trace
 
 
@@ -14,10 +20,8 @@ import Debug.Trace
 
 
 
-stripSyntax :: BzoSyntax -> BzoSyntax
-stripSyntax (BzS_Expr p [x]) = stripSyntax x
-stripSyntax (BzS_Box  p  x ) = stripSyntax x
-stripSyntax x                = x
+zeroContext :: Context
+zeroContext = Context M.empty M.empty M.empty M.empty 0
 
 
 
@@ -28,16 +32,12 @@ stripSyntax x                = x
 
 
 
-checkRecord :: BzoSyntax -> Maybe (BzoPos, String, BzoSyntax)
-checkRecord (BzS_FilterObj p0 (BzS_Id  p1 i) [ty]) = Just (p0, i, ty)
-checkRecord (BzS_FilterObj p0 (BzS_BId p1 i) [ty]) = Just (p0, i, ty)
-checkRecord (BzS_Expr _ [(BzS_FilterObj p0 (BzS_Id  p1 i) [ty])]) = Just (p0, i, ty)
-checkRecord (BzS_Expr _ [(BzS_FilterObj p0 (BzS_BId p1 i) [ty])]) = Just (p0, i, ty)
-checkRecord (BzS_FilterObj p0 x@(BzS_Expr _ _) [t]) = checkRecord (BzS_FilterObj p0 (stripSyntax x) [t])
-checkRecord (BzS_FilterObj p0 x@(BzS_Box  _ _) [t]) = checkRecord (BzS_FilterObj p0 (stripSyntax x) [t])
-checkRecord (BzS_Expr _ [(BzS_FilterObj p0 x@(BzS_Expr _ _) [t])]) = checkRecord (BzS_FilterObj p0 (stripSyntax x) [t])
-checkRecord (BzS_Expr _ [(BzS_FilterObj p0 x@(BzS_Box  _ _) [t])]) = checkRecord (BzS_FilterObj p0 (stripSyntax x) [t])
-checkRecord _                                    = Nothing
+addVar :: Context -> Text -> [TyId] -> (Context, Int64)
+addVar cx@(Context tvs vs ts fs top) var tyids =
+  let vsLookup = L.map (\(a, (b, c)) -> (c, a)) $ M.assocs vs
+  in case (L.lookup var vsLookup) of
+      Just x  ->  (cx, x)
+      Nothing -> ((Context tvs (M.insert (top+1) (tyids, var) vs) ts fs (top+1)), top+1)
 
 
 
@@ -48,16 +48,12 @@ checkRecord _                                    = Nothing
 
 
 
-checkEnum :: BzoSyntax -> Maybe (BzoPos, String, BzoSyntax)
-checkEnum (BzS_FilterObj p0 (BzS_TyId p1 i) [ty]) = Just (p0, i, ty)
-checkEnum (BzS_FilterObj p0 (BzS_BTId p1 i) [ty]) = Just (p0, i, ty)
-checkEnum (BzS_Expr _ [(BzS_FilterObj p0 (BzS_TyId p1 i) [ty])]) = Just (p0, i, ty)
-checkEnum (BzS_Expr _ [(BzS_FilterObj p0 (BzS_BTId p1 i) [ty])]) = Just (p0, i, ty)
-checkEnum (BzS_FilterObj p0 x@(BzS_Expr _ _) [t]) = checkEnum (BzS_FilterObj p0 (stripSyntax x) [t])
-checkEnum (BzS_FilterObj p0 x@(BzS_Box  _ _) [t]) = checkEnum (BzS_FilterObj p0 (stripSyntax x) [t])
-checkEnum (BzS_Expr _ [(BzS_FilterObj p0 x@(BzS_Expr _ _) [t])]) = checkEnum (BzS_FilterObj p0 (stripSyntax x) [t])
-checkEnum (BzS_Expr _ [(BzS_FilterObj p0 x@(BzS_Box  _ _) [t])]) = checkEnum (BzS_FilterObj p0 (stripSyntax x) [t])
-checkEnum _                                     = Nothing
+addTVr :: Context -> Text -> [TyId] -> (Context, Int64)
+addTVr cx@(Context tvs vs ts fs top) var tyids =
+  let tvLookup = L.map (\(a, (b, c)) -> (c, a)) $ M.assocs tvs
+  in case (L.lookup var tvLookup) of
+      Just x  ->  (cx, x)
+      Nothing -> ((Context (M.insert (top+1) (tyids, var) tvs) vs ts fs (top+1)), top+1)
 
 
 
@@ -68,10 +64,12 @@ checkEnum _                                     = Nothing
 
 
 
-separateRecords :: BzoSyntax -> Either BzoSyntax (String, BzoSyntax)
-separateRecords (BzS_Expr _ [(BzS_FilterObj p0 (BzS_Id  p1 i) [ty])]) = Right (i, ty)
-separateRecords (BzS_Expr _ [(BzS_FilterObj p0 (BzS_BId p1 i) [ty])]) = Right (i, ty)
-separateRecords x                                    = Left  x
+addType :: Context -> TyId -> (Context, Int64)
+addType cx@(Context tvs vs ts fs top) newtyp =
+  let tyLookup = L.map swap $ M.assocs ts
+  in case (L.lookup newtyp tyLookup) of
+      Just x  ->  (cx, x)
+      Nothing -> ((Context tvs vs (M.insert (top+1) newtyp ts) fs (top+1)), top+1)
 
 
 
@@ -82,10 +80,12 @@ separateRecords x                                    = Left  x
 
 
 
-separateEnums :: BzoSyntax -> Either BzoSyntax (String, BzoSyntax)
-separateEnums (BzS_Expr _ [(BzS_FilterObj p0 (BzS_TyId p1 i) [ty])]) = Right (i, ty)
-separateEnums (BzS_Expr _ [(BzS_FilterObj p0 (BzS_BTId p1 i) [ty])]) = Right (i, ty)
-separateEnums x                                     = Left  x
+addFunc :: Context -> FnId -> (Context, Int64)
+addFunc cx@(Context tvs vs ts fs top) newfun =
+  let fnLookup = L.map swap $ M.assocs fs
+  in case (L.lookup newfun fnLookup) of
+      Just x  ->  (cx, x)
+      Nothing -> ((Context tvs vs ts (M.insert (top+1) newfun fs) (top+1)), top+1)
 
 
 
@@ -96,15 +96,22 @@ separateEnums x                                     = Left  x
 
 
 
-getCompoundContents :: String -> Either BzoSyntax (String, BzoSyntax) -> Either [BzoErr] TypeAST
-getCompoundContents parent (Left       syn ) = modelType parent syn
-getCompoundContents parent (Right (str, syn)) =
-  let x  = [modelType str syn]
-      ls = lefts  x
-      rs = head $ rights x
-  in case ls of
-      []  -> Right (TA_Record (pos syn) str parent rs)
-      ers -> Left $ concat ers
+getTVars :: BzoSyntax -> [Text]
+getTVars (BzS_TyVar      _    tvar) = [pack tvar]
+getTVars (BzS_Expr       _    expr) = L.concatMap getTVars expr
+getTVars (BzS_Statement  _    expr) = getTVars expr
+getTVars (BzS_Cmpd       _    expr) = L.concatMap getTVars expr
+getTVars (BzS_Poly       _    expr) = L.concatMap getTVars expr
+getTVars (BzS_FnTy       _   ax bx) = (getTVars ax) ++ (getTVars bx)
+getTVars (BzS_Block      _    expr) = L.concatMap getTVars expr
+getTVars (BzS_TypDef     _ ps _ df) = (getTVars ps) ++ (getTVars df)
+getTVars (BzS_TyClassDef _ ps _ df) = (getTVars ps) ++ (L.concatMap getTVars df)
+getTVars (BzS_FnTypeDef  _ ps _ df) = (getTVars ps) ++ (getTVars df)
+getTVars (BzS_Calls      _      cs) = L.concatMap getTVars cs
+getTVars (BzS_ArrayObj   _ expr _ ) = getTVars expr
+getTVars (BzS_FilterObj  _ obj  fs) = (getTVars obj) ++ (L.concatMap getTVars fs)
+getTVars (BzS_CurryObj   _ obj  ps) = (getTVars obj) ++ (L.concatMap getTVars ps)
+getTVars _                          = []
 
 
 
@@ -115,15 +122,27 @@ getCompoundContents parent (Right (str, syn)) =
 
 
 
-getPolymorphContents :: String -> Either BzoSyntax (String, BzoSyntax) -> Either [BzoErr] TypeAST
-getPolymorphContents parent (Left        syn ) = modelType parent syn
-getPolymorphContents parent (Right (str, syn)) =
-  let x  = [modelType str syn]
-      ls = lefts  x
-      es = head $ rights x
-  in case ls of
-      []  -> Right (TA_Enum (pos syn) str parent es)
-      ers -> Left $ concat ers
+getVars :: BzoSyntax -> [Text]
+getVars (BzS_Id         _     var) = [pack var]
+getVars (BzS_MId        _     var) = [pack var]
+getVars (BzS_BId        _     var) = [pack var]
+getVars (BzS_Expr       _    expr) = L.concatMap getVars expr
+getVars (BzS_Statement  _    expr) = getVars expr
+getVars (BzS_Cmpd       _    expr) = L.concatMap getVars expr
+getVars (BzS_Poly       _    expr) = L.concatMap getVars expr
+getVars (BzS_FnTy       _   ax bx) = (getVars ax) ++ (getVars bx)
+getVars (BzS_Block      _    expr) = L.concatMap getVars expr
+getVars (BzS_TypDef     _ ps _ df) = (getVars ps) ++ (getVars df)
+getVars (BzS_TyClassDef _ ps _ df) = (getVars ps) ++ (L.concatMap getVars df)
+getVars (BzS_FnTypeDef  _ ps _ df) = (getVars ps) ++ (getVars df)
+getVars (BzS_FunDef     _ i _ o x) = (getVars i)  ++ (getVars o)  ++ (getVars x)
+getVars (BzS_Calls      _      cs) = L.concatMap getVars cs
+getVars (BzS_ArrayObj   _ expr _ ) = getVars expr
+getVars (BzS_FilterObj  _ obj  fs) = (getVars obj) ++ (L.concatMap getVars fs)
+getVars (BzS_CurryObj   _ obj  ps) = (getVars obj) ++ (L.concatMap getVars ps)
+getVars (BzS_MapObj     _    expr) = (getVars expr)
+getVars (BzS_Lambda     _ ps expr) = (getVars ps)  ++ (getVars expr)
+getVars _                          = []
 
 
 
@@ -134,10 +153,26 @@ getPolymorphContents parent (Right (str, syn)) =
 
 
 
-modelArrayObj :: BzoSyntax -> Either [BzoErr] Integer
-modelArrayObj (BzS_ArrGnObj p  ) = Right 0
-modelArrayObj (BzS_ArrSzObj p s) = Right s
-modelArrayObj s                  = Left [(SntxErr (pos s) "No idea what happened here. Something's not right in the Array Syntax.")]
+getTypes :: BzoSyntax -> [Text]
+getTypes (BzS_TyId       _     var) = [pack var]
+getTypes (BzS_BTId       _     var) = [pack var]
+getTypes (BzS_Expr       _    expr) = L.concatMap getTypes expr
+getTypes (BzS_Statement  _    expr) = getTypes expr
+getTypes (BzS_Cmpd       _    expr) = L.concatMap getTypes expr
+getTypes (BzS_Poly       _    expr) = L.concatMap getTypes expr
+getTypes (BzS_FnTy       _   ax bx) = (getTypes ax) ++ (getTypes bx)
+getTypes (BzS_Block      _    expr) = L.concatMap getTypes expr
+getTypes (BzS_TypDef     _ ps _ df) = (getTypes ps) ++ (getTypes df)
+getTypes (BzS_TyClassDef _ ps _ df) = (getTypes ps) ++ (L.concatMap getTypes df)
+getTypes (BzS_FnTypeDef  _ ps _ df) = (getTypes ps) ++ (getTypes df)
+getTypes (BzS_FunDef     _ i _ o x) = (getTypes i)  ++ (getTypes o)  ++ (getTypes x)
+getTypes (BzS_Calls      _      cs) = L.concatMap getTypes cs
+getTypes (BzS_ArrayObj   _ expr _ ) = getTypes expr
+getTypes (BzS_FilterObj  _ obj  fs) = (getTypes obj) ++ (L.concatMap getTypes fs)
+getTypes (BzS_CurryObj   _ obj  ps) = (getTypes obj) ++ (L.concatMap getTypes ps)
+getTypes (BzS_MapObj     _    expr) = (getTypes expr)
+getTypes (BzS_Lambda     _ ps expr) = (getTypes ps)  ++ (getTypes expr)
+getTypes _                          = []
 
 
 
@@ -148,122 +183,61 @@ modelArrayObj s                  = Left [(SntxErr (pos s) "No idea what happened
 
 
 
--- | Basic Type Expression. No Records or Enums. Used for filters, etc.
-modelBasicType :: BzoSyntax -> Either [BzoErr] TypeAST
-modelBasicType (BzS_Int   p i)  = Right (TA_IntLit p i)
-modelBasicType (BzS_Flt   p f)  = Right (TA_FltLit p f)
-modelBasicType (BzS_Str   p s)  = Right (TA_StrLit p s)
-modelBasicType (BzS_Id    p x)  = Right (TA_FnLit  p x)
-modelBasicType (BzS_TyId  p x)  = Right (TA_TyLit  p x)
-modelBasicType (BzS_BId   p x)  = Right (TA_BFnLit p x)
-modelBasicType (BzS_BTId  p x)  = Right (TA_BTyLit p x)
-modelBasicType (BzS_Nil   p  )  = Right (TA_Nil    p  )
-modelBasicType (BzS_TyVar p x)  = Right (TA_TyVar  p x)
-modelBasicType (BzS_ExFunObj p x n) = Right (TA_ExFnLit  p x n)
-modelBasicType (BzS_ExTypObj p x n) = Right (TA_ExTyLit  p x n)
+divideIntoDefs :: [BzoSyntax] -> [Definition]
+divideIntoDefs [BzS_Calls _ cs] = divideIntoDefs $ L.reverse cs
+divideIntoDefs [BzS_File  _ _ _ _ _ dfs] = divideIntoDefs $ L.reverse dfs
+divideIntoDefs asts = L.foldl divideDefStep [] asts
+  where divideDefStep :: [Definition] -> BzoSyntax -> [Definition]
+        divideDefStep (f@(FuncSyntax fnid file fty fdfs):defs) fd@(BzS_FunDef p _ fnid' _ _) =
+          if fnid == (pack fnid')
+            then ((FuncSyntax       fnid   file fty (fd:fdfs)):defs)
+            else ((FuncSyntax (pack fnid') (pack $ fileName p) BzS_Undefined [fd]):f:defs)
 
-modelBasicType (BzS_FnTy p i e) =
-  let !i'  = [modelBasicType i]
-      !e'  = [modelBasicType e]
+        divideDefStep (f@(FuncSyntax fnid file fty fdfs):defs) fd@(BzS_FnTypeDef p _ fnid' _) =
+          ((FuncSyntax (pack fnid') (pack $ fileName p) fd []):f:defs)
 
-      ers  = (lefts  i') ++ (lefts e')
+        divideDefStep defs fd@(BzS_FnTypeDef p _ fnid' _) =
+          ((FuncSyntax (pack fnid') (pack $ fileName p) fd []):defs)
 
-      vli  = head $ rights i'
-      vle  = head $ rights e'
-  in case ers of
-      [] -> Right (TA_FnTy p vli vle)
-      er -> Left $ concat er
+        divideDefStep defs td@(BzS_TypDef p _ tyid _) =
+          ((TypeSyntax (pack tyid) (pack $ fileName p) td):defs)
 
-modelBasicType (BzS_Cmpd p xs) =
-  let !xs' = [map modelBasicType xs]
-      rcs  = catMaybes $ map checkRecord xs
-      ens  = catMaybes $ map checkEnum xs
+        divideDefStep defs td@(BzS_TyClassDef p _ tyid _) =
+          ((TyClassSyntax (pack tyid) (pack $ fileName p) td):defs)
 
-      ers  = concatMap lefts  xs'
-      vls  = concatMap rights xs'
-  in case (ers, rcs, ens) of
-      ([], [], []) -> Right (TA_Cmpd p vls)
-      (er, rs, es) -> Left $ (concat er)
-        ++ (map (\(p, n, t) -> (SntxErr p $ "Unexpected Record Syntax: " ++ n ++ "\n")) rs)
-        ++ (map (\(p, n, t) -> (SntxErr p $ "Unexpected Enum Syntax: "   ++ n ++ "\n")) es)
+        divideDefStep defs fd@(BzS_FunDef p _ fnid' _ _) =
+          ((FuncSyntax (pack fnid') (pack $ fileName p) BzS_Undefined [fd]):defs)
 
-modelBasicType (BzS_Poly p xs) =
-  let !xs' = [map modelBasicType xs]
-      rcs  = catMaybes $ map checkRecord xs
-      ens  = catMaybes $ map checkEnum xs
 
-      ers  = concatMap lefts  xs'
-      vls  = concatMap rights xs'
-  in case (ers, rcs, ens) of
-      ([], [], []) -> Right (TA_Poly p vls)
-      (er, rs, es) -> Left $ concat er
-        ++ (map (\(p, n, t) -> (SntxErr p $ "Unexpected Record Syntax: " ++ n ++ "\n")) rs)
-        ++ (map (\(p, n, t) -> (SntxErr p $ "Unexpected Enum Syntax: "   ++ n ++ "\n")) es)
 
-modelBasicType (BzS_Box p x) = modelBasicType x
 
-modelBasicType (BzS_Expr p [x]) = modelBasicType x
 
-modelBasicType (BzS_FilterObj p (BzS_Id _ x) _) = Left [SntxErr p "Unexpected Record"]
 
-modelBasicType (BzS_FilterObj p (BzS_BId _ x) _) = Left [SntxErr p "Unexpected Record"]
 
-modelBasicType (BzS_FilterObj p (BzS_BTId _ x) _) = Left [SntxErr p "Unexpected Enum"]
 
-modelBasicType (BzS_FilterObj p (BzS_TyId _ x) _) = Left [SntxErr p "Unexpected Enum"]
 
-modelBasicType (BzS_FilterObj p o f) =
-  let !o'  = [modelBasicType o]
-      !f'  = map modelBasicType f
 
-      ers  = (lefts o') ++ (lefts f')
+getFnIds :: [Definition] -> [Text]
+getFnIds ((FuncDef    fnid   _ _):defs) = (fnid):(getFnIds defs)
+getFnIds ((FuncSyntax fnid _ _ _):defs) = (fnid):(getFnIds defs)
+getFnIds (_:defs)                    = getFnIds defs
 
-      vlo  = head $ rights o'
-      vlf  = rights f'
-  in case ers of
-      [] -> Right (TA_Filt p vlf vlo)
-      er -> Left $ concat er
 
-modelBasicType (BzS_MapObj p o) = Left [SntxErr p "Unexpected Map Syntax in Type Expression"]
 
-modelBasicType (BzS_ArrayObj p o a) =
-  let !o'  = [modelBasicType o]
 
-      ers  = lefts  o'
 
-      vls  = head $ rights o'
-      szs  = map modelArrayObj a
-      szx  = rights szs
-      sze  = lefts szs
-  in case (ers ++ sze) of
-      [] -> Right $ (TA_Arr p szx vls)
-      er -> Left  $ concat er
 
-modelBasicType (BzS_Expr p (x:xs)) =
-  let !x'  = [modelBasicType x]
-      !xs' = [modelBasicType (BzS_Expr (pos $ head xs) xs)]
 
-      ers  = (lefts x') ++ (lefts xs')
 
-      vlx  = head $ rights x'
-      vly  = head $ rights xs'
-  in case (ers) of
-      [] -> Right (TA_Expr p vlx vly)
-      er -> Left $ concat er
 
-modelBasicType (BzS_CurryObj p o x) =
-  let o'  = [modelBasicType o]
-      x'  = map modelBasicType x
 
-      ers = concat $ (lefts o') ++ (lefts x')
+getTyIds :: [Definition] -> [Text]
+getTyIds ((TypeDef       tyid _ _):defs) = (tyid):(getTyIds defs)
+getTyIds ((TypeSyntax    tyid _ _):defs) = (tyid):(getTyIds defs)
+getTyIds ((TyClassSyntax tyid _ _):defs) = (tyid):(getTyIds defs)
+getTyIds (_:defs)                        = getTyIds defs
 
-      vlo = head $ rights o'
-      vlx = rights x'
-  in case ers of
-      [] -> Right $ TA_Curry p vlx vlo
-      er -> Left  er
 
-modelBasicType s = Left [SntxErr (pos s) "Unexpected Component of Type Expression."]
 
 
 
@@ -272,118 +246,84 @@ modelBasicType s = Left [SntxErr (pos s) "Unexpected Component of Type Expressio
 
 
 
+getDefs :: [BzoFileModel BzoSyntax] -> [BzoFileModel [Definition]]
+getDefs [] = []
+getDefs ((BzoFileModel mn fp dm model is ls ia la):fs) = ((BzoFileModel mn fp dm (divideIntoDefs [model]) is ls ia la):(getDefs fs))
 
 
-modelType :: String -> BzoSyntax -> Either [BzoErr] TypeAST
-modelType _ (BzS_Int   p i)  = Right (TA_IntLit p i)
-modelType _ (BzS_Flt   p f)  = Right (TA_FltLit p f)
-modelType _ (BzS_Str   p s)  = Right (TA_StrLit p s)
-modelType _ (BzS_Id    p x)  = Right (TA_FnLit  p x)
-modelType _ (BzS_TyId  p x)  = Right (TA_TyLit  p x)
-modelType _ (BzS_BId   p x)  = Right (TA_BFnLit p x)
-modelType _ (BzS_BTId  p x)  = Right (TA_BTyLit p x)
-modelType _ (BzS_Nil   p  )  = Right (TA_Nil    p  )
-modelType _ (BzS_TyVar p x)  = Right (TA_TyVar  p x)
-modelType _ (BzS_ExFunObj p x n) = Right (TA_ExFnLit  p x n)
-modelType _ (BzS_ExTypObj p x n) = Right (TA_ExTyLit  p x n)
-modelType parent (BzS_FnTy p i e) =
-  let !i'  = [modelType parent i]
-      !e'  = [modelType parent e]
 
-      ers  = (lefts  i') ++ (lefts e')
 
-      vli  = head $ rights i'
-      vle  = head $ rights e'
-  in case ers of
-      [] -> Right (TA_FnTy p vli vle)
-      er -> Left $ concat er
 
-modelType parent (BzS_Cmpd p xs) =
-  let !xs' = map ((getCompoundContents parent) . separateRecords) xs
 
-      exs' = map (\(p, n, _) -> SntxErr p (n ++ " is an Enum defined in a Compound Tuple. This is not valid.")) $ catMaybes $ map checkEnum xs
-      errs = (concat $ lefts xs') ++ exs'
 
-      as   = rights xs'
-  in case errs of
-      [] -> Right (TA_Cmpd p as)
-      er -> Left er
 
-modelType parent (BzS_Poly p xs) =
-  let !xs' = map ((getPolymorphContents parent) . separateEnums) xs
 
-      rxs' = map (\(p, n, _) -> SntxErr p (n ++ " is an Record defined in a Polymorphic Tuple. This is not valid.")) $ catMaybes $ map checkRecord xs
-      errs = (concat $ lefts xs') ++ rxs'
 
-      as  = rights xs'
-  in case errs of
-      [] -> Right (TA_Poly p as)
-      er -> Left er
+getDefTable :: [BzoFileModel [Definition]] -> DefinitionTable
+getDefTable files =
+  let defCts  = L.scanl (+) 0 $ L.map (L.length . bfm_fileModel) files
 
-modelType parent (BzS_Box p x) = modelType parent x
+      alldefs :: [(Int64, Definition)]
+      alldefs = L.zip [0..] $ L.concatMap (L.reverse . bfm_fileModel) files
+      defmap :: Map Int64 Definition
+      defmap  = M.fromList alldefs
 
-modelType parent (BzS_Expr p [x]) = modelType parent x
+      fileIxs = L.map swap alldefs
+      idlists :: [[(Text, Int64)]]
+      idlists = L.groupBy (\(a,_) (b,_) -> a == b) $ L.map (\(a, b) -> (identifier a, b)) fileIxs
+      idmap :: Map Text [Int64]
+      idmap   = M.fromList $ L.map (\xs -> (fst $ L.head xs, L.map (fromIntegral . snd) xs)) $ idlists
 
-modelType _ (BzS_FilterObj p (BzS_Id _ x) _) = Left [SntxErr p "Unexpected Record"]
+      ctranges= L.zip defCts (L.tail defCts)
+      ctspaces :: [[Int64]]
+      ctspaces= L.map (\(a, b) -> L.map (\x -> fromIntegral $ x+a) $ L.take (b-a) [0..]) ctranges
+      filelist= L.map (\(space, f)-> replaceModel f space) $ L.zip ctspaces files
 
-modelType _ (BzS_FilterObj p (BzS_BId _ x) _) = Left [SntxErr p "Unexpected Record"]
 
-modelType _ (BzS_FilterObj p (BzS_BTId _ x) _) = Left [SntxErr p "Unexpected Enum"]
+      dmfiles  :: [(Text, [Int64])]
+      dmfiles = L.map (\xs -> (pack $ bfm_domain $ L.head xs, L.concatMap bfm_fileModel xs)) $ L.groupBy (\a b-> (bfm_domain a) == (bfm_domain b)) filelist
+      dmspaces= M.fromList dmfiles
 
-modelType _ (BzS_FilterObj p (BzS_TyId _ x) _) = Left [SntxErr p "Unexpected Enum"]
+      mdfiles  :: [((Text, Text), [Int64])]
+      mdfiles = L.map (\xs -> ((pack $ bfm_moduleName $ L.head xs, pack $ bfm_domain $ L.head xs), L.concatMap bfm_fileModel xs)) $ L.groupBy (\a b-> (bfm_filepath a) == (bfm_filepath b)) filelist
+      mdspaces= M.fromList mdfiles
 
-modelType parent (BzS_FilterObj p o f) =
-  let !o'  = [modelType parent o]
-      !f'  = map modelBasicType f
 
-      ers  = (lefts o') ++ (lefts f')
+      filelist' = L.map (\bfm-> let imps = L.map pack $ (bfm_fileImports bfm) ++ (L.map fst $ bfm_fileImportsAs bfm)
+                                    lnks = L.map pack $ (bfm_fileLinks   bfm) ++ (L.map fst $ bfm_fileLinksAs   bfm)
+                                    domn = pack $ bfm_domain bfm
+                                    idefs= catMaybes $ L.map (\k -> M.lookup (k, domn) mdspaces) imps
+                                    ldefs= catMaybes $ L.map (\k -> M.lookup  k        dmspaces) lnks
+                                    model= (bfm_fileModel bfm, L.nub $ L.concat (idefs ++ ldefs ++ [bfm_fileModel bfm]))
+                                in  replaceModel bfm model) filelist
 
-      vlf  = rights f'
-      vlo  = head $ rights o'
-  in case ers of
-      [] -> Right (TA_Filt p vlf vlo)
-      er -> Left $ concat er
+  in (DefinitionTable defmap filelist' idmap (fromIntegral $ L.last defCts))
 
-modelType _ (BzS_MapObj p o) = Left [SntxErr p "Unexpected Map Syntax in Type Expression"]
 
-modelType parent (BzS_ArrayObj p o a) =
-  let !o' = [modelType parent o]
 
-      ers = lefts  o'
 
-      vls = head $ rights o'
-      szs = map modelArrayObj a
-      sze = lefts szs
-      szx = rights szs
-  in case (ers ++ sze) of
-      [] -> Right $ (TA_Arr p szx vls)
-      er -> Left  $ concat er
 
-modelType parent (BzS_Expr p (x:xs)) =
-  let !x'  = [modelBasicType x]
-      !xs' = [modelBasicType (BzS_Expr (pos $ head xs) xs)]
 
-      ers  = (lefts x') ++ (lefts xs')
 
-      vlx = head $ rights x'
-      vly = head $ rights xs'
-  in case (ers) of
-      [] -> Right (TA_Expr p vlx vly)
-      er -> Left $ concat er
 
-modelType parent (BzS_CurryObj p o x) =
-  let o'  = [modelBasicType o]
-      x'  = map modelBasicType x
+-- This doesn't replace lambdas in the AST with anything new
+extractLambda :: BzoSyntax -> [BzoSyntax]
+extractLambda (BzS_Expr       _    expr) = L.concatMap extractLambda expr
+extractLambda (BzS_Statement  _    expr) = extractLambda expr
+extractLambda (BzS_Cmpd       _    expr) = L.concatMap extractLambda expr
+extractLambda (BzS_Poly       _    expr) = L.concatMap extractLambda expr
+extractLambda (BzS_Block      _    expr) = L.concatMap extractLambda expr
+extractLambda (BzS_FunDef     _ _ _ _ x) = (extractLambda x)
+extractLambda (BzS_Calls      _      cs) = L.concatMap extractLambda cs
+extractLambda (BzS_ArrayObj   _ expr _ ) = extractLambda expr
+extractLambda (BzS_FilterObj  _ obj  fs) = (extractLambda obj) ++ (L.concatMap extractLambda fs)
+extractLambda (BzS_CurryObj   _ obj  ps) = (extractLambda obj) ++ (L.concatMap extractLambda ps)
+extractLambda (BzS_MapObj     _    expr) = (extractLambda expr)
+extractLambda (BzS_Lambda     p ps expr) = [BzS_FunDef p ps (show p) BzS_Undefined expr] ++ (extractLambda expr)
+extractLambda _                          = []
 
-      ers = concat $ (lefts o') ++ (lefts x')
 
-      vlo = head $ rights o'
-      vlx = rights x'
-  in case ers of
-      [] -> Right $ (TA_Curry p vlx vlo)
-      er -> Left  er
 
-modelType _ s = Left [SntxErr (pos s) "Unexpected Component of Type Expression."]
 
 
 
@@ -391,76 +331,74 @@ modelType _ s = Left [SntxErr (pos s) "Unexpected Component of Type Expression."
 
 
 
+-- This does replace lambdas in the AST
+replaceLambda :: BzoSyntax -> BzoSyntax
+replaceLambda (BzS_Expr       p    expr) = (BzS_Expr   p (L.map replaceLambda expr))
+replaceLambda (BzS_Statement  p    expr) = (BzS_Statement p (replaceLambda expr))
+replaceLambda (BzS_Cmpd       p    expr) = (BzS_Cmpd   p (L.map replaceLambda expr))
+replaceLambda (BzS_Poly       p    expr) = (BzS_Poly   p (L.map replaceLambda expr))
+replaceLambda (BzS_Block      p    expr) = (BzS_Block  p (L.map replaceLambda expr))
+replaceLambda (BzS_FunDef     p i f o x) = (BzS_FunDef p i f o (replaceLambda x))
+replaceLambda (BzS_Calls      p      cs) = (BzS_Calls  p (L.map replaceLambda cs))
+replaceLambda (BzS_ArrayObj   p expr  a) = (BzS_ArrayObj  p (replaceLambda expr) a)
+replaceLambda (BzS_FilterObj  p obj  fs) = (BzS_FilterObj p (replaceLambda obj) (L.map replaceLambda fs))
+replaceLambda (BzS_CurryObj   p obj  ps) = (BzS_CurryObj  p (replaceLambda obj) (L.map replaceLambda ps))
+replaceLambda (BzS_MapObj     p    expr) = (BzS_MapObj p (replaceLambda expr))
+replaceLambda (BzS_Lambda     p ps expr) = (BzS_Id p (show p))
+replaceLambda x                          = x
 
 
 
-modelTPars :: BzoSyntax -> Either [BzoErr] TParModel
-modelTPars (BzS_TyVar     p x   ) = Right (TParVar p x [])
-modelTPars (BzS_FilterObj p (BzS_TyVar _ x) f ) =
-  let f' = map modelBasicType f
-      fl = lefts f'
-      fr = rights f'
-  in case fl of
-      [] -> Right (TParVar p x fr)
-      er -> Left $ concat fl
 
-modelTPars (BzS_Expr      p [x] ) = modelTPars x
-modelTPars (BzS_Box       p x   ) = modelTPars x
-modelTPars (BzS_Poly      p _   ) = Left [SntxErr p "Unexpected Polymorphic Expression as Type Parameters"]
-modelTPars (BzS_Cmpd      p xs  ) =
-  let xs' = map modelTPars xs
-      xrs = rights xs'
-      xls = lefts  xs'
-  in case xls of
-      [] -> Right (TParModel p xrs)
-      er -> Left  $ concat er
 
-modelTPars (BzS_Undefined)        = Right TParNil
-modelTPars x                      = Left [SntxErr (pos x) "Invalid Definition of Type Parameter"]
 
 
 
 
 
+-- This doesn't replace Enums in the AST with anything new
+extractEnum :: BzoSyntax -> BzoSyntax -> [BzoSyntax]
+extractEnum ps (BzS_Expr       _    expr) = L.concatMap (extractEnum ps) expr
+extractEnum ps (BzS_Statement  _    expr) = extractEnum ps expr
+extractEnum ps (BzS_Cmpd       _    expr) = L.concatMap (extractEnum ps) expr
+extractEnum ps (BzS_Block      _    expr) = L.concatMap (extractEnum ps) expr
+extractEnum _  (BzS_TypDef     _ ps  _ x) = (extractEnum ps x)
+extractEnum ps (BzS_Calls      _      cs) = L.concatMap (extractEnum ps) cs
+extractEnum ps (BzS_ArrayObj   _ expr _ ) = extractEnum ps expr
+extractEnum ps (BzS_FilterObj  _ obj  fs) = (extractEnum ps obj) ++ (L.concatMap (extractEnum ps) fs)
+extractEnum ps (BzS_CurryObj   _ obj prs) = (extractEnum ps obj) ++ (L.concatMap (extractEnum ps) prs)
+extractEnum ps (BzS_Poly       _    expr) = L.concatMap (enumOp ps) expr
+  where enumOp :: BzoSyntax -> BzoSyntax -> [BzoSyntax]
+        enumOp ps (BzS_Expr _ [BzS_FilterObj p (BzS_TyId _ t) [tdef]]) = (BzS_TypDef p ps t tdef):(extractEnum ps tdef)
+        enumOp ps x = extractEnum ps x
+extractEnum _  _                          = []
 
 
 
 
 
-modelFPars :: BzoSyntax -> Either [BzoErr] FParModel
-modelFPars (BzS_Id        p x   ) = Right (FParVar p x  )
-modelFPars (BzS_TyId      p x   ) = Right (FParTyp p x  )
-modelFPars (BzS_Int       p i   ) = Right (FParInt p i  )
-modelFPars (BzS_Flt       p f   ) = Right (FParFlt p f  )
-modelFPars (BzS_Str       p s   ) = Right (FParStr p s  )
-modelFPars (BzS_Nil       p     ) = Right (FParNilVal p )
-modelFPars (BzS_Wildcard  p     ) = Right (FParWild   p )
-modelFPars (BzS_FilterObj p x f ) =
-  let f' = map modelBasicType f
-      x' = [modelFPars x]
-      fl = (lefts f') ++ (lefts x')
-      fr = rights f'
-      xr = head $ rights x'
-  in case fl of
-      [] -> Right (FParFilt p xr fr)
-      er -> Left $ concat fl
 
-modelFPars (BzS_Expr      p [x] ) = modelFPars x
-modelFPars (BzS_Box       p x   ) = modelFPars x
-modelFPars (BzS_Poly      p _   ) = Left [SntxErr p "Unexpected Polymorphic Expression as Function Parameters"]
-modelFPars (BzS_Cmpd      p xs  ) =
-  let xs' = map modelFPars xs
-      xrs = rights xs'
-      xls = lefts  xs'
-  in case xls of
-      [] -> Right (FParModel p xrs)
-      er -> Left  $ concat er
 
-modelFPars (BzS_Undefined)        = Right FParNil
-modelFPars x                      = Left [SntxErr (pos x) "Invalid Definition of Function Parameter"]
 
 
 
+-- This does replace Enums in the AST
+replaceEnum :: BzoSyntax -> BzoSyntax -> BzoSyntax
+replaceEnum ps (BzS_Expr       p    expr) = (BzS_Expr   p (L.map (replaceEnum ps) expr))
+replaceEnum ps (BzS_Statement  p    expr) = (BzS_Statement p (replaceEnum ps expr))
+replaceEnum ps (BzS_Cmpd       p    expr) = (BzS_Cmpd   p (L.map (replaceEnum ps) expr))
+replaceEnum ps (BzS_Block      p    expr) = (BzS_Block  p (L.map (replaceEnum ps) expr))
+replaceEnum _  (BzS_TypDef     p i  t  x) = (BzS_TypDef p i t (replaceEnum i x))
+replaceEnum ps (BzS_Calls      p      cs) = (BzS_Calls  p (L.map (replaceEnum ps) cs))
+replaceEnum ps (BzS_ArrayObj   p expr  a) = (BzS_ArrayObj  p (replaceEnum ps expr) a)
+replaceEnum ps (BzS_FilterObj  p obj  fs) = (BzS_FilterObj p (replaceEnum ps obj) (L.map (replaceEnum ps) fs))
+replaceEnum ps (BzS_CurryObj   p obj prs) = (BzS_CurryObj  p (replaceEnum ps obj) (L.map (replaceEnum ps) prs))
+replaceEnum ps (BzS_Poly       p    expr) = (BzS_Poly   p (L.map (enumOp ps) expr))
+  where enumOp :: BzoSyntax -> BzoSyntax -> BzoSyntax
+        enumOp BzS_Undefined (BzS_FilterObj p (BzS_TyId _ t) [tdef]) =  BzS_TyId p t
+        enumOp ps            (BzS_FilterObj p (BzS_TyId _ t) [tdef]) = (BzS_Expr p ((BzS_TyId p t):[ps]))
+        enumOp ps x = replaceEnum ps x
+replaceEnum _  x                          = x
 
 
 
@@ -468,17 +406,6 @@ modelFPars x                      = Left [SntxErr (pos x) "Invalid Definition of
 
 
 
-isValidHintPar :: BzoSyntax -> Either BzoErr ExprModel
-isValidHintPar (BzS_Id   p i) = Right $ EM_Id     p i
-isValidHintPar (BzS_BId  p i) = Right $ EM_BId    p i
-isValidHintPar (BzS_TyId p i) = Right $ EM_TyId   p i
-isValidHintPar (BzS_BTId p i) = Right $ EM_BTyId  p i
-isValidHintPar (BzS_Int  p i) = Right $ EM_LitInt p i
-isValidHintPar (BzS_Flt  p f) = Right $ EM_LitFlt p f
-isValidHintPar (BzS_Str  p s) = Right $ EM_LitStr p s
-isValidHintPar (BzS_Expr p [x]) = isValidHintPar x
-isValidHintPar (BzS_Box  p   x) = isValidHintPar x
-isValidHintPar bzs            = Left  $ SntxErr (pos bzs) "Invalid Hint Parameter"
 
 
 
@@ -488,199 +415,97 @@ isValidHintPar bzs            = Left  $ SntxErr (pos bzs) "Invalid Hint Paramete
 
 
 
-modelExpr :: BzoSyntax -> Either [BzoErr] ExprModel
-modelExpr (BzS_MId      p i  ) = Right $ EM_MId      p i
-modelExpr (BzS_Id       p i  ) = Right $ EM_Id       p i
-modelExpr (BzS_TyId     p i  ) = Right $ EM_TyId     p i
-modelExpr (BzS_BId      p i  ) = Right $ EM_BId      p i
-modelExpr (BzS_BTId     p i  ) = Right $ EM_BTyId    p i
-modelExpr (BzS_Int      p i  ) = Right $ EM_LitInt   p i
-modelExpr (BzS_Flt      p f  ) = Right $ EM_LitFlt   p f
-modelExpr (BzS_Str      p s  ) = Right $ EM_LitStr   p s
-modelExpr (BzS_ExFunObj p i l) = Right $ EM_ExFun    p i l
-modelExpr (BzS_ExTypObj p i l) = Right $ EM_ExTyp    p i l
-modelExpr (BzS_Wildcard p    ) = Right $ EM_Wildcard p
-modelExpr (BzS_Nil      p    ) = Right $ EM_Nil      p
-modelExpr (BzS_Box      p   x) = modelExpr x
 
-modelExpr (BzS_Expr   p [x]) = modelExpr x
 
-modelExpr (BzS_CurryObj p x crs) =
-  let x'   = [modelExpr x]
-      crs' = map modelExpr crs
-      ers = concat $ (lefts x') ++ (lefts crs')
-  in case ers of
-      [] -> Right $ EM_Curry p (rights crs') (head $ rights x')
-      er -> Left  er
 
-modelExpr (BzS_Lambda p prs df) =
-  let df'  = [modelExpr df]
-      prs' = [modelFPars prs]
-      ers  = (lefts df') ++ (lefts prs')
-  in case ers of
-      [] -> Right $ EM_Lambda p (head $ rights prs') (head $ rights df')
-      er -> Left  $ concat er
 
-modelExpr (BzS_FilterObj p x filt) =
-  let x'   = [modelExpr x]
-      flt' = map modelBasicType filt
-      ers  = (lefts x') ++ (lefts flt')
-  in case ers of
-      [] -> Right $ EM_Filt p (head $ rights x') (rights flt')
-      er -> Left  $ concat er
+-- This doesn't replace Records in the AST with anything new
+extractRecord :: BzoSyntax -> Text -> [(Int, Int)] -> BzoSyntax -> [BzoSyntax]
+extractRecord ps tid depth (BzS_Expr       _     expr) = L.concatMap (extractRecord ps tid depth) expr
+extractRecord ps tid depth (BzS_Statement  _     expr) = extractRecord ps tid depth expr
+extractRecord ps tid depth (BzS_Poly       _     expr) = L.concatMap (extractRecord ps tid depth) expr
+extractRecord ps tid depth (BzS_Block      _     expr) = L.concatMap (extractRecord ps tid depth) expr
+extractRecord _  _   depth (BzS_TypDef     _ ps tid x) = (extractRecord ps (pack tid) depth x)
+extractRecord ps tid depth (BzS_Calls      _       cs) = L.concatMap (extractRecord ps tid depth) cs
+extractRecord ps tid depth (BzS_ArrayObj   _  expr _ ) = extractRecord ps tid depth expr
+extractRecord ps tid depth (BzS_FilterObj  _  obj  fs) = (extractRecord ps tid depth obj) ++ (L.concatMap (extractRecord ps tid depth) fs)
+extractRecord ps tid depth (BzS_CurryObj   _  obj prs) = (extractRecord ps tid depth obj) ++ (L.concatMap (extractRecord ps tid depth) prs)
+extractRecord ps tid depth (BzS_Cmpd       _     expr) = L.concatMap (\(d, xpr) -> recordOp ps tid d xpr) $ L.zip (addDepth depth expr) expr
+  where recordOp :: BzoSyntax -> Text -> [(Int, Int)] -> BzoSyntax -> [BzoSyntax]
+        recordOp BzS_Undefined tid depth (BzS_FilterObj p (BzS_Id _ rcid) [tdef]) =
+          [(BzS_FunDef    p (makeDepthPattern p depth) rcid BzS_Undefined (BzS_Id p "x")),
+           (BzS_FnTypeDef p BzS_Undefined rcid (BzS_FnTy p (BzS_TyId p $ unpack tid    )      tdef))]
 
-modelExpr (BzS_MapObj p x ) =
-  let x' = modelExpr x
-  in case (lefts [x']) of
-      [] -> Right $ EM_Map p $ head $ rights [x']
-      er -> Left  $ concat er
 
-modelExpr (BzS_Block  p xs ) =
-  let xs' = map modelExpr xs
-      xsl = lefts  xs'
-      xsr = rights xs'
-  in case xsl of
-      [] -> Right $ EM_Block p xsr
-      er -> Left  $ concat er
+        recordOp ps            tid depth (BzS_FilterObj p (BzS_Id _ rcid) [tdef]) =
+          [(BzS_FunDef    p (makeDepthPattern p depth) rcid BzS_Undefined (BzS_Id p "x")),
+           (BzS_FnTypeDef p BzS_Undefined rcid (BzS_FnTy p (BzS_Expr p [BzS_TyId p $ unpack tid, ps])      tdef))]
 
-modelExpr (BzS_Cmpd   p xs) =
-  let xs' = map modelExpr xs
-      xsl = lefts  xs'
-      xsr = rights xs'
-  in case xsl of
-      [] -> Right $ EM_Cmpd p xsr
-      er -> Left $ concat er
+        recordOp ps tid depth x = extractRecord ps tid depth x
+extractRecord _ _ _ _                                 = []
 
-modelExpr (BzS_Poly   p xs) =
-  let xs' = map modelExpr xs
-      xsl = lefts  xs'
-      xsr = rights xs'
-  in case xsl of
-      [] -> Right $ EM_Poly p xsr
-      er -> Left $ concat er
 
-modelExpr (BzS_Expr p [(BzS_Cmpd _ xs), (BzS_BId _ hint)]) =
-  let xs' = map isValidHintPar xs
-  in case (lefts xs') of
-      [] -> Right $ EM_Hint p hint (rights xs')
-      er -> Left  er
 
-modelExpr (BzS_Expr p [(BzS_Cmpd _ xs), (BzS_BTId _ hint)]) =
-  let xs' = map isValidHintPar xs
-  in case (lefts xs') of
-      [] -> Right $ EM_Hint p hint (rights xs')
-      er -> Left  er
 
-modelExpr (BzS_Expr p [x, (BzS_BId _ hint)]) =
-  let xs' = [isValidHintPar x]
-  in case (lefts xs') of
-      [] -> Right $ EM_Hint p hint (rights xs')
-      er -> Left  er
 
-modelExpr (BzS_Expr p [x, (BzS_BTId _ hint)]) =
-  let xs' = [isValidHintPar x]
-  in case (lefts xs') of
-      [] -> Right $ EM_Hint p hint (rights xs')
-      er -> Left  er
 
-modelExpr (BzS_Expr   p (x:xs)) =
-  let x'  = [modelExpr x ]
-      xs' = [modelExpr (BzS_Expr (pos $ head xs) xs)]
-      ers = concat $ lefts (x' ++ xs')
-  in case ers of
-      [] -> Right $ EM_Expr p (head $ rights x') (head $ rights xs')
-      er -> Left er
 
-modelExpr x = Left [(SntxErr (pos x) "Unexpected Expression Contents")]
 
 
 
+-- This does replace Records in the AST
+replaceRecord :: BzoSyntax -> Text -> [(Int, Int)] -> BzoSyntax -> BzoSyntax
+replaceRecord ps tid depth (BzS_Expr       p    expr) = (BzS_Expr   p (L.map (replaceRecord ps tid depth) expr))
+replaceRecord ps tid depth (BzS_Statement  p    expr) = (BzS_Statement p (replaceRecord ps tid depth expr))
+replaceRecord ps tid depth (BzS_Poly       p    expr) = (BzS_Poly   p (L.map (replaceRecord ps tid depth) expr))
+replaceRecord ps tid depth (BzS_Block      p    expr) = (BzS_Block  p (L.map (replaceRecord ps tid depth) expr))
+replaceRecord _  _   depth (BzS_TypDef     p i tid x) = (BzS_TypDef p i tid (replaceRecord i (pack tid) depth x))
+replaceRecord ps tid depth (BzS_Calls      p      cs) = (BzS_Calls  p (L.map (replaceRecord ps tid depth) cs))
+replaceRecord ps tid depth (BzS_ArrayObj   p expr  a) = (BzS_ArrayObj  p (replaceRecord ps tid depth expr) a)
+replaceRecord ps tid depth (BzS_FilterObj  p obj  fs) = (BzS_FilterObj p (replaceRecord ps tid depth obj) (L.map (replaceRecord ps tid depth) fs))
+replaceRecord ps tid depth (BzS_CurryObj   p obj prs) = (BzS_CurryObj  p (replaceRecord ps tid depth obj) (L.map (replaceRecord ps tid depth) prs))
+replaceRecord ps tid depth (BzS_Cmpd       p    expr) = (BzS_Cmpd   p (L.map (\(d, xpr) -> recordOp  ps tid d xpr) $ L.zip (addDepth depth expr) expr))
+  where recordOp :: BzoSyntax -> Text -> [(Int, Int)] -> BzoSyntax -> BzoSyntax
+        recordOp _  tid depth (BzS_FilterObj p (BzS_Id _ rcid) [tdef]) = tdef
 
+        recordOp ps tid depth x = replaceRecord ps tid depth x
+replaceRecord _ _ _  x                                = x
 
 
 
 
 
 
-extractEnumsRecords :: TypeAST -> ([ModelEnum], [ModelRecord])
-extractEnumsRecords (TA_Enum   position eid parent expr) =
-  let (enms, recs) = extractEnumsRecords expr
-  in ((ModelEnum   position eid parent expr):enms, recs)
-extractEnumsRecords (TA_Record position rid parent expr) =
-  let (enms, recs) = extractEnumsRecords expr
-  in (enms, (ModelRecord position rid parent expr):recs)
-extractEnumsRecords (TA_Cmpd   position xs             ) = (\(a, b) -> (concat a, concat b)) $ unzip $ map extractEnumsRecords xs
-extractEnumsRecords (TA_Poly   position xs             ) = (\(a, b) -> (concat a, concat b)) $ unzip $ map extractEnumsRecords xs
-extractEnumsRecords _ = ([], [])
 
 
 
 
+addDepth :: [(Int, Int)] -> [a] -> [[(Int, Int)]]
+addDepth ds xs =
+  let dss = L.repeat ds
+      len = L.length xs
+      xs' = L.take len $ L.zip (L.repeat len) [0..]
+  in L.map (\(d, ds) -> ds ++ [d]) $ L.zip xs' dss
 
 
 
 
 
-modelCalls :: BzoSyntax -> Either [BzoErr] [CallAST]
-modelCalls (BzS_Calls  p xs) =
-  let cs = map modelCalls xs
-      er = concat $ lefts cs
-      vs = concat $ rights cs
-  in case er of
-      []  -> Right vs
-      ers -> Left ers
 
-modelCalls (BzS_TypDef p prs t df) =
-  let df' = [modelType t df]
-      ps' = [modelTPars prs]
-      psr = head $ rights ps'
-      er  = (concat $ lefts  df') ++ (concat $ lefts ps')
-      xs  = head $ rights df'
-      (es', rs') = extractEnumsRecords xs
-  in case er of
-      [] -> Right [(CA_TypeDefCall p t psr rs' es' xs)]
-      ers -> Left ers
 
-modelCalls (BzS_FnTypeDef p fnid (BzS_FnTy _ i o)) =
-  let i'  = [modelBasicType i]
-      o'  = [modelBasicType o]
-      er  = concat $ lefts (i' ++ o')
-      ity = head $ rights i'    -- Laziness prevents errors here
-      oty = head $ rights o'    --
-  in case er of
-      []  -> Right [(CA_FTDefCall p fnid ity oty)]
-      ers -> Left ers
 
-modelCalls (BzS_FunDef p i f e x) =
-  let x' = [modelExpr x]
-      i' = [modelFPars i]
-      e' = [modelFPars e]
-      er = (lefts x') ++ (lefts i') ++ (lefts e')
-      ri = head $ rights i'
-      re = head $ rights e'
-  in case er of
-      [] -> Right [(CA_FnDefCall p f ri re (head $ rights x'))]
-      ers -> Left $ concat ers
 
-modelCalls (BzS_Expr p [(BzS_Cmpd _ xs), (BzS_BId _ hint)]) =
-  let xs' = map isValidHintPar xs
-  in case (lefts xs') of
-      [] -> Right [CA_HintCall p hint (rights xs')]
-      er -> Left  er
 
-modelCalls (BzS_Expr p [(BzS_Cmpd _ xs), (BzS_BTId _ hint)]) =
-  let xs' = map isValidHintPar xs
-  in case (lefts xs') of
-      [] -> Right [CA_HintCall p hint (rights xs')]
-      er -> Left  er
+makeDepthPattern :: BzoPos -> [(Int, Int)] -> BzoSyntax
+makeDepthPattern p [] = BzS_Id p "x"
+makeDepthPattern p ((l, x):xs) = (BzS_Cmpd p $ L.take l (L.map (depthStage p x xs) [0..]))
+  where depthStage :: BzoPos -> Int -> [(Int, Int)] -> Int -> BzoSyntax
+        depthStage p x xs n =
+          if x == n
+            then makeDepthPattern p xs
+            else BzS_Wildcard p
 
-modelCalls (BzS_Expr p [x, (BzS_BId _ hint)]) =
-  let xs' = [isValidHintPar x]
-  in case (lefts xs') of
-      [] -> Right [CA_HintCall p hint (rights xs')]
-      er -> Left  er
 
-modelCalls x = Left [SntxErr (pos x) $ "Unexpected Expression Call: " ++ (show x)]
 
 
 
@@ -689,55 +514,36 @@ modelCalls x = Left [SntxErr (pos x) $ "Unexpected Expression Call: " ++ (show x
 
 
 
+removeBoxes :: BzoSyntax -> BzoSyntax
+removeBoxes (BzS_Expr       p   [expr]) = removeBoxes expr
+removeBoxes (BzS_Expr       p    expr ) = (BzS_Expr      p (L.map removeBoxes expr))
+removeBoxes (BzS_Statement  p    expr ) = (BzS_Statement p (removeBoxes expr))
+removeBoxes (BzS_Cmpd       p   [expr]) = removeBoxes expr
+removeBoxes (BzS_Poly       p   [expr]) = removeBoxes expr
+removeBoxes (BzS_Cmpd       p    expr ) = (BzS_Cmpd      p (L.map removeBoxes expr))
+removeBoxes (BzS_Poly       p    expr ) = (BzS_Poly      p (L.map removeBoxes expr))
+removeBoxes (BzS_Block      p    expr ) = (BzS_Block     p (L.map removeBoxes expr))
+removeBoxes (BzS_TypDef     p i  t  x ) = (BzS_TypDef    p i t (removeBoxes x))
+removeBoxes (BzS_Calls      p      cs ) = (BzS_Calls     p (L.map removeBoxes cs))
+removeBoxes (BzS_ArrayObj   p expr  a ) = (BzS_ArrayObj  p (removeBoxes expr) a)
+removeBoxes (BzS_FilterObj  p obj  fs ) = (BzS_FilterObj p (removeBoxes obj) (L.map removeBoxes fs))
+removeBoxes (BzS_CurryObj   p obj prs ) = (BzS_CurryObj  p (removeBoxes obj) (L.map removeBoxes prs))
+removeBoxes x = x
 
 
-modelREPLCalls :: BzoSyntax -> Either [BzoErr] CallAST
-modelREPLCalls sntx =
-  let sntx' = [modelCalls sntx]
-      errs  = lefts sntx'
-      snxrs = head $ rights sntx'
-  in case (errs, sntx) of
-      ([], _ ) -> Right $ CA_Calls (ca_pos $ head $ snxrs) snxrs
-      (er, (BzS_Calls _ [sn@(BzS_Expr p _)])) ->
-        case (modelExpr sn) of
-          Left er -> Left er
-          Right x -> Right $ CA_REPLCall p x
-      (er, _ ) -> Left $ concat er
 
 
 
 
 
 
+modelXForm :: BzoSyntax -> BzoSyntax
+modelXForm (BzS_Calls p ast) =
+  let ast' = L.map removeBoxes ast
+      lams = L.concatMap  extractLambda ast
+      enms = L.concatMap (extractEnum   BzS_Undefined             ) ast'
+      rcds = L.concatMap (extractRecord BzS_Undefined (pack "") []) ast'
 
-
-
-wrappedModellerMapREPL :: [BzoSyntax] -> Either [BzoErr] [CallAST]
-wrappedModellerMapREPL ss =
-  let xs = map modelREPLCalls ss
-      er = concat $ lefts  xs
-      vs = rights xs
-  in case er of
-      []  -> Right vs
-      ers -> Left ers
-
-
-
-
-
-
-
-
-
-
-wrappedModellerMap :: [BzoFileModel BzoSyntax] -> Either [BzoErr] [BzoFileModel CallAST]
-wrappedModellerMap ss =
-  let xs = map (modelCalls . bfm_fileModel) ss
-      er = concat $ lefts  xs
-      vs = rights xs
-      rets = map adjustAST $ zip ss $ map (\xs -> CA_Calls (ca_pos $ head xs) xs) vs
-  in case er of
-      []  -> Right rets
-      ers -> Left ers
-  where adjustAST :: Show a => (BzoFileModel a, CallAST) -> BzoFileModel CallAST
-        adjustAST ((BzoFileModel mn fp dm _ fi fl fia fla), ast) = (BzoFileModel mn fp dm ast fi fl fia fla)
+      allAST  = rcds ++ enms ++ lams ++ ast'
+      allAST' = L.map ((replaceRecord BzS_Undefined (pack "") []) . (replaceEnum BzS_Undefined) . replaceLambda) allAST
+  in (BzS_Calls p allAST')

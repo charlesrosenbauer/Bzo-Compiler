@@ -16,6 +16,66 @@ import qualified Data.Map.Strict as Mp hiding (foldl, map)
 
 
 
+-- Tomasulo algorithm as a higher order function.
+-- Iterating a function on each element as much as possible before moving on is great for cache performance.
+toma :: [a] -> b -> (b -> a -> (Bool, Either [c] a)) -> (b -> [a] -> (Bool, b)) -> (b -> a -> Bool) ->  (b, Either [c] [a])
+toma xs b f xs2b try =
+  let vals  = map (\x -> ife (try b x) (True, iterErr (f b) x) (False, Right x)) xs
+      vals' = map snd vals
+      tries = map fst vals
+      errs  = L.concat $ E.lefts $ vals'
+      xs'   = E.rights vals'
+      (cont, b')  = xs2b b xs'
+      satisfiable = L.or tries
+  in case (cont, errs, satisfiable) of
+      (_    , er, False) -> (b', Left er)
+      (True , [],    _ ) -> toma xs' b' f xs2b try
+      (False, [],    _ ) -> (b', Right xs')
+      (_    , er,    _ ) -> (b', Left  er )
+
+
+
+
+
+
+
+
+
+
+
+iter :: (a -> (Bool, a)) -> a -> a
+iter f x =
+  let (cond, x') = f x
+  in if cond
+      then iter f x'
+      else x'
+
+
+
+
+
+
+
+
+
+
+iterErr :: (a -> (Bool, Either b a)) -> a -> Either b a
+iterErr f x =
+  let (cond, x') = f x
+  in case (cond, x') of
+      (True , Right par) -> iterErr f par
+      (True , Left  err) -> Left err
+      (False, x        ) -> x
+
+
+
+
+
+
+
+
+
+
 class Hashable a where
   hash :: a -> I.Int64
 
