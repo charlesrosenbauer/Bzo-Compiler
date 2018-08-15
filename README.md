@@ -1,9 +1,6 @@
 # Bzo-Compiler
 Compiler for a custom programming language I'm developing called Bzo
 
-**NOTE: This branch is experimental, is heavily refactoring several parts, and even changing language semantics.**
-
-
 This file is of course not final, and will be updated as the project progresses.
 
 
