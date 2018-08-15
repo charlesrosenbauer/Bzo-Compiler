@@ -5,9 +5,10 @@ import BzoPreprocessor
 import GHC.Exts
 import Data.Either
 import Data.Maybe
-import Data.List hiding (map, foldl, foldr, insert)
-import Data.Map.Strict hiding (map, foldl, foldr, mapEither)
-import Data.Set hiding (map, foldl, foldr, mapEither, empty)
+import Data.Text as T
+import Data.List as L
+import Data.Map.Strict as M
+import Data.Set as S
 import HigherOrder
 import ModelRules
 import Debug.Trace
@@ -21,8 +22,8 @@ import Debug.Trace
 
 
 
-getImportDependencies :: Show a => BzoFileModel a -> [String]
-getImportDependencies fs = nub $ (\(BzoFileModel mn fp dm ast im ln ia la) -> im ++ (map fst ia)) fs
+getImportDependencies :: Show a => BzoFileModel a -> [Text]
+getImportDependencies fs = nub $ (\(BzoFileModel mn fp dm ast im ln ia la) -> im ++ (L.map fst ia)) fs
 
 
 
@@ -33,8 +34,8 @@ getImportDependencies fs = nub $ (\(BzoFileModel mn fp dm ast im ln ia la) -> im
 
 
 
-getLinkDependencies :: Show a => [BzoFileModel a] -> [String]
-getLinkDependencies fs = nub $ concatMap (\(BzoFileModel mn fp dm ast im ln ia la) -> ln ++ (map fst la)) fs
+getLinkDependencies :: Show a => [BzoFileModel a] -> [Text]
+getLinkDependencies fs = nub $ L.concatMap (\(BzoFileModel mn fp dm ast im ln ia la) -> ln ++ (L.map fst la)) fs
 
 
 
@@ -45,16 +46,16 @@ getLinkDependencies fs = nub $ concatMap (\(BzoFileModel mn fp dm ast im ln ia l
 
 
 
-orderByImports :: Show a => Map String (BzoFileModel a) -> [BzoFileModel a] -> [BzoFileModel a] -> Either [BzoErr] [BzoFileModel a]
+orderByImports :: Show a => Map Text (BzoFileModel a) -> [BzoFileModel a] -> [BzoFileModel a] -> Either [BzoErr] [BzoFileModel a]
 orderByImports mp out [] = Right out
 orderByImports mp out fs =
-  let (remain, next) = break (\x -> containsManyMembers mp $ getImportDependencies x) fs
-      next'          = map (\x -> (bfm_moduleName x, x)) next
-      domain         = if (bfm_domain (head fs) == "@")
-                        then "Project Files"
-                        else bfm_domain $ head fs
+  let (remain, next) = L.break (\x -> containsManyMembers mp $ getImportDependencies x) fs
+      next'          = L.map (\x -> (bfm_moduleName x, x)) next
+      domain         = if (bfm_domain (L.head fs) == (pack "@"))
+                        then pack "Project Files"
+                        else bfm_domain $ L.head fs
   in case next of
-    [] -> Left [CfgErr ("Unsatisfiable Dependencies in " ++ domain ++ "! Compilation cannot continue.\n")]
+    [] -> Left [CfgErr ((pack "Unsatisfiable Dependencies in ") `T.append` domain `T.append` (pack "! Compilation cannot continue.\n"))]
     nx -> orderByImports (insertMany mp next') (out ++ next) remain
 
 
@@ -66,13 +67,13 @@ orderByImports mp out fs =
 
 
 
-orderByLinks :: Show a => Map String [BzoFileModel a] -> [[BzoFileModel a]] -> [[BzoFileModel a]] -> Either [BzoErr] [[BzoFileModel a]]
+orderByLinks :: Show a => Map Text [BzoFileModel a] -> [[BzoFileModel a]] -> [[BzoFileModel a]] -> Either [BzoErr] [[BzoFileModel a]]
 orderByLinks mp out [] = Right out
 orderByLinks mp out fs =
-  let (remain, next) = break (\x -> containsManyMembers mp $ getLinkDependencies x) fs
-      next'          = map (\x -> (bfm_domain $ head x, x)) next
+  let (remain, next) = L.break (\x -> containsManyMembers mp $ getLinkDependencies x) fs
+      next'          = L.map (\x -> (bfm_domain $ L.head x, x)) next
   in case next of
-    [] -> Left [CfgErr "Unsatisfiable Dependencies between libraries! Compilation cannot continue.\n"]
+    [] -> Left [CfgErr $ pack "Unsatisfiable Dependencies between libraries! Compilation cannot continue.\n"]
     nx -> orderByLinks (insertMany mp next') (out ++ next) remain
 
 
@@ -86,12 +87,12 @@ orderByLinks mp out fs =
 orderFileData :: Show a => [BzoFileModel a] -> Either [BzoErr] [BzoFileModel a]
 orderFileData fs =
   let f0 = groupWith bfm_domain fs
-      f1 = map (orderByImports empty []) f0
-      f2 = concat $ lefts  f1
-      f3 = [orderByLinks empty [] $ rights f1]
+      f1 = L.map (orderByImports M.empty []) f0
+      f2 = L.concat $ lefts  f1
+      f3 = [orderByLinks M.empty [] $ rights f1]
       f4 = lefts  f3
-      f5 = concat $ rights f3
+      f5 = L.concat $ rights f3
   in case (f2, f4) of
-      ([], []) -> Right $ concat f5
-      ([], er) -> Left  $ concat er
+      ([], []) -> Right $ L.concat f5
+      ([], er) -> Left  $ L.concat er
       (er, _ ) -> Left  er

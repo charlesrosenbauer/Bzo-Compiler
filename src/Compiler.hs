@@ -1,6 +1,7 @@
 module Compiler where
 import Data.Tuple
-import Data.List
+import Data.List as L
+import Data.Text as T
 import BzoTypes
 import BzoPreprocessor
 import BzoParameterParser
@@ -22,16 +23,16 @@ import Debug.Trace
 
 compileFilePass :: BzoSettings -> IO ()
 compileFilePass (BzoSettings imp lib flg opt pfx) =
-  let valid = areFilesValid (map fst imp)
+  let valid = areFilesValid (L.map fst imp)
   in do
       lCfg  <- getLibraryCfgContents (BzoSettings imp lib flg opt pfx)
-      files <- loadSourceFiles imp
+      files <- loadSourceFiles $ L.map (\(fp,txt) -> (fp, pack txt)) imp
 
       -- Load, preprocess
 
       defs       <- return $ processFiles files
       defs'      <- (fmap (applyWithErr orderFileData)) $ (applyWithErrM (wrappedLibLoader lCfg)) defs
-      defs''     <- return $ (applyRight getDefTable) $ (applyRight getDefs) $ (applyRight (map (\x -> (adjustModel x modelXForm)))) defs'
+      defs''     <- return $ (applyRight getDefTable) $ (applyRight getDefs) $ (applyRight (L.map (\x -> (adjustModel x modelXForm)))) defs'
       --models   <- (((fmap (applyWithErr orderFileData)). (fmap $ applyWithErr wrappedModellerMap). (applyWithErrM (wrappedLibLoader lCfg)). processFiles) $ map swap files)
       --symbols  <- return (applyRight generateSymbolTable models)
       --namemaps <- return (applyRight (\st -> applyRight (map (getNamespaces st)) models) symbols)
@@ -58,7 +59,7 @@ showOutput (Right outs) = show outs
 showOutput (Left [err]) =
   "Compilation Failed. Errors:\n\n" ++ show err ++ "\n\n1 error total."
 showOutput (Left  errs) =
-  "Compilation Failed. Errors:\n\n" ++ concatMap (\x -> show x ++ "\n\n") (sortErrs $ errs) ++ "\n\n" ++ (show $ length errs) ++ " errors total."
+  "Compilation Failed. Errors:\n\n" ++ L.concatMap (\x -> show x ++ "\n\n") (sortErrs $ errs) ++ "\n\n" ++ (show $ L.length errs) ++ " errors total."
 
 
 
@@ -85,19 +86,8 @@ sortErrs = sortBy (\a b->
 
 
 
---compileExpression :: (FilePath, String) -> Either [BzoErr] [BzoFileModel]
---compileExpression lCfg s = (((applyWithErrM (wrappedLibLoader lCfg)). (applyWithErr wrappedModellerMap). (applyWithErr wrappedParserMap). wrappedLexerMap) [swap s])
-
-
-
-
-
-
-
-
-
-replExpression :: (FilePath, String) -> String
-replExpression s = showOutput (({-}(applyWithErr wrappedModellerMapREPL).-} (applyWithErr wrappedParserMap). wrappedLexerMap) [s])
+replExpression :: (FilePath, Text) -> String
+replExpression s = showOutput (({-(applyWithErr wrappedModellerMapREPL).-} (applyWithErr wrappedParserMap). wrappedLexerMap) [s])
 
 
 
@@ -108,7 +98,7 @@ replExpression s = showOutput (({-}(applyWithErr wrappedModellerMapREPL).-} (app
 
 
 
-parseExpression :: (FilePath, String) -> String
+parseExpression :: (Text, FilePath) -> String
 parseExpression s = showOutput (((applyWithErr wrappedParserMap). wrappedLexerMap) [swap s])
 
 
@@ -120,5 +110,5 @@ parseExpression s = showOutput (((applyWithErr wrappedParserMap). wrappedLexerMa
 
 
 
-lexExpression :: (FilePath, String) -> String
+lexExpression :: (Text, FilePath) -> String
 lexExpression s = showOutput (wrappedLexerMap [swap s])

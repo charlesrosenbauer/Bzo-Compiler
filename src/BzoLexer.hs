@@ -1,7 +1,8 @@
 module BzoLexer where
 import BzoTypes
 import Data.Char
-import Data.List
+import Data.List as L
+import Data.Text as T
 import Control.Monad
 import Control.Applicative
 import HigherOrder
@@ -20,7 +21,7 @@ data LexerState = LexerState{
   lsLine    :: Int,
   lsColumn  :: Int,
   lsOffset  :: Int,
-  lsFName   :: String }
+  lsFName   :: Text }
   deriving Eq
 
 
@@ -44,7 +45,7 @@ makeBzoPos (LexerState l c _ n) = BzoPos l c n
 
 
 
-newtype Lexer a = Lexer { lex :: String -> LexerState -> Either BzoErr [(a, LexerState, String)] }
+newtype Lexer a = Lexer { lex :: Text -> LexerState -> Either BzoErr [(a, LexerState, Text)] }
 
 
 
@@ -61,7 +62,7 @@ makeLexErr ls =
       l = line p
       c = column p
       n = fileName p
-  in (LexErr (BzoPos l c n) "Lexer error\n")
+  in (LexErr (BzoPos l c n) $ pack "Lexer error\n")
 
 
 
@@ -72,13 +73,15 @@ makeLexErr ls =
 
 
 
-runLexer :: String -> Lexer a -> String -> Either BzoErr a
+runLexer :: Text -> Lexer a -> Text -> Either BzoErr a
 runLexer fname lx s =
-  case (BzoLexer.lex lx s (LexerState 1 1 0 fname)) of
-    Right [(ret,  _, [] )] -> Right  ret
-    Right [(_  , st, _  )] -> Left $ LexErr (BzoPos (lsLine st) (lsColumn st) (lsFName st)) "Failed to consume entire input."
-    Left  err              -> Left err
-    _                      -> Left $ LexErr (BzoPos 0 0 fname) "Bug detected in runLexer in BzoLexer.hs"
+  let frames  = (BzoLexer.lex lx s (LexerState 1 1 0 fname))
+      frames' = mapEither frames (L.map (\(a, b, c) -> (a, b, T.null c)))
+  in case frames' of
+      Right [(ret,  _, True)] -> Right  ret
+      Right [(_  , st, _   )] -> Left $ LexErr (BzoPos (lsLine st) (lsColumn st) (lsFName st)) $ pack "Failed to consume entire input."
+      Left  err               -> Left err
+      _                       -> Left $ LexErr (BzoPos 0 0 fname) $ pack "Bug detected in runLexer in BzoLexer.hs"
 
 
 
@@ -110,12 +113,12 @@ instance Applicative Lexer where
     case (lf1 s ls) of
       Left  err -> Left err
       Right lst ->
-        let (p1, p23) = unzip $ map (\(a, b, c) -> (a, (c, b))) lst
-            out1 = map (\(a, b) -> lf2 a b) p23
+        let (p1, p23) = unzip $ L.map (\(a, b, c) -> (a, (c, b))) lst
+            out1 = L.map (\(a, b) -> lf2 a b) p23
             out2 = sepErrs out1
         in case out2 of
           Left  err -> Left err
-          Right val -> Right $ concat $ applyListFns p1 (\f (a, b, c) -> (f a, b, c)) val   )
+          Right val -> Right $ L.concat $ applyListFns p1 (\f (a, b, c) -> (f a, b, c)) val   )
 
 
 
@@ -225,9 +228,9 @@ getLexerState = Lexer $ \s ls -> Right [(ls, ls, s)]
 
 item :: Lexer Char
 item = Lexer $ \s ls ->
-  case s of
-    []     -> Right []
-    (c:cs) -> Right [(c, moveOne ls c, cs)]
+  case (T.uncons s) of
+    Nothing     -> Right []
+    Just (c,cs) -> Right [(c, moveOne ls c, cs)]
 
 
 
@@ -290,7 +293,7 @@ toLstLexer :: Lexer a -> Lexer [a]
 toLstLexer lx = Lexer (\s ls ->
   case (BzoLexer.lex lx s ls) of
     Left  err -> Left err
-    Right lst -> Right $ map xform lst)
+    Right lst -> Right $ L.map xform lst)
     where xform (a, b, c) = ([a], b, c)
 
 
@@ -302,9 +305,27 @@ toLstLexer lx = Lexer (\s ls ->
 
 
 
-lexGenString :: String -> Lexer String
-lexGenString [] = return []
-lexGenString (c:cs) = do { _ <- lexChar c; _ <- lexGenString cs; return (c:cs)}
+toTxtLexer :: Lexer Char -> Lexer Text
+toTxtLexer lx = Lexer (\s ls ->
+  case (BzoLexer.lex lx s ls) of
+    Left  err -> Left err
+    Right lst -> Right $ L.map xform lst)
+    where xform (a, b, c) = (pack [a], b, c)
+
+
+
+
+
+
+
+
+
+
+lexGenString :: Text -> Lexer Text
+lexGenString t =
+  case (T.uncons t) of
+    Just (c,cs) -> do { _ <- lexChar c; _ <- lexGenString cs; return $ T.cons c cs}
+    _           -> return t
 
 
 
@@ -316,12 +337,12 @@ lexGenString (c:cs) = do { _ <- lexChar c; _ <- lexGenString cs; return (c:cs)}
 
 
 
-lexComment :: Lexer String
+lexComment :: Lexer Text
 lexComment = do
   _  <- lexChar '"'
   cm <- many $ lexExceptChar '"'
   _  <- lexChar '"'
-  return cm
+  return $ pack cm
 
 
 
@@ -375,7 +396,7 @@ lexString = do
   _   <- lexChar '\''
   sr  <- many (lexEscape <|> (lexExceptChar '\''))
   _   <- lexChar '\''
-  return $ TkStr (makeBzoPos pos) sr
+  return $ TkStr (makeBzoPos pos) $ pack sr
 
 
 
@@ -388,7 +409,7 @@ lexString = do
 
 lexWhiteSpace :: Lexer BzoToken
 lexWhiteSpace = do
-  _  <- lexComment <|> (toLstLexer $ satisfy isSpace)
+  _  <- lexComment <|> (toTxtLexer $ satisfy isSpace)
   return TkNil
 
 
@@ -400,7 +421,7 @@ lexWhiteSpace = do
 
 
 
-lexStringToToken :: String -> (BzoPos -> BzoToken) -> Lexer BzoToken
+lexStringToToken :: Text -> (BzoPos -> BzoToken) -> Lexer BzoToken
 lexStringToToken st f = do
   p <- getLexerState
   _ <- lexGenString st
@@ -417,24 +438,24 @@ lexStringToToken st f = do
 
 lexSymbol :: Lexer BzoToken
 lexSymbol =
-  (lexStringToToken "::" (\p -> TkDefine    p)) <|>
-  (lexStringToToken ";;" (\p -> TkFnSym     p)) <|>
-  (lexStringToToken "()" (\p -> TkTupEmpt   p)) <|>
-  (lexStringToToken "[]" (\p -> TkArrGnrl   p)) <|>
-  (lexStringToToken "("  (\p -> TkStartTup  p)) <|>
-  (lexStringToToken ")"  (\p -> TkEndTup    p)) <|>
-  (lexStringToToken "["  (\p -> TkStartDat  p)) <|>
-  (lexStringToToken "]"  (\p -> TkEndDat    p)) <|>
-  (lexStringToToken "{"  (\p -> TkStartDo   p)) <|>
-  (lexStringToToken "}"  (\p -> TkEndDo     p)) <|>
-  (lexStringToToken ":"  (\p -> TkFilterSym p)) <|>
-  (lexStringToToken ";"  (\p -> TkLambdaSym p)) <|>
-  (lexStringToToken ".." (\p -> TkArrMod    p)) <|>
-  (lexStringToToken "."  (\p -> TkSepExpr   p)) <|>
-  (lexStringToToken ","  (\p -> TkSepPoly   p)) <|>
-  (lexStringToToken "_"  (\p -> TkWildcard  p)) <|>
-  (lexStringToToken "`"  (\p -> TkCurrySym  p)) <|>
-  (lexStringToToken "@"  (\p -> TkReference p))
+  (lexStringToToken (pack "::") (\p -> TkDefine    p)) <|>
+  (lexStringToToken (pack ";;") (\p -> TkFnSym     p)) <|>
+  (lexStringToToken (pack "()") (\p -> TkTupEmpt   p)) <|>
+  (lexStringToToken (pack "[]") (\p -> TkArrGnrl   p)) <|>
+  (lexStringToToken (pack "(")  (\p -> TkStartTup  p)) <|>
+  (lexStringToToken (pack ")")  (\p -> TkEndTup    p)) <|>
+  (lexStringToToken (pack "[")  (\p -> TkStartDat  p)) <|>
+  (lexStringToToken (pack "]")  (\p -> TkEndDat    p)) <|>
+  (lexStringToToken (pack "{")  (\p -> TkStartDo   p)) <|>
+  (lexStringToToken (pack "}")  (\p -> TkEndDo     p)) <|>
+  (lexStringToToken (pack ":")  (\p -> TkFilterSym p)) <|>
+  (lexStringToToken (pack ";")  (\p -> TkLambdaSym p)) <|>
+  (lexStringToToken (pack "..") (\p -> TkArrMod    p)) <|>
+  (lexStringToToken (pack ".")  (\p -> TkSepExpr   p)) <|>
+  (lexStringToToken (pack ",")  (\p -> TkSepPoly   p)) <|>
+  (lexStringToToken (pack "_")  (\p -> TkWildcard  p)) <|>
+  (lexStringToToken (pack "`")  (\p -> TkCurrySym  p)) <|>
+  (lexStringToToken (pack "@")  (\p -> TkReference p))
 
 
 
@@ -462,7 +483,7 @@ lexIdentifier = do
   p  <- getLexerState
   c0 <- satisfy (\c -> (isLegalChar c) && (not $ isUpper c) && (not $ isDigit c))
   cs <- many $ satisfy isLegalChar
-  return (TkId (makeBzoPos p) (c0 : cs))
+  return (TkId (makeBzoPos p) $ pack (c0 : cs))
 
 
 
@@ -479,7 +500,7 @@ lexMutIdentifier = do
   c0 <- lexChar '~'
   c1 <- satisfy (\c -> (isLegalChar c) && (not $ isUpper c) && (not $ isDigit c))
   cs <- many $ satisfy isLegalChar
-  return (TkMutId (makeBzoPos p) (c0 : (c1 : cs)))
+  return (TkMutId (makeBzoPos p) $ pack (c0 : (c1 : cs)))
 
 
 
@@ -495,7 +516,7 @@ lexTypeIdentifier = do
   p  <- getLexerState
   c0 <- satisfy isUpper
   cs <- many $ satisfy isLegalChar
-  return (TkTypeId (makeBzoPos p) (c0 : cs))
+  return (TkTypeId (makeBzoPos p) $ pack (c0 : cs))
 
 
 
@@ -512,7 +533,7 @@ lexTyVarIdentifier = do
   c0 <- satisfy isUpper
   cs <- many $ satisfy isLegalChar
   c' <- lexChar '\''
-  return (TkTyVar (makeBzoPos p) (c0 : (cs ++ [c'])))
+  return (TkTyVar (makeBzoPos p) $ pack (c0 : (cs ++ [c'])))
 
 
 
@@ -528,7 +549,7 @@ lexBIIdentifier = do
   b  <- lexChar '$'
   c0 <- satisfy (\c -> (isLegalChar c) && (not $ isUpper c) && (not $ isDigit c))
   cs <- many $ satisfy isLegalChar
-  return (TkBuiltin (makeBzoPos p) (b : (c0 : cs)))
+  return (TkBuiltin (makeBzoPos p) $ pack (b : (c0 : cs)))
 
 
 
@@ -545,7 +566,7 @@ lexBITypeIdentifier = do
   b  <- lexChar '$'
   c0 <- satisfy isUpper
   cs <- many $ satisfy isLegalChar
-  return (TkBIType (makeBzoPos p) (b : (c0 : cs)))
+  return (TkBIType (makeBzoPos p) $ pack (b : (c0 : cs)))
 
 
 
@@ -558,7 +579,7 @@ lexBITypeIdentifier = do
 
 readIntWithBase :: String -> Integer -> Integer
 readIntWithBase sr b =
-  let rs = reverse sr
+  let rs = L.reverse sr
   in  (readDgt rs b)
     where readDgt [] _ = 0
           readDgt st base =
@@ -601,7 +622,7 @@ readIntWithBase sr b =
 lexBinInt :: Lexer BzoToken
 lexBinInt = do
   p  <- getLexerState
-  _  <- ((lexGenString "0b") <|> (lexGenString "0B"))   --c0
+  _  <- ((lexGenString $ pack "0b") <|> (lexGenString $ pack "0B"))   --c0
   c1 <- some $ satisfy (\c -> elem c "01")
   return (TkInt (makeBzoPos p) (readIntWithBase c1 2))
 
@@ -617,7 +638,7 @@ lexBinInt = do
 lexOctInt :: Lexer BzoToken
 lexOctInt = do
   p  <- getLexerState
-  _  <- lexGenString "0"    -- c0
+  _  <- lexGenString $ pack "0"    -- c0
   c1 <- some $ satisfy isOctDigit
   return (TkInt (makeBzoPos p) (readIntWithBase c1 8))
 
@@ -648,7 +669,7 @@ lexDecInt = do
 lexNegDecInt :: Lexer BzoToken
 lexNegDecInt = do
   p <- getLexerState
-  _ <- lexGenString "-"
+  _ <- lexGenString $ pack "-"
   c <- some $ satisfy isDigit
   return (TkInt (makeBzoPos p) $ -1 * (readIntWithBase c 10))
 
@@ -663,7 +684,7 @@ lexNegDecInt = do
 lexHexInt :: Lexer BzoToken
 lexHexInt = do
   p  <- getLexerState
-  _  <- ((lexGenString "0x") <|> (lexGenString "0X"))   -- c0
+  _  <- ((lexGenString $ pack "0x") <|> (lexGenString $ pack "0X"))   -- c0
   c1 <- some $ satisfy isHexDigit
   return (TkInt (makeBzoPos p) (readIntWithBase c1 16))
 
@@ -680,10 +701,10 @@ lexFlt :: Lexer BzoToken
 lexFlt = do
   p  <- getLexerState
   c0 <- some $ satisfy isDigit
-  _  <- lexGenString "."      -- c1
+  _  <- lexGenString $ pack "."      -- c1
   c2 <- some $ satisfy isDigit
   return (TkFlt (makeBzoPos p) ((fromIntegral $ readIntWithBase c0 10) +
-    ((fromIntegral $ readIntWithBase c2 10) / (10 ^ (length c2))) ) )
+    ((fromIntegral $ readIntWithBase c2 10) / (10 ^ (L.length c2))) ) )
 
 
 
@@ -697,12 +718,12 @@ lexFlt = do
 lexNegFlt :: Lexer BzoToken
 lexNegFlt = do
   p  <- getLexerState
-  _  <- lexGenString "-"
+  _  <- lexGenString $ pack "-"
   c0 <- some $ satisfy isDigit
-  _  <- lexGenString "."      -- c1
+  _  <- lexGenString $ pack "."      -- c1
   c2 <- some $ satisfy isDigit
   return (TkFlt (makeBzoPos p) $ -1 * ((fromIntegral $ readIntWithBase c0 10) +
-    ((fromIntegral $ readIntWithBase c2 10) / (10 ^ (length c2))) ) )
+    ((fromIntegral $ readIntWithBase c2 10) / (10 ^ (L.length c2))) ) )
 
 
 
@@ -768,13 +789,13 @@ generalLexerMany = many generalLexer
 
 
 
-literateTransform :: String -> String
+literateTransform :: Text -> Text
 literateTransform text =
-  let l  = lines text
-      ls = map (\x -> if((length x > 0) && (head x == '>'))
-                        then (" " ++ (drop 1 x) ++ "\n")
-                        else ("\n")) l
-  in concat ls
+  let l  = T.lines text
+      ls = L.map (\x -> if((T.length x > 0) && (T.head x == '>'))
+                          then ((pack " ") `T.append` (T.drop 1 x) `T.append` (pack "\n"))
+                          else (pack "\n")) l
+  in T.concat ls
 
 
 
@@ -785,9 +806,9 @@ literateTransform text =
 
 
 
-tryLiterateTransform :: FilePath -> String -> String
+tryLiterateTransform :: FilePath -> Text -> Text
 tryLiterateTransform file text =
-  if isSuffixOf ".lbz" file
+  if T.isSuffixOf (pack ".lbz") $ pack file
     then literateTransform text
     else text
 
@@ -816,12 +837,12 @@ removeLexerArtifacts prev this =
 
 
 
-fileLexer :: String -> FilePath -> Either [BzoErr] [BzoToken]
+fileLexer :: Text -> FilePath -> Either [BzoErr] [BzoToken]
 fileLexer syms file =
   let text = tryLiterateTransform file syms
-      res  = runLexer file generalLexerMany text
+      res  = runLexer (pack file) generalLexerMany text
   in  case res of
     Left  err -> Left [err]
-    Right tks -> Right $ repeatUntilFilterStops isValidToken (scanl removeLexerArtifacts TkNil) $ filter isValidToken tks
+    Right tks -> Right $ repeatUntilFilterStops isValidToken (L.scanl removeLexerArtifacts TkNil) $ L.filter isValidToken tks
   where isValidToken (TkNil) = False
         isValidToken _       = True

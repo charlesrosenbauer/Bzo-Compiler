@@ -36,14 +36,14 @@ data BzoToken
   | TkArrMod       { spos :: !BzoPos }
   | TkInt          { spos :: !BzoPos, valInt :: !Integer }
   | TkFlt          { spos :: !BzoPos, valFlt :: !Double  }
-  | TkStr          { spos :: !BzoPos, valStr :: !String  }
-  | TkId           { spos :: !BzoPos, valId  :: !String  }
-  | TkTypeId       { spos :: !BzoPos, valId  :: !String  }
-  | TkMutId        { spos :: !BzoPos, valId  :: !String  }
-  | TkTyVar        { spos :: !BzoPos, valId  :: !String  }
+  | TkStr          { spos :: !BzoPos, valStr :: !T.Text  }
+  | TkId           { spos :: !BzoPos, valId  :: !T.Text  }
+  | TkTypeId       { spos :: !BzoPos, valId  :: !T.Text  }
+  | TkMutId        { spos :: !BzoPos, valId  :: !T.Text  }
+  | TkTyVar        { spos :: !BzoPos, valId  :: !T.Text  }
   | TkNewline      { spos :: !BzoPos }
-  | TkBuiltin      { spos :: !BzoPos, valId  :: !String  }
-  | TkBIType       { spos :: !BzoPos, valId  :: !String  }
+  | TkBuiltin      { spos :: !BzoPos, valId  :: !T.Text  }
+  | TkBIType       { spos :: !BzoPos, valId  :: !T.Text  }
   | TkNil
   deriving Eq
 
@@ -57,16 +57,16 @@ data BzoToken
 
 
 data BzoErr = Other
-  | StringErr { position::BzoPos, errorStr::String }
-  | LexErr    { position::BzoPos, errorStr::String }
-  | ParseErr  { position::BzoPos, errorStr::String }
-  | TypeErr   { position::BzoPos, errorStr::String }
-  | SntxErr   { position::BzoPos, errorStr::String }
-  | DepErr    { errorStr::String }
-  | ParamErr  { errorStr::String }
-  | CfgErr    { errorStr::String }
-  | ModelErr  { position::BzoPos, errorStr::String }
-  | PrepErr   { position::BzoPos, errorStr::String}
+  | StringErr { position::BzoPos, errorStr::T.Text }
+  | LexErr    { position::BzoPos, errorStr::T.Text }
+  | ParseErr  { position::BzoPos, errorStr::T.Text }
+  | TypeErr   { position::BzoPos, errorStr::T.Text }
+  | SntxErr   { position::BzoPos, errorStr::T.Text }
+  | DepErr    { errorStr::T.Text }
+  | ParamErr  { errorStr::T.Text }
+  | CfgErr    { errorStr::T.Text }
+  | ModelErr  { position::BzoPos, errorStr::T.Text }
+  | PrepErr   { position::BzoPos, errorStr::T.Text}
 
 
 
@@ -78,15 +78,15 @@ data BzoErr = Other
 
 
 showBzErr :: BzoErr -> String
-showBzErr (StringErr  p st) = "Bzo Error:\n" ++ (showErrPos p) ++ st
-showBzErr (LexErr     p st) = "Lexer Error:\n" ++ (showErrPos p) ++ st
-showBzErr (ParseErr   p st) = "Parse Error:\n" ++ (showErrPos p) ++ st
-showBzErr (TypeErr    p st) = "Type Error:\n" ++ (showErrPos p) ++ st
-showBzErr (SntxErr    p st) = "Syntax Error:\n " ++ (showErrPos p) ++ st
-showBzErr (DepErr       st) = "Dependency Error:\n" ++ st
-showBzErr (ParamErr     st) = "Parameter Error:\n" ++ st
-showBzErr (CfgErr       st) = "Configuration Error:\n" ++ st
-showBzErr (PrepErr    p st) = "Preprocessor Error:\n" ++ (showErrPos p) ++ st
+showBzErr (StringErr  p st) = "Bzo Error:\n" ++ (showErrPos p) ++ (show st)
+showBzErr (LexErr     p st) = "Lexer Error:\n" ++ (showErrPos p) ++ (show st)
+showBzErr (ParseErr   p st) = "Parse Error:\n" ++ (showErrPos p) ++ (show st)
+showBzErr (TypeErr    p st) = "Type Error:\n" ++ (showErrPos p) ++ (show st)
+showBzErr (SntxErr    p st) = "Syntax Error:\n " ++ (showErrPos p) ++ (show st)
+showBzErr (DepErr       st) = "Dependency Error:\n" ++ (show st)
+showBzErr (ParamErr     st) = "Parameter Error:\n" ++ (show st)
+showBzErr (CfgErr       st) = "Configuration Error:\n" ++ (show st)
+showBzErr (PrepErr    p st) = "Preprocessor Error:\n" ++ (showErrPos p) ++ (show st)
 instance Show BzoErr where show = showBzErr
 
 
@@ -99,7 +99,7 @@ instance Show BzoErr where show = showBzErr
 
 
 showErrPos :: BzoPos -> String
-showErrPos p = "In file \"" ++ (fileName p) ++ "\", at line " ++ (show $ line p) ++ ", column " ++ (show $ column p) ++ " ::\n"
+showErrPos p = "In file \"" ++ (show $ fileName p) ++ "\", at line " ++ (show $ line p) ++ ", column " ++ (show $ column p) ++ " ::\n"
 
 
 
@@ -113,7 +113,7 @@ showErrPos p = "In file \"" ++ (fileName p) ++ "\", at line " ++ (show $ line p)
 data BzoPos = BzoPos {
   line     :: !Int,
   column   :: !Int,
-  fileName :: !String }
+  fileName :: !T.Text }
   deriving (Eq, Show)
 
 
@@ -187,31 +187,31 @@ data BzoSyntax
         sflt :: !Double }
     | BzS_Str {
         pos  :: !BzoPos,
-        sstr :: !String }
+        sstr :: !T.Text }
     | BzS_Id {
         pos  :: !BzoPos,
-        sid  :: !String }
+        sid  :: !T.Text }
     | BzS_TyId {
         pos  :: !BzoPos,
-        sid  :: !String }
+        sid  :: !T.Text }
     | BzS_TyVar {
         pos  :: !BzoPos,
-        sid  :: !String }
+        sid  :: !T.Text }
     | BzS_Curry {
         pos  :: !BzoPos,
         obj  :: !BzoSyntax }
     | BzS_MId {
         pos  :: !BzoPos,
-        sid  :: !String }
+        sid  :: !T.Text }
     | BzS_BId {
         pos  :: !BzoPos,
-        sid  :: !String }
+        sid  :: !T.Text }
     | BzS_BTId {
         pos  :: !BzoPos,
-        sid  :: !String }
+        sid  :: !T.Text }
     | BzS_Namespace{
         pos  :: !BzoPos,
-        sid  :: !String }
+        sid  :: !T.Text }
     | BzS_MapMod {
         pos  :: !BzoPos }
     | BzS_Wildcard {
@@ -252,35 +252,35 @@ data BzoSyntax
     | BzS_FunDef {
         pos    :: !BzoPos,
         inpars :: !BzoSyntax,
-        fnid   :: !String,
+        fnid   :: !T.Text,
         expars :: !BzoSyntax,
         def    :: !BzoSyntax }
     | BzS_TypDef {
         pos  :: !BzoPos,
         pars :: !BzoSyntax,
-        tyid :: !String,
+        tyid :: !T.Text,
         typ  :: !BzoSyntax }
     | BzS_FnTypeDef {
         pos  :: !BzoPos,
         pars :: !BzoSyntax,
-        fnid :: !String,
+        fnid :: !T.Text,
         def  :: !BzoSyntax }
     | BzS_TyClassDef {
         pos  :: !BzoPos,
         pars :: !BzoSyntax,
-        tyid :: !String,
+        tyid :: !T.Text,
         defs :: ![BzoSyntax] }
     | BzS_Calls {
         pos   :: !BzoPos,
         calls :: ![BzoSyntax] }
     | BzS_ExTypObj {
         pos       :: !BzoPos,
-        sid       :: !String,
-        namespace :: !String }
+        sid       :: !T.Text,
+        namespace :: !T.Text }
     | BzS_ExFunObj {
         pos       :: !BzoPos,
-        sid       :: !String,
-        namespace :: !String }
+        sid       :: !T.Text,
+        namespace :: !T.Text }
     | BzS_ArrayObj {
         pos      :: !BzoPos,
         bzobj    :: !BzoSyntax,
@@ -319,39 +319,39 @@ data BzoSyntax
     | BzS_FnHead {
         pos     :: !BzoPos,
         inpars  :: !BzoSyntax,
-        fnid    :: !String,
+        fnid    :: !T.Text,
         expars  :: !BzoSyntax }
     | BzS_TyHead {
         pos     :: !BzoPos,
         pars    :: !BzoSyntax,
-        tyid    :: !String }
+        tyid    :: !T.Text }
     | BzS_TyClassHead {
         pos     :: !BzoPos,
         pars    :: !BzoSyntax,
-        tyid    :: !String,
+        tyid    :: !T.Text,
         defs    :: ![BzoSyntax] }
     | BzS_Import {
         pos     :: !BzoPos,
-        fname   :: !String,
-        frename :: !String }
+        fname   :: !T.Text,
+        frename :: !T.Text }
     | BzS_Include {
         pos     :: !BzoPos,
-        fname   :: !String,
-        frename :: !String }
+        fname   :: !T.Text,
+        frename :: !T.Text }
     | BzS_TyHint {
         pos     :: !BzoPos,
         inpars  :: !BzoSyntax,
-        htid    :: !String,
+        htid    :: !T.Text,
         expars  :: !BzoSyntax }
     | BzS_FnHint {
         pos     :: !BzoPos,
         inpars  :: !BzoSyntax,
-        htid    :: !String,
+        htid    :: !T.Text,
         expars  :: !BzoSyntax }
     | BzS_File {
         pos     :: !BzoPos,
-        mname   :: !String,
-        fname   :: !String,
+        mname   :: !T.Text,
+        fname   :: !T.Text,
         includes:: ![BzoSyntax],
         imports :: ![BzoSyntax],
         defs    :: ![BzoSyntax] }
@@ -370,7 +370,7 @@ data BzoSyntax
 data CfgSyntax
   = LibLine {
       cpos    :: BzoPos,
-      libName :: String,
+      libName :: T.Text,
       libPath :: FilePath }
   | LibLines {
       cpos     :: BzoPos,
@@ -428,12 +428,12 @@ showAST (BzS_FilterObj _ o f)              = " <" ++ (show o) ++ " of type " ++ 
 showAST (BzS_CurryObj  _ o p)              = " <" ++ (show p) ++ " applied to " ++ (show o) ++ "> "
 showAST (BzS_MapObj    _ o)                = " <" ++ (show o) ++ " .. > "
 showAST (BzS_Token     _ t)                = (show t)
-showAST (BzS_TyHint    _ ins h exs)        = " {Ty HINT: " ++ (show ins) ++ " -> " ++ h ++ " -> " ++ (show exs) ++ "} \n"
-showAST (BzS_FnHint    _ ins h exs)        = " {Fn HINT: " ++ (show ins) ++ " -> " ++ h ++ " -> " ++ (show exs) ++ "} \n"
+showAST (BzS_TyHint    _ ins h exs)        = " {Ty HINT: " ++ (show ins) ++ " -> " ++ (show h) ++ " -> " ++ (show exs) ++ "} \n"
+showAST (BzS_FnHint    _ ins h exs)        = " {Fn HINT: " ++ (show ins) ++ " -> " ++ (show h) ++ " -> " ++ (show exs) ++ "} \n"
 
-showAST (BzS_Import    _ fn fr)            = "    -- Import  " ++ fn ++ " as " ++ fr ++ " --\n"
-showAST (BzS_Include   _ fn fr)            = "    -- Include " ++ fn ++ " as " ++ fr ++ " --\n"
-showAST (BzS_File      _ mn fn ins ims dfs)= "\n-- (File, Module): (" ++ fn ++ ", " ++ mn ++ ")\nIncludes:\n" ++ (concatMap show ins) ++ "\nImports:\n" ++ (concatMap show ims) ++ "\nDefs:\n" ++ (concatMap show dfs)
+showAST (BzS_Import    _ fn fr)            = "    -- Import  " ++ (show fn) ++ " as " ++ (show fr) ++ " --\n"
+showAST (BzS_Include   _ fn fr)            = "    -- Include " ++ (show fn) ++ " as " ++ (show fr) ++ " --\n"
+showAST (BzS_File      _ mn fn ins ims dfs)= "\n-- (File, Module): (" ++ (show fn) ++ ", " ++ (show mn) ++ ")\nIncludes:\n" ++ (concatMap show ins) ++ "\nImports:\n" ++ (concatMap show ims) ++ "\nDefs:\n" ++ (concatMap show dfs)
 
 showAST (BzS_Undefined)                    = " UNDEFINED "
 
@@ -455,14 +455,14 @@ instance Show BzoSyntax where show = showAST
 
 data (Show a) => BzoFileModel a
   = BzoFileModel{
-      bfm_moduleName    :: !String,
+      bfm_moduleName    :: !T.Text,
       bfm_filepath      :: !FilePath,
-      bfm_domain        :: !String,
+      bfm_domain        :: !T.Text,
       bfm_fileModel     :: !a,
-      bfm_fileImports   :: ![String],
-      bfm_fileLinks     :: ![String],
-      bfm_fileImportsAs :: ![(String, String)],   -- [(import fst, refer to as snd)]
-      bfm_fileLinksAs   :: ![(String, String)]}   -- [(link   fst, refer to as snd)]
+      bfm_fileImports   :: ![T.Text],
+      bfm_fileLinks     :: ![T.Text],
+      bfm_fileImportsAs :: ![(T.Text, T.Text)],   -- [(import fst, refer to as snd)]
+      bfm_fileLinksAs   :: ![(T.Text, T.Text)]}   -- [(link   fst, refer to as snd)]
 
 
 
@@ -475,7 +475,7 @@ data (Show a) => BzoFileModel a
 
 showBzoFileModel :: Show a => BzoFileModel a -> String
 showBzoFileModel (BzoFileModel mn pth dmn ast imp lnk impa lnka) =
-  "\n \nModule: " ++ mn ++ "\nPath: " ++ pth ++
+  "\n \nModule: " ++ (show mn ) ++ "\nPath: " ++ (show pth) ++
     "\nDomain: "  ++ (show dmn) ++
     "\nImports: " ++ (show imp) ++ "\nAliased Imports: " ++ (show impa) ++
     "\nLinks: "   ++ (show lnk) ++ "\nAliased Links: "   ++ (show lnka) ++

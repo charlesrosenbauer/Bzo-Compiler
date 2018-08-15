@@ -1,7 +1,8 @@
+{-# LANGUAGE ViewPatterns, PatternSynonyms #-}
 module BzoParserRules where
 import BzoTypes
 import Data.List as L
-import Data.Text
+import Data.Text as T
 import Debug.Trace
 
 
@@ -13,10 +14,10 @@ import Debug.Trace
 
 
 
-parserIter :: String -> [BzoSyntax] -> [BzoSyntax] -> Either [BzoErr] BzoSyntax
+parserIter :: Text -> [BzoSyntax] -> [BzoSyntax] -> Either [BzoErr] BzoSyntax
 
 -- | Nothing to Parse?
-parserIter fname [] [] = Left $ [ParseErr (BzoPos 1 1 fname) "Nothing to Parse?"]
+parserIter fname [] [] = Left $ [ParseErr (BzoPos 1 1 fname) $ pack "Nothing to Parse?"]
 
 
 
@@ -313,61 +314,46 @@ parserIter fname tokens (f@(BzS_File p1 mname _     incs imps df)
 
 parserIter fname tokens ((BzS_Statement p0 (BzS_Expr  _ [
                                             (BzS_TyId _ impas),
-                                            (BzS_BTId _ "$ImportAs"),
-                                            (BzS_TyId _ imp)])) :stk)   = parserIter fname tokens ((BzS_Import p0 imp impas):stk)
+                                            (BzS_BTId _ tid),
+                                            (BzS_TyId _ imp)])) :stk) =
+    case (unpack tid) of
+      "ImportAs"   -> parserIter fname tokens ((BzS_Import  p0 imp impas):stk)
+      "IncludeAs"  -> parserIter fname tokens ((BzS_Include p0 imp impas):stk)
+      _            -> Left [ParseErr p0 $ pack "Unrecognized header."]
 
 parserIter fname tokens ((BzS_Statement p0 (BzS_Expr  _ [
-                                            (BzS_BTId _ "$ImportAs"),
-                                            (BzS_TyId _ imp)])) :stk)   = Left [ParseErr p0 "Attempting to import module with unspecified namespace."]
+                                            (BzS_BTId _ tid),
+                                            (BzS_TyId _ imp)])) :stk) =
+    case (unpack tid) of
+      "$ImportAs"  -> Left [ParseErr p0 $ pack "Attempting to import module with unspecified namespace."]
+      "$Import"    -> parserIter fname tokens ((BzS_Import  p0 imp imp):stk)
+      "$Include"   -> parserIter fname tokens ((BzS_Include p0 imp imp):stk)
+      "$IncludeAs" -> Left [ParseErr p0 $ pack "Attempting to include module with unspecified namespace."]
+      "$Module"    -> parserIter fname tokens ((BzS_File p0 imp fname [] [] []):stk)
+      _            -> Left [ParseErr p0 $ pack "Unrecognized header."]
 
 parserIter fname tokens ((BzS_Statement p0 (BzS_Expr  _ [_,
-                                            (BzS_BTId _ "$ImportAs"),
-                                            (BzS_TyId _ imp)])) :stk)   = Left [ParseErr p0 "Attempting to import module with invalid namespace."]
-
-parserIter fname tokens ((BzS_Statement p0 (BzS_Expr  _ [
-                                            (BzS_BTId _ "$Import"),
-                                            (BzS_TyId _ imp)])) :stk)   = parserIter fname tokens ((BzS_Import p0 imp imp):stk)
-
-parserIter fname tokens ((BzS_Statement p0 (BzS_Expr  _ [_,
-                                            (BzS_BTId _ "$Import"),
-                                            (BzS_TyId _ imp)])) :stk)   = Left [ParseErr p0 "Invalid import call. Did you mean to use $ImportAs?"]
-
-parserIter fname tokens ((BzS_Statement p0 (BzS_Expr  _ [
-                                            (BzS_TyId _ impas),
-                                            (BzS_BTId _ "$IncludeAs"),
-                                            (BzS_TyId _ imp)])) :stk)   = parserIter fname tokens ((BzS_Include p0 imp impas):stk)
-
-parserIter fname tokens ((BzS_Statement p0 (BzS_Expr  _ [
-                                            (BzS_BTId _ "$Include"),
-                                            (BzS_TyId _ imp)])) :stk)   = parserIter fname tokens ((BzS_Include p0 imp imp):stk)
-
-parserIter fname tokens ((BzS_Statement p0 (BzS_Expr  _ [
-                                            (BzS_BTId _ "$IncludeAs"),
-                                            (BzS_TyId _ imp)])) :stk)   = Left [ParseErr p0 "Attempting to include module with unspecified namespace."]
-
-parserIter fname tokens ((BzS_Statement p0 (BzS_Expr  _ [_,
-                                            (BzS_BTId _ "$IncludeAs"),
-                                            (BzS_TyId _ imp)])) :stk)   = Left [ParseErr p0 "Attempting to include module with invalid namespace."]
-
-parserIter fname tokens ((BzS_Statement p0 (BzS_Expr  _ [_,
-                                            (BzS_BTId _ "$Include"),
-                                            (BzS_TyId _ imp)])) :stk)   = Left [ParseErr p0 "Invalide include call. Did you mean to use $IncludeAs?"]
-
-parserIter fname tokens ((BzS_Statement p0 (BzS_Expr  _ [
-                                            (BzS_BTId _ "$Module"),
-                                            (BzS_TyId _ mname)])):stk)  = parserIter fname tokens ((BzS_File p0 mname fname [] [] []):stk)
+                                            (BzS_BTId _ tid),
+                                            (BzS_TyId _ imp)])) :stk) =
+    case (unpack tid) of
+      "$ImportAs"  -> Left [ParseErr p0 $ pack "Attempting to import module with invalid namespace."]
+      "$Import"    -> Left [ParseErr p0 $ pack "Invalid import call. Did you mean to use $ImportAs?"]
+      "$Include"   -> parserIter fname tokens ((BzS_Include p0 imp imp):stk)
+      "$IncludeAs" -> Left [ParseErr p0 $ pack "Attempting to include module with invalid namespace."]
+      "$Include"   -> Left [ParseErr p0 $ pack "Invalide include call. Did you mean to use $IncludeAs?"]
+      _            -> Left [ParseErr p0 $ pack "Unrecognized header."]
 
 parserIter fname tokens (i@(BzS_Include p1 imp impas)
                         :(BzS_File p0 mname _       incs imps []):stk)  = parserIter fname tokens ((BzS_File p0 mname fname (i:incs) imps []):stk)
 
 parserIter fname tokens (i@(BzS_Include p1 imp impas)
-                        :(BzS_File p0 mname _       incs imps df):stk)  = Left [ParseErr p1 "Include call found outside of file header."]
+                        :(BzS_File p0 mname _       incs imps df):stk)  = Left [ParseErr p1 $ pack "Include call found outside of file header."]
 
 parserIter fname tokens (i@(BzS_Import p1 imp impas)
                         :(BzS_File p0 mname _       incs imps []):stk)  = parserIter fname tokens ((BzS_File p0 mname fname incs (i:imps) []):stk)
 
 parserIter fname tokens (i@(BzS_Import p1 imp impas)
-                        :(BzS_File p0 mname _       incs imps []):stk)  = Left [ParseErr p1 "Import call found outside of file header."]
+                        :(BzS_File p0 mname _       incs imps []):stk)  = Left [ParseErr p1 $ pack "Import call found outside of file header."]
 
 parserIter fname tokens ((BzS_Calls  p1 calls)
                         :(BzS_File p0 mname _       incs imps df):stk)  = parserIter fname tokens ((BzS_File p0 mname fname incs imps (calls++df)):stk)
@@ -420,7 +406,7 @@ parserIter fname tokens ((BzS_Calls  p1 calls1)
 
 parserIter fname [] [item]        = Right item
 
-parserIter fname [] (s:stack)     = Left (ParseErr (pos s) ("Parser could not consume entire file.\n"):(parserErr fname (L.reverse (s:stack)) []))
+parserIter fname [] (s:stack)     = Left (ParseErr (pos s) (pack "Parser could not consume entire file.\n"):(parserErr fname (L.reverse (s:stack)) []))
 
 parserIter fname (t:tokens) stack = parserIter fname tokens (t:stack)
 
@@ -433,65 +419,65 @@ parserIter fname (t:tokens) stack = parserIter fname tokens (t:stack)
 
 
 
-parserErr :: String -> [BzoSyntax] -> [BzoSyntax] -> [BzoErr]
+parserErr :: Text -> [BzoSyntax] -> [BzoSyntax] -> [BzoErr]
 
 
 -- | Nothing to Parse?
 
-parserErr fname [] [] = [ParseErr (BzoPos 1 1 fname) "Nothing to Parse?"]
+parserErr fname [] [] = [ParseErr (BzoPos 1 1 fname) $ pack "Nothing to Parse?"]
 
 -- | Errors
 
 parserErr fname (n:nxt) stk@((BzS_Token _ (TkSepPoly p2))
                              :x@(BzS_Expr  p1 _)
-                             :(BzS_CmpdHead p0 xs):_)                = (ParseErr p0 "Unexpected comma (,) in compound tuple."    ):(parserErr fname nxt (n:stk))
+                             :(BzS_CmpdHead p0 xs):_)                = (ParseErr p0 $ pack "Unexpected comma (,) in compound tuple."    ):(parserErr fname nxt (n:stk))
 
 parserErr fname (n:nxt) stk@((BzS_Token _ (TkSepExpr p2))
                              :x@(BzS_Expr  p1 _)
-                             :(BzS_PolyHead p0 xs):_)                = (ParseErr p0 "Unexpected period (.) in polymorphic tuple."):(parserErr fname nxt (n:stk))
+                             :(BzS_PolyHead p0 xs):_)                = (ParseErr p0 $ pack "Unexpected period (.) in polymorphic tuple."):(parserErr fname nxt (n:stk))
 
 parserErr fname (n:nxt) stk@((BzS_Calls p1 calls1)
-                             :xpr:_)                                 = (ParseErr (pos xpr) "Unexpected random expression among calls."):(parserErr fname nxt (n:stk))
+                             :xpr:_)                                 = (ParseErr (pos xpr) $ pack "Unexpected random expression among calls."):(parserErr fname nxt (n:stk))
 
 parserErr fname (n:nxt) stk@((BzS_Token _ (TkEndDat   p2))
                              :(BzS_Expr  _ [BzS_Flt    p1 num])
-                             :(BzS_Token _ (TkStartDat p0)):_)       = (ParseErr p1 "Floats cannot be used to denote the size of an array."):(parserErr fname nxt (n:stk))
+                             :(BzS_Token _ (TkStartDat p0)):_)       = (ParseErr p1 $ pack "Floats cannot be used to denote the size of an array."):(parserErr fname nxt (n:stk))
 
 parserErr fname (n:nxt) stk@((BzS_Token _ (TkEndDat   p2))
                              :(BzS_Expr  _ [BzS_Str    p1 str])
-                             :(BzS_Token _ (TkStartDat p0)):_)       = (ParseErr p1 "Strings cannot be used to denote the size of an array."):(parserErr fname nxt (n:stk))
+                             :(BzS_Token _ (TkStartDat p0)):_)       = (ParseErr p1 $ pack "Strings cannot be used to denote the size of an array."):(parserErr fname nxt (n:stk))
 
 parserErr fname (n:nxt) stk@((BzS_Token _ (TkEndDat   p2))
                              :(BzS_Expr  p x)
-                             :(BzS_Token _ (TkStartDat p0)):_)       = (ParseErr p "Only integers can be used to denote the size of an array."):(parserErr fname nxt (n:stk))
+                             :(BzS_Token _ (TkStartDat p0)):_)       = (ParseErr p $ pack "Only integers can be used to denote the size of an array."):(parserErr fname nxt (n:stk))
 
 parserErr fname (n:nxt) stk@((BzS_Token p1 (TkArrMod _))
-                             :_)                                     = (ParseErr p1 "Unexpected array modifier (..)."):(parserErr fname nxt (n:stk))
+                             :_)                                     = (ParseErr p1 $ pack "Unexpected array modifier (..)."):(parserErr fname nxt (n:stk))
 
 parserErr fname (n:nxt) stk@((BzS_Token p1 (TkLambdaSym _))
-                             :_)                                     = (ParseErr p1 "Unexpected semicolon (;)."):(parserErr fname nxt (n:stk))
+                             :_)                                     = (ParseErr p1 $ pack "Unexpected semicolon (;)."):(parserErr fname nxt (n:stk))
 
 parserErr fname (n:nxt) stk@((BzS_Token p1 (TkDefine _))
-                             :_)                                     = (ParseErr p1 "Unexpected definition symbol (::)."):(parserErr fname nxt (n:stk))
+                             :_)                                     = (ParseErr p1 $ pack "Unexpected definition symbol (::)."):(parserErr fname nxt (n:stk))
 
 parserErr fname (n:nxt) stk@((BzS_Token p1 (TkReference _))
-                             :_)                                     = (ParseErr p1 "Unexpected reference symbol (@)."):(parserErr fname nxt (n:stk))
+                             :_)                                     = (ParseErr p1 $ pack "Unexpected reference symbol (@)."):(parserErr fname nxt (n:stk))
 
 parserErr fname (n:nxt) stk@((BzS_Token p2 (TkNewline _))
                              :(BzS_FnHead p1 _ _ _)
-                             :_)                                     = (ParseErr p2 "Newlines are not allowed immediated after a definition symbol (::)."):(parserErr fname nxt (n:stk))
+                             :_)                                     = (ParseErr p2 $ pack "Newlines are not allowed immediated after a definition symbol (::)."):(parserErr fname nxt (n:stk))
 
 parserErr fname (n:nxt) stk@((BzS_Token p2 (TkNewline _))
                              :(BzS_TyHead p1 _ _)
-                             :_)                                     = (ParseErr p2 "Newlines are not allowed immediated after a definition symbol (::)."):(parserErr fname nxt (n:stk))
+                             :_)                                     = (ParseErr p2 $ pack "Newlines are not allowed immediated after a definition symbol (::)."):(parserErr fname nxt (n:stk))
 
 parserErr fname (n:nxt) stk@(_
                              :(BzS_FnHead p1 _ _ _)
-                             :_)                                     = (ParseErr p1 "Improper definition of function or function type."):(parserErr fname nxt (n:stk))
+                             :_)                                     = (ParseErr p1 $ pack "Improper definition of function or function type."):(parserErr fname nxt (n:stk))
 
 parserErr fname (n:nxt) stk@(_
                              :(BzS_TyHead p1 _ _)
-                             :_)                                     = (ParseErr p1 "Improper definition of type."):(parserErr fname nxt (n:stk))
+                             :_)                                     = (ParseErr p1 $ pack "Improper definition of type."):(parserErr fname nxt (n:stk))
 
 -- | Control Logic
 

@@ -1,4 +1,6 @@
 module BzoParser where
+import Data.Text as T
+import Data.List as L
 import BzoTypes
 import BzoParserRules
 import HigherOrder
@@ -31,7 +33,7 @@ isBracket _              = False
 
 
 -- Probably could use a monad, but that's too much work
-combineBracketChecks :: (String -> [BzoToken] -> (Maybe [BzoErr], [BzoToken])) -> (String -> [BzoToken] -> (Maybe [BzoErr], [BzoToken])) -> String -> [BzoToken] -> (Maybe [BzoErr], [BzoToken])
+combineBracketChecks :: (Text -> [BzoToken] -> (Maybe [BzoErr], [BzoToken])) -> (Text -> [BzoToken] -> (Maybe [BzoErr], [BzoToken])) -> Text -> [BzoToken] -> (Maybe [BzoErr], [BzoToken])
 combineBracketChecks f0 f1 fname tks =
   let a = case (f0 fname tks) of
             (Just errs, tks') -> (errs, f1 fname tks')
@@ -51,7 +53,7 @@ combineBracketChecks f0 f1 fname tks =
 
 
 
-recoverBracketCheck :: (String -> [BzoToken] -> (Maybe [BzoErr], [BzoToken])) -> String -> [BzoErr] -> [BzoToken] -> (Maybe [BzoErr], [BzoToken])
+recoverBracketCheck :: (Text -> [BzoToken] -> (Maybe [BzoErr], [BzoToken])) -> Text -> [BzoErr] -> [BzoToken] -> (Maybe [BzoErr], [BzoToken])
 recoverBracketCheck fn fname errs tks =
   let out = fn fname tks
   in case out of
@@ -67,15 +69,15 @@ recoverBracketCheck fn fname errs tks =
 
 
 
-bracketCheck_Tuple :: String -> [BzoToken] -> (Maybe [BzoErr], [BzoToken])
+bracketCheck_Tuple :: Text -> [BzoToken] -> (Maybe [BzoErr], [BzoToken])
 bracketCheck_Tuple fname ((TkStartTup ps) : tks) = combineBracketChecks bracketCheck_Tuple bracketCheck_Tuple fname tks
 bracketCheck_Tuple fname ((TkEndTup   ps) : tks) = (Nothing, tks)
 bracketCheck_Tuple fname ((TkStartDat ps) : tks) = combineBracketChecks bracketCheck_Data  bracketCheck_Tuple fname tks
-bracketCheck_Tuple fname ((TkEndDat   ps) : tks) = recoverBracketCheck bracketCheck_Tuple fname [ParseErr ps "Invalid placement of ']' inside Tuple"] tks
+bracketCheck_Tuple fname ((TkEndDat   ps) : tks) = recoverBracketCheck bracketCheck_Tuple fname [ParseErr ps $ pack "Invalid placement of ']' inside Tuple"] tks
 bracketCheck_Tuple fname ((TkStartDo  ps) : tks) = combineBracketChecks bracketCheck_Block bracketCheck_Tuple fname tks
-bracketCheck_Tuple fname ((TkEndDo    ps) : tks) = recoverBracketCheck bracketCheck_Tuple fname [ParseErr ps "Invalid placement of '}' inside Tuple"] tks
-bracketCheck_Tuple fname ([]                   ) = (Just $ [ParseErr (BzoPos 0 0 fname) "Mismatched parentheses"], [])
-bracketCheck_Tuple fname (tk : tks)              = (Just $ [ParseErr (spos tk) "This error should not occur. Please notify the developer that something is wrong in the bracketCheck_Tuple function"], tks)
+bracketCheck_Tuple fname ((TkEndDo    ps) : tks) = recoverBracketCheck bracketCheck_Tuple fname [ParseErr ps $ pack "Invalid placement of '}' inside Tuple"] tks
+bracketCheck_Tuple fname ([]                   ) = (Just $ [ParseErr (BzoPos 0 0 fname) $ pack "Mismatched parentheses"], [])
+bracketCheck_Tuple fname (tk : tks)              = (Just $ [ParseErr (spos tk) $ pack "This error should not occur. Please notify the developer that something is wrong in the bracketCheck_Tuple function"], tks)
 
 
 
@@ -86,15 +88,15 @@ bracketCheck_Tuple fname (tk : tks)              = (Just $ [ParseErr (spos tk) "
 
 
 
-bracketCheck_Data :: String -> [BzoToken] -> (Maybe [BzoErr], [BzoToken])
+bracketCheck_Data :: Text -> [BzoToken] -> (Maybe [BzoErr], [BzoToken])
 bracketCheck_Data fname ((TkStartTup ps) : tks) = combineBracketChecks bracketCheck_Tuple bracketCheck_Data fname tks
-bracketCheck_Data fname ((TkEndTup   ps) : tks) = recoverBracketCheck bracketCheck_Data fname [ParseErr ps "Invalid placement of ')' inside Array Modifier"] tks
+bracketCheck_Data fname ((TkEndTup   ps) : tks) = recoverBracketCheck bracketCheck_Data fname [ParseErr ps $ pack "Invalid placement of ')' inside Array Modifier"] tks
 bracketCheck_Data fname ((TkStartDat ps) : tks) = combineBracketChecks bracketCheck_Data bracketCheck_Data  fname tks
 bracketCheck_Data fname ((TkEndDat   ps) : tks) = (Nothing, tks)
 bracketCheck_Data fname ((TkStartDo  ps) : tks) = combineBracketChecks bracketCheck_Block bracketCheck_Data fname tks
-bracketCheck_Data fname ((TkEndDo    ps) : tks) = recoverBracketCheck bracketCheck_Data fname [ParseErr ps "Invalid placement of '}' inside Array Modifier"] tks
-bracketCheck_Data fname ([]                   ) = (Just $ [ParseErr (BzoPos 0 0 fname) "Mismatched Square Brackets"], [])
-bracketCheck_Data fname (tk : tks)              = (Just $ [ParseErr (spos tk) "This error should not occur. Please notify the developer that something is wrong in the bracketCheck_Data function"], tks)
+bracketCheck_Data fname ((TkEndDo    ps) : tks) = recoverBracketCheck bracketCheck_Data fname [ParseErr ps $ pack "Invalid placement of '}' inside Array Modifier"] tks
+bracketCheck_Data fname ([]                   ) = (Just $ [ParseErr (BzoPos 0 0 fname) $ pack "Mismatched Square Brackets"], [])
+bracketCheck_Data fname (tk : tks)              = (Just $ [ParseErr (spos tk) $ pack "This error should not occur. Please notify the developer that something is wrong in the bracketCheck_Data function"], tks)
 
 
 
@@ -105,15 +107,15 @@ bracketCheck_Data fname (tk : tks)              = (Just $ [ParseErr (spos tk) "T
 
 
 
-bracketCheck_Block :: String -> [BzoToken] -> (Maybe [BzoErr], [BzoToken])
+bracketCheck_Block :: Text -> [BzoToken] -> (Maybe [BzoErr], [BzoToken])
 bracketCheck_Block fname ((TkStartTup ps) : tks) = combineBracketChecks bracketCheck_Tuple bracketCheck_Block fname tks
-bracketCheck_Block fname ((TkEndTup   ps) : tks) = recoverBracketCheck bracketCheck_Block fname [ParseErr ps "Invalid placement of ')' inside Block"] tks
+bracketCheck_Block fname ((TkEndTup   ps) : tks) = recoverBracketCheck bracketCheck_Block fname [ParseErr ps $ pack "Invalid placement of ')' inside Block"] tks
 bracketCheck_Block fname ((TkStartDat ps) : tks) = combineBracketChecks bracketCheck_Data bracketCheck_Block  fname tks
-bracketCheck_Block fname ((TkEndDat   ps) : tks) = recoverBracketCheck bracketCheck_Block fname [ParseErr ps "Invalid placement of ']' inside Block"] tks
+bracketCheck_Block fname ((TkEndDat   ps) : tks) = recoverBracketCheck bracketCheck_Block fname [ParseErr ps $ pack "Invalid placement of ']' inside Block"] tks
 bracketCheck_Block fname ((TkStartDo  ps) : tks) = combineBracketChecks bracketCheck_Block bracketCheck_Block fname tks
 bracketCheck_Block fname ((TkEndDo    ps) : tks) = (Nothing, tks)
-bracketCheck_Block fname ([]                   ) = (Just $ [ParseErr (BzoPos 0 0 fname) "Mismatched Braces"], [])
-bracketCheck_Block fname (tk : tks)              = (Just $ [ParseErr (spos tk) "This error should not occur. Please notify the developer that something is wrong in the bracketCheck_Block function"], tks)
+bracketCheck_Block fname ([]                   ) = (Just $ [ParseErr (BzoPos 0 0 fname) $ pack "Mismatched Braces"], [])
+bracketCheck_Block fname (tk : tks)              = (Just $ [ParseErr (spos tk) $ pack "This error should not occur. Please notify the developer that something is wrong in the bracketCheck_Block function"], tks)
 
 
 
@@ -123,15 +125,15 @@ bracketCheck_Block fname (tk : tks)              = (Just $ [ParseErr (spos tk) "
 
 
 
-bracketCheckFn :: String -> [BzoToken] -> (Maybe [BzoErr], [BzoToken])
+bracketCheckFn :: Text -> [BzoToken] -> (Maybe [BzoErr], [BzoToken])
 bracketCheckFn fname (t : ts) = case t of
           (TkStartTup ps) -> bracketCheck_Tuple fname ts
           (TkStartDat ps) -> bracketCheck_Data  fname ts
           (TkStartDo  ps) -> bracketCheck_Block fname ts
-          (TkEndTup   ps) -> (Just $ [ParseErr ps "Mismatched parentheses!"], ts)
-          (TkEndDat   ps) -> (Just $ [ParseErr ps "Mismatched square brackets!"], ts)
-          (TkEndDo    ps) -> (Just $ [ParseErr ps "Mismatched braces!"], ts)
-          tk              -> (Just $ [ParseErr (spos tk) "This error should not occur. Please notify the developer that something is wrong in the bracketCheckFn function"], ts)
+          (TkEndTup   ps) -> (Just $ [ParseErr ps $ pack "Mismatched parentheses!"], ts)
+          (TkEndDat   ps) -> (Just $ [ParseErr ps $ pack "Mismatched square brackets!"], ts)
+          (TkEndDo    ps) -> (Just $ [ParseErr ps $ pack "Mismatched braces!"], ts)
+          tk              -> (Just $ [ParseErr (spos tk) $ pack "This error should not occur. Please notify the developer that something is wrong in the bracketCheckFn function"], ts)
 
 
 
@@ -142,9 +144,9 @@ bracketCheckFn fname (t : ts) = case t of
 
 
 
-bracketCheck :: String -> [BzoToken] -> Maybe [BzoErr]
+bracketCheck :: Text -> [BzoToken] -> Maybe [BzoErr]
 bracketCheck fname tks =
-  let tks' = filter isBracket tks
+  let tks' = L.filter isBracket tks
   in checkIter tks' (bracketCheckFn fname)
     where checkIter x f = case x of
             [] -> Nothing
@@ -177,10 +179,10 @@ fuseNameObj a                b                     = [a, b]
 
 
 
-parseFile :: String -> [BzoToken] -> Either [BzoErr] BzoSyntax
+parseFile :: Text -> [BzoToken] -> Either [BzoErr] BzoSyntax
 parseFile fname tks =
   let bracketErrs = bracketCheck fname tks
-      parseOut    = parserIter fname (map (\t -> BzS_Token (spos t) t) tks) []
+      parseOut    = parserIter fname (L.map (\t -> BzS_Token (spos t) t) tks) []
   in case (bracketErrs, parseOut) of
       (Just errs,        _ ) -> Left errs
       (Nothing  , Left errs) -> Left errs

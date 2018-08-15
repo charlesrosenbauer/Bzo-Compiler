@@ -1,5 +1,6 @@
 module BzoParameterParser where
-import Data.List
+import Data.List as L
+import Data.Text as T
 import BzoTypes
 import System.IO
 import HigherOrder
@@ -41,7 +42,7 @@ readIntMaybeIter i c =
 
 
 readIntMaybe :: [Char] -> Maybe Int
-readIntMaybe s = foldl readIntMaybeIter (Just 0) s
+readIntMaybe s = L.foldl readIntMaybeIter (Just 0) s
 
 
 
@@ -115,7 +116,7 @@ data BzoSettings
 
 
 parseImport :: String -> Maybe String
-parseImport s = case (head s) of
+parseImport s = case (L.head s) of
   '-' -> Nothing
   _   -> Just s
 
@@ -142,11 +143,11 @@ addImport (BzoSettings imp lib flg opt pfx) f = BzoSettings (imp ++ [(f, "")]) l
 
 parsePrefixFlag :: String -> Maybe PrefixFlags
 parsePrefixFlag s
-  | isPrefixOf "-p="   s = Just $ PathFlag $ drop 3 s           -- Path to search for missing files
-  | isPrefixOf "-o="   s = Just $ OutFlag  $ drop 3 s           -- Output Path
-  | isPrefixOf "-env=" s = Just $ EnvFlag  $ drop 5 s           -- Environment Path
-  | isPrefixOf "-g="   s =
-      case (readIntMaybe $ drop 3 s) of
+  | L.isPrefixOf "-p="   s = Just $ PathFlag $ L.drop 3 s           -- Path to search for missing files
+  | L.isPrefixOf "-o="   s = Just $ OutFlag  $ L.drop 3 s           -- Output Path
+  | L.isPrefixOf "-env=" s = Just $ EnvFlag  $ L.drop 5 s           -- Environment Path
+  | L.isPrefixOf "-g="   s =
+      case (readIntMaybe $ L.drop 3 s) of
         Just x  -> Just $ GranFlag x    -- Thread Granularity (add potential failure here if input is not a valid int)
         Nothing -> Nothing
   | otherwise          = Nothing
@@ -271,7 +272,7 @@ foldParameter input par =
                                  (genericParameterParse par (parseSpecificFlags  , addSpecificFlag)),
                                  (genericParameterParse par (parseImport         , addImport      ))]
       in case out of
-        Nothing -> Left $ ParamErr $ "Error on parameter " ++ (show par)
+        Nothing -> Left $ ParamErr $ pack $ "Error on parameter " ++ (show par)
         Just x  -> Right x
 
 
@@ -286,4 +287,4 @@ foldParameter input par =
 parseParameters :: [String] -> Either BzoErr BzoSettings
 parseParameters pars =
   let settings = BzoSettings [] [] [] Opt_None []
-  in foldl foldParameter (Right settings) pars
+  in L.foldl foldParameter (Right settings) pars

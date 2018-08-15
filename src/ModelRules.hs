@@ -97,7 +97,7 @@ addFunc cx@(Context tvs vs ts fs top) newfun =
 
 
 getTVars :: BzoSyntax -> [Text]
-getTVars (BzS_TyVar      _    tvar) = [pack tvar]
+getTVars (BzS_TyVar      _    tvar) = [tvar]
 getTVars (BzS_Expr       _    expr) = L.concatMap getTVars expr
 getTVars (BzS_Statement  _    expr) = getTVars expr
 getTVars (BzS_Cmpd       _    expr) = L.concatMap getTVars expr
@@ -123,9 +123,9 @@ getTVars _                          = []
 
 
 getVars :: BzoSyntax -> [Text]
-getVars (BzS_Id         _     var) = [pack var]
-getVars (BzS_MId        _     var) = [pack var]
-getVars (BzS_BId        _     var) = [pack var]
+getVars (BzS_Id         _     var) = [var]
+getVars (BzS_MId        _     var) = [var]
+getVars (BzS_BId        _     var) = [var]
 getVars (BzS_Expr       _    expr) = L.concatMap getVars expr
 getVars (BzS_Statement  _    expr) = getVars expr
 getVars (BzS_Cmpd       _    expr) = L.concatMap getVars expr
@@ -154,8 +154,8 @@ getVars _                          = []
 
 
 getTypes :: BzoSyntax -> [Text]
-getTypes (BzS_TyId       _     var) = [pack var]
-getTypes (BzS_BTId       _     var) = [pack var]
+getTypes (BzS_TyId       _     var) = [var]
+getTypes (BzS_BTId       _     var) = [var]
 getTypes (BzS_Expr       _    expr) = L.concatMap getTypes expr
 getTypes (BzS_Statement  _    expr) = getTypes expr
 getTypes (BzS_Cmpd       _    expr) = L.concatMap getTypes expr
@@ -189,24 +189,24 @@ divideIntoDefs [BzS_File  _ _ _ _ _ dfs] = divideIntoDefs $ L.reverse dfs
 divideIntoDefs asts = L.foldl divideDefStep [] asts
   where divideDefStep :: [Definition] -> BzoSyntax -> [Definition]
         divideDefStep (f@(FuncSyntax fnid file fty fdfs):defs) fd@(BzS_FunDef p _ fnid' _ _) =
-          if fnid == (pack fnid')
-            then ((FuncSyntax       fnid   file fty (fd:fdfs)):defs)
-            else ((FuncSyntax (pack fnid') (pack $ fileName p) BzS_Undefined [fd]):f:defs)
+          if fnid == fnid'
+            then ((FuncSyntax fnid   file fty (fd:fdfs)):defs)
+            else ((FuncSyntax fnid' (fileName p) BzS_Undefined [fd]):f:defs)
 
         divideDefStep (f@(FuncSyntax fnid file fty fdfs):defs) fd@(BzS_FnTypeDef p _ fnid' _) =
-          ((FuncSyntax (pack fnid') (pack $ fileName p) fd []):f:defs)
+          ((FuncSyntax fnid' (fileName p) fd []):f:defs)
 
         divideDefStep defs fd@(BzS_FnTypeDef p _ fnid' _) =
-          ((FuncSyntax (pack fnid') (pack $ fileName p) fd []):defs)
+          ((FuncSyntax fnid' (fileName p) fd []):defs)
 
         divideDefStep defs td@(BzS_TypDef p _ tyid _) =
-          ((TypeSyntax (pack tyid) (pack $ fileName p) td):defs)
+          ((TypeSyntax tyid (fileName p) td):defs)
 
         divideDefStep defs td@(BzS_TyClassDef p _ tyid _) =
-          ((TyClassSyntax (pack tyid) (pack $ fileName p) td):defs)
+          ((TyClassSyntax tyid (fileName p) td):defs)
 
         divideDefStep defs fd@(BzS_FunDef p _ fnid' _ _) =
-          ((FuncSyntax (pack fnid') (pack $ fileName p) BzS_Undefined [fd]):defs)
+          ((FuncSyntax fnid' (fileName p) BzS_Undefined [fd]):defs)
 
 
 
@@ -281,17 +281,17 @@ getDefTable files =
 
 
       dmfiles  :: [(Text, [Int64])]
-      dmfiles = L.map (\xs -> (pack $ bfm_domain $ L.head xs, L.concatMap bfm_fileModel xs)) $ L.groupBy (\a b-> (bfm_domain a) == (bfm_domain b)) filelist
+      dmfiles = L.map (\xs -> (bfm_domain $ L.head xs, L.concatMap bfm_fileModel xs)) $ L.groupBy (\a b-> (bfm_domain a) == (bfm_domain b)) filelist
       dmspaces= M.fromList dmfiles
 
       mdfiles  :: [((Text, Text), [Int64])]
-      mdfiles = L.map (\xs -> ((pack $ bfm_moduleName $ L.head xs, pack $ bfm_domain $ L.head xs), L.concatMap bfm_fileModel xs)) $ L.groupBy (\a b-> (bfm_filepath a) == (bfm_filepath b)) filelist
+      mdfiles = L.map (\xs -> ((bfm_moduleName $ L.head xs, bfm_domain $ L.head xs), L.concatMap bfm_fileModel xs)) $ L.groupBy (\a b-> (bfm_filepath a) == (bfm_filepath b)) filelist
       mdspaces= M.fromList mdfiles
 
 
-      filelist' = L.map (\bfm-> let imps = L.map pack $ (bfm_fileImports bfm) ++ (L.map fst $ bfm_fileImportsAs bfm)
-                                    lnks = L.map pack $ (bfm_fileLinks   bfm) ++ (L.map fst $ bfm_fileLinksAs   bfm)
-                                    domn = pack $ bfm_domain bfm
+      filelist' = L.map (\bfm-> let imps = (bfm_fileImports bfm) ++ (L.map fst $ bfm_fileImportsAs bfm)
+                                    lnks = (bfm_fileLinks   bfm) ++ (L.map fst $ bfm_fileLinksAs   bfm)
+                                    domn = bfm_domain bfm
                                     idefs= catMaybes $ L.map (\k -> M.lookup (k, domn) mdspaces) imps
                                     ldefs= catMaybes $ L.map (\k -> M.lookup  k        dmspaces) lnks
                                     model= (bfm_fileModel bfm, L.nub $ L.concat (idefs ++ ldefs ++ [bfm_fileModel bfm]))
@@ -319,7 +319,7 @@ extractLambda (BzS_ArrayObj   _ expr _ ) = extractLambda expr
 extractLambda (BzS_FilterObj  _ obj  fs) = (extractLambda obj) ++ (L.concatMap extractLambda fs)
 extractLambda (BzS_CurryObj   _ obj  ps) = (extractLambda obj) ++ (L.concatMap extractLambda ps)
 extractLambda (BzS_MapObj     _    expr) = (extractLambda expr)
-extractLambda (BzS_Lambda     p ps expr) = [BzS_FunDef p ps (show p) BzS_Undefined expr] ++ (extractLambda expr)
+extractLambda (BzS_Lambda     p ps expr) = [BzS_FunDef p ps (pack $ show p) BzS_Undefined expr] ++ (extractLambda expr)
 extractLambda _                          = []
 
 
@@ -344,7 +344,7 @@ replaceLambda (BzS_ArrayObj   p expr  a) = (BzS_ArrayObj  p (replaceLambda expr)
 replaceLambda (BzS_FilterObj  p obj  fs) = (BzS_FilterObj p (replaceLambda obj) (L.map replaceLambda fs))
 replaceLambda (BzS_CurryObj   p obj  ps) = (BzS_CurryObj  p (replaceLambda obj) (L.map replaceLambda ps))
 replaceLambda (BzS_MapObj     p    expr) = (BzS_MapObj p (replaceLambda expr))
-replaceLambda (BzS_Lambda     p ps expr) = (BzS_Id p (show p))
+replaceLambda (BzS_Lambda     p ps expr) = (BzS_Id p (pack $ show p))
 replaceLambda x                          = x
 
 
@@ -425,7 +425,7 @@ extractRecord ps tid depth (BzS_Expr       _     expr) = L.concatMap (extractRec
 extractRecord ps tid depth (BzS_Statement  _     expr) = extractRecord ps tid depth expr
 extractRecord ps tid depth (BzS_Poly       _     expr) = L.concatMap (extractRecord ps tid depth) expr
 extractRecord ps tid depth (BzS_Block      _     expr) = L.concatMap (extractRecord ps tid depth) expr
-extractRecord _  _   depth (BzS_TypDef     _ ps tid x) = (extractRecord ps (pack tid) depth x)
+extractRecord _  _   depth (BzS_TypDef     _ ps tid x) = (extractRecord ps tid depth x)
 extractRecord ps tid depth (BzS_Calls      _       cs) = L.concatMap (extractRecord ps tid depth) cs
 extractRecord ps tid depth (BzS_ArrayObj   _  expr _ ) = extractRecord ps tid depth expr
 extractRecord ps tid depth (BzS_FilterObj  _  obj  fs) = (extractRecord ps tid depth obj) ++ (L.concatMap (extractRecord ps tid depth) fs)
@@ -433,13 +433,13 @@ extractRecord ps tid depth (BzS_CurryObj   _  obj prs) = (extractRecord ps tid d
 extractRecord ps tid depth (BzS_Cmpd       _     expr) = L.concatMap (\(d, xpr) -> recordOp ps tid d xpr) $ L.zip (addDepth depth expr) expr
   where recordOp :: BzoSyntax -> Text -> [(Int, Int)] -> BzoSyntax -> [BzoSyntax]
         recordOp BzS_Undefined tid depth (BzS_FilterObj p (BzS_Id _ rcid) [tdef]) =
-          [(BzS_FunDef    p (makeDepthPattern p depth) rcid BzS_Undefined (BzS_Id p "x")),
-           (BzS_FnTypeDef p BzS_Undefined rcid (BzS_FnTy p (BzS_TyId p $ unpack tid    )      tdef))]
+          [(BzS_FunDef    p (makeDepthPattern p depth) rcid BzS_Undefined (BzS_Id p $ pack "x")),
+           (BzS_FnTypeDef p BzS_Undefined rcid (BzS_FnTy p (BzS_TyId p tid    )      tdef))]
 
 
         recordOp ps            tid depth (BzS_FilterObj p (BzS_Id _ rcid) [tdef]) =
-          [(BzS_FunDef    p (makeDepthPattern p depth) rcid BzS_Undefined (BzS_Id p "x")),
-           (BzS_FnTypeDef p BzS_Undefined rcid (BzS_FnTy p (BzS_Expr p [BzS_TyId p $ unpack tid, ps])      tdef))]
+          [(BzS_FunDef    p (makeDepthPattern p depth) rcid BzS_Undefined (BzS_Id p $ pack "x")),
+           (BzS_FnTypeDef p BzS_Undefined rcid (BzS_FnTy p (BzS_Expr p [BzS_TyId p tid, ps])      tdef))]
 
         recordOp ps tid depth x = extractRecord ps tid depth x
 extractRecord _ _ _ _                                 = []
@@ -459,7 +459,7 @@ replaceRecord ps tid depth (BzS_Expr       p    expr) = (BzS_Expr   p (L.map (re
 replaceRecord ps tid depth (BzS_Statement  p    expr) = (BzS_Statement p (replaceRecord ps tid depth expr))
 replaceRecord ps tid depth (BzS_Poly       p    expr) = (BzS_Poly   p (L.map (replaceRecord ps tid depth) expr))
 replaceRecord ps tid depth (BzS_Block      p    expr) = (BzS_Block  p (L.map (replaceRecord ps tid depth) expr))
-replaceRecord _  _   depth (BzS_TypDef     p i tid x) = (BzS_TypDef p i tid (replaceRecord i (pack tid) depth x))
+replaceRecord _  _   depth (BzS_TypDef     p i tid x) = (BzS_TypDef p i tid (replaceRecord i tid depth x))
 replaceRecord ps tid depth (BzS_Calls      p      cs) = (BzS_Calls  p (L.map (replaceRecord ps tid depth) cs))
 replaceRecord ps tid depth (BzS_ArrayObj   p expr  a) = (BzS_ArrayObj  p (replaceRecord ps tid depth expr) a)
 replaceRecord ps tid depth (BzS_FilterObj  p obj  fs) = (BzS_FilterObj p (replaceRecord ps tid depth obj) (L.map (replaceRecord ps tid depth) fs))
@@ -497,7 +497,7 @@ addDepth ds xs =
 
 
 makeDepthPattern :: BzoPos -> [(Int, Int)] -> BzoSyntax
-makeDepthPattern p [] = BzS_Id p "x"
+makeDepthPattern p [] = BzS_Id p $ pack "x"
 makeDepthPattern p ((l, x):xs) = (BzS_Cmpd p $ L.take l (L.map (depthStage p x xs) [0..]))
   where depthStage :: BzoPos -> Int -> [(Int, Int)] -> Int -> BzoSyntax
         depthStage p x xs n =
