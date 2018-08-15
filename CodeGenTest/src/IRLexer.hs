@@ -4,6 +4,7 @@ import Data.List as L
 import Data.Either as E
 import Control.Monad
 import Control.Applicative
+import IRTypes
 import Data.Text
 
 
@@ -49,69 +50,6 @@ concatMapWithErrs xs fn =
   in  if((L.length ls) /= 0)
     then Left  $ ls !! 0
     else Right $ L.concat rs
-
-
-
-
-
-
-
-
-
-
-data IRPos = IRPos{
-  irLine   :: Int,
-  irColumn :: Int,
-  irFName  :: Text }
-  deriving (Eq, Show)
-
-
-
-
-
-
-
-
-
-
-data IRErr = IRErr IRPos Text deriving Eq
-instance Show IRErr where
-  show (IRErr (IRPos l c f) t) = "At " ++ (show l) ++ ":" ++ (show c) ++ ", in " ++ (show f) ++ ":\n" ++ unpack t
-
-
-
-
-
-
-
-
-
-
-data IRToken
-  = FuncToken   {tpos :: IRPos, ttxt :: Text}
-  | NodeToken   {tpos :: IRPos, tnum :: Int }
-  | TypeToken   {tpos :: IRPos, ttxt :: Text}
-  | ExternToken {tpos :: IRPos, ttxt :: Text}
-  | ProcToken   {tpos :: IRPos, ttxt :: Text}
-  | ConstToken  {tpos :: IRPos, ttxt :: Text}
-  | HintToken   {tpos :: IRPos, ttxt :: Text}
-  | NumToken    {tpos :: IRPos, tnum :: Int }
-  | StrToken    {tpos :: IRPos, ttxt :: Text}
-  | ArrToken    {tpos :: IRPos, tnum :: Int }
-  | AttribToken {tpos :: IRPos, ttxt :: Text}
-  | OpenBrace   {tpos :: IRPos}
-  | CloseBrace  {tpos :: IRPos}
-  | OpenParen   {tpos :: IRPos}
-  | CloseParen  {tpos :: IRPos}
-  | FTypeToken  {tpos :: IRPos}
-  | DefFunc     {tpos :: IRPos}
-  | DefType     {tpos :: IRPos}
-  | DefExtern   {tpos :: IRPos}
-  | DefProc     {tpos :: IRPos}
-  | NewLine     {tpos :: IRPos}
-  | PtrToken    {tpos :: IRPos}
-  | NilToken
-  deriving (Eq, Show)
 
 
 
@@ -444,7 +382,10 @@ lexSymbol =
   (lexStringToToken "}"  (\p -> CloseBrace  p)) <|>
   (lexStringToToken "("  (\p -> OpenParen   p)) <|>
   (lexStringToToken ")"  (\p -> CloseParen  p)) <|>
+  (lexStringToToken "["  (\p -> OpenBox     p)) <|>
+  (lexStringToToken "]"  (\p -> CloseBox    p)) <|>
   (lexStringToToken ">"  (\p -> FTypeToken  p)) <|>
+  (lexStringToToken "|"  (\p -> EffectToken p)) <|>
   (lexStringToToken "~"  (\p -> DefProc     p)) <|>
   (lexStringToToken "*"  (\p -> PtrToken    p)) <|>
   (lexStringToToken "\n" (\p -> NewLine     p))
@@ -560,9 +501,8 @@ lexHint = do
 lexArr :: IRLexer IRToken
 lexArr = do
   p  <- getLexerState
-  c0 <- lexChar '['
+  c0 <- lexChar '*'
   cs <- many $ satisfy isDigit
-  cl <- lexChar ']'
   return (ArrToken (makeIRPos p) $ readInt cs)
 
 

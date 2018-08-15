@@ -1,9 +1,18 @@
 module IRModel where
 import Data.Text
-import Data.List
-import Data.Map.Strict as M
+import Data.List as L
+import Data.Map as M
+import Data.Maybe
+import Data.Either
+import Data.Tuple
 import IRParser
 import IRLexer
+import IRTypes
+import IRFuncModel
+import IRTypeModel
+import IRModelAbstract
+import HigherOrder
+import Debug.Trace
 
 
 
@@ -14,175 +23,22 @@ import IRLexer
 
 
 
-data FuncData = FuncType{
-  funcKind    :: FunctionKind,
-  inputTypes  :: [TypeData],
-  outputTypes :: [TypeData],
-  attributes  :: AttrSet,
-  funcNodes   :: [Node],
-  funcId      :: FnId }
-
-data FunctionKind = PureFn | ProcFn | ExtrFn
-
-type FnId = Int
-
-
-
-
-
-
-
-
-
-
-data TypeData = TypeData [([Int], TyId)]
-
-type TyId = Int
-
-
-
-
-
-
-
-
-
-
-data Attribute
-  = IntAttribute AttrId Int
-  | StrAttribute AttrId Text
-  | BlAttribute  AttrId
-
-type AttrId  = Int
-
-type AttrSet = Map AttrId Attribute
-
-
-
-
-
-
-
-
-
-
-data ConstantData
-  = ConstString CnstId Text
-  | ConstInt    CnstId Int
-  | ConstBool   CnstId
-
-type CnstId = Int
-
-
-
-
-
-
-
-
-
-
-data Hint
-  = HintInt Text Int
-  | HintStr Text Text
-
-
-
-
-
-
-
-
-
-
-data IRSymbols
-  = IRSymbols{
-    funcSymbols  :: Map Text   FnId,
-    funcSymbols' :: Map FnId   Text,
-    typeSymbols  :: Map Text   TyId,
-    typeSymbols' :: Map TyId   Text,
-    attrSymbols  :: Map Text   AttrId,
-    attrSymbols' :: Map AttrId Text,
-    cnstSymbols  :: Map Text   CnstId,
-    cnstSymbols' :: Map CnstId Text,
-    idTop        :: Int }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-data Node
-  = CastNode  AttrSet  Int  TypeData  Int
-  | BinopNode AttrSet  Int  BinopCode Int  Int
-  | OpNode    AttrSet  Int  OpCode    Int
-  | ParNode   AttrSet  Int  TypeData
-  | RetNode   AttrSet  Int  TypeData  Int
-  | CallNode  AttrSet [Int] FnId     [Int]
-  | HOFNode   AttrSet  Int  HOFCode  [Int]
-  | PhiNode   AttrSet  Int  CondCode  Int  Int
-  | FuncNode  AttrSet  Int  FnId
-  | TypeNode  AttrSet  Int  TyId
-
-
-
-
-
-
-
-
-
-
-data OpCode     = AbsOp  | TrncOp | WideOp | NegOp  | NotOp  | LNotOp |
-                  SqrtOp | CbrtOp | Lg2Op  | Lg10Op | SinOp  | CosOp  |
-                  TanOp  | AsinOp | AcosOp | AtanOp | SinhOp | CoshOp |
-                  TanhOp | AsinhOp| AcoshOp| AtanhOp
-
-data BinopCode  = IAddOp | ISubOp | IMulOp | IDivOp | IModOp | ICmpOp |   -- Integer Ops
-                  UAddOp | USubOp | UMulOp | UDivOp | UModOp | UCmpOp |   -- Unsigned Integer Ops
-                  FAddOp | FSubOp | FMulOp | FDivOp | FModOp | FCmpOp |   -- Float Ops
-                  NAddOp | NSubOp | NMulOp | NDivOp | NModOp | NCmpOp |   -- Unum Ops
-                  OrOp   | AndOp  | XorOp  | LOrOp  | LAndOp | LXorOp |
-                  CttzOp | CtlzOp | PCntOp | LShLOp | LShROp | AShROp |
-                  LogOp  | RootOp | ExpOp  | PowOp
-
-data HOFCode    = MapHF  | FoldHF | RedcHF | ZipHF  | UZipHF | ScanHF |
-                  ChnHF  | FiltHF
-
-data CondCode   = LSCond | GTCond | EQCond | NECond | LECond | GECond |
-                  NZCond | EZCond
-
-
-
-
-
-
-
-
-
-{-
-modelIR :: [IRParseItem] -> ([IRErr], IRSymbols, Map FnId FuncData,
-                                                 Map TyId TypeData,
-                                                 Map AttrId Attribute,
-                                                 Map CnstId ConstantData,
-                                                 [Hint])
+modelIR :: IRParseItem -> Either [IRErr] (IRSymbols,
+                                          Map FnId FuncData,
+                                          Map TyId TypeData,
+                                          Map CnstId ConstantData,
+                                          [Hint])
 modelIR irs =
-  let symbols = getSymbols irs
-  in ([], symbols, M.empty, M.empty, M.empty, M.empty, [])
+  let (errs, syms) = getSymbols   [irs]
+      fns          = getFunctions [irs]
+      tys          = getTypes     [irs]
+      cts          = getConstants [irs]
+      cts'         = modelConst    cts syms
+      (fers, fns') = modelFunc     fns syms
+      (ters, tys') = modelType     tys syms
+  in case (fers ++ ters ++ errs) of
+      [] -> Right (syms, (makeFuncMap fns'), (makeTypeMap tys'), M.empty, [])
+      er -> Left er
 
 
 
@@ -193,14 +49,8 @@ modelIR irs =
 
 
 
-modelIRHelper :: IRSymbols -> [IRParseItem] -> ([IRErr], [FuncData], [TypeData], [Attribute], [ConstantData], [Hint])
-modelIRHelper syms ((PI_FnDef p fnid typ nodes):irs) =
-  let (errors, nodes', attrs') = modelFnNodes nodes
-      (errs, fns, tys, ats, cns, hts) = modelIRHelper syms irs
-      fn = if (null errors)
-            then [(FuncData PureFunc [] attrs' nodes' (M.lookup ))]
-            else []
-  in  (errors ++ errs, ():fns, tys, ats, cns, hts)-}
+makeFuncMap :: [FuncData] -> Map FnId FuncData
+makeFuncMap fs = M.fromList $ L.map (\f@(FuncType _ _ _ _ _ _ _ fnid _ _ _) -> (fnid, f)) fs
 
 
 
@@ -210,69 +60,142 @@ modelIRHelper syms ((PI_FnDef p fnid typ nodes):irs) =
 
 
 
-getSymbols :: [IRParseItem] -> IRSymbols
-getSymbols [] = (IRSymbols M.empty M.empty M.empty M.empty M.empty M.empty M.empty M.empty 0)
+
+makeTypeMap :: [TypeData] -> Map TyId TypeData
+makeTypeMap ts = M.fromList $ L.map (\t@(TypeData _ _ _ _ tyid) -> (tyid, t)) ts
+
+
+
+
+
+
+
+
+
+getFunctions :: [IRParseItem] -> [IRParseItem]
+getFunctions [] = []
+getFunctions ((PI_Defs _ defs)          :irs) = getFunctions (irs ++ defs)
+getFunctions (fn@(PI_FnDef _ _ _ _    ) :irs) = fn : (getFunctions irs)
+getFunctions (fn@(PI_PrDef _ _ _ _ _ _) :irs) = fn : (getFunctions irs)
+getFunctions (fn@(PI_ExDef _ _ _ _ _ _) :irs) = fn : (getFunctions irs)
+getFunctions (x                         :irs) =      (getFunctions irs)
+
+
+
+
+
+
+
+
+
+
+getTypes :: [IRParseItem] -> [IRParseItem]
+getTypes [] = []
+getTypes ((PI_Defs _ defs)      :irs) = getTypes (irs ++ defs)
+getTypes (fn@(PI_TyDef _ _ _ _) :irs) = fn : (getTypes irs)
+getTypes (x                     :irs) =      (getTypes irs)
+
+
+
+
+
+
+
+
+
+
+getConstants :: [IRParseItem] -> [IRParseItem]
+getConstants [] = []
+getConstants ((PI_Defs _ defs)       :irs) = getTypes (irs ++ defs)
+getConstants (fn@(PI_Const    _ _  ) :irs) = fn : (getTypes irs)
+getConstants (fn@(PI_ConstInt _ _ _) :irs) = fn : (getTypes irs)
+getConstants (fn@(PI_ConstStr _ _ _) :irs) = fn : (getTypes irs)
+getConstants (x                      :irs) =      (getTypes irs)
+
+
+
+
+
+
+
+
+
+
+modelConst :: [IRParseItem] -> IRSymbols -> [ConstantData]
+modelConst [] syms = []
+modelConst ((PI_Const    p x  ):irs) syms = (ConstBool ((cnstSymbols syms) ! x)  ) : (modelConst irs syms)
+modelConst ((PI_ConstStr p x s):irs) syms = (ConstStr  ((cnstSymbols syms) ! x) s) : (modelConst irs syms)
+modelConst ((PI_ConstInt p x n):irs) syms = (ConstInt  ((cnstSymbols syms) ! x) n) : (modelConst irs syms)
+modelConst (_                  :irs) syms = modelConst irs syms
+
+
+
+
+
+
+
+
+
+
+getSymbols :: [IRParseItem] -> ([IRErr], IRSymbols)
+getSymbols [] = ([], initialSymbolTable)
 
 getSymbols ((PI_Defs _ defs):irs) = getSymbols (irs ++ defs)
 
-getSymbols ((PI_FnDef _ fnid _ _):irs) =
-  let (IRSymbols  fns  fns' tys tys' ats ats' cns cns'  top) = getSymbols irs
-      nfns' = M.insert (top + 1) fnid fns'
-      nfns  = M.insert fnid (top + 1) fns
-  in  (IRSymbols nfns nfns' tys tys' ats ats' cns cns' (top+1))
+getSymbols ((PI_FnDef p fnid _ _):irs) =
+  let (errs, (IRSymbols  fns  fns' tys tys' cns cns'  top)) = getSymbols irs
+      top'  = ife (isJust $ M.lookup fnid fns) top (top+1)
+      nfns' = M.insert top' fnid fns'
+      nfns  = M.insert fnid top' fns
+      errs' = ife (top /= top') errs ((IRErr p $ append fnid $ pack " defined multiple times."):errs)
+  in  (errs', (IRSymbols nfns nfns' tys tys' cns cns' top'))
 
-getSymbols ((PI_TyDef _ tyid _ _):irs) =
-  let (IRSymbols fns fns'  tys  tys' ats ats' cns cns'  top) = getSymbols irs
-      ntys' = M.insert (top + 1) tyid tys'
-      ntys  = M.insert tyid (top + 1) tys
-  in  (IRSymbols fns fns' ntys ntys' ats ats' cns cns' (top+1))
+getSymbols ((PI_TyDef p tyid _ _):irs) =
+  let (errs, (IRSymbols fns fns'  tys  tys' cns cns'  top)) = getSymbols irs
+      top'  = ife (isJust $ M.lookup tyid tys) top (top+1)
+      ntys' = M.insert top' tyid tys'
+      ntys  = M.insert tyid top' tys
+      errs' = ife (top /= top') errs ((IRErr p $ append tyid $ pack " defined multiple times."):errs)
+  in  (errs', (IRSymbols fns fns' ntys ntys' cns cns' (top+1)))
 
-getSymbols ((PI_PrDef _ fnid _ _ _):irs) =
-  let (IRSymbols  fns  fns' tys tys' ats ats' cns cns'  top) = getSymbols irs
-      nfns' = M.insert (top + 1) fnid fns'
-      nfns  = M.insert fnid (top + 1) fns
-  in  (IRSymbols nfns nfns' tys tys' ats ats' cns cns' (top+1))
+getSymbols ((PI_PrDef p fnid _ _ _ _):irs) =
+  let (errs, (IRSymbols  fns  fns' tys tys' cns cns'  top)) = getSymbols irs
+      top'  = ife (isJust $ M.lookup fnid fns) top (top+1)
+      nfns' = M.insert top' fnid fns'
+      nfns  = M.insert fnid top' fns
+      errs' = ife (top /= top') errs ((IRErr p $ append fnid $ pack " defined multiple times."):errs)
+  in  (errs', (IRSymbols nfns nfns' tys tys' cns cns' (top+1)))
 
-getSymbols ((PI_ExDef _ fnid _ _):irs) =
-  let (IRSymbols  fns  fns' tys tys' ats ats' cns cns'  top) = getSymbols irs
-      nfns' = M.insert (top + 1) fnid fns'
-      nfns  = M.insert fnid (top + 1) fns
-  in  (IRSymbols nfns nfns' tys tys' ats ats' cns cns' (top+1))
+getSymbols ((PI_ExDef p fnid _ _ _ _):irs) =
+  let (errs, (IRSymbols  fns  fns' tys tys' cns cns'  top)) = getSymbols irs
+      top'  = ife (isJust $ M.lookup fnid fns) top (top+1)
+      nfns' = M.insert top' fnid fns'
+      nfns  = M.insert fnid top' fns
+      errs' = ife (top /= top') errs ((IRErr p $ append fnid $ pack " defined multiple times."):errs)
+  in  (errs', (IRSymbols nfns nfns' tys tys' cns cns' (top+1)))
 
-getSymbols ((PI_Const _ cid):irs) =
-  let (IRSymbols fns fns' tys tys' ats ats'  cns  cns'  top) = getSymbols irs
-      ncns' = M.insert (top + 1) cid cns'
-      ncns  = M.insert cid (top + 1) cns
-  in  (IRSymbols fns fns' tys tys' ats ats' ncns ncns' (top+1))
+getSymbols ((PI_Const p cid):irs) =
+  let (errs, (IRSymbols fns fns' tys tys'  cns  cns'  top)) = getSymbols irs
+      top'  = ife (isJust $ M.lookup cid cns) top (top+1)
+      ncns' = M.insert top' cid cns'
+      ncns  = M.insert cid top' cns
+      errs' = ife (top /= top') errs ((IRErr p $ append cid $ pack " defined multiple times."):errs)
+  in  (errs', (IRSymbols fns fns' tys tys' ncns ncns' (top+1)))
 
-getSymbols ((PI_ConstInt _ cid _):irs) =
-  let (IRSymbols fns fns' tys tys' ats ats'  cns  cns'  top) = getSymbols irs
-      ncns' = M.insert (top + 1) cid cns'
-      ncns  = M.insert cid (top + 1) cns
-  in  (IRSymbols fns fns' tys tys' ats ats' ncns ncns' (top+1))
+getSymbols ((PI_ConstInt p cid _):irs) =
+  let (errs, (IRSymbols fns fns' tys tys'  cns  cns'  top)) = getSymbols irs
+      top'  = ife (isJust $ M.lookup cid cns) top (top+1)
+      ncns' = M.insert top' cid cns'
+      ncns  = M.insert cid top' cns
+      errs' = ife (top /= top') errs ((IRErr p $ append cid $ pack " defined multiple times."):errs)
+  in  (errs', (IRSymbols fns fns' tys tys' ncns ncns' (top+1)))
 
-getSymbols ((PI_ConstStr _ cid _):irs) =
-  let (IRSymbols fns fns' tys tys' ats ats'  cns  cns'  top) = getSymbols irs
-      ncns' = M.insert (top + 1) cid cns'
-      ncns  = M.insert cid (top + 1) cns
-  in  (IRSymbols fns fns' tys tys' ats ats' ncns ncns' (top+1))
-
-getSymbols ((PI_Attr _ aid):irs) =
-  let (IRSymbols fns fns' tys tys'  ats  ats' cns cns'  top) = getSymbols irs
-      nats' = M.insert (top + 1) aid ats'
-      nats  = M.insert aid (top + 1) ats
-  in  (IRSymbols fns fns' tys tys' nats nats' cns cns' (top+1))
-
-getSymbols ((PI_AttrInt _ aid _):irs) =
-  let (IRSymbols fns fns' tys tys'  ats  ats' cns cns'  top) = getSymbols irs
-      nats' = M.insert (top + 1) aid ats'
-      nats  = M.insert aid (top + 1) ats
-  in  (IRSymbols fns fns' tys tys' nats nats' cns cns' (top+1))
-
-getSymbols ((PI_AttrStr _ aid _):irs) =
-  let (IRSymbols fns fns' tys tys'  ats  ats' cns cns'  top) = getSymbols irs
-      nats' = M.insert (top + 1) aid ats'
-      nats  = M.insert aid (top + 1) ats
-  in  (IRSymbols fns fns' tys tys' nats nats' cns cns' (top+1))
+getSymbols ((PI_ConstStr p cid _):irs) =
+  let (errs, (IRSymbols fns fns' tys tys'  cns  cns'  top)) = getSymbols irs
+      top'  = ife (isJust $ M.lookup cid cns) top (top+1)
+      ncns' = M.insert top' cid cns'
+      ncns  = M.insert cid top' cns
+      errs' = ife (top /= top') errs ((IRErr p $ append cid $ pack " defined multiple times."):errs)
+  in  (errs', (IRSymbols fns fns' tys tys' ncns ncns' (top+1)))
 
 getSymbols (_:irs) = getSymbols irs
