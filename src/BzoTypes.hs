@@ -608,7 +608,8 @@ data Expr
   | ForkExpr  BzoPos Type [Expr]
   | CmpdExpr  BzoPos Type [Expr]
   | PolyExpr  BzoPos Type [Expr]
-  | FuncAtom  BzoPos Type FnId
+  | FuncAtom  BzoPos Type  FnId
+  | FncsAtom  BzoPos Type [FnId]
   | TypeAtom  BzoPos Type TyId
   | IntAtom   BzoPos Integer
   | StrAtom   BzoPos T.Text
