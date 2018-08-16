@@ -20,19 +20,19 @@ Also, if you have any knowledge of Haskell and are interested in contributing, t
 
 Currently, the compiler can be run by calling the bzo executable in the /dist/build/main directory.
 ```
-bzo main.bz
+./dist/build/main/main main.bzo
 ```
-attempts to compile the main.bz file. Currently, "compilation" is limited to just lexing, parsing, and importing libraries.
+attempts to compile the main.bzo file. Currently, "compilation" is limited to just lexing, parsing, desugaring, and importing libraries.
 
 ```
-bzo
+./dist/build/main/main
 ```
 opens a REPL-like environment, though it is limited to just lexing and parsing checks. Enter $quit to exit.
 
 
-Libraries are stored in a /bzo file. The compiler checks in your /opt, /opt/lib, /opt/lib64, /lib, /lib64, /usr/lib, usr/lib64 directories. You can also pass in a -env=... parameter to the compiler with another (relative) path.
+Libraries are stored in a bzo/ file. The compiler checks in your /opt, /opt/lib, /opt/lib64, /lib, /lib64, /usr/lib, usr/lib64 directories. You can also pass in a -env=... parameter to the compiler with another (relative) path.
 
-/bzo consists mainly of two subdirectories; /cfg, and /libs. /cfg holds config files, and /libs holds library code. For the most up-to-date library code, go to (https://github.com/charlesrosenbauer/Bzo-Standard-Library).
+bzo/ consists mainly of two subdirectories; cfg/, and libs/. cfg/ holds config files, and libs/ holds library code. For the most up-to-date library code, go to (https://github.com/charlesrosenbauer/Bzo-Standard-Library).
 
 The compiler can be run in parallel by adding the parameters "+RTS -NX" where X is the number of CPU cores you wish you use. This does have some drawbacks however, mainly that it only currently handles parallelism across full files (meaning you won't see much of an improvement in compilation speed without many large program files), and that it is not extremely stable.
 
