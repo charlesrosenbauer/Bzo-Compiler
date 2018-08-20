@@ -42,14 +42,11 @@ The compiler can be run in parallel by adding the parameters "+RTS -NX" where X 
 
 * I need to finish writing some type checking code, etc.
 
-* Automatic memory management: Rust is a great example of how memory can be managed efficiently via compile-time checks. However, with a small amount of extra work, it should be possible to have a language capable of very efficient memory management without the need for traditional garbage collection passes. The language will make extensive use of persistent data structures and lifetime checks to assist here.
+* Implicit Memory Arena Usage: Rust is a great example of how memory can be managed efficiently via compile-time checks. However, languages like C are often still faster due to extensive usage of memory arenas and allocators. With a small amount of extra analysis, it should be possible to have a language capable of implicitly deciding when this is feasible through some dependency analysis, etc.
 
 * Implicit Parallelism: rather than force the programmer to manage parallelism entirely on their own, Bzo aims to handle this with a smarter compiler. Implicit parallelism is definitely possible in a purely functional environment, however issues arise with deciding the proper granularity of threads; too high and threads aren't distributed efficiently, too low and the program generates too many threads for it to handle efficiently. Bzo aims to solve this problem by recognizing situations where threads can be generated in smaller numbers, or when they can be grouped together; for example, map operations only need to produce as many threads as the hardware supports, rather than how many can theoretically be run. Most other highger-order functions with any level of parallelism can be interpreted as variations on map operations, and therefore, thread numbers should be able to managed well simply with a smart enough compiler.
 
 * LLVM backend: because LLVM is good for producing fast code, and offers a lot of cross-platform support.
-
-* Unum support: As Bzo is a language oriented toward parallelism, it is necessary to have number formats that are parallelism-friendly. Unfortunately, floating point arithmetic is non-associative, which puts extreme limitations on parallelism-oriented optimizations. John Gustafson (https://en.wikipedia.org/wiki/John_Gustafson_(scientist)) has suggested a number format called Unums, which do not have this downside, and also have many other advantages. Including them in a parallelism-oriented language therefore makes a lot of sense, despite the current lack of hardware support for them.
-
 
 *Long-Term Plans*
 
@@ -60,6 +57,8 @@ The compiler can be run in parallel by adding the parameters "+RTS -NX" where X 
 * Embedded Bytecode: the intermediate representation mentioned above will have a bytecode format that will be embedded into executable files. So long as dependencies can be met, this will allow applications to be recompiled for new platforms without needing the original source code.
 
 * Compiler API: Much like Jonathan Blow's Jai language, Bzo is planned to offer a compiler API that enables Bzo code to have fine-grained control over what the compiler is doing. This enables very powerful debugging tools to be implemented with little effort, and enables automated code review at compile time.
+
+* Direct Backend: LLVM may be powerful, but it's also slow and makes assumptions about the programming language that are much more pessimistic than what is achievable in a purely functional language. A backend that directly produces machine code should be faster, and allow for more freedom with optimization. Some potential optimization techniques that could be utilized include Cached Conditionally-Correct Superoptimization, and various forms of Function Fusion.
 
 
 
