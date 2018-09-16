@@ -489,6 +489,35 @@ isCharType ty
 
 
 
+data TaggedFunc a b c =
+  TaggedFunc {
+    tf_ins :: [(TypeKind, a)],
+    tf_exs :: [(TypeKind, a)],
+    tf_nds :: M.Map Int (Node, b),
+    tf_ios :: M.Map (Int, Int) c }
+
+
+
+
+
+
+
+
+
+tagNodes :: FuncData -> (Node -> b) -> TaggedFunc a b c
+tagNodes (FuncType _ _ _ _ _ _ _ _ ndmap _ _) f =
+  let nds = fromList $ L.map (\(a, b)-> (a, (b, f b))) $ M.assocs ndmap
+  in TaggedFunc [] [] nds M.empty
+
+
+
+
+
+
+
+
+
+
 data TypeData = TypeData{
   typeKind    :: TypeKind,
   typeNodes   :: [TypeNode],
