@@ -546,7 +546,7 @@ lexTyVarIdentifier = do
 lexBIIdentifier :: Lexer BzoToken
 lexBIIdentifier = do
   p  <- getLexerState
-  b  <- lexChar '$'
+  b  <- lexChar '#'
   c0 <- satisfy (\c -> (isLegalChar c) && (not $ isUpper c) && (not $ isDigit c))
   cs <- many $ satisfy isLegalChar
   return (TkBuiltin (makeBzoPos p) $ pack (b : (c0 : cs)))
