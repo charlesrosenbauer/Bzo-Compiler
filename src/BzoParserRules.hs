@@ -325,22 +325,22 @@ parserIter fname tokens ((BzS_Statement p0 (BzS_Expr  _ [
                                             (BzS_BTId _ tid),
                                             (BzS_TyId _ imp)])) :stk) =
     case (unpack tid) of
-      "$ImportAs"  -> Left [ParseErr p0 $ pack "Attempting to import module with unspecified namespace."]
-      "$Import"    -> parserIter fname tokens ((BzS_Import  p0 imp imp):stk)
-      "$Include"   -> parserIter fname tokens ((BzS_Include p0 imp imp):stk)
-      "$IncludeAs" -> Left [ParseErr p0 $ pack "Attempting to include module with unspecified namespace."]
-      "$Module"    -> parserIter fname tokens ((BzS_File p0 imp fname [] [] []):stk)
+      "#ImportAs"  -> Left [ParseErr p0 $ pack "Attempting to import module with unspecified namespace."]
+      "#Import"    -> parserIter fname tokens ((BzS_Import  p0 imp imp):stk)
+      "#Include"   -> parserIter fname tokens ((BzS_Include p0 imp imp):stk)
+      "#IncludeAs" -> Left [ParseErr p0 $ pack "Attempting to include module with unspecified namespace."]
+      "#Module"    -> parserIter fname tokens ((BzS_File p0 imp fname [] [] []):stk)
       _            -> Left [ParseErr p0 $ pack "Unrecognized header."]
 
 parserIter fname tokens ((BzS_Statement p0 (BzS_Expr  _ [_,
                                             (BzS_BTId _ tid),
                                             (BzS_TyId _ imp)])) :stk) =
     case (unpack tid) of
-      "$ImportAs"  -> Left [ParseErr p0 $ pack "Attempting to import module with invalid namespace."]
-      "$Import"    -> Left [ParseErr p0 $ pack "Invalid import call. Did you mean to use $ImportAs?"]
-      "$Include"   -> parserIter fname tokens ((BzS_Include p0 imp imp):stk)
-      "$IncludeAs" -> Left [ParseErr p0 $ pack "Attempting to include module with invalid namespace."]
-      "$Include"   -> Left [ParseErr p0 $ pack "Invalide include call. Did you mean to use $IncludeAs?"]
+      "#ImportAs"  -> Left [ParseErr p0 $ pack "Attempting to import module with invalid namespace."]
+      "#Import"    -> Left [ParseErr p0 $ pack "Invalid import call. Did you mean to use $ImportAs?"]
+      "#Include"   -> parserIter fname tokens ((BzS_Include p0 imp imp):stk)
+      "#IncludeAs" -> Left [ParseErr p0 $ pack "Attempting to include module with invalid namespace."]
+      "#Include"   -> Left [ParseErr p0 $ pack "Invalide include call. Did you mean to use $IncludeAs?"]
       _            -> Left [ParseErr p0 $ pack "Unrecognized header."]
 
 parserIter fname tokens (i@(BzS_Include p1 imp impas)

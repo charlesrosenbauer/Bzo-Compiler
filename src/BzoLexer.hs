@@ -467,7 +467,7 @@ lexSymbol =
 
 
 isLegalChar :: Char -> Bool
-isLegalChar c = (isPrint c) && (not $ isSpace c) && (not $ elem c "~@_$()[]{}:;\'\",`.")
+isLegalChar c = (isPrint c) && (not $ isSpace c) && (not $ elem c "~@_#()[]{}:;\'\",`.")
 
 
 
@@ -563,7 +563,7 @@ lexBIIdentifier = do
 lexBITypeIdentifier :: Lexer BzoToken
 lexBITypeIdentifier = do
   p  <- getLexerState
-  b  <- lexChar '$'
+  b  <- lexChar '#'
   c0 <- satisfy isUpper
   cs <- many $ satisfy isLegalChar
   return (TkBIType (makeBzoPos p) $ pack (b : (c0 : cs)))
