@@ -122,6 +122,18 @@ parserIter fname tokens ((BzS_Token _ (TkEndDo p2))
 
 
 -- | Expression Construction
+parserIter fname tokens ((BzS_Token _ (TkSepExpr p2))
+                        :x@(BzS_Expr p1 _)
+                        :(BzS_Token _ (TkStartTup p0)):stk)             = parserIter fname tokens ((BzS_LispHead p0 x []):stk)
+
+parserIter fname tokens ((BzS_Token _ (TkEndDat p2))
+                        :x@(BzS_Expr  p1 _)
+                        :(BzS_LispHead p0 fn xs):stk)                   = parserIter fname tokens ((BzS_Expr p0 [BzS_LispCall p0 fn (x:xs)]):stk)
+
+parserIter fname tokens ((BzS_Token _ (TkSepPoly p2))
+                        :x@(BzS_Expr  p1 _)
+                        :(BzS_LispHead p0 fn xs):stk)                   = parserIter fname tokens ((BzS_LispHead p0 fn (x:xs)):stk)
+
 parserIter fname tokens ((BzS_Token _ (TkSepPoly p2))
                         :x@(BzS_Expr  p1 _)
                         :(BzS_Token _ (TkStartDat p0)):stk)             = parserIter fname tokens ((BzS_CmpdHead p0 [x]):stk)
@@ -437,13 +449,13 @@ parserErr fname [] [] = [ParseErr (BzoPos 1 1 fname) $ pack "Nothing to Parse?"]
 
 -- | Errors
 
-parserErr fname (n:nxt) stk@((BzS_Token _ (TkSepExpr p2))
-                             :x@(BzS_Expr  p1 _)
-                             :(BzS_CmpdHead p0 xs):_)                = (ParseErr p0 $ pack "Unexpected period (.) in compound tuple."    ):(parserErr fname nxt (n:stk))
+--parserErr fname (n:nxt) stk@((BzS_Token _ (TkSepExpr p2))
+--                             :x@(BzS_Expr  p1 _)
+--                             :(BzS_CmpdHead p0 xs):_)                = (ParseErr p0 $ pack "Unexpected period (.) in compound tuple."    ):(parserErr fname nxt (n:stk))
 
-parserErr fname (n:nxt) stk@((BzS_Token _ (TkSepExpr p2))
-                             :x@(BzS_Expr  p1 _)
-                             :(BzS_PolyHead p0 xs):_)                = (ParseErr p0 $ pack "Unexpected period (.) in polymorphic tuple."):(parserErr fname nxt (n:stk))
+--parserErr fname (n:nxt) stk@((BzS_Token _ (TkSepExpr p2))
+--                             :x@(BzS_Expr  p1 _)
+--                             :(BzS_PolyHead p0 xs):_)                = (ParseErr p0 $ pack "Unexpected period (.) in polymorphic tuple."):(parserErr fname nxt (n:stk))
 
 parserErr fname (n:nxt) stk@((BzS_Calls p1 calls1)
                              :xpr:_)                                 = (ParseErr (pos xpr) $ pack "Unexpected random expression among calls."):(parserErr fname nxt (n:stk))

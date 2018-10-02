@@ -317,6 +317,14 @@ data BzoSyntax
     | BzS_Statement {
         pos     :: !BzoPos,
         expr    :: !BzoSyntax }
+    | BzS_LispCall {
+        pos     :: !BzoPos,
+        fncall  :: !BzoSyntax,
+        exprs   :: ![BzoSyntax] }
+    | BzS_LispHead {
+        pos     :: !BzoPos,
+        fncall  :: !BzoSyntax,
+        exprs   :: ![BzoSyntax] }
     | BzS_FnHead {
         pos     :: !BzoPos,
         inpars  :: !BzoSyntax,
@@ -412,6 +420,7 @@ showAST (BzS_Cmpd _ c)                     = " {CMPD: " ++ (L.concat $ L.intersp
 showAST (BzS_Block _ ex)                   = " {BK: " ++ (Prelude.concatMap showAST ex) ++ " } "
 showAST (BzS_Expr _ ex)                    = " (EX: " ++ (L.concat $ L.intersperse " >> " $ L.reverse (Prelude.map showAST ex)) ++ " ) "
 showAST (BzS_Statement _ ex)               = " (STMT: " ++ (showAST ex) ++ " ) "
+showAST (BzS_LispCall _ fn ps)             = " (LISP: " ++ (show fn) ++ " <- " ++ (L.concat $ L.intersperse " , " $ L.reverse $ Prelude.map showAST ps) ++ " ) "
 showAST (BzS_Calls _ c)                    = Prelude.concatMap (\s -> " CALL:: " ++ (show s) ++ "\n") c
 showAST (BzS_Wildcard _)                   = " _ "
 showAST (BzS_MapMod _)                     = " .. "
@@ -442,6 +451,7 @@ showAST (BzS_BlockHead _ _)                = "BLKHEAD "
 showAST (BzS_CmpdHead  _ _)                = "CMPDHEAD "
 showAST (BzS_PolyHead  _ _)                = "POLYHEAD "
 showAST (BzS_FnHead _ _ _ _)               = "FNHEAD "
+showAST (BzS_LispHead _ _ _)               = "LSPHEAD "
 showAST _                                  = " <???> "
 instance Show BzoSyntax where show = showAST
 
