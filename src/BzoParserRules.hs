@@ -43,10 +43,16 @@ parserIter fname tokens ((BzS_Token _ (TkNewline  p1))
                         :(BzS_Token _ (TkStartTup p0)):stk)             = parserIter fname tokens ((BzS_Token p0 (TkStartTup p0)):stk)
 
 parserIter fname tokens ((BzS_Token _ (TkNewline  p1))
+                        :(BzS_Token _ (TkStartDat p0)):stk)             = parserIter fname tokens ((BzS_Token p0 (TkStartDat p0)):stk)
+
+parserIter fname tokens ((BzS_Token _ (TkNewline  p1))
                         :(BzS_Token _ (TkStartDo  p0)):stk)             = parserIter fname tokens ((BzS_Token p0 (TkStartDo  p0)):stk)
 
 parserIter fname tokens ((BzS_Token _ (TkEndTup   p1))
                         :(BzS_Token _ (TkNewline  p0)):stk)             = parserIter fname tokens ((BzS_Token p0 (TkEndTup   p0)):stk)
+
+parserIter fname tokens ((BzS_Token _ (TkEndDat   p1))
+                        :(BzS_Token _ (TkNewline  p0)):stk)             = parserIter fname tokens ((BzS_Token p0 (TkEndDat   p0)):stk)
 
 parserIter fname tokens ((BzS_Token _ (TkEndDo    p1))
                         :(BzS_Token _ (TkNewline  p0)):stk)             = parserIter fname tokens ((BzS_Token p0 (TkEndDo    p0)):stk)
@@ -84,6 +90,9 @@ parserIter fname tokens ((BzS_Token _ (TkEndTup p2))
                         :x@(BzS_Expr p1 _)
                         :(BzS_Token _ (TkStartTup p0)):stk)             = parserIter fname tokens ((BzS_Expr p0 [x]):stk)
 
+parserIter fname tokens ((BzS_Token _ (TkEndDat p2))
+                        :x@(BzS_Expr p1 _)
+                        :(BzS_Token _ (TkStartDat p0)):stk)             = parserIter fname tokens ((BzS_Expr p0 [x]):stk)
 
 
 -- | Statements and Blocks
@@ -113,15 +122,15 @@ parserIter fname tokens ((BzS_Token _ (TkEndDo p2))
 
 
 -- | Expression Construction
-parserIter fname tokens ((BzS_Token _ (TkSepExpr p2))
+parserIter fname tokens ((BzS_Token _ (TkSepPoly p2))
                         :x@(BzS_Expr  p1 _)
-                        :(BzS_Token _ (TkStartTup p0)):stk)             = parserIter fname tokens ((BzS_CmpdHead p0 [x]):stk)
+                        :(BzS_Token _ (TkStartDat p0)):stk)             = parserIter fname tokens ((BzS_CmpdHead p0 [x]):stk)
 
-parserIter fname tokens ((BzS_Token _ (TkSepExpr p2))
+parserIter fname tokens ((BzS_Token _ (TkSepPoly p2))
                         :x@(BzS_Expr  p1 _)
                         :(BzS_CmpdHead p0 xs):stk)                      = parserIter fname tokens ((BzS_CmpdHead p0 (x:xs)):stk)
 
-parserIter fname tokens ((BzS_Token _ (TkEndTup p2))
+parserIter fname tokens ((BzS_Token _ (TkEndDat p2))
                         :x@(BzS_Expr  p1 _)
                         :(BzS_CmpdHead p0 xs):stk)                      = parserIter fname tokens ((BzS_Expr p0 [BzS_Cmpd p0 (x:xs)]):stk)
 
@@ -428,9 +437,9 @@ parserErr fname [] [] = [ParseErr (BzoPos 1 1 fname) $ pack "Nothing to Parse?"]
 
 -- | Errors
 
-parserErr fname (n:nxt) stk@((BzS_Token _ (TkSepPoly p2))
+parserErr fname (n:nxt) stk@((BzS_Token _ (TkSepExpr p2))
                              :x@(BzS_Expr  p1 _)
-                             :(BzS_CmpdHead p0 xs):_)                = (ParseErr p0 $ pack "Unexpected comma (,) in compound tuple."    ):(parserErr fname nxt (n:stk))
+                             :(BzS_CmpdHead p0 xs):_)                = (ParseErr p0 $ pack "Unexpected period (.) in compound tuple."    ):(parserErr fname nxt (n:stk))
 
 parserErr fname (n:nxt) stk@((BzS_Token _ (TkSepExpr p2))
                              :x@(BzS_Expr  p1 _)
