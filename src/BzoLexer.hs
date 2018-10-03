@@ -448,10 +448,10 @@ lexSymbol =
   (lexStringToToken (pack "]")  (\p -> TkEndDat    p)) <|>
   (lexStringToToken (pack "{")  (\p -> TkStartDo   p)) <|>
   (lexStringToToken (pack "}")  (\p -> TkEndDo     p)) <|>
-  (lexStringToToken (pack ":")  (\p -> TkFilterSym p)) <|>
+  (lexStringToToken (pack ".")  (\p -> TkFilterSym p)) <|>
   (lexStringToToken (pack ";")  (\p -> TkLambdaSym p)) <|>
   (lexStringToToken (pack "..") (\p -> TkArrMod    p)) <|>
-  (lexStringToToken (pack ".")  (\p -> TkSepExpr   p)) <|>
+  (lexStringToToken (pack ":")  (\p -> TkSepExpr   p)) <|>
   (lexStringToToken (pack ",")  (\p -> TkSepPoly   p)) <|>
   (lexStringToToken (pack "_")  (\p -> TkWildcard  p)) <|>
   (lexStringToToken (pack "`")  (\p -> TkCurrySym  p)) <|>

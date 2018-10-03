@@ -124,7 +124,7 @@ parserIter fname tokens ((BzS_Token _ (TkEndDo p2))
 -- | Expression Construction
 parserIter fname tokens ((BzS_Token _ (TkSepExpr p2))
                         :x@(BzS_Expr p1 _)
-                        :(BzS_Token _ (TkStartTup p0)):stk)             = parserIter fname tokens ((BzS_LispHead p0 x []):stk)
+                        :(BzS_Token _ (TkStartDat p0)):stk)             = parserIter fname tokens ((BzS_LispHead p0 x []):stk)
 
 parserIter fname tokens ((BzS_Token _ (TkEndDat p2))
                         :x@(BzS_Expr  p1 _)
