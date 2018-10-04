@@ -65,7 +65,7 @@ The compiler can be run in parallel by adding the parameters "+RTS -NX" where X 
 *Syntax*
 
 ```
-(A. B)
+[A, B]
 Compound Tuple
 
 
@@ -73,8 +73,8 @@ Compound Tuple
 Polymorphic Tuple
 
 
-[]I32
-[4]I32
+[:I32]
+[4:I32]
 Array Types
 
 
@@ -85,22 +85,22 @@ Array Types
 Do Block
 
 
-expr : Type
+expr . Type
 Type Filter. This is a way of adding constraints to a type, for example that it must be a member of a type class, or that it is one of several options in a polymorphic type. These filters are normally not allowed outside of function/type parameters.
 
 
 ;parameter{definition}
-;(par0.par1){definition}
+;[par0,par1]{definition}
 Lambda expression
 
 
 x g f q
 Function call (equivalent to q = f(g(x)) in C-like languages)
 
-(a. b) f q
+[a, b] f q
 Function call (equivalent to q = f(a, b) in C-like languages)
 
-(a. b) + q
+[a, b] + q
 Function call (equivalent to q = a + b in C-like languages)
 
 
@@ -108,26 +108,26 @@ Type :: Def
 Simple Type Definition
 
 
-(Pars') Type :: Def
+[Pars'] Type :: Def
 Parameterized Type Definition
 
 
-(A') Functor :: {
-	(F':Functor) map :: (A' F'. (A' ;; B')) ;; B' F'
+[A'] Functor :: {
+	[F'.Functor] map :: [A' F', [A' ;; B']] ;; B' F'
 }
 Type Class Definition
 
 
 fn :: In ;; Out
-(K':Ord. A') insert :: ((K'. A')Dict. K'. A') ;; (K'. A')Dict
+[K'.Ord, A'] insert :: [[K', A']Dict, K', A'] ;; [K', A']Dict
 Function Type Definitions
 
 
 fn :: expr
 fn :: {expr}
-(in) fn  :: expr
-fn (out) :: expr
-(in) fn (out) :: expr
+[in] fn  :: expr
+fn [out] :: expr
+[in] fn [out] :: expr
 ...
 Some Function definitions
 
@@ -146,7 +146,7 @@ Passing 4 into an addition function partially applied with 5. Returns 9.
 a b`12`%+
 Here b and 12 is applied to %+, a modular addition function. This expression is desugared to (a. b. 12) %+.
 
-(a. b) c`%+
+[a, b] c`%+
 This code is not valid however.
 
 a b c`%+
@@ -177,11 +177,11 @@ Type Variable (Type Identifier ending with single quote)
 Mutable variable (Function/variable identifier starting with tilde)
 
 
-$fn
+#fn
 Builtin Function
 
 
-$Ty
+#Ty
 Builtin Type
 
 
@@ -210,14 +210,14 @@ Some Floating Point Literals
 *Hello World*
 
 ```
-Main $Module
-IO   $import
+Main #Module
+IO   #import
 
 
 main :: () ;; ()
 main :: {
 	() IO ~io
-	('Hello World!'. ~io) print ~io }
+	['Hello World!', ~io] print ~io }
 
 ```
 
@@ -235,5 +235,5 @@ Then we define main. Inside the do block, the first line calls the IO constructo
 
 The next line calls the print function, passing in a string, and the ~io variable. The print function returns an IO type, and so we store this back in ~io. This is also the end of the do block, and so the main function terminates here.
 ```
-('Hello World!'. ~io) print ~io }
+['Hello World!', ~io] print ~io }
 ```
