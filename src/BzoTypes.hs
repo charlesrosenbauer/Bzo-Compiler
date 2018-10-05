@@ -222,12 +222,13 @@ data BzoSyntax
         filt  :: !BzoSyntax }
     | BzS_ArrGenMod{
         pos   :: !BzoPos }
-    | BzS_ArrSzMod{
+    | BzS_ArrayObj{
+        pos   :: !BzoPos,
+        sint  :: !Integer,
+        typ   :: !BzoSyntax }
+    | BzS_ArrHead{
         pos   :: !BzoPos,
         sint  :: !Integer }
-    | BzS_ArrExprMod{
-        pos   :: !BzoPos,
-        def   :: !BzoSyntax }
     | BzS_Nil {
         pos   :: !BzoPos }
     | BzS_Lambda {
@@ -282,10 +283,6 @@ data BzoSyntax
         pos       :: !BzoPos,
         sid       :: !T.Text,
         namespace :: !T.Text }
-    | BzS_ArrayObj {
-        pos      :: !BzoPos,
-        bzobj    :: !BzoSyntax,
-        arrszs   :: ![Integer] }
     | BzS_FilterObj {
         pos     :: !BzoPos,
         bzobj   :: !BzoSyntax,
@@ -297,11 +294,6 @@ data BzoSyntax
     | BzS_MapObj {
         pos     :: !BzoPos,
         bzobj   :: !BzoSyntax }
-    | BzS_ArrSzObj {
-        pos     :: !BzoPos,
-        sint    :: !Integer }
-    | BzS_ArrGnObj {
-        pos     :: !BzoPos }
     | BzS_Token {
         pos     :: !BzoPos,
         tok     :: !BzoToken }
@@ -425,15 +417,11 @@ showAST (BzS_Calls _ c)                    = Prelude.concatMap (\s -> " CALL:: "
 showAST (BzS_Wildcard _)                   = " _ "
 showAST (BzS_MapMod _)                     = " .. "
 showAST (BzS_ArrGenMod _)                  = " [] "
-showAST (BzS_ArrSzMod _ i)                 = " [ " ++ (show  i) ++ " ] "
-showAST (BzS_ArrGnObj _)                   = " [] "
-showAST (BzS_ArrSzObj _ i)                 = " [ " ++ (show  i) ++ " ] "
-showAST (BzS_ArrExprMod _ ex)              = " [ " ++ (show ex) ++ " ] "
+showAST (BzS_ArrayObj _ sz ex)             = " [ " ++ (show sz) ++ ":" ++ (show ex) ++ " ] "
 showAST (BzS_Nil _)                        = " () "
 showAST (BzS_TyVar _ i)                    = " TyVr: " ++ (show i)
 showAST (BzS_ExTypObj _ o n)               = " <" ++ (show o) ++ " from " ++ (show n) ++ "> "
 showAST (BzS_ExFunObj _ o n)               = " <" ++ (show o) ++ " from " ++ (show n) ++ "> "
-showAST (BzS_ArrayObj  _ o a)              = " <" ++ (show o) ++ " array: " ++ (Prelude.concatMap (\x -> "[" ++ show x ++ "], ") a) ++ "> "
 showAST (BzS_FilterObj _ o f)              = " <" ++ (show o) ++ " of type " ++ (show f) ++ "> "
 showAST (BzS_CurryObj  _ o p)              = " <" ++ (show p) ++ " applied to " ++ (show o) ++ "> "
 showAST (BzS_MapObj    _ o)                = " <" ++ (show o) ++ " .. > "
@@ -452,6 +440,7 @@ showAST (BzS_CmpdHead  _ _)                = "CMPDHEAD "
 showAST (BzS_PolyHead  _ _)                = "POLYHEAD "
 showAST (BzS_FnHead _ _ _ _)               = "FNHEAD "
 showAST (BzS_LispHead _ _ _)               = "LSPHEAD "
+showAST (BzS_ArrHead  _ _)                 = "ARRHEAD "
 showAST _                                  = " <???> "
 instance Show BzoSyntax where show = showAST
 
