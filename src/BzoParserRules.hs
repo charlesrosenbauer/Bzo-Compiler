@@ -32,13 +32,6 @@ parserIter fname tokens ((BzS_Token _ (TkEndTup   p1))
 
 parserIter fname tokens ((BzS_Token _ (TkTupEmpt  p0)):stk)             = parserIter fname tokens ((BzS_Expr p0 [BzS_Nil p0]):stk)
 
-parserIter fname tokens ((BzS_Token _ (TkEndDat   p1))
-                        :(BzS_Token _ (TkStartDat p0)):stk)             = parserIter fname tokens ((BzS_ArrGenMod p0):stk)
-
-parserIter fname tokens ((BzS_Token _ (TkEndDat   p2))
-                        :(BzS_Expr  _ [BzS_Int    p1 sz])
-                        :(BzS_Token _ (TkStartDat p0)):stk)             = parserIter fname tokens ((BzS_ArrSzObj p0 sz):stk)
-
 parserIter fname tokens ((BzS_Token _ (TkNewline  p1))
                         :(BzS_Token _ (TkStartTup p0)):stk)             = parserIter fname tokens ((BzS_Token p0 (TkStartTup p0)):stk)
 
@@ -119,6 +112,18 @@ parserIter fname tokens ((BzS_Token _ (TkEndDo p2))
                         :x@(BzS_Expr p1 _)
                         :(BzS_Token _ (TkStartDo p0)):stk)              = parserIter fname tokens ((BzS_Expr p0 [BzS_Block p0 [x]]):stk)
 
+
+-- | Array Parsing
+parserIter fname tokens ((BzS_Token _ (TkSepExpr  p1))
+                        :(BzS_Token _ (TkStartDat p0)):stk)             = parserIter fname tokens ((BzS_ArrHead p0  0):stk)
+
+parserIter fname tokens ((BzS_Token _ (TkSepExpr  p2))
+                        :(BzS_Expr  _ [BzS_Int    p1 sz])
+                        :(BzS_Token _ (TkStartDat p0)):stk)             = parserIter fname tokens ((BzS_ArrHead p0 sz):stk)
+
+parserIter fname tokens ((BzS_Token _ (TkEndDat p2))
+                        :x@(BzS_Expr p1 _)
+                        :(BzS_ArrHead p0 sz):stk)                       = parserIter fname tokens ((BzS_Expr p0 [BzS_ArrayObj p0 sz x]):stk)
 
 
 -- | Expression Construction
@@ -302,18 +307,6 @@ parserIter fname tokens ((BzS_Expr  p2 [BzS_TyId _ ns])
                         :(BzS_Token p1 (TkReference _))
                         :(BzS_Expr  p0 ((BzS_FilterObj p x ((BzS_TyId p' nm):ys)):xs))
                         :stk)                                           = parserIter fname tokens ((BzS_Expr p0 ((BzS_FilterObj p x ((BzS_ExTypObj p' nm ns):ys)):xs)):stk)
-
-parserIter fname tokens ((BzS_Expr  p1 ((BzS_ArrayObj _ x ys):xs))
-                        :(BzS_Token p0 (TkArrGnrl _))           :stk)   = parserIter fname tokens ((BzS_Expr p0 ((BzS_ArrayObj p0 x (0:ys)):xs)):stk)
-
-parserIter fname tokens ((BzS_Expr  p1 ((BzS_ArrayObj _ x ys):xs))
-                        :(BzS_ArrSzObj p0 sz)                   :stk)   = parserIter fname tokens ((BzS_Expr p0 ((BzS_ArrayObj p0 x (sz:ys)):xs)):stk)
-
-parserIter fname tokens ((BzS_Expr  p1 (x:xs))
-                        :(BzS_Token p0 (TkArrGnrl _))           :stk)   = parserIter fname tokens ((BzS_Expr p0 ((BzS_ArrayObj p0 x [0] ):xs)):stk)
-
-parserIter fname tokens ((BzS_Expr  p1 (x:xs))
-                        :(BzS_ArrSzObj p0 sz)                   :stk)   = parserIter fname tokens ((BzS_Expr p0 ((BzS_ArrayObj p0 x [sz]):xs)):stk)
 
 parserIter fname tokens ((BzS_Expr  p2 [y])
                         :(BzS_Token p1 (TkFilterSym _))
