@@ -111,6 +111,7 @@ getTVars (BzS_Calls      _      cs) = L.concatMap getTVars cs
 getTVars (BzS_ArrayObj   _  _ expr) = getTVars expr
 getTVars (BzS_FilterObj  _ obj  fs) = (getTVars obj) ++ (L.concatMap getTVars fs)
 getTVars (BzS_CurryObj   _ obj  ps) = (getTVars obj) ++ (L.concatMap getTVars ps)
+getTVars (BzS_LispCall   _ fn expr) = (getTVars fn)  ++ (L.concatMap getTVars expr)
 getTVars _                          = []
 
 
@@ -142,6 +143,7 @@ getVars (BzS_FilterObj  _ obj  fs) = (getVars obj) ++ (L.concatMap getVars fs)
 getVars (BzS_CurryObj   _ obj  ps) = (getVars obj) ++ (L.concatMap getVars ps)
 getVars (BzS_MapObj     _    expr) = (getVars expr)
 getVars (BzS_Lambda     _ ps expr) = (getVars ps)  ++ (getVars expr)
+getVars (BzS_LispCall   _ fn expr) = (getVars fn)  ++ (L.concatMap getVars expr)
 getVars _                          = []
 
 
@@ -172,6 +174,7 @@ getTypes (BzS_FilterObj  _ obj  fs) = (getTypes obj) ++ (L.concatMap getTypes fs
 getTypes (BzS_CurryObj   _ obj  ps) = (getTypes obj) ++ (L.concatMap getTypes ps)
 getTypes (BzS_MapObj     _    expr) = (getTypes expr)
 getTypes (BzS_Lambda     _ ps expr) = (getTypes ps)  ++ (getTypes expr)
+getTypes (BzS_LispCall   _ fn expr) = (getTypes fn)  ++ (L.concatMap getTypes expr)
 getTypes _                          = []
 
 
@@ -320,6 +323,7 @@ extractLambda (BzS_FilterObj  _ obj  fs) = (extractLambda obj) ++ (L.concatMap e
 extractLambda (BzS_CurryObj   _ obj  ps) = (extractLambda obj) ++ (L.concatMap extractLambda ps)
 extractLambda (BzS_MapObj     _    expr) = (extractLambda expr)
 extractLambda (BzS_Lambda     p ps expr) = [BzS_FunDef p ps (pack $ show p) BzS_Undefined expr] ++ (extractLambda expr)
+extractLambda (BzS_LispCall   _ fn expr) = (extractLambda fn) ++ (L.concatMap extractLambda expr)
 extractLambda _                          = []
 
 
@@ -345,6 +349,7 @@ replaceLambda (BzS_FilterObj  p obj  fs) = (BzS_FilterObj p (replaceLambda obj) 
 replaceLambda (BzS_CurryObj   p obj  ps) = (BzS_CurryObj  p (replaceLambda obj) (L.map replaceLambda ps))
 replaceLambda (BzS_MapObj     p    expr) = (BzS_MapObj p (replaceLambda expr))
 replaceLambda (BzS_Lambda     p ps expr) = (BzS_Id p (pack $ show p))
+replaceLambda (BzS_LispCall   p fn expr) = (BzS_LispCall p (replaceLambda fn) (L.map replaceLambda expr))
 replaceLambda x                          = x
 
 
@@ -367,6 +372,7 @@ extractEnum ps (BzS_Calls      _      cs) = L.concatMap (extractEnum ps) cs
 extractEnum ps (BzS_ArrayObj   _  _ expr) = extractEnum ps expr
 extractEnum ps (BzS_FilterObj  _ obj  fs) = (extractEnum ps obj) ++ (L.concatMap (extractEnum ps) fs)
 extractEnum ps (BzS_CurryObj   _ obj prs) = (extractEnum ps obj) ++ (L.concatMap (extractEnum ps) prs)
+extractEnum ps (BzS_LispCall   _ fn expr) = (extractEnum ps fn)  ++ (L.concatMap (extractEnum ps) expr)
 extractEnum ps (BzS_Poly       _    expr) = L.concatMap (enumOp ps) expr
   where enumOp :: BzoSyntax -> BzoSyntax -> [BzoSyntax]
         enumOp ps (BzS_Expr _ [BzS_FilterObj p (BzS_TyId _ t) [tdef]]) = (BzS_TypDef p ps t tdef):(extractEnum ps tdef)
@@ -393,6 +399,7 @@ replaceEnum ps (BzS_Calls      p      cs) = (BzS_Calls  p (L.map (replaceEnum ps
 replaceEnum ps (BzS_ArrayObj   p a  expr) = (BzS_ArrayObj  p a (replaceEnum ps expr))
 replaceEnum ps (BzS_FilterObj  p obj  fs) = (BzS_FilterObj p (replaceEnum ps obj) (L.map (replaceEnum ps) fs))
 replaceEnum ps (BzS_CurryObj   p obj prs) = (BzS_CurryObj  p (replaceEnum ps obj) (L.map (replaceEnum ps) prs))
+replaceEnum ps (BzS_LispCall   p fn expr) = (BzS_LispCall  p (replaceEnum ps fn)  (L.map (replaceEnum ps) expr))
 replaceEnum ps (BzS_Poly       p    expr) = (BzS_Poly   p (L.map (enumOp ps) expr))
   where enumOp :: BzoSyntax -> BzoSyntax -> BzoSyntax
         enumOp BzS_Undefined (BzS_FilterObj p (BzS_TyId _ t) [tdef]) =  BzS_TyId p t
@@ -430,6 +437,7 @@ extractRecord ps tid depth (BzS_Calls      _       cs) = L.concatMap (extractRec
 extractRecord ps tid depth (BzS_ArrayObj   _  _  expr) = extractRecord ps tid depth expr
 extractRecord ps tid depth (BzS_FilterObj  _  obj  fs) = (extractRecord ps tid depth obj) ++ (L.concatMap (extractRecord ps tid depth) fs)
 extractRecord ps tid depth (BzS_CurryObj   _  obj prs) = (extractRecord ps tid depth obj) ++ (L.concatMap (extractRecord ps tid depth) prs)
+extractRecord ps tid depth (BzS_LispCall   _  fn expr) = (extractRecord ps tid depth  fn) ++ (L.concatMap (extractRecord ps tid depth) expr)
 extractRecord ps tid depth (BzS_Cmpd       _     expr) = L.concatMap (\(d, xpr) -> recordOp ps tid d xpr) $ L.zip (addDepth depth expr) expr
   where recordOp :: BzoSyntax -> Text -> [(Int, Int)] -> BzoSyntax -> [BzoSyntax]
         recordOp BzS_Undefined tid depth (BzS_FilterObj p (BzS_Id _ rcid) [tdef]) =
@@ -464,6 +472,7 @@ replaceRecord ps tid depth (BzS_Calls      p      cs) = (BzS_Calls  p (L.map (re
 replaceRecord ps tid depth (BzS_ArrayObj   p a  expr) = (BzS_ArrayObj  p a (replaceRecord ps tid depth expr))
 replaceRecord ps tid depth (BzS_FilterObj  p obj  fs) = (BzS_FilterObj p (replaceRecord ps tid depth obj) (L.map (replaceRecord ps tid depth) fs))
 replaceRecord ps tid depth (BzS_CurryObj   p obj prs) = (BzS_CurryObj  p (replaceRecord ps tid depth obj) (L.map (replaceRecord ps tid depth) prs))
+replaceRecord ps tid depth (BzS_LispCall   p fn expr) = (BzS_LispCall  p (replaceRecord ps tid depth fn) (L.map (replaceRecord ps tid depth) expr))
 replaceRecord ps tid depth (BzS_Cmpd       p    expr) = (BzS_Cmpd   p (L.map (\(d, xpr) -> recordOp  ps tid d xpr) $ L.zip (addDepth depth expr) expr))
   where recordOp :: BzoSyntax -> Text -> [(Int, Int)] -> BzoSyntax -> BzoSyntax
         recordOp _  tid depth (BzS_FilterObj p (BzS_Id _ rcid) [tdef]) = tdef
@@ -528,6 +537,7 @@ removeBoxes (BzS_Calls      p      cs ) = (BzS_Calls     p (L.map removeBoxes cs
 removeBoxes (BzS_ArrayObj   p  a  expr) = (BzS_ArrayObj  p a (removeBoxes expr))
 removeBoxes (BzS_FilterObj  p obj  fs ) = (BzS_FilterObj p (removeBoxes obj) (L.map removeBoxes fs))
 removeBoxes (BzS_CurryObj   p obj prs ) = (BzS_CurryObj  p (removeBoxes obj) (L.map removeBoxes prs))
+removeBoxes (BzS_LispCall   p fn  expr) = (BzS_LispCall  p (removeBoxes  fn) (L.map removeBoxes expr))
 removeBoxes x = x
 
 
