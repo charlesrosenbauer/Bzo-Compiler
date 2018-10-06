@@ -30,7 +30,12 @@ parserIter fname tokens ((BzS_Token _ (TkNewline p1))
 parserIter fname tokens ((BzS_Token _ (TkEndTup   p1))
                         :(BzS_Token _ (TkStartTup p0)):stk)             = parserIter fname tokens ((BzS_Expr p0 [BzS_Nil p0]):stk)
 
+parserIter fname tokens ((BzS_Token _ (TkEndDat   p1))
+                        :(BzS_Token _ (TkStartDat p0)):stk)             = parserIter fname tokens ((BzS_Expr p0 [BzS_Nil p0]):stk)
+
 parserIter fname tokens ((BzS_Token _ (TkTupEmpt  p0)):stk)             = parserIter fname tokens ((BzS_Expr p0 [BzS_Nil p0]):stk)
+
+parserIter fname tokens ((BzS_Token _ (TkArrGnrl  p0)):stk)             = parserIter fname tokens ((BzS_Expr p0 [BzS_Nil p0]):stk)
 
 parserIter fname tokens ((BzS_Token _ (TkNewline  p1))
                         :(BzS_Token _ (TkStartTup p0)):stk)             = parserIter fname tokens ((BzS_Token p0 (TkStartTup p0)):stk)
@@ -286,14 +291,14 @@ parserIter fname tokens (def@(BzS_Statement p1 xs)
 parserIter fname tokens ((BzS_Token p1 (TkArrMod _))
                         :(BzS_Expr  p0 (x:xs))                  :stk)   = parserIter fname tokens ((BzS_Expr p0 ((BzS_MapObj (pos x) x):xs)):stk)
 
-parserIter fname tokens ((BzS_Expr  p2 [y])
+parserIter fname tokens ((BzS_Expr  p2 [x])
                         :(BzS_Token p1 (TkCurrySym _))
-                        :(BzS_Expr  p0 ((BzS_CurryObj p x ys):xs))
+                        :(BzS_Expr  p0 ((BzS_CurryObj p y ys):xs))
                         :stk)                                           = parserIter fname tokens ((BzS_Expr p0 ((BzS_CurryObj p x (y:ys)):xs)):stk)
 
 parserIter fname tokens ((BzS_Expr  p2 [y])
                         :(BzS_Token p1 (TkCurrySym _))
-                        :(BzS_Expr  p0 (x:xs))                  :stk)   = parserIter fname tokens ((BzS_Expr p0 ((BzS_CurryObj (pos x) x [y]):xs)):stk)
+                        :(BzS_Expr  p0 (x:xs))                  :stk)   = parserIter fname tokens ((BzS_Expr p0 ((BzS_CurryObj (pos x) y [x]):xs)):stk)
 
 parserIter fname tokens ((BzS_Expr  p2 [BzS_TyId _ ns])
                         :(BzS_Token p1 (TkReference _))
