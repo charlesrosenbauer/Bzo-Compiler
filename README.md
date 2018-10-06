@@ -103,6 +103,9 @@ Function call (equivalent to q = f(a, b) in C-like languages)
 [a, b] + q
 Function call (equivalent to q = a + b in C-like languages)
 
+[+: a, b] q
+Prefix function call (equivalent to q = a + b). This is just an alternative way to call functions that is more readable in some cases.
+
 
 Type :: Def
 Simple Type Definition
@@ -154,7 +157,8 @@ Neither is this. Only one parameter must remain after partial application.
 
 
 ()
-Nil Type / Empty Tuple
+[]
+Nil Type / Empty Tuple (Both are acceptable)
 
 
 T@Namespace
