@@ -4,29 +4,29 @@ LiterateTest #importAs L
 "A bunch of potential Bzo expressions for use in testing expression parsing"
 "Many of these may show up in the standard library"
 
-(n) +1  :: (n.  1)+
-(n) +2  :: (n.  2)+
-(n) -1  :: (n.  1)-
-(n) -2  :: (n.  2)-
-(n) *2  :: (n.  2)*
-(n) /2  :: (n.  2)/
-(n) %2  :: (n.  2)%
-(n) %4  :: (n.  4)%
-(n) %8  :: (n.  8)%
-(n) %16 :: (n. 16)%
+[n] +1  :: (n.  1)+
+[n] +2  :: (n.  2)+
+[n] -1  :: (n.  1)-
+[n] -2  :: (n.  2)-
+[n] *2  :: (n.  2)*
+[n] /2  :: (n.  2)/
+[n] %2  :: (n.  2)%
+[n] %4  :: (n.  4)%
+[n] %8  :: (n.  8)%
+[n] %16 :: (n. 16)%
 
 
-? :: (Bool. A. A) ;; A
-(True . l. _) ? :: l
-(False. _. r) ? :: r
+? :: [Bool, A', A') ;; A'
+[True , l, _] ? :: l
+[False, _, r] ? :: r
 
-map :: ([]A. (A ;; B)) ;; []B
-(arr. f) map :: arr f..
+map :: [[:A'], [A' ;; B']] ;; [:B']
+[arr, f] map :: arr f..
 
-reduce :: ([]A. B. ((A. B) ;; B)) ;; B
-reduce :: ([]A. B. ((A. B) ;; B). Int) ;; B
-(arr. x. f)    reduce :: ((0 arr. x) f. 1) reduce
-(arr. x. f. i) reduce :: ((arr top. i)>. ((i arr. x) f. i +1) reduce. x)?
+reduce :: [[:A'], B', [[A', B'] ;; B']] ;; B'
+reduce :: [[:A'], B', [[A', B'] ;; B'], Int] ;; B'
+[arr, x, f]    reduce :: [[0 arr, x] f, 1] reduce
+[arr, x, f, i] reduce :: [[arr top, i]>, [[i arr, x] f, i +1] reduce, x]?
 
-mkReduce :: (B. ((A. B) ;; B)) ;; ([]A ;; B)
-(x. f) mkReduce :: { ;arr :: { (arr. x. f) reduce } }
+mkReduce :: [B', [[A', B'] ;; B']] ;; [[A'] ;; B']
+[x, f] mkReduce :: ;arr{ [arr, x, f] reduce }
