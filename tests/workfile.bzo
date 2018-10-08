@@ -22,9 +22,9 @@ Mat1x2 ::    [2:F32]
 Mat1x3 ::    [3:F32]
 Mat1x4 ::    [4:F32]
 Mat2x1 ::      Vec2
-Mat2x2 :: [2:[2:F32]
-Mat2x3 :: [2:[3:F32]
-Mat2x4 :: [2:[4:F32]
+Mat2x2 :: [2:[2:F32]]
+Mat2x3 :: [2:[3:F32]]
+Mat2x4 :: [2:[4:F32]]
 Mat3x1 ::      Vec3
 Mat3x2 :: [3:[2:F32]]
 Mat3x3 :: [3:[3:F32]]
@@ -39,21 +39,20 @@ Mat4x4 :: [4:[4:F32]]
 
 
 
-main :: [] ;; Console
-main :: {
-  ~c : Console
-  ['Hello World!', ~c] println ~c
+main :: IO ;; IO
+[~io] main :: {
+  ['Hello World!', ~io] println ~io
 }
 
 
 
 
 
-# :: Index ;; [A' ;; [A', Index]]
-[x] # :: ;v{[v, x]}
+ix :: Index ;; [A' ;; [A', Index]]
+[x] ix :: ;v{[v, x]}
 
-# :: [Index, Index] ;; [A' ;; [A', Index, Index]]
-[x, y] # :: ;v{[v, x, y]}
+ix :: [Index, Index] ;; [A' ;; [A', Index, Index]]
+[x, y] ix :: ;v{[v, x, y]}
 
-# :: [Index, Index, Index] ;; [A' ;; [A', Index, Index, Index]]
-[x, y, z] # :: ;v{[v, x, y, z]}
+ix :: [Index, Index, Index] ;; [A' ;; [A', Index, Index, Index]]
+[x, y, z] ix :: ;v{[v, x, y, z]}
