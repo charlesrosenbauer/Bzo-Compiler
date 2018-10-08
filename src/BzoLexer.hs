@@ -438,6 +438,7 @@ lexStringToToken st f = do
 
 lexSymbol :: Lexer BzoToken
 lexSymbol =
+  (lexStringToToken (pack "..") (\p -> TkArrMod    p)) <|>
   (lexStringToToken (pack "::") (\p -> TkDefine    p)) <|>
   (lexStringToToken (pack ";;") (\p -> TkFnSym     p)) <|>
   (lexStringToToken (pack "()") (\p -> TkTupEmpt   p)) <|>
@@ -450,7 +451,6 @@ lexSymbol =
   (lexStringToToken (pack "}")  (\p -> TkEndDo     p)) <|>
   (lexStringToToken (pack ".")  (\p -> TkFilterSym p)) <|>
   (lexStringToToken (pack ";")  (\p -> TkLambdaSym p)) <|>
-  (lexStringToToken (pack "..") (\p -> TkArrMod    p)) <|>
   (lexStringToToken (pack ":")  (\p -> TkSepExpr   p)) <|>
   (lexStringToToken (pack ",")  (\p -> TkSepPoly   p)) <|>
   (lexStringToToken (pack "_")  (\p -> TkWildcard  p)) <|>
