@@ -27,10 +27,17 @@ data BGArithop =
   BGIADD | BGISUB | BGIMUL | BGIDIV | BGIMOD |
   BGFADD | BGFSUB | BGFMUL | BGFDIV | BGFMOD |
   BGBXOR | BGBOR  | BGBAND | BGBNOT | BGBSHL |
-  BGBSHR | BGLOR  | BGLAND | BGLNOT | BGBNIL |
-  BGBVAR
+  BGBSHR | BGLOR  | BGLAND | BGLNOT | BGLSS  |
+  BGGTR  | BGLSE  | BGGTE  | BGEQ   | BGNEQ  |
+  BGEZ   | BGNZ
 
-data BGOps =
-    BGARith BGArithop BGOps BGOps
-  | BGVrSet BGId BGOps
-  | BGCall  BGId [BGOps]
+
+
+
+
+data BGExpr =
+    BGArith BGArithop BGExpr BGExpr
+  | BGVar   BGId
+  | BGCast  BGType BGExpr
+  | BGVrSet [BGId] BGExpr
+  | BGCall  BGId [BGExpr]
