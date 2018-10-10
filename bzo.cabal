@@ -38,3 +38,4 @@ executable main
       , DefinitionTable
       , Builtins
       , Backend
+      , BackendTypes
