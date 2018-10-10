@@ -42,15 +42,16 @@ The compiler can be run in parallel by adding the parameters "+RTS -NX" where X 
 
 * I need to finish writing some type checking code, etc.
 
-* Implicit Memory Arena Usage: Rust is a great example of how memory can be managed efficiently via compile-time checks. However, languages like C are often still faster due to extensive usage of memory arenas and allocators. With a small amount of extra analysis, it should be possible to have a language capable of implicitly deciding when this is feasible through some dependency analysis, etc.
+* Simple Golang backend: the analysis that Bzo will depend on for its more powerful features doesn't seem easy to do in Haskell. Those features thus will be pushed onto the eventual self-hosted version. This version will simply output and compile Golang, which will allow Bzo to piggyback off of Go's GC so that memory analysis can be saved until later.
 
-* Implicit Parallelism: rather than force the programmer to manage parallelism entirely on their own, Bzo aims to handle this with a smarter compiler. Implicit parallelism is definitely possible in a purely functional environment, however issues arise with deciding the proper granularity of threads; too high and threads aren't distributed efficiently, too low and the program generates too many threads for it to handle efficiently. Bzo aims to solve this problem by recognizing situations where threads can be generated in smaller numbers, or when they can be grouped together; for example, map operations only need to produce as many threads as the hardware supports, rather than how many can theoretically be run. Most other highger-order functions with any level of parallelism can be interpreted as variations on map operations, and therefore, thread numbers should be able to managed well simply with a smart enough compiler.
-
-* LLVM backend: because LLVM is good for producing fast code, and offers a lot of cross-platform support.
 
 *Long-Term Plans*
 
 * Self-hosting: I've made some design decisions in this compiler that could be improved with a second revision, and I think a more permissive license would be favorable. As a result, this compiler will likely be used just for bootstrapping purposes, and a self-hosted compiler will be written later.
+
+* Implicit Memory Arena Usage: Rust is a great example of how memory can be managed efficiently via compile-time checks. However, languages like C are often still faster due to extensive usage of memory arenas and allocators. With a small amount of extra analysis, it should be possible to have a language capable of implicitly deciding when this is feasible through some dependency analysis, etc.
+
+* Implicit Parallelism: rather than force the programmer to manage parallelism entirely on their own, Bzo aims to handle this with a smarter compiler. Implicit parallelism is definitely possible in a purely functional environment, however issues arise with deciding the proper granularity of threads; too high and threads aren't distributed efficiently, too low and the program generates too many threads for it to handle efficiently. Bzo aims to solve this problem by recognizing situations where threads can be generated in smaller numbers, or when they can be grouped together; for example, map operations only need to produce as many threads as the hardware supports, rather than how many can theoretically be run. Most other highger-order functions with any level of parallelism can be interpreted as variations on map operations, and therefore, thread numbers should be able to managed well simply with a smart enough compiler.
 
 * Intermediate Representations: a goal for the self-hosted compiler will be to enable other languages to compile to an intermediate representation that can be compiled using the Bzo compiler. This will allow other languages to use features of Bzo, such as implicit parallelism, without having to reimplement it.
 
