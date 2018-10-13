@@ -41,3 +41,13 @@ data BGExpr =
   | BGCast  BGType BGExpr
   | BGVrSet [BGId] BGExpr
   | BGCall  BGId [BGExpr]
+
+
+
+
+
+
+data OtherOp =
+  BGDeref | BGRef   | BGArrayIx | BGReadIx | BGWriteIx |
+  BGInsert| BGRemove| BGMapOp   | BGFold   | BGScan    |
+  BGFilter| BGSlice
