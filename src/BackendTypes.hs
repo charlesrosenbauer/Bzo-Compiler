@@ -36,18 +36,34 @@ data BGArithop =
 
 
 data BGExpr =
-    BGArith BGArithop BGExpr BGExpr
+    BGArith BGArithop  BGExpr BGExpr
+  | BGOther BGOtherop [BGExpr]
   | BGVar   BGId
   | BGCast  BGType BGExpr
   | BGVrSet [BGId] BGExpr
   | BGCall  BGId [BGExpr]
+  | BGCase  [(Pattern, BGExpr)]
 
 
 
 
 
 
-data OtherOp =
+data Pattern =
+    PatWild
+  | PatInt  Integer
+  | PatFlt  Double
+  | PatStr  String
+  | PatType BGId BGType
+  | PatFunc BGId
+  | PatTVar BGId BGType
+
+
+
+
+
+
+data BGOtherop =
   BGDeref | BGRef   | BGArrayIx | BGReadIx | BGWriteIx |
   BGInsert| BGRemove| BGMapOp   | BGFold   | BGScan    |
   BGFilter| BGSlice
