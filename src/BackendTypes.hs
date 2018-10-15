@@ -43,6 +43,7 @@ data BGExpr =
   | BGVrSet [BGId] BGExpr
   | BGCall  BGId [BGExpr]
   | BGCase  [(Pattern, BGExpr)]
+  | BGLmda  Pattern [BGType] [BGType] BGExpr
 
 
 
@@ -65,5 +66,6 @@ data Pattern =
 
 data BGOtherop =
   BGDeref | BGRef   | BGArrayIx | BGReadIx | BGWriteIx |
-  BGInsert| BGRemove| BGMapOp   | BGFold   | BGScan    |
-  BGFilter| BGSlice
+  BGMpInst| BGMpRmov| BGMpGet   | BGMpAdjst| BGArGet   |
+  BGArSet | BGMapOp | BGFold    | BGScan   | BGFilter  |
+  BGSlice
