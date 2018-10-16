@@ -309,56 +309,6 @@ getDefTable files =
 
 
 
--- This doesn't replace lambdas in the AST with anything new
-extractLambda :: BzoSyntax -> [BzoSyntax]
-extractLambda (BzS_Expr       _    expr) = L.concatMap extractLambda expr
-extractLambda (BzS_Statement  _    expr) = extractLambda expr
-extractLambda (BzS_Cmpd       _    expr) = L.concatMap extractLambda expr
-extractLambda (BzS_Poly       _    expr) = L.concatMap extractLambda expr
-extractLambda (BzS_Block      _    expr) = L.concatMap extractLambda expr
-extractLambda (BzS_FunDef     _ _ _ _ x) = (extractLambda x)
-extractLambda (BzS_Calls      _      cs) = L.concatMap extractLambda cs
-extractLambda (BzS_ArrayObj   _  _ expr) = extractLambda expr
-extractLambda (BzS_FilterObj  _ obj  fs) = (extractLambda obj) ++ (L.concatMap extractLambda fs)
-extractLambda (BzS_CurryObj   _ obj  ps) = (extractLambda obj) ++ (L.concatMap extractLambda ps)
-extractLambda (BzS_MapObj     _    expr) = (extractLambda expr)
-extractLambda (BzS_Lambda     p ps expr) = [BzS_FunDef p ps (pack $ show p) BzS_Undefined expr] ++ (extractLambda expr)
-extractLambda (BzS_LispCall   _ fn expr) = (extractLambda fn) ++ (L.concatMap extractLambda expr)
-extractLambda _                          = []
-
-
-
-
-
-
-
-
-
-
--- This does replace lambdas in the AST
-replaceLambda :: BzoSyntax -> BzoSyntax
-replaceLambda (BzS_Expr       p    expr) = (BzS_Expr   p (L.map replaceLambda expr))
-replaceLambda (BzS_Statement  p    expr) = (BzS_Statement p (replaceLambda expr))
-replaceLambda (BzS_Cmpd       p    expr) = (BzS_Cmpd   p (L.map replaceLambda expr))
-replaceLambda (BzS_Poly       p    expr) = (BzS_Poly   p (L.map replaceLambda expr))
-replaceLambda (BzS_Block      p    expr) = (BzS_Block  p (L.map replaceLambda expr))
-replaceLambda (BzS_FunDef     p i f o x) = (BzS_FunDef p i f o (replaceLambda x))
-replaceLambda (BzS_Calls      p      cs) = (BzS_Calls  p (L.map replaceLambda cs))
-replaceLambda (BzS_ArrayObj   p a  expr) = (BzS_ArrayObj  p a (replaceLambda expr))
-replaceLambda (BzS_FilterObj  p obj  fs) = (BzS_FilterObj p (replaceLambda obj) (L.map replaceLambda fs))
-replaceLambda (BzS_CurryObj   p obj  ps) = (BzS_CurryObj  p (replaceLambda obj) (L.map replaceLambda ps))
-replaceLambda (BzS_MapObj     p    expr) = (BzS_MapObj p (replaceLambda expr))
-replaceLambda (BzS_Lambda     p ps expr) = (BzS_Id p (pack $ show p))
-replaceLambda (BzS_LispCall   p fn expr) = (BzS_LispCall p (replaceLambda fn) (L.map replaceLambda expr))
-replaceLambda x                          = x
-
-
-
-
-
-
-
-
 
 
 -- This doesn't replace Enums in the AST with anything new
@@ -535,6 +485,7 @@ removeBoxes (BzS_Block      p    expr ) = (BzS_Block     p (L.map removeBoxes ex
 removeBoxes (BzS_TypDef     p i  t  x ) = (BzS_TypDef    p i t (removeBoxes x))
 removeBoxes (BzS_Calls      p      cs ) = (BzS_Calls     p (L.map removeBoxes cs))
 removeBoxes (BzS_ArrayObj   p  a  expr) = (BzS_ArrayObj  p a (removeBoxes expr))
+removeBoxes (BzS_Lambda     p pars def) = (BzS_Lambda    p (removeBoxes pars) (removeBoxes def))
 removeBoxes (BzS_FilterObj  p obj  fs ) = (BzS_FilterObj p (removeBoxes obj) (L.map removeBoxes fs))
 removeBoxes (BzS_CurryObj   p obj prs ) = (BzS_CurryObj  p (removeBoxes obj) (L.map removeBoxes prs))
 removeBoxes (BzS_LispCall   p fn  expr) = (BzS_LispCall  p (removeBoxes  fn) (L.map removeBoxes expr))
@@ -547,13 +498,36 @@ removeBoxes x = x
 
 
 
+
+
+verifyAST :: (BzoSyntax -> Bool) -> BzoSyntax -> Bool
+verifyAST fn x@(BzS_Expr       p  expr) = (fn x) || L.foldl (\a b -> a || (verifyAST fn b)) False expr
+verifyAST fn x@(BzS_Statement  p  expr) = (fn x) || (fn expr)
+verifyAST fn x@(BzS_Cmpd       p  expr) = (fn x) || L.foldl (\a b -> a || (verifyAST fn b)) False expr
+verifyAST fn x@(BzS_Poly       p  expr) = (fn x) || L.foldl (\a b -> a || (verifyAST fn b)) False expr
+verifyAST fn x@(BzS_Block      p  expr) = (fn x) || L.foldl (\a b -> a || (verifyAST fn b)) False expr
+verifyAST fn x@(BzS_Calls      p calls) = (fn x) || L.foldl (\a b -> a || (verifyAST fn b)) False expr
+verifyAST fn x@(BzS_FnTy       p i   o) = (fn x) || (verifyAST fn i) || (verifyAST fn o)
+verifyAST fn x@(BzS_TypDef     p i t o) = (fn x) || (verifyAST fn i) || (verifyAST fn o)
+verifyAST fn x@(BzS_FnTypeDef  p i f d) = (fn x) || (verifyAST fn i) || (verifyAST fn d)
+verifyAST fn x@(BzS_FunDef   p i f o d) = (fn x) || (verifyAST fn i) || (verifyAST fn o) || (verifyAST fn d)
+verifyAST fn x@(BzS_TyClassDef p i c d) = (fn x) || (verifyAST fn i) || L.foldl (\a b -> a || (verifyAST fn b)) False d
+verifyAST fn x@(BzS_ArrayObj   p _   t) = (fn x) || (verifyAST fn t)
+verifyAST fn x@(BzS_Lambda     p i   d) = (fn x) || (verifyAST fn i) || (verifyAST fn d)
+verifyAST fn x@(BzS_FilterObj  p o   t) = (fn x) || (verifyAST fn o) || L.foldl (\a b -> a || (verifyAST fn b)) False t
+verifyAST fn x@(BzS_CurryObj   p o   i) = (fn x) || L.foldl (\a b -> a || (verifyAST fn b)) False i
+verifyAST fn x@(BzS_LispCall   p f xpr) = (fn x) || (verifyAST fn f) || L.foldl (\a b -> a || (verifyAST fn b)) False xpr
+verifyAST fn x = fn x
+
+
+
+
 modelXForm :: BzoSyntax -> BzoSyntax
 modelXForm (BzS_Calls p ast) =
   let ast' = L.map removeBoxes ast
-      lams = L.concatMap  extractLambda ast
       enms = L.concatMap (extractEnum   BzS_Undefined             ) ast'
       rcds = L.concatMap (extractRecord BzS_Undefined (pack "") []) ast'
 
-      allAST  = rcds ++ enms ++ lams ++ ast'
-      allAST' = L.map ((replaceRecord BzS_Undefined (pack "") []) . (replaceEnum BzS_Undefined) . replaceLambda) allAST
+      allAST  = rcds ++ enms ++ ast'
+      allAST' = L.map ((replaceRecord BzS_Undefined (pack "") []) . (replaceEnum BzS_Undefined)) allAST
   in (BzS_Calls p allAST')

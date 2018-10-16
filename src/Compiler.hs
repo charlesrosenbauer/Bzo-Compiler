@@ -10,6 +10,7 @@ import ModelRules
 import DefinitionTable
 import BzoChecker
 import HigherOrder
+import Backend
 import Debug.Trace
 
 
@@ -39,7 +40,6 @@ compileFilePass (BzoSettings imp lib flg opt pfx) =
       --defs     <- return $ (applyWithErr wrappedDefOrganizePass) models
       --types    <- return (wrappedGenerateTypes symbols defs)
       -- TODO: Type Checker
-      -- TODO: Static Analysis
       -- TODO: Code Generation
       putStrLn $ case valid of
                   Nothing -> showOutput {-$ trace (show namemaps)-} defs''
