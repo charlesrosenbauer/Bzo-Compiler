@@ -500,6 +500,9 @@ removeBoxes x = x
 
 
 
+-- This is a bit oversimplified, and won't properly cover many cases.
+-- Ideally, we should be able to switch to a different validation function in
+-- some cases, e.g., a type filter inside an expression.
 verifyAST :: (BzoSyntax -> Bool) -> BzoSyntax -> Bool
 verifyAST fn x@(BzS_Expr       p  expr) = (fn x) || L.foldl (\a b -> a || (verifyAST fn b)) False expr
 verifyAST fn x@(BzS_Statement  p  expr) = (fn x) || (fn expr)
@@ -518,6 +521,102 @@ verifyAST fn x@(BzS_FilterObj  p o   t) = (fn x) || (verifyAST fn o) || L.foldl 
 verifyAST fn x@(BzS_CurryObj   p o   i) = (fn x) || L.foldl (\a b -> a || (verifyAST fn b)) False i
 verifyAST fn x@(BzS_LispCall   p f xpr) = (fn x) || (verifyAST fn f) || L.foldl (\a b -> a || (verifyAST fn b)) False xpr
 verifyAST fn x = fn x
+
+
+
+
+
+
+
+
+
+
+isValidPattern :: BzoSyntax -> Bool
+isValidPattern pattern = not $ verifyAST checkfn pattern
+  where checkfn :: BzoSyntax -> Bool
+        checkfn (BzS_Lambda      _ _ _) = True
+        checkfn (BzS_FnTypeDef _ _ _ _) = True
+        checkfn (BzS_Calls         _ _) = True
+        checkfn (BzS_Block         _ _) = True
+        checkfn (BzS_TypDef    _ _ _ _) = True
+        checkfn (BzS_FunDef  _ _ _ _ _) = True
+        checkfn (BzS_Import      _ _ _) = True
+        checkfn (BzS_Include     _ _ _) = True
+        checkfn (BzS_File  _ _ _ _ _ _) = True
+        checkfn (BzS_MapObj        _ _) = True
+        checkfn _ = False
+
+
+
+
+
+
+
+
+
+
+isValidType :: BzoSyntax -> Bool
+isValidType ty = not $ verifyAST checkfn ty
+  where checkfn :: BzoSyntax -> Bool
+        checkfn (BzS_MId            _ _) = True
+        checkfn (BzS_Lambda       _ _ _) = True
+        checkfn (BzS_FnTypeDef  _ _ _ _) = True
+        checkfn (BzS_TyClassDef _ _ _ _) = True
+        checkfn (BzS_Calls          _ _) = True
+        checkfn (BzS_Block          _ _) = True
+        checkfn (BzS_TypDef     _ _ _ _) = True
+        checkfn (BzS_FunDef   _ _ _ _ _) = True
+        checkfn (BzS_Import       _ _ _) = True
+        checkfn (BzS_Include      _ _ _) = True
+        checkfn (BzS_File   _ _ _ _ _ _) = True
+        checkfn (BzS_MapObj         _ _) = True
+        checkfn (BzS_Wildcard         _) = True
+        checkfn _ = False
+
+
+
+
+
+
+
+
+
+
+isValidExpr :: BzoSyntax -> Bool
+isValidExpr expr = not $ verifyAST checkfn expr
+  where checkfn :: BzoSyntax -> Bool
+        checkfn (BzS_TyClassDef _ _ _ _) = True
+        checkfn (BzS_FnTypeDef  _ _ _ _) = True
+        checkfn (BzS_Calls          _ _) = True
+        checkfn (BzS_TypDef     _ _ _ _) = True
+        checkfn (BzS_FunDef   _ _ _ _ _) = True
+        checkfn (BzS_Import       _ _ _) = True
+        checkfn (BzS_Include      _ _ _) = True
+        checkfn (BzS_File   _ _ _ _ _ _) = True
+        checkfn _ = False
+
+
+
+
+
+
+
+
+
+
+isValidCall :: BzoSyntax -> Bool
+-- Type parameters for BzS_TyClassDef, BzS_FnTypeDef and BzS_TypDef probably aren't best considered patterns.
+isValidCall (BzS_TyClassDef _ ps _ df) = L.foldl (\a b -> a && (isValidCall b)) (isValidPattern ps) df
+isValidCall (BzS_FnTypeDef  _ ps _ df) = (isValidType df) && (isValidPattern ps)
+isValidCall (BzS_TypDef     _ ps _ df) = (isValidType df) && (isValidPattern ps)
+isValidCall (BzS_FunDef  _ is _ xs df) = (isValidPattern is) && (isValidPattern xs) && (isValidExpr df)
+isValidCall _ = False
+
+
+
+
+
+
 
 
 
