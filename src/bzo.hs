@@ -29,7 +29,7 @@ printIntro = do
   putStrLn "Github for Compiler: https://github.com/charlesrosenbauer/Bzo-Compiler"
   putStrLn "Note: This is a work in progress. Don't expect everything to work right now."
   putStrLn "This compiler is licensed under GPLv.3"
-  putStrLn "Enter \"$quit\" to exit\n"
+  putStrLn "Enter \"#quit\" to exit\n"
   return ()
 
 
