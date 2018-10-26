@@ -180,101 +180,37 @@ showTokens tk = Prelude.unwords $ Prelude.map showTk tk
 
 
 data BzoSyntax
+
+    -- | Primitive Nodes
     = BzS_Int {
-        pos  :: !BzoPos,
-        sint :: !Integer }
+        pos       :: !BzoPos,
+        sint      :: !Integer }
     | BzS_Flt {
-        pos  :: !BzoPos,
-        sflt :: !Double }
+        pos       :: !BzoPos,
+        sflt      :: !Double }
     | BzS_Str {
-        pos  :: !BzoPos,
-        sstr :: !T.Text }
+        pos       :: !BzoPos,
+        sstr      :: !T.Text }
     | BzS_Id {
-        pos  :: !BzoPos,
-        sid  :: !T.Text }
+        pos       :: !BzoPos,
+        sid       :: !T.Text }
     | BzS_TyId {
-        pos  :: !BzoPos,
-        sid  :: !T.Text }
+        pos       :: !BzoPos,
+        sid       :: !T.Text }
     | BzS_TyVar {
-        pos  :: !BzoPos,
-        sid  :: !T.Text }
-    | BzS_Curry {
-        pos  :: !BzoPos,
-        obj  :: !BzoSyntax }
+        pos       :: !BzoPos,
+        sid       :: !T.Text }
     | BzS_MId {
-        pos  :: !BzoPos,
-        sid  :: !T.Text }
+        pos       :: !BzoPos,
+        sid       :: !T.Text }
     | BzS_BId {
-        pos  :: !BzoPos,
-        sid  :: !T.Text }
+        pos       :: !BzoPos,
+        sid       :: !T.Text }
     | BzS_BTId {
-        pos  :: !BzoPos,
-        sid  :: !T.Text }
-    | BzS_Namespace{
-        pos  :: !BzoPos,
-        sid  :: !T.Text }
-    | BzS_MapMod {
-        pos  :: !BzoPos }
+        pos       :: !BzoPos,
+        sid       :: !T.Text }
     | BzS_Wildcard {
-        pos   :: !BzoPos }
-    | BzS_Filter {
-        pos   :: !BzoPos,
-        filt  :: !BzoSyntax }
-    | BzS_ArrGenMod{
-        pos   :: !BzoPos }
-    | BzS_ArrayObj{
-        pos   :: !BzoPos,
-        sint  :: !Integer,
-        typ   :: !BzoSyntax }
-    | BzS_ArrHead{
-        pos   :: !BzoPos,
-        sint  :: !Integer }
-    | BzS_Nil {
-        pos   :: !BzoPos }
-    | BzS_Lambda {
-        pos  :: !BzoPos,
-        pars :: !BzoSyntax,
-        def  :: !BzoSyntax }
-    | BzS_Expr {
-        pos   :: !BzoPos,
-        exprs :: ![BzoSyntax] }
-    | BzS_Poly {
-        pos   :: !BzoPos,
-        exprs :: ![BzoSyntax] }
-    | BzS_Cmpd {
-        pos   :: !BzoPos,
-        exprs :: ![BzoSyntax] }
-    | BzS_FnTy {
-        pos   :: !BzoPos,
-        tyIn  :: !BzoSyntax,
-        tyEx  :: !BzoSyntax }
-    | BzS_Block {
-        pos   :: !BzoPos,
-        exprs :: ![BzoSyntax] }
-    | BzS_FunDef {
-        pos    :: !BzoPos,
-        inpars :: !BzoSyntax,
-        fnid   :: !T.Text,
-        expars :: !BzoSyntax,
-        def    :: !BzoSyntax }
-    | BzS_TypDef {
-        pos  :: !BzoPos,
-        pars :: !BzoSyntax,
-        tyid :: !T.Text,
-        typ  :: !BzoSyntax }
-    | BzS_FnTypeDef {
-        pos  :: !BzoPos,
-        pars :: !BzoSyntax,
-        fnid :: !T.Text,
-        def  :: !BzoSyntax }
-    | BzS_TyClassDef {
-        pos  :: !BzoPos,
-        pars :: !BzoSyntax,
-        tyid :: !T.Text,
-        defs :: ![BzoSyntax] }
-    | BzS_Calls {
-        pos   :: !BzoPos,
-        calls :: ![BzoSyntax] }
+        pos       :: !BzoPos }
     | BzS_ExTypObj {
         pos       :: !BzoPos,
         sid       :: !T.Text,
@@ -283,6 +219,10 @@ data BzoSyntax
         pos       :: !BzoPos,
         sid       :: !T.Text,
         namespace :: !T.Text }
+    | BzS_Nil {
+        pos       :: !BzoPos }
+
+    -- | Complex nodes
     | BzS_FilterObj {
         pos     :: !BzoPos,
         bzobj   :: !BzoSyntax,
@@ -294,6 +234,70 @@ data BzoSyntax
     | BzS_MapObj {
         pos     :: !BzoPos,
         bzobj   :: !BzoSyntax }
+    | BzS_Statement {
+        pos     :: !BzoPos,
+        expr    :: !BzoSyntax }
+    | BzS_ArrayObj{
+        pos     :: !BzoPos,
+        sint    :: !Integer,
+        typ     :: !BzoSyntax }
+    | BzS_LispCall {
+        pos     :: !BzoPos,
+        fncall  :: !BzoSyntax,
+        exprs   :: ![BzoSyntax] }
+    | BzS_Lambda {
+        pos     :: !BzoPos,
+        pars    :: !BzoSyntax,
+        def     :: !BzoSyntax }
+    | BzS_Expr {
+        pos     :: !BzoPos,
+        exprs   :: ![BzoSyntax] }
+    | BzS_Poly {
+        pos     :: !BzoPos,
+        exprs   :: ![BzoSyntax] }
+    | BzS_Cmpd {
+        pos     :: !BzoPos,
+        exprs   :: ![BzoSyntax] }
+    | BzS_FnTy {
+        pos     :: !BzoPos,
+        tyIn    :: !BzoSyntax,
+        tyEx    :: !BzoSyntax }
+    | BzS_Block {
+        pos     :: !BzoPos,
+        exprs   :: ![BzoSyntax] }
+
+    -- | Definitions
+    | BzS_FunDef {
+        pos    :: !BzoPos,
+        inpars :: !BzoSyntax,
+        fnid   :: !T.Text,
+        expars :: !BzoSyntax,
+        def    :: !BzoSyntax }
+    | BzS_TypDef {
+        pos    :: !BzoPos,
+        pars   :: !BzoSyntax,
+        tyid   :: !T.Text,
+        typ    :: !BzoSyntax }
+    | BzS_FnTypeDef {
+        pos    :: !BzoPos,
+        pars   :: !BzoSyntax,
+        fnid   :: !T.Text,
+        def    :: !BzoSyntax }
+    | BzS_TyClassDef {
+        pos    :: !BzoPos,
+        pars   :: !BzoSyntax,
+        tyid   :: !T.Text,
+        defs   :: ![BzoSyntax] }
+    | BzS_Calls {
+        pos    :: !BzoPos,
+        calls  :: ![BzoSyntax] }
+
+    -- | Parser control nodes. These shouldn't show up after parsing
+    | BzS_Namespace{
+        pos     :: !BzoPos,
+        sid     :: !T.Text }
+    | BzS_MapMod {
+        pos     :: !BzoPos }
     | BzS_Token {
         pos     :: !BzoPos,
         tok     :: !BzoToken }
@@ -306,13 +310,6 @@ data BzoSyntax
     | BzS_BlockHead {
         pos     :: !BzoPos,
         sttmnts :: ![BzoSyntax] }
-    | BzS_Statement {
-        pos     :: !BzoPos,
-        expr    :: !BzoSyntax }
-    | BzS_LispCall {
-        pos     :: !BzoPos,
-        fncall  :: !BzoSyntax,
-        exprs   :: ![BzoSyntax] }
     | BzS_LispHead {
         pos     :: !BzoPos,
         fncall  :: !BzoSyntax,
@@ -331,32 +328,46 @@ data BzoSyntax
         pars    :: !BzoSyntax,
         tyid    :: !T.Text,
         defs    :: ![BzoSyntax] }
-    | BzS_Import {
+    | BzS_Curry {
         pos     :: !BzoPos,
-        fname   :: !T.Text,
-        frename :: !T.Text }
-    | BzS_Include {
+        obj     :: !BzoSyntax }
+    | BzS_Filter {
         pos     :: !BzoPos,
-        fname   :: !T.Text,
-        frename :: !T.Text }
-    | BzS_TyHint {
+        filt    :: !BzoSyntax }
+    | BzS_ArrGenMod{
+        pos     :: !BzoPos }
+    | BzS_ArrHead{
         pos     :: !BzoPos,
-        inpars  :: !BzoSyntax,
-        htid    :: !T.Text,
-        expars  :: !BzoSyntax }
-    | BzS_FnHint {
-        pos     :: !BzoPos,
-        inpars  :: !BzoSyntax,
-        htid    :: !T.Text,
-        expars  :: !BzoSyntax }
-    | BzS_File {
-        pos     :: !BzoPos,
-        mname   :: !T.Text,
-        fname   :: !T.Text,
-        includes:: ![BzoSyntax],
-        imports :: ![BzoSyntax],
-        defs    :: ![BzoSyntax] }
+        sint    :: !Integer }
     | BzS_Undefined
+
+    -- | Header and hint stuff
+    | BzS_Import {
+        pos      :: !BzoPos,
+        fname    :: !T.Text,
+        frename  :: !T.Text }
+    | BzS_Include {
+        pos      :: !BzoPos,
+        fname    :: !T.Text,
+        frename  :: !T.Text }
+    | BzS_TyHint {
+        pos      :: !BzoPos,
+        inpars   :: !BzoSyntax,
+        htid     :: !T.Text,
+        expars   :: !BzoSyntax }
+    | BzS_FnHint {
+        pos      :: !BzoPos,
+        inpars   :: !BzoSyntax,
+        htid     :: !T.Text,
+        expars   :: !BzoSyntax }
+    | BzS_File {
+        pos      :: !BzoPos,
+        mname    :: !T.Text,
+        fname    :: !T.Text,
+        includes :: ![BzoSyntax],
+        imports  :: ![BzoSyntax],
+        defs     :: ![BzoSyntax] }
+
     deriving Eq
 
 
