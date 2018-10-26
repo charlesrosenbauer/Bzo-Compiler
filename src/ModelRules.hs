@@ -500,29 +500,30 @@ removeBoxes x = x
 
 
 
-verifyAST :: (BzoSyntax -> [BzoErr]) -> (BzoSyntax -> [BzoErr]) -> (BzoSyntax -> Bool) -> BzoSyntax -> [BzoErr]
-verifyAST fn tx swx x =
-  let verify = verifyAST fn tx swx
-  in  if swx x
-        then tx x
-        else case x of
-              (BzS_Expr       p  expr) -> (fn x) ++ L.foldl (\a b -> a ++ (verify b)) [] expr
-              (BzS_Statement  p  expr) -> (fn x) ++ (fn expr)
-              (BzS_Cmpd       p  expr) -> (fn x) ++ L.foldl (\a b -> a ++ (verify b)) [] expr
-              (BzS_Poly       p  expr) -> (fn x) ++ L.foldl (\a b -> a ++ (verify b)) [] expr
-              (BzS_Block      p  expr) -> (fn x) ++ L.foldl (\a b -> a ++ (verify b)) [] expr
-              (BzS_Calls      p calls) -> (fn x) ++ L.foldl (\a b -> a ++ (verify b)) [] calls
-              (BzS_FnTy       p i   o) -> (fn x) ++ (verify i) ++ (verify o)
-              (BzS_TypDef     p i t o) -> (fn x) ++ (verify i) ++ (verify o)
-              (BzS_FnTypeDef  p i f d) -> (fn x) ++ (verify i) ++ (verify d)
-              (BzS_FunDef   p i f o d) -> (fn x) ++ (verify i) ++ (verify o) ++ (verify d)
-              (BzS_TyClassDef p i c d) -> (fn x) ++ (verify i) ++ L.foldl (\a b -> a ++ (verify b)) [] d
-              (BzS_ArrayObj   p _   t) -> (fn x) ++ (verify t)
-              (BzS_Lambda     p i   d) -> (fn x) ++ (verify i) ++ (verify d)
-              (BzS_FilterObj  p o   t) -> (fn x) ++ (verify o) ++ L.foldl (\a b -> a ++ (verify b)) [] t
-              (BzS_CurryObj   p o   i) -> (fn x) ++ L.foldl (\a b -> a ++ (verify b)) [] i
-              (BzS_LispCall   p f xpr) -> (fn x) ++ (verify f) ++ L.foldl (\a b -> a ++ (verify b)) [] xpr
-              x                        ->  fn x
+verifyAST :: (BzoSyntax -> [BzoErr]) -> (BzoSyntax -> Maybe (BzoSyntax -> [BzoErr])) -> BzoSyntax -> [BzoErr]
+verifyAST fn swx x =
+  let verify = verifyAST fn swx
+  in case swx x of
+      Just tx -> tx x
+      Nothing ->
+        case x of
+          (BzS_Expr       p  expr) -> (fn x) ++ L.foldl (\a b -> a ++ (verify b)) [] expr
+          (BzS_Statement  p  expr) -> (fn x) ++ (fn expr)
+          (BzS_Cmpd       p  expr) -> (fn x) ++ L.foldl (\a b -> a ++ (verify b)) [] expr
+          (BzS_Poly       p  expr) -> (fn x) ++ L.foldl (\a b -> a ++ (verify b)) [] expr
+          (BzS_Block      p  expr) -> (fn x) ++ L.foldl (\a b -> a ++ (verify b)) [] expr
+          (BzS_Calls      p calls) -> (fn x) ++ L.foldl (\a b -> a ++ (verify b)) [] calls
+          (BzS_FnTy       p i   o) -> (fn x) ++ (verify i) ++ (verify o)
+          (BzS_TypDef     p i t o) -> (fn x) ++ (verify i) ++ (verify o)
+          (BzS_FnTypeDef  p i f d) -> (fn x) ++ (verify i) ++ (verify d)
+          (BzS_FunDef   p i f o d) -> (fn x) ++ (verify i) ++ (verify o) ++ (verify d)
+          (BzS_TyClassDef p i c d) -> (fn x) ++ (verify i) ++ L.foldl (\a b -> a ++ (verify b)) [] d
+          (BzS_ArrayObj   p _   t) -> (fn x) ++ (verify t)
+          (BzS_Lambda     p i   d) -> (fn x) ++ (verify i) ++ (verify d)
+          (BzS_FilterObj  p o   t) -> (fn x) ++ (verify o) ++ L.foldl (\a b -> a ++ (verify b)) [] t
+          (BzS_CurryObj   p o   i) -> (fn x) ++ L.foldl (\a b -> a ++ (verify b)) [] i
+          (BzS_LispCall   p f xpr) -> (fn x) ++ (verify f) ++ L.foldl (\a b -> a ++ (verify b)) [] xpr
+          x                        ->  fn x
 
 
 
