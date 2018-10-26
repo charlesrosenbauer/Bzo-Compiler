@@ -500,27 +500,29 @@ removeBoxes x = x
 
 
 
--- This is a bit oversimplified, and won't properly cover many cases.
--- Ideally, we should be able to switch to a different validation function in
--- some cases, e.g., a type filter inside an expression.
-verifyAST :: (BzoSyntax -> Bool) -> BzoSyntax -> Bool
-verifyAST fn x@(BzS_Expr       p  expr) = (fn x) || L.foldl (\a b -> a || (verifyAST fn b)) False expr
-verifyAST fn x@(BzS_Statement  p  expr) = (fn x) || (fn expr)
-verifyAST fn x@(BzS_Cmpd       p  expr) = (fn x) || L.foldl (\a b -> a || (verifyAST fn b)) False expr
-verifyAST fn x@(BzS_Poly       p  expr) = (fn x) || L.foldl (\a b -> a || (verifyAST fn b)) False expr
-verifyAST fn x@(BzS_Block      p  expr) = (fn x) || L.foldl (\a b -> a || (verifyAST fn b)) False expr
-verifyAST fn x@(BzS_Calls      p calls) = (fn x) || L.foldl (\a b -> a || (verifyAST fn b)) False calls
-verifyAST fn x@(BzS_FnTy       p i   o) = (fn x) || (verifyAST fn i) || (verifyAST fn o)
-verifyAST fn x@(BzS_TypDef     p i t o) = (fn x) || (verifyAST fn i) || (verifyAST fn o)
-verifyAST fn x@(BzS_FnTypeDef  p i f d) = (fn x) || (verifyAST fn i) || (verifyAST fn d)
-verifyAST fn x@(BzS_FunDef   p i f o d) = (fn x) || (verifyAST fn i) || (verifyAST fn o) || (verifyAST fn d)
-verifyAST fn x@(BzS_TyClassDef p i c d) = (fn x) || (verifyAST fn i) || L.foldl (\a b -> a || (verifyAST fn b)) False d
-verifyAST fn x@(BzS_ArrayObj   p _   t) = (fn x) || (verifyAST fn t)
-verifyAST fn x@(BzS_Lambda     p i   d) = (fn x) || (verifyAST fn i) || (verifyAST fn d)
-verifyAST fn x@(BzS_FilterObj  p o   t) = (fn x) || (verifyAST fn o) || L.foldl (\a b -> a || (verifyAST fn b)) False t
-verifyAST fn x@(BzS_CurryObj   p o   i) = (fn x) || L.foldl (\a b -> a || (verifyAST fn b)) False i
-verifyAST fn x@(BzS_LispCall   p f xpr) = (fn x) || (verifyAST fn f) || L.foldl (\a b -> a || (verifyAST fn b)) False xpr
-verifyAST fn x = fn x
+verifyAST :: (BzoSyntax -> [BzoErr]) -> (BzoSyntax -> [BzoErr]) -> (BzoSyntax -> Bool) -> BzoSyntax -> [BzoErr]
+verifyAST fn tx swx x =
+  let verify = verifyAST fn tx swx
+  in  if swx x
+        then tx x
+        else case x of
+              (BzS_Expr       p  expr) -> (fn x) ++ L.foldl (\a b -> a ++ (verify b)) [] expr
+              (BzS_Statement  p  expr) -> (fn x) ++ (fn expr)
+              (BzS_Cmpd       p  expr) -> (fn x) ++ L.foldl (\a b -> a ++ (verify b)) [] expr
+              (BzS_Poly       p  expr) -> (fn x) ++ L.foldl (\a b -> a ++ (verify b)) [] expr
+              (BzS_Block      p  expr) -> (fn x) ++ L.foldl (\a b -> a ++ (verify b)) [] expr
+              (BzS_Calls      p calls) -> (fn x) ++ L.foldl (\a b -> a ++ (verify b)) [] calls
+              (BzS_FnTy       p i   o) -> (fn x) ++ (verify i) ++ (verify o)
+              (BzS_TypDef     p i t o) -> (fn x) ++ (verify i) ++ (verify o)
+              (BzS_FnTypeDef  p i f d) -> (fn x) ++ (verify i) ++ (verify d)
+              (BzS_FunDef   p i f o d) -> (fn x) ++ (verify i) ++ (verify o) ++ (verify d)
+              (BzS_TyClassDef p i c d) -> (fn x) ++ (verify i) ++ L.foldl (\a b -> a ++ (verify b)) [] d
+              (BzS_ArrayObj   p _   t) -> (fn x) ++ (verify t)
+              (BzS_Lambda     p i   d) -> (fn x) ++ (verify i) ++ (verify d)
+              (BzS_FilterObj  p o   t) -> (fn x) ++ (verify o) ++ L.foldl (\a b -> a ++ (verify b)) [] t
+              (BzS_CurryObj   p o   i) -> (fn x) ++ L.foldl (\a b -> a ++ (verify b)) [] i
+              (BzS_LispCall   p f xpr) -> (fn x) ++ (verify f) ++ L.foldl (\a b -> a ++ (verify b)) [] xpr
+              x                        ->  fn x
 
 
 
@@ -530,7 +532,7 @@ verifyAST fn x = fn x
 
 
 
-
+{-
 isValidPattern :: BzoSyntax -> Bool
 isValidPattern pattern = not $ verifyAST checkfn pattern
   where checkfn :: BzoSyntax -> Bool
@@ -611,7 +613,7 @@ isValidCall (BzS_FnTypeDef  _ ps _ df) = (isValidType df) && (isValidPattern ps)
 isValidCall (BzS_TypDef     _ ps _ df) = (isValidType df) && (isValidPattern ps)
 isValidCall (BzS_FunDef  _ is _ xs df) = (isValidPattern is) && (isValidPattern xs) && (isValidExpr df)
 isValidCall _ = False
-
+-}
 
 
 
