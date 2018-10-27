@@ -550,6 +550,18 @@ makeSntxErr txt syn = [SntxErr (pos syn) txt]
 
 
 
+placeholderSwitch :: BzoSyntax -> Maybe (BzoSyntax -> [BzoErr])
+placeholderSwitch _ = Nothing
+
+
+
+
+
+
+
+
+
+
 verifyPattern :: BzoSyntax -> [BzoErr]
 verifyPattern (BzS_Lambda       p _ _) = [SntxErr p $ pack "Unexpected Lambda expression in pattern"]
 verifyPattern (BzS_TyClassDef p _ _ _) = [SntxErr p $ pack "Unexpected Function Type Definition in pattern"]
@@ -618,11 +630,26 @@ verifyExpr _ = []
 
 
 
+verifyTyPattern :: BzoSyntax -> [BzoErr]
+verifyTyPattern (BzS_Cmpd p xs) = L.concatMap isValidPar xs
+  where isValidPar :: BzoSyntax -> [BzoErr]
+        isValidPar (BzS_TyVar p _) = []
+        isValidPar (BzS_FilterObj p (BzS_TyVar _ v) filts) = L.concatMap (verifyAST verifyType placeholderSwitch) filts
+        isValidPar x = [SntxErr (pos x) $ pack "Expected a type variable, or filtered type variable."]
+
+
+
+
+
+
+
+
+
+
 verifyCall :: BzoSyntax -> [BzoErr]
--- Type parameters for BzS_TyClassDef, BzS_FnTypeDef and BzS_TypDef probably aren't best considered patterns.
-verifyCall (BzS_TyClassDef _ ps _ df) = L.foldl (\a b -> a ++ (verifyCall b)) (verifyPattern ps) df
-verifyCall (BzS_FnTypeDef  _ ps _ df) = (verifyType df) ++ (verifyPattern ps)
-verifyCall (BzS_TypDef     _ ps _ df) = (verifyType df) ++ (verifyPattern ps)
+verifyCall (BzS_TyClassDef _ ps _ df) = L.foldl (\a b -> a ++ (verifyCall b)) (verifyTyPattern ps) df
+verifyCall (BzS_FnTypeDef  _ ps _ df) = (verifyType df) ++ (verifyTyPattern ps)
+verifyCall (BzS_TypDef     _ ps _ df) = (verifyType df) ++ (verifyTyPattern ps)
 verifyCall (BzS_FunDef  _ is _ xs df) = (verifyPattern is) ++ (verifyPattern xs) ++ (verifyExpr df)
 verifyCall (BzS_Calls   _        dfs) = L.foldl (\a b -> a ++ (verifyCall b)) [] dfs
 verifyCall x = [SntxErr (pos x) $ pack "Expected a definition, found something else"]
