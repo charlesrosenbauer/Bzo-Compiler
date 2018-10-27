@@ -500,6 +500,10 @@ removeBoxes x = x
 
 
 
+-- | fn  is applied to each subexpression
+-- | swx is applied to each subexpression to determine if the current pass should be continued on said
+-- |   subexpression. If not, the function it provides is applied instead.
+-- | All errors produced from these passes are concatenated into a list and returned.
 verifyAST :: (BzoSyntax -> [BzoErr]) -> (BzoSyntax -> Maybe (BzoSyntax -> [BzoErr])) -> BzoSyntax -> [BzoErr]
 verifyAST fn swx x =
   let verify = verifyAST fn swx
@@ -533,21 +537,9 @@ verifyAST fn swx x =
 
 
 
-{-
-isValidPattern :: BzoSyntax -> Bool
-isValidPattern pattern = not $ verifyAST checkfn pattern
-  where checkfn :: BzoSyntax -> Bool
-        checkfn (BzS_Lambda      _ _ _) = True
-        checkfn (BzS_FnTypeDef _ _ _ _) = True
-        checkfn (BzS_Calls         _ _) = True
-        checkfn (BzS_Block         _ _) = True
-        checkfn (BzS_TypDef    _ _ _ _) = True
-        checkfn (BzS_FunDef  _ _ _ _ _) = True
-        checkfn (BzS_Import      _ _ _) = True
-        checkfn (BzS_Include     _ _ _) = True
-        checkfn (BzS_File  _ _ _ _ _ _) = True
-        checkfn (BzS_MapObj        _ _) = True
-        checkfn _ = False
+
+makeSntxErr :: Text -> BzoSyntax -> [BzoErr]
+makeSntxErr txt syn = [SntxErr (pos syn) txt]
 
 
 
@@ -558,23 +550,19 @@ isValidPattern pattern = not $ verifyAST checkfn pattern
 
 
 
-isValidType :: BzoSyntax -> Bool
-isValidType ty = not $ verifyAST checkfn ty
-  where checkfn :: BzoSyntax -> Bool
-        checkfn (BzS_MId            _ _) = True
-        checkfn (BzS_Lambda       _ _ _) = True
-        checkfn (BzS_FnTypeDef  _ _ _ _) = True
-        checkfn (BzS_TyClassDef _ _ _ _) = True
-        checkfn (BzS_Calls          _ _) = True
-        checkfn (BzS_Block          _ _) = True
-        checkfn (BzS_TypDef     _ _ _ _) = True
-        checkfn (BzS_FunDef   _ _ _ _ _) = True
-        checkfn (BzS_Import       _ _ _) = True
-        checkfn (BzS_Include      _ _ _) = True
-        checkfn (BzS_File   _ _ _ _ _ _) = True
-        checkfn (BzS_MapObj         _ _) = True
-        checkfn (BzS_Wildcard         _) = True
-        checkfn _ = False
+verifyPattern :: BzoSyntax -> [BzoErr]
+verifyPattern (BzS_Lambda       p _ _) = [SntxErr p $ pack "Unexpected Lambda expression in pattern"]
+verifyPattern (BzS_TyClassDef p _ _ _) = [SntxErr p $ pack "Unexpected Function Type Definition in pattern"]
+verifyPattern (BzS_FnTypeDef  p _ _ _) = [SntxErr p $ pack "Unexpected Function Type Definition in pattern"]
+verifyPattern (BzS_Calls          p _) = [SntxErr p $ pack "Unexpected Definitions in pattern"]
+verifyPattern (BzS_Block          p _) = [SntxErr p $ pack "Unexpected Block Expression in pattern"]
+verifyPattern (BzS_TypDef     p _ _ _) = [SntxErr p $ pack "Unexpected Type Definition in pattern"]
+verifyPattern (BzS_FunDef   p _ _ _ _) = [SntxErr p $ pack "Unexpected Function Definition in pattern"]
+verifyPattern (BzS_Import       p _ _) = [SntxErr p $ pack "Unexpected File Import in pattern"]
+verifyPattern (BzS_Include      p _ _) = [SntxErr p $ pack "Unexpected File Inclusion in pattern"]
+verifyPattern (BzS_File   p _ _ _ _ _) = [SntxErr p $ pack "Unexpected File Definition in pattern"]
+verifyPattern (BzS_MapObj         p _) = [SntxErr p $ pack "Unexpected Map expression in pattern"]
+verifyPattern _ = []
 
 
 
@@ -585,18 +573,21 @@ isValidType ty = not $ verifyAST checkfn ty
 
 
 
-isValidExpr :: BzoSyntax -> Bool
-isValidExpr expr = not $ verifyAST checkfn expr
-  where checkfn :: BzoSyntax -> Bool
-        checkfn (BzS_TyClassDef _ _ _ _) = True
-        checkfn (BzS_FnTypeDef  _ _ _ _) = True
-        checkfn (BzS_Calls          _ _) = True
-        checkfn (BzS_TypDef     _ _ _ _) = True
-        checkfn (BzS_FunDef   _ _ _ _ _) = True
-        checkfn (BzS_Import       _ _ _) = True
-        checkfn (BzS_Include      _ _ _) = True
-        checkfn (BzS_File   _ _ _ _ _ _) = True
-        checkfn _ = False
+verifyType :: BzoSyntax -> [BzoErr]
+verifyType (BzS_MId            p _) = [SntxErr p $ pack "Unexpected Mutable Variable in type"]
+verifyType (BzS_Lambda       p _ _) = [SntxErr p $ pack "Unexpected Lambda Expression in type"]
+verifyType (BzS_FnTypeDef  p _ _ _) = [SntxErr p $ pack "Unexpected Function Type Definition in type"]
+verifyType (BzS_TyClassDef p _ _ _) = [SntxErr p $ pack "Unexpected Type Class Definition in type"]
+verifyType (BzS_Calls          p _) = [SntxErr p $ pack "Unexpected Calls in type"]
+verifyType (BzS_Block          p _) = [SntxErr p $ pack "Unexpected Block Expression in type"]
+verifyType (BzS_TypDef     p _ _ _) = [SntxErr p $ pack "Unexpected Type Definition in type"]
+verifyType (BzS_FunDef   p _ _ _ _) = [SntxErr p $ pack "Unexpected Function Definition in type"]
+verifyType (BzS_Import       p _ _) = [SntxErr p $ pack "Unexpected File Import in type"]
+verifyType (BzS_Include      p _ _) = [SntxErr p $ pack "Unexpected File Inclusion in type"]
+verifyType (BzS_File   p _ _ _ _ _) = [SntxErr p $ pack "Unexpected File Definition in type"]
+verifyType (BzS_MapObj         p _) = [SntxErr p $ pack "Unexpected Map expression in type"]
+verifyType (BzS_Wildcard         p) = [SntxErr p $ pack "Unexpected Wildcard in type"]
+verifyType _ = []
 
 
 
@@ -607,14 +598,35 @@ isValidExpr expr = not $ verifyAST checkfn expr
 
 
 
-isValidCall :: BzoSyntax -> Bool
+verifyExpr :: BzoSyntax -> [BzoErr]
+verifyExpr (BzS_TyClassDef p _ _ _) = [SntxErr p $ pack "Unexpected type class definition inside expression"]
+verifyExpr (BzS_FnTypeDef  p _ _ _) = [SntxErr p $ pack "Unexpected function type definition inside expression"]
+verifyExpr (BzS_Calls          p _) = [SntxErr p $ pack "Unexpected definitions inside expression"]
+verifyExpr (BzS_TypDef     p _ _ _) = [SntxErr p $ pack "Unexpected type definition inside expression"]
+verifyExpr (BzS_FunDef   p _ _ _ _) = [SntxErr p $ pack "Unexpected function definition inside expression"]
+verifyExpr (BzS_Import       p _ _) = [SntxErr p $ pack "Unexpected file import inside expression"]
+verifyExpr (BzS_Include      p _ _) = [SntxErr p $ pack "Unexpected file inclusion inside expression"]
+verifyExpr (BzS_File   p _ _ _ _ _) = [SntxErr p $ pack "Unexpected file definition inside expression"]
+verifyExpr _ = []
+
+
+
+
+
+
+
+
+
+
+verifyCall :: BzoSyntax -> [BzoErr]
 -- Type parameters for BzS_TyClassDef, BzS_FnTypeDef and BzS_TypDef probably aren't best considered patterns.
-isValidCall (BzS_TyClassDef _ ps _ df) = L.foldl (\a b -> a && (isValidCall b)) (isValidPattern ps) df
-isValidCall (BzS_FnTypeDef  _ ps _ df) = (isValidType df) && (isValidPattern ps)
-isValidCall (BzS_TypDef     _ ps _ df) = (isValidType df) && (isValidPattern ps)
-isValidCall (BzS_FunDef  _ is _ xs df) = (isValidPattern is) && (isValidPattern xs) && (isValidExpr df)
-isValidCall _ = False
--}
+verifyCall (BzS_TyClassDef _ ps _ df) = L.foldl (\a b -> a ++ (verifyCall b)) (verifyPattern ps) df
+verifyCall (BzS_FnTypeDef  _ ps _ df) = (verifyType df) ++ (verifyPattern ps)
+verifyCall (BzS_TypDef     _ ps _ df) = (verifyType df) ++ (verifyPattern ps)
+verifyCall (BzS_FunDef  _ is _ xs df) = (verifyPattern is) ++ (verifyPattern xs) ++ (verifyExpr df)
+verifyCall (BzS_Calls   _        dfs) = L.foldl (\a b -> a ++ (verifyCall b)) [] dfs
+verifyCall x = [SntxErr (pos x) $ pack "Expected a definition, found something else"]
+
 
 
 
