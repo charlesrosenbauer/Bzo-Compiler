@@ -562,6 +562,9 @@ placeholderSwitch _ = Nothing
 
 
 
+validatePattern :: BzoSyntax -> [BzoErr]
+validatePattern patt = verifyAST verifyPattern switchPattern patt
+
 verifyPattern :: BzoSyntax -> [BzoErr]
 verifyPattern (BzS_Lambda       p _ _) = [SntxErr p $ pack "Unexpected Lambda expression in pattern"]
 verifyPattern (BzS_TyClassDef p _ _ _) = [SntxErr p $ pack "Unexpected Function Type Definition in pattern"]
@@ -576,6 +579,9 @@ verifyPattern (BzS_File   p _ _ _ _ _) = [SntxErr p $ pack "Unexpected File Defi
 verifyPattern (BzS_MapObj         p _) = [SntxErr p $ pack "Unexpected Map expression in pattern"]
 verifyPattern _ = []
 
+switchPattern :: BzoSyntax -> Maybe (BzoSyntax -> [BzoErr])
+switchPattern (BzS_FilterObj _ o filts) = Just (\_ -> (validateExpr   o) ++ (L.concatMap validateType filts))
+switchPattern _ = Nothing
 
 
 
@@ -584,6 +590,10 @@ verifyPattern _ = []
 
 
 
+
+
+validateType :: BzoSyntax -> [BzoErr]
+validateType ty = verifyAST verifyType switchType ty
 
 verifyType :: BzoSyntax -> [BzoErr]
 verifyType (BzS_MId            p _) = [SntxErr p $ pack "Unexpected Mutable Variable in type"]
@@ -601,6 +611,8 @@ verifyType (BzS_MapObj         p _) = [SntxErr p $ pack "Unexpected Map expressi
 verifyType (BzS_Wildcard         p) = [SntxErr p $ pack "Unexpected Wildcard in type"]
 verifyType _ = []
 
+switchType :: BzoSyntax -> Maybe (BzoSyntax -> [BzoErr])
+switchType _ = Nothing
 
 
 
@@ -609,6 +621,10 @@ verifyType _ = []
 
 
 
+
+
+validateExpr :: BzoSyntax -> [BzoErr]
+validateExpr expr = verifyAST verifyExpr switchExpr expr
 
 verifyExpr :: BzoSyntax -> [BzoErr]
 verifyExpr (BzS_TyClassDef p _ _ _) = [SntxErr p $ pack "Unexpected type class definition inside expression"]
@@ -621,6 +637,10 @@ verifyExpr (BzS_Include      p _ _) = [SntxErr p $ pack "Unexpected file inclusi
 verifyExpr (BzS_File   p _ _ _ _ _) = [SntxErr p $ pack "Unexpected file definition inside expression"]
 verifyExpr _ = []
 
+switchExpr :: BzoSyntax -> Maybe (BzoSyntax -> [BzoErr])
+switchExpr (BzS_FilterObj _ o filts) = Just (\_ -> (validateExpr   o) ++ (L.concatMap validateType filts))
+switchExpr (BzS_Lambda    _ ps  def) = Just (\_ -> (validateExpr def) ++ (validatePattern ps))
+switchExpr _ = Nothing
 
 
 
@@ -630,11 +650,13 @@ verifyExpr _ = []
 
 
 
+
+-- I don't think I need any switches here or anything
 verifyTyPattern :: BzoSyntax -> [BzoErr]
 verifyTyPattern (BzS_Cmpd p xs) = L.concatMap isValidPar xs
   where isValidPar :: BzoSyntax -> [BzoErr]
         isValidPar (BzS_TyVar p _) = []
-        isValidPar (BzS_FilterObj p (BzS_TyVar _ v) filts) = L.concatMap (verifyAST verifyType placeholderSwitch) filts
+        isValidPar (BzS_FilterObj p (BzS_TyVar _ v) filts) = L.concatMap validateType filts
         isValidPar x = [SntxErr (pos x) $ pack "Expected a type variable, or filtered type variable."]
 
 
@@ -648,11 +670,21 @@ verifyTyPattern (BzS_Cmpd p xs) = L.concatMap isValidPar xs
 
 verifyCall :: BzoSyntax -> [BzoErr]
 verifyCall (BzS_TyClassDef _ ps _ df) = L.foldl (\a b -> a ++ (verifyCall b)) (verifyTyPattern ps) df
-verifyCall (BzS_FnTypeDef  _ ps _ df) = (verifyType df) ++ (verifyTyPattern ps)
-verifyCall (BzS_TypDef     _ ps _ df) = (verifyType df) ++ (verifyTyPattern ps)
-verifyCall (BzS_FunDef  _ is _ xs df) = (verifyPattern is) ++ (verifyPattern xs) ++ (verifyExpr df)
+verifyCall (BzS_FnTypeDef  _ ps _ df) = (validateType df) ++ (verifyTyPattern ps)
+verifyCall (BzS_TypDef     _ ps _ df) = (validateType df) ++ (verifyTyPattern ps)
+verifyCall (BzS_FunDef  _ is _ xs df) = (validatePattern is) ++ (validatePattern xs) ++ (validateExpr df)
 verifyCall (BzS_Calls   _        dfs) = L.foldl (\a b -> a ++ (verifyCall b)) [] dfs
 verifyCall x = [SntxErr (pos x) $ pack "Expected a definition, found something else"]
+
+
+
+
+
+
+
+
+
+-- verifyAST :: (BzoSyntax -> [BzoErr]) -> (BzoSyntax -> Maybe (BzoSyntax -> [BzoErr])) -> BzoSyntax -> [BzoErr]
 
 
 
