@@ -32,7 +32,7 @@ compileFilePass (BzoSettings imp lib flg opt pfx) =
       -- Load, preprocess
 
       defs       <- return $ processFiles files
-      defs'      <- (fmap (applyWithErr orderFileData)) $ (applyWithErrM (wrappedLibLoader lCfg)) defs
+      defs'      <- (fmap (applyWithErr orderFileData)) $ (fmap (applyWithErr wrappedVerifier)) $ (applyWithErrM (wrappedLibLoader lCfg)) defs
       defs''     <- return $ (applyRight getDefTable) $ (applyRight getDefs) $ (applyRight (L.map (\x -> (adjustModel x modelXForm)))) defs'
       --models   <- (((fmap (applyWithErr orderFileData)). (fmap $ applyWithErr wrappedModellerMap). (applyWithErrM (wrappedLibLoader lCfg)). processFiles) $ map swap files)
       --symbols  <- return (applyRight generateSymbolTable models)

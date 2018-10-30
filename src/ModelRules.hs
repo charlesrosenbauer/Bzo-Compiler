@@ -654,10 +654,14 @@ switchExpr _ = Nothing
 -- I don't think I need any switches here or anything
 verifyTyPattern :: BzoSyntax -> [BzoErr]
 verifyTyPattern (BzS_Cmpd p xs) = L.concatMap isValidPar xs
-  where isValidPar :: BzoSyntax -> [BzoErr]
-        isValidPar (BzS_TyVar p _) = []
-        isValidPar (BzS_FilterObj p (BzS_TyVar _ v) filts) = L.concatMap validateType filts
-        isValidPar x = [SntxErr (pos x) $ pack "Expected a type variable, or filtered type variable."]
+verifyTyPattern expr            = isValidPar expr
+
+
+isValidPar :: BzoSyntax -> [BzoErr]
+isValidPar (BzS_TyVar p _) = []
+isValidPar (BzS_FilterObj p (BzS_TyVar _ v) filts) = L.concatMap validateType filts
+isValidPar x = [SntxErr (pos x) $ pack "Expected a type variable, or filtered type variable."]
+
 
 
 
@@ -684,7 +688,12 @@ verifyCall x = [SntxErr (pos x) $ pack "Expected a definition, found something e
 
 
 
--- verifyAST :: (BzoSyntax -> [BzoErr]) -> (BzoSyntax -> Maybe (BzoSyntax -> [BzoErr])) -> BzoSyntax -> [BzoErr]
+
+wrappedVerifier :: [BzoFileModel BzoSyntax] -> Either [BzoErr] [BzoFileModel BzoSyntax]
+wrappedVerifier files =
+  case L.concatMap (verifyCall . bfm_fileModel) files of
+    [] -> Right files
+    er -> Left  er
 
 
 
