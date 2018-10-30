@@ -563,6 +563,7 @@ placeholderSwitch _ = Nothing
 
 
 validatePattern :: BzoSyntax -> [BzoErr]
+validatePattern (BzS_Undefined _) = []
 validatePattern patt = verifyAST verifyPattern switchPattern patt
 
 verifyPattern :: BzoSyntax -> [BzoErr]
@@ -653,14 +654,17 @@ switchExpr _ = Nothing
 
 -- I don't think I need any switches here or anything
 verifyTyPattern :: BzoSyntax -> [BzoErr]
-verifyTyPattern (BzS_Cmpd p xs) = L.concatMap isValidPar xs
-verifyTyPattern expr            = isValidPar expr
+verifyTyPattern (BzS_Undefined   _) = []
+verifyTyPattern (BzS_Cmpd p     xs) = L.concatMap isValidPar xs
+verifyTyPattern (BzS_Expr p [expr]) = isValidPar expr
+verifyTyPattern x                   = isValidPar x
 
 
 isValidPar :: BzoSyntax -> [BzoErr]
-isValidPar (BzS_TyVar p _) = []
+isValidPar (BzS_Expr  p [x]) = isValidPar x
+isValidPar (BzS_TyVar p  _ ) = []
 isValidPar (BzS_FilterObj p (BzS_TyVar _ v) filts) = L.concatMap validateType filts
-isValidPar x = [SntxErr (pos x) $ pack "Expected a type variable, or filtered type variable."]
+isValidPar x = [SntxErr (pos x) $ pack $ "Expected a type variable, or filtered type variable." ++ (show x)]
 
 
 

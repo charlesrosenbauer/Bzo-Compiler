@@ -336,8 +336,8 @@ parserIter fname tokens ((BzS_Statement p0 (BzS_Expr  _ [
                                             (BzS_BTId _ tid),
                                             (BzS_TyId _ imp)])) :stk) =
     case (unpack tid) of
-      "ImportAs"   -> parserIter fname tokens ((BzS_Import  p0 imp impas):stk)
-      "IncludeAs"  -> parserIter fname tokens ((BzS_Include p0 imp impas):stk)
+      "#ImportAs"   -> parserIter fname tokens ((BzS_Import  p0 imp impas):stk)
+      "#IncludeAs"  -> parserIter fname tokens ((BzS_Include p0 imp impas):stk)
       _            -> Left [ParseErr p0 $ pack "Unrecognized header."]
 
 parserIter fname tokens ((BzS_Statement p0 (BzS_Expr  _ [
