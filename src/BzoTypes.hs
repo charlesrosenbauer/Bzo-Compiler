@@ -339,7 +339,8 @@ data BzoSyntax
     | BzS_ArrHead{
         pos     :: !BzoPos,
         sint    :: !Integer }
-    | BzS_Undefined
+    | BzS_Undefined{
+        pos     :: !BzoPos }
 
     -- | Header and hint stuff
     | BzS_Import {
@@ -444,7 +445,7 @@ showAST (BzS_Import    _ fn fr)            = "    -- Import  " ++ (show fn) ++ "
 showAST (BzS_Include   _ fn fr)            = "    -- Include " ++ (show fn) ++ " as " ++ (show fr) ++ " --\n"
 showAST (BzS_File      _ mn fn ins ims dfs)= "\n-- (File, Module): (" ++ (show fn) ++ ", " ++ (show mn) ++ ")\nIncludes:\n" ++ (concatMap show ins) ++ "\nImports:\n" ++ (concatMap show ims) ++ "\nDefs:\n" ++ (concatMap show dfs)
 
-showAST (BzS_Undefined)                    = " UNDEFINED "
+showAST (BzS_Undefined _)                  = " UNDEFINED "
 
 showAST (BzS_BlockHead _ _)                = "BLKHEAD "
 showAST (BzS_CmpdHead  _ _)                = "CMPDHEAD "

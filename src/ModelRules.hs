@@ -194,7 +194,7 @@ divideIntoDefs asts = L.foldl divideDefStep [] asts
         divideDefStep (f@(FuncSyntax fnid file fty fdfs):defs) fd@(BzS_FunDef p _ fnid' _ _) =
           if fnid == fnid'
             then ((FuncSyntax fnid   file fty (fd:fdfs)):defs)
-            else ((FuncSyntax fnid' (fileName p) BzS_Undefined [fd]):f:defs)
+            else ((FuncSyntax fnid' (fileName p) (BzS_Undefined p) [fd]):f:defs)
 
         divideDefStep (f@(FuncSyntax fnid file fty fdfs):defs) fd@(BzS_FnTypeDef p _ fnid' _) =
           ((FuncSyntax fnid' (fileName p) fd []):f:defs)
@@ -209,7 +209,7 @@ divideIntoDefs asts = L.foldl divideDefStep [] asts
           ((TyClassSyntax tyid (fileName p) td):defs)
 
         divideDefStep defs fd@(BzS_FunDef p _ fnid' _ _) =
-          ((FuncSyntax fnid' (fileName p) BzS_Undefined [fd]):defs)
+          ((FuncSyntax fnid' (fileName p) (BzS_Undefined p) [fd]):defs)
 
 
 
@@ -352,8 +352,8 @@ replaceEnum ps (BzS_CurryObj   p obj prs) = (BzS_CurryObj  p (replaceEnum ps obj
 replaceEnum ps (BzS_LispCall   p fn expr) = (BzS_LispCall  p (replaceEnum ps fn)  (L.map (replaceEnum ps) expr))
 replaceEnum ps (BzS_Poly       p    expr) = (BzS_Poly   p (L.map (enumOp ps) expr))
   where enumOp :: BzoSyntax -> BzoSyntax -> BzoSyntax
-        enumOp BzS_Undefined (BzS_FilterObj p (BzS_TyId _ t) [tdef]) =  BzS_TyId p t
-        enumOp ps            (BzS_FilterObj p (BzS_TyId _ t) [tdef]) = (BzS_Expr p ((BzS_TyId p t):[ps]))
+        enumOp (BzS_Undefined _) (BzS_FilterObj p (BzS_TyId _ t) [tdef]) =  BzS_TyId p t
+        enumOp ps                (BzS_FilterObj p (BzS_TyId _ t) [tdef]) = (BzS_Expr p ((BzS_TyId p t):[ps]))
         enumOp ps x = replaceEnum ps x
 replaceEnum _  x                          = x
 
@@ -390,14 +390,14 @@ extractRecord ps tid depth (BzS_CurryObj   _  obj prs) = (extractRecord ps tid d
 extractRecord ps tid depth (BzS_LispCall   _  fn expr) = (extractRecord ps tid depth  fn) ++ (L.concatMap (extractRecord ps tid depth) expr)
 extractRecord ps tid depth (BzS_Cmpd       _     expr) = L.concatMap (\(d, xpr) -> recordOp ps tid d xpr) $ L.zip (addDepth depth expr) expr
   where recordOp :: BzoSyntax -> Text -> [(Int, Int)] -> BzoSyntax -> [BzoSyntax]
-        recordOp BzS_Undefined tid depth (BzS_FilterObj p (BzS_Id _ rcid) [tdef]) =
-          [(BzS_FunDef    p (makeDepthPattern p depth) rcid BzS_Undefined (BzS_Id p $ pack "x")),
-           (BzS_FnTypeDef p BzS_Undefined rcid (BzS_FnTy p (BzS_TyId p tid    )      tdef))]
+        recordOp (BzS_Undefined _) tid depth (BzS_FilterObj p (BzS_Id _ rcid) [tdef]) =
+          [(BzS_FunDef    p (makeDepthPattern p depth) rcid (BzS_Undefined p) (BzS_Id p $ pack "x")),
+           (BzS_FnTypeDef p (BzS_Undefined p) rcid (BzS_FnTy p (BzS_TyId p tid    )      tdef))]
 
 
         recordOp ps            tid depth (BzS_FilterObj p (BzS_Id _ rcid) [tdef]) =
-          [(BzS_FunDef    p (makeDepthPattern p depth) rcid BzS_Undefined (BzS_Id p $ pack "x")),
-           (BzS_FnTypeDef p BzS_Undefined rcid (BzS_FnTy p (BzS_Expr p [BzS_TyId p tid, ps])      tdef))]
+          [(BzS_FunDef    p (makeDepthPattern p depth) rcid (BzS_Undefined p) (BzS_Id p $ pack "x")),
+           (BzS_FnTypeDef p (BzS_Undefined p) rcid (BzS_FnTy p (BzS_Expr p [BzS_TyId p tid, ps])      tdef))]
 
         recordOp ps tid depth x = extractRecord ps tid depth x
 extractRecord _ _ _ _                                 = []
@@ -707,9 +707,9 @@ wrappedVerifier files =
 modelXForm :: BzoSyntax -> BzoSyntax
 modelXForm (BzS_Calls p ast) =
   let ast' = L.map removeBoxes ast
-      enms = L.concatMap (extractEnum   BzS_Undefined             ) ast'
-      rcds = L.concatMap (extractRecord BzS_Undefined (pack "") []) ast'
+      enms = L.concatMap (extractEnum   (BzS_Undefined p)             ) ast'
+      rcds = L.concatMap (extractRecord (BzS_Undefined p) (pack "") []) ast'
 
       allAST  = rcds ++ enms ++ ast'
-      allAST' = L.map ((replaceRecord BzS_Undefined (pack "") []) . (replaceEnum BzS_Undefined)) allAST
+      allAST' = L.map ((replaceRecord (BzS_Undefined p) (pack "") []) . (replaceEnum (BzS_Undefined p))) allAST
   in (BzS_Calls p allAST')
