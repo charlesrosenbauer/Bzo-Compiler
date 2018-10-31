@@ -612,23 +612,24 @@ type LcId = Int64   -- Local Id
 
 
 data Expr
-  = MatchExpr BzoPos Type [(Pattern, Expr)]
-  | LetExpr   BzoPos Type [(Int, Expr)]
-  | ParamExpr BzoPos Type Pattern
-  | PipeExpr  BzoPos Type [Expr]
-  | CaseExpr  BzoPos Type [Expr]
-  | ForkExpr  BzoPos Type [Expr]
-  | CmpdExpr  BzoPos Type [Expr]
-  | PolyExpr  BzoPos Type [Expr]
-  | FuncAtom  BzoPos Type  FnId
-  | FncsAtom  BzoPos Type [FnId]
-  | TypeAtom  BzoPos Type TyId
-  | IntAtom   BzoPos Integer
-  | StrAtom   BzoPos T.Text
-  | FltAtom   BzoPos Double
-  | VarAtom   BzoPos Type VrId
-  | MutAtom   BzoPos Type VrId
-  | UnresExpr BzoSyntax
+  = CallExpr BzoPos  FnId  [LcId] [LcId]
+  | PhiExpr  BzoPos [FnId] [LcId] [LcId]
+  | OpExpr   BzoPos Opcode [LcId] [LcId]
+  deriving (Show, Eq)
+
+
+
+
+
+
+
+
+
+
+data Opcode =
+  OP_ADD  | OP_SUB  | OP_MUL  | OP_DIV  | OP_MOD  |
+  OP_XOR  | OP_OR   | OP_AND  | OP_NOT  | OP_PCT  |
+  OP_SHL  | OP_SHR
   deriving (Show, Eq)
 
 
@@ -662,6 +663,8 @@ data Pattern
 
 
 
+data TypeHeader = TyHeader (M.Map TVId Atom)
+
 data Type
   = UnresType BzoSyntax
   | ParamType BzoPos Pattern
@@ -674,6 +677,26 @@ data Type
   | VoidType  BzoPos
   | LtrlType  BzoPos TyId
   | TVarType  BzoPos TVId
+  deriving (Show, Eq)
+
+
+
+
+
+
+
+
+
+
+data Atom
+  = IntAtom BzoPos Integer
+  | FltAtom BzoPos Double
+  | StrAtom BzoPos T.Text
+  | VarAtom BzoPos T.Text Type
+  | MutAtom BzoPos T.Text Type
+  | TVrAtom BzoPos T.Text Type
+  | ParAtom BzoPos T.Text Type
+  | RetAtom BzoPos T.Text Type
   deriving (Show, Eq)
 
 
