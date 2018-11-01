@@ -530,11 +530,12 @@ data Definition
  = FuncDef {
     identifier :: T.Text,
     hostfile   :: T.Text,
+    typedef    :: TypeHeader,
     definitions:: [(T.Text, Expr)] }
  | TypeDef {
     identifier :: T.Text,
     hostfile   :: T.Text,
-    typedef    :: Type }
+    typedef    :: TypeHeader }
  | FuncSyntax {
     identifier :: T.Text,
     hostfile   :: T.Text,
@@ -559,9 +560,10 @@ data Definition
 
 
 showDefinition :: Definition -> String
-showDefinition (FuncDef fnid file defs) = "  FNDEF:\n    " ++
+showDefinition (FuncDef fnid file tyhd defs) = "  FNDEF:\n    " ++
                                               (show fnid)  ++ "\n    " ++
                                               (show file)  ++ "\n        " ++
+                                              (show tyhd)  ++ "\n" ++
                                               (show defs)  ++ "\n"
 
 showDefinition (TypeDef tyid file defs) = "  TYDEF:\n    " ++
@@ -663,7 +665,7 @@ data Pattern
 
 
 
-data TypeHeader = TyHeader (M.Map TVId Atom)
+data TypeHeader = TyHeader (M.Map TVId Atom) deriving Show
 
 data Type
   = UnresType BzoSyntax

@@ -131,7 +131,7 @@ divideIntoDefs asts = L.foldl divideDefStep [] asts
 
 
 getFnIds :: [Definition] -> [Text]
-getFnIds ((FuncDef    fnid   _ _):defs) = (fnid):(getFnIds defs)
+getFnIds ((FuncDef    fnid _ _ _):defs) = (fnid):(getFnIds defs)
 getFnIds ((FuncSyntax fnid _ _ _):defs) = (fnid):(getFnIds defs)
 getFnIds (_:defs)                    = getFnIds defs
 
