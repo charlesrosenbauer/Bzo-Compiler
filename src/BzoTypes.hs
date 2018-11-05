@@ -613,6 +613,8 @@ type LcId = Int64   -- Local Id
 
 
 
+data ExprHeader = ExprHeader (M.Map LcId Atom) deriving Show
+
 data Expr
   = CallExpr BzoPos  FnId  [LcId] [LcId]
   | PhiExpr  BzoPos [FnId] [LcId] [LcId]
