@@ -18,8 +18,8 @@ import Debug.Trace
 
 
 
-getTVars :: BzoSyntax -> [Text]
-getTVars (BzS_TyVar      _    tvar) = [tvar]
+getTVars :: BzoSyntax -> [(Text, BzoPos)]
+getTVars (BzS_TyVar      p    tvar) = [(tvar, p)]
 getTVars (BzS_Expr       _    expr) = L.concatMap getTVars expr
 getTVars (BzS_Statement  _    expr) = getTVars expr
 getTVars (BzS_Cmpd       _    expr) = L.concatMap getTVars expr
@@ -45,10 +45,10 @@ getTVars _                          = []
 
 
 
-getVars :: BzoSyntax -> [Text]
-getVars (BzS_Id         _     var) = [var]
-getVars (BzS_MId        _     var) = [var]
-getVars (BzS_BId        _     var) = [var]
+getVars :: BzoSyntax -> [(Text, BzoPos)]
+getVars (BzS_Id         p     var) = [(var, p)]
+getVars (BzS_MId        p     var) = [(var, p)]
+getVars (BzS_BId        p     var) = [(var, p)]
 getVars (BzS_Expr       _    expr) = L.concatMap getVars expr
 getVars (BzS_Statement  _    expr) = getVars expr
 getVars (BzS_Cmpd       _    expr) = L.concatMap getVars expr
@@ -77,9 +77,9 @@ getVars _                          = []
 
 
 
-getTypes :: BzoSyntax -> [Text]
-getTypes (BzS_TyId       _     var) = [var]
-getTypes (BzS_BTId       _     var) = [var]
+getTypes :: BzoSyntax -> [(Text, BzoPos)]
+getTypes (BzS_TyId       p     var) = [(var, p)]
+getTypes (BzS_BTId       p     var) = [(var, p)]
 getTypes (BzS_Expr       _    expr) = L.concatMap getTypes expr
 getTypes (BzS_Statement  _    expr) = getTypes expr
 getTypes (BzS_Cmpd       _    expr) = L.concatMap getTypes expr
