@@ -163,6 +163,30 @@ getNamespaceFiles (DefinitionTable _ files _ _) filepath =
 
 
 
+getVisible :: BzoFileModel ([Int64], [Int64]) -> [Int64]
+getVisible model = fst $ bfm_fileModel model
+
+
+
+
+
+
+
+
+
+
+getNamesFromIds :: DefinitionTable -> [Int64] -> [(Int64, Text)]
+getNamesFromIds (DefinitionTable defs _ _ _) ids = L.map (\i -> (i, identifier $ Mb.fromJust $ M.lookup i defs)) ids
+
+
+
+
+
+
+
+
+
+
 -- modelTypeExpr
   -- returns a Either Err TypeExpr
   -- checks if all type references and constructors are valid
