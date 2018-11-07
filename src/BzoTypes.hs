@@ -117,6 +117,15 @@ data BzoPos = BzoPos {
   fileName :: !T.Text }
   deriving (Eq, Show)
 
+compareBzoPos :: BzoPos -> BzoPos -> Ordering
+compareBzoPos (BzoPos l0 c0 f0) (BzoPos l1 c1 f1)
+  | (f0 == f1) && (l0 == l1) && (c0 == c1) = EQ
+  | (f0 == f1) && (l0 == l1)               = compare c0 c1
+  | (f0 == f1)                             = compare l0 l1
+  | otherwise                              = compare f0 f1
+
+instance Ord BzoPos where compare = compareBzoPos
+
 
 
 
