@@ -187,6 +187,26 @@ getNamesFromIds (DefinitionTable defs _ _ _) ids = L.map (\i -> (i, identifier $
 
 
 
+noOverloadTypes :: DefinitionTable -> Text -> [BzoErr]
+noOverloadTypes dt@(DefinitionTable defs files ids _) fpath =
+  let file    = L.head $ L.filter (\fm -> fpath == (pack $ bfm_filepath fm)) files
+      visible = getVisible file
+      names   = getNamesFromIds dt visible
+      nubbed  = L.nubBy (\a b -> (snd a) == (snd b)) names
+  in case (nubbed L.\\ names) of
+      [] -> []
+      xs -> L.map makeOverloadErr xs
+  where makeOverloadErr :: (Int64, Text) -> BzoErr
+        makeOverloadErr (def, tname) = TypeErr (BzoPos 0 0 fpath) $ pack $ (unpack tname) ++ " is defined in multiple places."
+
+
+
+
+
+
+
+
+
 -- modelTypeExpr
   -- returns a Either Err TypeExpr
   -- checks if all type references and constructors are valid
