@@ -191,13 +191,16 @@ noOverloadTypes :: DefinitionTable -> Text -> [BzoErr]
 noOverloadTypes dt@(DefinitionTable defs files ids _) fpath =
   let file    = L.head $ L.filter (\fm -> fpath == (pack $ bfm_filepath fm)) files
       visible = getVisible file
-      names   = getNamesFromIds dt visible
+      names   = L.filter (\(_,b)->isType b) $ getNamesFromIds dt visible
       nubbed  = L.nubBy (\a b -> (snd a) == (snd b)) names
   in case (nubbed L.\\ names) of
       [] -> []
       xs -> L.map makeOverloadErr xs
   where makeOverloadErr :: (Int64, Text) -> BzoErr
         makeOverloadErr (def, tname) = TypeErr (BzoPos 0 0 fpath) $ pack $ (unpack tname) ++ " is defined in multiple places."
+
+        isType :: Text -> Bool
+        isType t = elem (Data.Text.head t) "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
 
 
