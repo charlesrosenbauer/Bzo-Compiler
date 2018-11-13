@@ -34,15 +34,12 @@ compileFilePass (BzoSettings imp lib flg opt pfx) =
       defs       <- return $ processFiles files
       defs'      <- (fmap (applyWithErr orderFileData)) $ (fmap (applyWithErr wrappedVerifier)) $ (applyWithErrM (wrappedLibLoader lCfg)) defs
       defs''     <- return $ (applyRight getDefTable) $ (applyRight getDefs) $ (applyRight (L.map (\x -> (adjustModel x modelXForm)))) defs'
-      --models   <- (((fmap (applyWithErr orderFileData)). (fmap $ applyWithErr wrappedModellerMap). (applyWithErrM (wrappedLibLoader lCfg)). processFiles) $ map swap files)
-      --symbols  <- return (applyRight generateSymbolTable models)
-      --namemaps <- return (applyRight (\st -> applyRight (map (getNamespaces st)) models) symbols)
-      --defs     <- return $ (applyWithErr wrappedDefOrganizePass) models
-      --types    <- return (wrappedGenerateTypes symbols defs)
+      checkedast <- return $ applyWithErr checkProgram defs''
+
       -- TODO: Type Checker
       -- TODO: Code Generation
       putStrLn $ case valid of
-                  Nothing -> showOutput {-$ trace (show namemaps)-} defs''
+                  Nothing -> showOutput {-$ trace (show namemaps)-} checkedast
                   Just er -> show er
 
 

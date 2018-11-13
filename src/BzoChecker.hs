@@ -187,20 +187,25 @@ getNamesFromIds (DefinitionTable defs _ _ _) ids = L.map (\i -> (i, identifier $
 
 
 
-noOverloadTypes :: DefinitionTable -> Text -> [BzoErr]
-noOverloadTypes dt@(DefinitionTable defs files ids _) fpath =
-  let file    = L.head $ L.filter (\fm -> fpath == (pack $ bfm_filepath fm)) files
-      visible = getVisible file
-      names   = L.filter (\(_,b)->isType b) $ getNamesFromIds dt visible
-      nubbed  = L.nubBy (\a b -> (snd a) == (snd b)) names
-  in case (nubbed L.\\ names) of
+noOverloadTypes :: DefinitionTable -> [BzoErr]
+noOverloadTypes dt@(DefinitionTable defs files ids _) =
+  let types  = L.filter isType $ M.elems defs
+      nubbed = L.nubBy matchType types
+  in case (types L.\\ nubbed) of
       [] -> []
       xs -> L.map makeOverloadErr xs
-  where makeOverloadErr :: (Int64, Text) -> BzoErr
-        makeOverloadErr (def, tname) = TypeErr (BzoPos 0 0 fpath) $ pack $ (unpack tname) ++ " is defined in multiple places."
 
-        isType :: Text -> Bool
-        isType t = elem (Data.Text.head t) "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+  where makeOverloadErr :: Definition -> BzoErr
+        makeOverloadErr (TypeSyntax tname _ df) = TypeErr (pos df) $ pack $ (unpack tname) ++ " is defined in multiple places."
+
+        matchType :: Definition -> Definition -> Bool
+        matchType (TypeSyntax t0 f0 _) (TypeSyntax t1 f1 _) = (t0 == t1) && (f0 == f1)
+        matchType _ _ = False
+
+        isType :: Definition -> Bool
+        isType (TypeSyntax _ _ _) = True
+        isType _ = False
+
 
 
 
@@ -221,3 +226,19 @@ noOverloadTypes dt@(DefinitionTable defs files ids _) fpath =
 -- buildCheckedScope
   -- takes a local scope,
   --
+
+
+
+
+
+
+
+
+
+
+checkProgram :: DefinitionTable -> Either [BzoErr] DefinitionTable
+checkProgram dt@(DefinitionTable defs files ids _) =
+  let err0 = noOverloadTypes dt
+  in case err0 of
+      [] -> Right dt
+      er -> Left  er

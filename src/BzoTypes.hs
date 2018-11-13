@@ -558,6 +558,7 @@ data Definition
     identifier :: T.Text,
     hostfile   :: T.Text,
     typesyntax :: BzoSyntax }
+  deriving Eq
 
 
 
@@ -622,7 +623,7 @@ type LcId = Int64   -- Local Id
 
 
 
-data ExprHeader = ExprHeader (M.Map LcId Atom) deriving Show
+data ExprHeader = ExprHeader (M.Map LcId Atom) deriving (Eq, Show)
 
 data Expr
   = CallExpr BzoPos  FnId  [LcId] [LcId]
@@ -676,7 +677,7 @@ data Pattern
 
 
 
-data TypeHeader = TyHeader (M.Map TVId Atom) deriving Show
+data TypeHeader = TyHeader (M.Map TVId Atom) deriving (Eq, Show)
 
 data Type
   = UnresType BzoSyntax
@@ -742,7 +743,7 @@ data Context
 data DefinitionTable
   = DefinitionTable {
       dt_defs :: M.Map Int64 Definition,
-      dt_files:: [BzoFileModel ([Int64], [Int64])],
+      dt_files:: [BzoFileModel ([Int64], [Int64])], -- [(local defs, visible defs)]
       dt_ids  :: M.Map T.Text [Int64],
       dt_top  :: Int64 }
   deriving Show
