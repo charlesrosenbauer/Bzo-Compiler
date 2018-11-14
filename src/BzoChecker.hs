@@ -97,6 +97,7 @@ getTypes (BzS_CurryObj   _ obj  ps) = (getTypes obj) ++ (L.concatMap getTypes ps
 getTypes (BzS_MapObj     _    expr) = (getTypes expr)
 getTypes (BzS_Lambda     _ ps expr) = (getTypes ps)  ++ (getTypes expr)
 getTypes (BzS_LispCall   _ fn expr) = (getTypes fn)  ++ (L.concatMap getTypes expr)
+getTypes (BzS_ExTypObj   p ty    _) = [(ty, p)]
 getTypes _                          = []
 
 
