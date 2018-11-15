@@ -236,6 +236,7 @@ extractEnum ps (BzS_LispCall   _ fn expr) = (extractEnum ps fn)  ++ (L.concatMap
 extractEnum ps (BzS_Poly       _    expr) = L.concatMap (enumOp ps) expr
   where enumOp :: BzoSyntax -> BzoSyntax -> [BzoSyntax]
         enumOp ps (BzS_Expr _ [BzS_FilterObj p (BzS_TyId _ t) [tdef]]) = (BzS_TypDef p ps t tdef):(extractEnum ps tdef)
+        enumOp ps             (BzS_FilterObj p (BzS_TyId _ t) [tdef] ) = (BzS_TypDef p ps t tdef):(extractEnum ps tdef)
         enumOp ps x = extractEnum ps x
 extractEnum _  _                          = []
 
@@ -625,5 +626,5 @@ modelXForm (BzS_Calls p ast) =
       rcds = L.concatMap (extractRecord (BzS_Undefined p) (pack "") []) ast'
 
       allAST  = rcds ++ enms ++ ast'
-      allAST' = L.map ((replaceRecord (BzS_Undefined p) (pack "") []) . (replaceEnum (BzS_Undefined p))) allAST
+      allAST' = L.map ((replaceRecord (BzS_Undefined p) (pack "") []){- . (replaceEnum (BzS_Undefined p))-}) allAST
   in (BzS_Calls p allAST')
