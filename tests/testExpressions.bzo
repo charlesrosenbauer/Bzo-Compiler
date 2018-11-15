@@ -14,7 +14,7 @@ LiterateTest #IncludeAs L
 [n] %16 :: [n, 16]%
 
 
-? :: [Bool, A', A'] ;; A'
+? :: [Bl, A', A'] ;; A'
 [True , l, _] ? :: l
 [False, _, r] ? :: r
 

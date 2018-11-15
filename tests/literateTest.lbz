@@ -16,12 +16,10 @@ Here we initialize the file:
 
 Here we define a function:
 
-> ! :: Integer ;; Integer
+> ! :: Integral ;; Integral
 > [1] ! :: 1
 > [0] ! :: 1
-> [x] ! :: [?: x -?,
->             0,
->             [x, x 1`- !]*]
+> [x] ! :: [?: x -?, 0, [x, x 1`- !]*]
 
 The above function is a factorial function. If the input is negative, it returns 0.
 If the value is 1 or 0, it returns 1.
