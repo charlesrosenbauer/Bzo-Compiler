@@ -8,6 +8,7 @@ import qualified Data.Map.Strict as M
 import qualified Data.Maybe as Mb
 import qualified Data.List as L
 import qualified Data.Set as S
+import Control.Parallel.Strategies
 import Debug.Trace
 
 
@@ -245,7 +246,7 @@ noUndefinedTypes dt@(DefinitionTable defs files ids _) =
       filetypmap :: M.Map Text [(Text, BzoPos)] -- FilePath -> [(TyId, Pos)]
       filetypmap = M.map (L.concatMap typesFromDef) filedefmap
 
-  in  L.concatMap (checkTyScope filetypmap tynamesmap) $ M.keys filetypmap
+  in  L.concat $ parMap rpar (checkTyScope filetypmap tynamesmap) $ M.keys filetypmap
   where
         typesFromDef :: Definition -> [(Text, BzoPos)]
         typesFromDef (FuncSyntax _ _  ft fd) = (getTypes ft) ++ (L.concatMap getTypes fd)

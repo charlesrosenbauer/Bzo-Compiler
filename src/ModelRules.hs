@@ -9,6 +9,7 @@ import Data.Int
 import Data.Map.Strict as M
 import Data.List as L
 import DefinitionTable
+import Control.Parallel.Strategies
 import Debug.Trace
 
 
@@ -626,5 +627,5 @@ modelXForm (BzS_Calls p ast) =
       rcds = L.concatMap (extractRecord (BzS_Undefined p) (pack "") []) ast'
 
       allAST  = rcds ++ enms ++ ast'
-      allAST' = L.map ((replaceRecord (BzS_Undefined p) (pack "") []){- . (replaceEnum (BzS_Undefined p))-}) allAST
+      allAST' = parMap rpar ((replaceRecord (BzS_Undefined p) (pack "") []) . (replaceEnum (BzS_Undefined p))) allAST
   in (BzS_Calls p allAST')
