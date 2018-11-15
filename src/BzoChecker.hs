@@ -7,6 +7,7 @@ import Data.Int
 import qualified Data.Map.Strict as M
 import qualified Data.Maybe as Mb
 import qualified Data.List as L
+import qualified Data.Set as S
 import Debug.Trace
 
 
@@ -79,7 +80,7 @@ getVars _                          = []
 
 getTypes :: BzoSyntax -> [(Text, BzoPos)]
 getTypes (BzS_TyId       p     var) = [(var, p)]
-getTypes (BzS_BTId       p     var) = [(var, p)]
+--getTypes (BzS_BTId       p     var) = [(var, p)]
 getTypes (BzS_Expr       _    expr) = L.concatMap getTypes expr
 getTypes (BzS_Statement  _    expr) = getTypes expr
 getTypes (BzS_Cmpd       _    expr) = L.concatMap getTypes expr
@@ -203,9 +204,61 @@ noOverloadTypes dt@(DefinitionTable defs files ids _) =
         matchType (TypeSyntax t0 f0 _) (TypeSyntax t1 f1 _) = (t0 == t1) && (f0 == f1)
         matchType _ _ = False
 
-        isType :: Definition -> Bool
-        isType (TypeSyntax _ _ _) = True
-        isType _ = False
+
+
+
+
+
+
+
+
+
+isType :: Definition -> Bool
+isType (TypeSyntax    _ _ _) = True
+isType (TyClassSyntax _ _ _) = True
+isType _ = False
+
+
+
+
+
+
+
+
+
+
+noUndefinedTypes :: DefinitionTable -> [BzoErr]
+noUndefinedTypes dt@(DefinitionTable defs files ids _) =
+  let
+      visiblemap :: M.Map FilePath [Int64]
+      visiblemap = M.fromList $ L.map (\fm -> (bfm_filepath fm, snd $ bfm_fileModel fm)) files
+
+      visdefsmap :: M.Map FilePath [Definition]
+      visdefsmap = M.map (\vis -> L.map (\x -> Mb.fromJust $ M.lookup x defs) vis) visiblemap
+
+      tynamesmap :: M.Map FilePath (S.Set Text)
+      tynamesmap = M.map (S.fromList . L.map identifier . L.filter isType) visdefsmap
+
+      filedefmap :: M.Map Text [Definition]     -- FilePath -> [Definition]
+      filedefmap = insertManyList M.empty $ L.map (\df -> (hostfile df, df)) $ M.elems defs
+
+      filetypmap :: M.Map Text [(Text, BzoPos)] -- FilePath -> [(TyId, Pos)]
+      filetypmap = M.map (L.concatMap typesFromDef) filedefmap
+
+  in  L.concatMap (checkTyScope filetypmap tynamesmap) $ M.keys filetypmap
+  where
+        typesFromDef :: Definition -> [(Text, BzoPos)]
+        typesFromDef (FuncSyntax _ _  ft fd) = (getTypes ft) ++ (L.concatMap getTypes fd)
+        typesFromDef (TypeSyntax _ _     td) = (getTypes td)
+        typesFromDef (TyClassSyntax  _ _ cd) = (getTypes cd)
+
+        checkTyScope :: (M.Map Text [(Text, BzoPos)]) -> (M.Map FilePath (S.Set Text)) -> Text -> [BzoErr]
+        checkTyScope refmap vismap fname =
+          let refs = refmap M.!  fname
+              viss = vismap M.! (unpack fname)
+              missing = L.filter (\(ty,_)-> not $ S.member ty viss) refs
+          in  L.map (\(ty,ps)-> SntxErr ps (append ty (pack " is not defined in the local scope."))) missing
+
 
 
 
@@ -239,7 +292,9 @@ noOverloadTypes dt@(DefinitionTable defs files ids _) =
 
 checkProgram :: DefinitionTable -> Either [BzoErr] DefinitionTable
 checkProgram dt@(DefinitionTable defs files ids _) =
-  let err0 = noOverloadTypes dt
-  in case err0 of
+  let err0 = noOverloadTypes  dt
+      err1 = noUndefinedTypes dt
+      errs = err0 ++ err1
+  in case errs of
       [] -> Right dt
       er -> Left  er
