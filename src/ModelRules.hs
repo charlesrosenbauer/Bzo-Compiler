@@ -8,6 +8,7 @@ import Data.Tuple
 import Data.Int
 import Data.Map.Strict as M
 import Data.List as L
+import Builtins
 import DefinitionTable
 import Control.Parallel.Strategies
 import Debug.Trace
@@ -178,7 +179,7 @@ getDefTable files =
   let defCts  = L.scanl (+) 0 $ L.map (L.length . bfm_fileModel) files
 
       alldefs :: [(Int64, Definition)]
-      alldefs = L.zip [0..] $ L.concatMap (L.reverse . bfm_fileModel) files
+      alldefs = L.zip (L.map (\x->fromIntegral$topBuiltin+x) [0..]) $ L.concatMap (L.reverse . bfm_fileModel) files
       defmap :: Map Int64 Definition
       defmap  = M.fromList alldefs
 
@@ -190,7 +191,7 @@ getDefTable files =
 
       ctranges= L.zip defCts (L.tail defCts)
       ctspaces :: [[Int64]]
-      ctspaces= L.map (\(a, b) -> L.map (\x -> fromIntegral $ x+a) $ L.take (b-a) [0..]) ctranges
+      ctspaces= L.map (\(a, b) -> L.map (\x -> fromIntegral $ x+a) $ L.take (b-a) $ L.map (topBuiltin +) [0..]) ctranges
       filelist= L.map (\(space, f)-> replaceModel f space) $ L.zip ctspaces files
 
 
