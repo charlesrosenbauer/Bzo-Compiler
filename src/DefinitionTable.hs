@@ -34,6 +34,24 @@ addDef (DefinitionTable defs fs ids top) def =
 
 
 
+addAt :: DefinitionTable -> Definition -> Int64 -> DefinitionTable
+addAt (DefinitionTable defs fs ids top) def at =
+  let defs' = M.insert at def defs
+      defid = identifier def
+      ids'  = if (M.member defid ids)
+                then M.adjust (L.insert at) defid ids
+                else M.insert defid [at] ids
+  in (DefinitionTable defs' fs ids' top)
+
+
+
+
+
+
+
+
+
+
 queryDef :: DefinitionTable -> Int64 -> Maybe Definition
 queryDef (DefinitionTable defs fs ids top) defid = M.lookup defid defs
 
