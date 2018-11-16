@@ -81,7 +81,6 @@ getVars _                          = []
 
 getTypes :: BzoSyntax -> [(Text, BzoPos)]
 getTypes (BzS_TyId       p     var) = [(var, p)]
---getTypes (BzS_BTId       p     var) = [(var, p)]
 getTypes (BzS_Expr       _    expr) = L.concatMap getTypes expr
 getTypes (BzS_Statement  _    expr) = getTypes expr
 getTypes (BzS_Cmpd       _    expr) = L.concatMap getTypes expr
@@ -101,6 +100,80 @@ getTypes (BzS_Lambda     _ ps expr) = (getTypes ps)  ++ (getTypes expr)
 getTypes (BzS_LispCall   _ fn expr) = (getTypes fn)  ++ (L.concatMap getTypes expr)
 getTypes (BzS_ExTypObj   p ty    _) = [(ty, p)]
 getTypes _                          = []
+
+
+
+
+
+
+
+
+
+
+getBuiltins :: BzoSyntax -> [(Text, BzoPos)]
+getBuiltins (BzS_BId        p     var) = [(var, p)]
+getBuiltins (BzS_BTId       p     var) = [(var, p)]
+getBuiltins (BzS_Expr       _    expr) = L.concatMap getBuiltins expr
+getBuiltins (BzS_Statement  _    expr) = getBuiltins expr
+getBuiltins (BzS_Cmpd       _    expr) = L.concatMap getBuiltins expr
+getBuiltins (BzS_Poly       _    expr) = L.concatMap getBuiltins expr
+getBuiltins (BzS_FnTy       _   ax bx) = (getBuiltins ax) ++ (getBuiltins bx)
+getBuiltins (BzS_Block      _    expr) = L.concatMap getBuiltins expr
+getBuiltins (BzS_TypDef     _ ps _ df) = (getBuiltins ps) ++ (getBuiltins df)
+getBuiltins (BzS_TyClassDef _ ps _ df) = (getBuiltins ps) ++ (L.concatMap getBuiltins df)
+getBuiltins (BzS_FnTypeDef  _ ps _ df) = (getBuiltins ps) ++ (getBuiltins df)
+getBuiltins (BzS_FunDef     _ i _ o x) = (getBuiltins i)  ++ (getBuiltins o)  ++ (getBuiltins x)
+getBuiltins (BzS_Calls      _      cs) = L.concatMap getBuiltins cs
+getBuiltins (BzS_ArrayObj   _  _ expr) = getBuiltins expr
+getBuiltins (BzS_FilterObj  _ obj  fs) = (getBuiltins obj) ++ (L.concatMap getBuiltins fs)
+getBuiltins (BzS_CurryObj   _ obj  ps) = (getBuiltins obj) ++ (L.concatMap getBuiltins ps)
+getBuiltins (BzS_MapObj     _    expr) = (getBuiltins expr)
+getBuiltins (BzS_Lambda     _ ps expr) = (getBuiltins ps)  ++ (getBuiltins expr)
+getBuiltins (BzS_LispCall   _ fn expr) = (getBuiltins fn)  ++ (L.concatMap getBuiltins expr)
+getBuiltins _                          = []
+
+
+
+
+
+
+
+
+
+
+getNamespaces :: BzoSyntax -> [(Text, BzoPos)]
+getNamespaces (BzS_ExTypObj   p _    ns) = [(ns, p)]
+getNamespaces (BzS_ExFunObj   p _    ns) = [(ns, p)]
+getNamespaces (BzS_Expr       _    expr) = L.concatMap getNamespaces expr
+getNamespaces (BzS_Statement  _    expr) = getNamespaces expr
+getNamespaces (BzS_Cmpd       _    expr) = L.concatMap getNamespaces expr
+getNamespaces (BzS_Poly       _    expr) = L.concatMap getNamespaces expr
+getNamespaces (BzS_FnTy       _   ax bx) = (getNamespaces ax) ++ (getNamespaces bx)
+getNamespaces (BzS_Block      _    expr) = L.concatMap getNamespaces expr
+getNamespaces (BzS_TypDef     _ ps _ df) = (getNamespaces ps) ++ (getNamespaces df)
+getNamespaces (BzS_TyClassDef _ ps _ df) = (getNamespaces ps) ++ (L.concatMap getNamespaces df)
+getNamespaces (BzS_FnTypeDef  _ ps _ df) = (getNamespaces ps) ++ (getNamespaces df)
+getNamespaces (BzS_FunDef     _ i _ o x) = (getNamespaces i)  ++ (getNamespaces o)  ++ (getNamespaces x)
+getNamespaces (BzS_Calls      _      cs) = L.concatMap getNamespaces cs
+getNamespaces (BzS_ArrayObj   _  _ expr) = getNamespaces expr
+getNamespaces (BzS_FilterObj  _ obj  fs) = (getNamespaces obj) ++ (L.concatMap getNamespaces fs)
+getNamespaces (BzS_CurryObj   _ obj  ps) = (getNamespaces obj) ++ (L.concatMap getNamespaces ps)
+getNamespaces (BzS_MapObj     _    expr) = (getNamespaces expr)
+getNamespaces (BzS_Lambda     _ ps expr) = (getNamespaces ps)  ++ (getNamespaces expr)
+getNamespaces (BzS_LispCall   _ fn expr) = (getNamespaces fn)  ++ (L.concatMap getNamespaces expr)
+getNamespaces _                          = []
+
+
+
+
+
+
+
+
+
+
+getNamespaceSet :: (Show a) => BzoFileModel a -> S.Set Text
+getNamespaceSet (BzoFileModel _ _ _ _ is ls ias las) = S.fromList $ (is ++ ls) ++ (L.map snd (ias ++ las))
 
 
 
@@ -228,37 +301,60 @@ isType _ = False
 
 
 
-noUndefinedTypes :: DefinitionTable -> [BzoErr]
-noUndefinedTypes dt@(DefinitionTable defs files ids _) =
+noUndefinedErrs :: DefinitionTable -> [BzoErr]
+noUndefinedErrs dt@(DefinitionTable defs files ids _) =
   let
-      visiblemap :: M.Map FilePath [Int64]
-      visiblemap = M.fromList $ L.map (\fm -> (bfm_filepath fm, snd $ bfm_fileModel fm)) files
+      visiblemap :: M.Map Text [Int64]
+      visiblemap = M.fromList $ L.map (\fm -> (pack $ bfm_filepath fm, snd $ bfm_fileModel fm)) files
 
-      visdefsmap :: M.Map FilePath [Definition]
+      visdefsmap :: M.Map Text [Definition]
       visdefsmap = M.map (\vis -> L.map (\x -> Mb.fromJust $ M.lookup x defs) vis) visiblemap
 
-      tynamesmap :: M.Map FilePath (S.Set Text)
+      tynamesmap :: M.Map Text (S.Set Text)
       tynamesmap = M.map (S.fromList . L.map identifier . L.filter isType) visdefsmap
 
       filedefmap :: M.Map Text [Definition]     -- FilePath -> [Definition]
       filedefmap = insertManyList M.empty $ L.map (\df -> (hostfile df, df)) $ M.elems defs
 
       filetypmap :: M.Map Text [(Text, BzoPos)] -- FilePath -> [(TyId, Pos)]
-      filetypmap = M.map (L.concatMap typesFromDef) filedefmap
+      filetypmap = M.map (L.concatMap (fromDef getTypes)) filedefmap
 
-  in  L.concat $ parMap rpar (checkTyScope filetypmap tynamesmap) $ M.keys filetypmap
+      typeErrs :: [BzoErr]
+      typeErrs = L.concat $ parMap rpar (checkScope filetypmap tynamesmap undefTyErr) $ M.keys filetypmap
+
+
+      filenmsmap :: M.Map Text (S.Set Text)
+      filenmsmap = M.fromList $ L.map (\fm-> (pack $ bfm_filepath fm, getNamespaceSet fm)) files
+
+      namedefmap :: M.Map Text [(Text, BzoPos)]
+      namedefmap = M.fromList $ L.map (\df-> (hostfile df, fromDef getNamespaces df)) $ M.elems defs
+
+      nameErrs :: [BzoErr]
+      nameErrs = L.concat $ parMap rpar (checkScope namedefmap filenmsmap undefNsErr) $ M.keys namedefmap
+
+  in typeErrs ++ nameErrs
   where
-        typesFromDef :: Definition -> [(Text, BzoPos)]
-        typesFromDef (FuncSyntax _ _  ft fd) = (getTypes ft) ++ (L.concatMap getTypes fd)
-        typesFromDef (TypeSyntax _ _     td) = (getTypes td)
-        typesFromDef (TyClassSyntax  _ _ cd) = (getTypes cd)
+        fromDef :: (Show a) => (BzoSyntax -> [a]) -> Definition -> [a]
+        fromDef f (FuncSyntax _ _  ft fd) = (f ft) ++ (L.concatMap f fd)
+        fromDef f (TypeSyntax _ _     td) = (f td)
+        fromDef f (TyClassSyntax  _ _ cd) = (f cd)
 
-        checkTyScope :: (M.Map Text [(Text, BzoPos)]) -> (M.Map FilePath (S.Set Text)) -> Text -> [BzoErr]
-        checkTyScope refmap vismap fname =
-          let refs = refmap M.!  fname
-              viss = vismap M.! (unpack fname)
+        checkScope :: (M.Map Text [(Text, BzoPos)]) -> (M.Map Text (S.Set Text)) -> (BzoPos -> Text -> BzoErr) -> Text -> [BzoErr]
+        checkScope refmap vismap mkerr fname =
+          let refs = refmap M.! fname
+              viss = vismap M.! fname
               missing = L.filter (\(ty,_)-> not $ S.member ty viss) refs
-          in  L.map (\(ty,ps)-> SntxErr ps (append ty (pack " is not defined in the local scope."))) missing
+          in  L.map (\(ty,ps)-> mkerr ps ty) missing
+
+        undefTyErr :: BzoPos -> Text -> BzoErr
+        undefTyErr ps ty = SntxErr ps (append ty (pack " is not defined in the local scope."))
+
+        undefNsErr :: BzoPos -> Text -> BzoErr
+        undefNsErr ps ns = SntxErr ps (append ns (pack " is not a recognized namespace in the local scope."))
+
+
+
+
 
 
 
@@ -293,8 +389,8 @@ noUndefinedTypes dt@(DefinitionTable defs files ids _) =
 
 checkProgram :: DefinitionTable -> Either [BzoErr] DefinitionTable
 checkProgram dt@(DefinitionTable defs files ids _) =
-  let err0 = noOverloadTypes  dt
-      err1 = noUndefinedTypes dt
+  let err0 = noOverloadTypes dt
+      err1 = noUndefinedErrs dt
       errs = err0 ++ err1
   in case errs of
       [] -> Right dt
