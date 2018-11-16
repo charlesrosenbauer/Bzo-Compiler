@@ -329,10 +329,19 @@ noUndefinedErrs dt@(DefinitionTable defs files ids _) =
       namedefmap :: M.Map Text [(Text, BzoPos)]
       namedefmap = M.fromList $ L.map (\df-> (hostfile df, fromDef getNamespaces df)) $ M.elems defs
 
-      nameErrs :: [BzoErr]
-      nameErrs = L.concat $ parMap rpar (checkScope namedefmap filenmsmap undefNsErr) $ M.keys namedefmap
+      nameErrs  :: [BzoErr]
+      nameErrs  = L.concat $ parMap rpar (checkScope namedefmap filenmsmap undefNsErr) $ M.keys namedefmap
 
-  in typeErrs ++ nameErrs
+
+      bltinlist :: [(Text, BzoPos)]
+      bltinlist = L.concatMap (fromDef getBuiltins) defs
+
+      bltinErrs :: [BzoErr]
+      bltinErrs = L.map (\(bi,ps)-> SntxErr ps $ append bi $ pack " is not a valid built-in.") $ L.filter (\(bi,ps)->(isBuiltinFunc bi == 0) && (isBuiltinType bi == 0)) bltinlist
+
+      -- Later I'll have to do something about getting these builtins added into the Definition table.
+
+  in typeErrs ++ nameErrs ++ bltinErrs
   where
         fromDef :: (Show a) => (BzoSyntax -> [a]) -> Definition -> [a]
         fromDef f (FuncSyntax _ _  ft fd) = (f ft) ++ (L.concatMap f fd)
