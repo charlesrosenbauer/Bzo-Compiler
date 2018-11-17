@@ -31,19 +31,29 @@ isBuiltinType "#Flt16"  = 9
 isBuiltinType "#Flt32"  = 10
 isBuiltinType "#Flt64"  = 11
 
---Unums
-isBuiltinType "#Unm16"  = 12
-isBuiltinType "#Unm32"  = 13
-isBuiltinType "#Unm64"  = 14
+--Posits
+isBuiltinType "#Pst8"   = 12    -- I'm not sure if this will make it
+isBuiltinType "#Pst16"  = 13
+isBuiltinType "#Pst32"  = 14
+isBuiltinType "#Pst64"  = 15
 
 --Text
-isBuiltinType "#ASCII"  = 15
-isBuiltinType "#UTF8"   = 16
-isBuiltinType "#UTF16"  = 17
-isBuiltinType "#UTF32"  = 18
+isBuiltinType "#ASCII"  = 16
+isBuiltinType "#UTF8"   = 17
+isBuiltinType "#UTF16"  = 18
+isBuiltinType "#UTF32"  = 19
 
 --Bools
-isBuiltinType "#BoolTF" = 19
+isBuiltinType "#BoolTF" = 20
+
+--Slides
+isBuiltinType "#S8"     = 21
+isBuiltinType "#S16"    = 22
+isBuiltinType "#S32"    = 23
+isBuiltinType "#S64"    = 24
+isBuiltinType "#S128"   = 25
+isBuiltinType "#S256"   = 26
+isBuiltinType "#S512"   = 27
 
 --Internal/Unsafe/FFI Types
 isBuiltinType "#Ptr"    = 10001
@@ -88,7 +98,15 @@ isBuiltinFunc "#popcount-op"  = 20015
 isBuiltinFunc "#toBits"       = 20016
 isBuiltinFunc "#trunc"        = 20017
 isBuiltinFunc "#floatcast"    = 20018
-isBuiltinFunc "#unumcast"     = 20019
+isBuiltinFunc "#positcast"    = 20019
+isBuiltinFunc "#slideInsert"  = 20020
+isBuiltinFunc "#slideRemove"  = 20021
+isBuiltinFunc "#slideRead"    = 20022
+isBuiltinFunc "#slideComp"    = 20023
+isBuiltinFunc "#slideUnion"   = 20024
+isBuiltinFunc "#slideIntersection" = 20025
+isBuiltinFunc "#slideDifference"   = 20026
+isBuiltinFunc "#slideInverse"      = 20027
 
 --Comparison
 isBuiltinFunc "#gtr-binop"    = 30001
@@ -100,16 +118,50 @@ isBuiltinFunc "#neq-binop"    = 30006
 
 --Higher Order Functions
 isBuiltinFunc "#map"          = 40001
-isBuiltinFunc "#reduce"       = 40002
-isBuiltinFunc "#fold"         = 40003
-isBuiltinFunc "#scan"         = 40004
-isBuiltinFunc "#chain"        = 40005
-isBuiltinFunc "zip"           = 40006
+isBuiltinFunc "#pfold"        = 40002
+isBuiltinFunc "#sfold"        = 40003
+isBuiltinFunc "#pscan"        = 40004
+isBuiltinFunc "#sscan"        = 40005
+isBuiltinFunc "#zip"          = 40006
+isBuiltinFunc "#unzip"        = 40007
+isBuiltinFunc "#toMap"        = 40008
+isBuiltinFunc "#toArr"        = 40009
+isBuiltinFunc "#toSet"        = 40010
+isBuiltinFunc "#reverse"      = 40011
+isBuiltinFunc "#take"         = 40012
+isBuiltinFunc "#drop"         = 40013
+isBuiltinFunc "#intersperse"  = 40014
+isBuiltinFunc "#sort"         = 40015
+isBuiltinFunc "#sortBy"       = 40016
+isBuiltinFunc "#nub"          = 40017
+isBuiltinFunc "#nubBy"        = 40018
+isBuiltinFunc "#subcycle"     = 40019
+isBuiltinFunc "#head"         = 40020
+isBuiltinFunc "#tail"         = 40021
+isBuiltinFunc "#filter"       = 40022
+isBuiltinFunc "#concat"       = 40023
+isBuiltinFunc "#concatMap"    = 40024
+isBuiltinFunc "#rotate"       = 40025
+isBuiltinFunc "#square"       = 40026
+isBuiltinFunc "#cube"         = 40027
+isBuiltinFunc "#tesseract"    = 40028
+isBuiltinFunc "#any"          = 40029
+isBuiltinFunc "#all"          = 40030
+isBuiltinFunc "#none"         = 40031
+isBuiltinFunc "#iter"         = 40032
+isBuiltinFunc "#project"      = 40033
+isBuiltinFunc "#ife"          = 40034
+isBuiltinFunc "#guard"        = 40035
+isBuiltinFunc "#isPrefix"     = 40036
+isBuiltinFunc "#isSuffix"     = 40037
+isBuiltinFunc "#arrLength"    = 40038
+isBuiltinFunc "#getIndex"     = 40039
+isBuiltinFunc "#setIndex"     = 40040
+isBuiltinFunc "#cons"         = 40041
 
---Array
-isBuiltinFunc "#arrLength"    = 50001
-isBuiltinFunc "#getIndex"     = 50002
-isBuiltinFunc "#setIndex"     = 50003
+--String
+isBuiltinFunc "#to-uppercase" = 50001
+isBuiltinFunc "#to-lowercase" = 50002
 
 --Math
 isBuiltinFunc "#exp-binop"    = 60001
@@ -135,6 +187,17 @@ isBuiltinFunc "#factorial"    = 60020
 isBuiltinFunc "#gamma"        = 60021
 isBuiltinFunc "#nCr"          = 60022
 isBuiltinFunc "#nPr"          = 60023
+isBuiltinFunc "#sqrt"         = 60024
+isBuiltinFunc "#cbrt"         = 60025
+isBuiltinFunc "#log2"         = 60026
+isBuiltinFunc "#log10"        = 60027
+
+--Effect / FFI / Unsafe
+isBuiltinFunc "#print"        = 70001
+isBuiltinFunc "#printf"       = 70002
+isBuiltinFunc "#ffi"          = 70003
+isBuiltinFunc "#coerce"       = 70004
+isBuiltinFunc "#fail!"        = 70005
 
 isBuiltinFunc _               = 0
 
