@@ -702,34 +702,29 @@ data Type
 
 
 
+data Constraint = Constraint BzoPos Type  deriving (Eq, Show)
+
+
+
+
+
+
+
+
+
+
 data Atom
   = IntAtom BzoPos Integer
   | FltAtom BzoPos Double
   | StrAtom BzoPos T.Text
-  | VarAtom BzoPos T.Text Type
-  | MutAtom BzoPos T.Text Type
-  | TVrAtom BzoPos T.Text Type
-  | ParAtom BzoPos T.Text Type
-  | RetAtom BzoPos T.Text Type
+  | FncAtom BzoPos T.Text T.Text FnId
+  | TypAtom BzoPos T.Text T.Text TyId
+  | VarAtom BzoPos T.Text [Constraint] Type
+  | MutAtom BzoPos T.Text [Constraint] Type
+  | TVrAtom BzoPos T.Text [Constraint] Type
+  | ParAtom BzoPos T.Text [Constraint] Type
+  | RetAtom BzoPos T.Text [Constraint] Type
   deriving (Show, Eq)
-
-
-
-
-
-
-
-
-
-
-data Context
-  = Context {
-      cx_tvars :: M.Map TVId ([TyId], T.Text),
-      cx_vars  :: M.Map VrId ([TyId], T.Text),
-      cx_types :: M.Map TyId   TyId,
-      cx_funcs :: M.Map FnId   FnId,
-      cx_top   :: Int64 }
-  deriving Show
 
 
 
