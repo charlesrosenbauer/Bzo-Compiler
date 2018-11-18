@@ -79,6 +79,39 @@ getVars _                          = []
 
 
 
+getFuns :: BzoSyntax -> [(Text, Text, BzoPos)]
+getFuns (BzS_Id         p     var) = [(var, pack "@", p)]
+getFuns (BzS_MId        p     var) = [(var, pack "@", p)]
+getFuns (BzS_BId        p     var) = [(var, pack "@", p)]
+getFuns (BzS_ExFunObj   p var nsp) = [(var,      nsp, p)]
+getFuns (BzS_Expr       _    expr) = L.concatMap getFuns expr
+getFuns (BzS_Statement  _    expr) = getFuns expr
+getFuns (BzS_Cmpd       _    expr) = L.concatMap getFuns expr
+getFuns (BzS_Poly       _    expr) = L.concatMap getFuns expr
+getFuns (BzS_FnTy       _   ax bx) = (getFuns ax) ++ (getFuns bx)
+getFuns (BzS_Block      _    expr) = L.concatMap getFuns expr
+getFuns (BzS_TypDef     _ ps _ df) = (getFuns ps) ++ (getFuns df)
+getFuns (BzS_TyClassDef _ ps _ df) = (getFuns ps) ++ (L.concatMap getFuns df)
+getFuns (BzS_FnTypeDef  _ ps _ df) = (getFuns ps) ++ (getFuns df)
+getFuns (BzS_FunDef     _ i _ o x) = (getFuns i)  ++ (getFuns o)  ++ (getFuns x)
+getFuns (BzS_Calls      _      cs) = L.concatMap getFuns cs
+getFuns (BzS_ArrayObj   _  _ expr) = getFuns expr
+getFuns (BzS_FilterObj  _ obj  fs) = (getFuns obj) ++ (L.concatMap getFuns fs)
+getFuns (BzS_CurryObj   _ obj  ps) = (getFuns obj) ++ (L.concatMap getFuns ps)
+getFuns (BzS_MapObj     _    expr) = (getFuns expr)
+getFuns (BzS_Lambda     _ ps expr) = (getFuns ps)  ++ (getFuns expr)
+getFuns (BzS_LispCall   _ fn expr) = (getFuns fn)  ++ (L.concatMap getFuns expr)
+getFuns _                          = []
+
+
+
+
+
+
+
+
+
+
 getTypes :: BzoSyntax -> [(Text, BzoPos)]
 getTypes (BzS_TyId       p     var) = [(var, p)]
 getTypes (BzS_Expr       _    expr) = L.concatMap getTypes expr
@@ -333,13 +366,13 @@ noUndefinedErrs dt@(DefinitionTable defs files ids _) =
       nameErrs  = L.concat $ parMap rpar (checkScope namedefmap filenmsmap undefNsErr) $ M.keys namedefmap
 
 
+      -- Later I'll have to do something about getting these builtins added into the Definition table.
       bltinlist :: [(Text, BzoPos)]
       bltinlist = L.concatMap (fromDef getBuiltins) defs
 
       bltinErrs :: [BzoErr]
       bltinErrs = L.map (\(bi,ps)-> SntxErr ps $ append bi $ pack " is not a valid built-in.") $ L.filter (\(bi,ps)->(isBuiltinFunc bi == 0) && (isBuiltinType bi == 0)) bltinlist
 
-      -- Later I'll have to do something about getting these builtins added into the Definition table.
 
   in typeErrs ++ nameErrs ++ bltinErrs
   where
