@@ -403,6 +403,19 @@ noUndefinedErrs dt@(DefinitionTable defs files ids _) =
 
 
 
+getTypeIds :: DefinitionTable -> Text -> Text -> [Int64]
+getTypeIds (DefinitionTable defs files ids _) fname tname =
+  let matchingfiles = L.filter (\fm -> (bfm_filepath fm) == (unpack fname)) files
+      visible       = snd $ bfm_fileModel $ L.head matchingfiles
+      matchingdefs  = Mb.fromMaybe [] $ M.lookup tname ids
+  in case matchingfiles of
+      [] -> []
+      fs -> L.intersect visible matchingdefs
+
+
+
+
+
 
 
 
