@@ -742,3 +742,22 @@ data DefinitionTable
       dt_ids  :: M.Map T.Text [Int64],
       dt_top  :: Int64 }
   deriving Show
+
+
+
+
+
+
+
+
+
+
+data Context = Context [((M.Map Int64 Atom), Int64)]
+
+
+addAtom :: Context -> Atom -> (Context, Int64)
+addAtom (Context ((atoms, top):xs)) atom = (Context (((M.insert (top+1) atom atoms), top+1):xs), top+1)
+
+
+addContext :: Context -> Context
+addContext (Context ((atoms, top):xs)) = Context ((M.empty, top+1):(atoms, top):xs)
