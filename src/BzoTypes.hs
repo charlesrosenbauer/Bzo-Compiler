@@ -752,12 +752,26 @@ data DefinitionTable
 
 
 
-data Context = Context [((M.Map Int64 Atom), Int64)]
+data Context = Context [((M.Map Int64 Atom), Int64, Int64)]
 
 
 addAtom :: Context -> Atom -> (Context, Int64)
-addAtom (Context ((atoms, top):xs)) atom = (Context (((M.insert (top+1) atom atoms), top+1):xs), top+1)
+addAtom (Context ((atoms, top, i):xs)) atom = (Context (((M.insert (top+1) atom atoms), top+1, i+1):xs), top+1)
 
 
 addContext :: Context -> Context
-addContext (Context ((atoms, top):xs)) = Context ((M.empty, top+1):(atoms, top):xs)
+addContext (Context ((atoms, top, i):xs)) = Context ((M.empty, top+1, i+1):(atoms, top, i):xs)
+addContext (Context [])                   = Context [(M.empty,     0,   0)]
+
+
+popContext :: Context -> Context
+popContext (Context (_:xs)) = Context xs
+
+
+getIxContext :: Context -> Int64 -> Maybe (Atom, Int64)
+getIxContext (Context ((atoms, top, i):xs)) ix =
+  if (ix > top)
+    then Nothing
+    else case (fmap (\x -> (x, i)) $ M.lookup ix atoms) of
+          Nothing -> getIxContext (Context xs) ix
+          ret     -> ret
