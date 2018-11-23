@@ -726,6 +726,16 @@ data Atom
   | RetAtom BzoPos T.Text [Constraint] Type
   deriving (Show, Eq)
 
+atomId :: Atom -> Maybe T.Text
+atomId (FncAtom _ t _ _) = Just t
+atomId (TypAtom _ t _ _) = Just t
+atomId (VarAtom _ t _ _) = Just t
+atomId (MutAtom _ t _ _) = Just t
+atomId (TVrAtom _ t _ _) = Just t
+atomId (ParAtom _ t _ _) = Just t
+atomId (RetAtom _ t _ _) = Just t
+atomId _ = Nothing
+
 
 
 
@@ -769,6 +779,7 @@ popContext (Context (_:xs)) = Context xs
 
 
 getIxContext :: Context -> Int64 -> Maybe (Atom, Int64)
+getIxContext (Context []) ix = Nothing
 getIxContext (Context ((atoms, top, i):xs)) ix =
   if (ix > top)
     then Nothing
