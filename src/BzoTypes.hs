@@ -786,3 +786,12 @@ getIxContext (Context ((atoms, top, i):xs)) ix =
     else case (fmap (\x -> (x, i)) $ M.lookup ix atoms) of
           Nothing -> getIxContext (Context xs) ix
           ret     -> ret
+
+findId :: Context -> T.Text -> Maybe (Int64, Int64)
+findId (Context                   []) name = Nothing
+findId (Context ((atoms, top, i):xs)) name =
+  let pairs   = M.assocs atoms
+      matches = L.filter (\(i, atm) -> name == (Mb.fromMaybe (T.pack "") (atomId atm))) pairs
+  in  case matches of
+        [] -> findId (Context xs) name
+        ms -> Just (fst $ L.head ms, i)
