@@ -736,6 +736,58 @@ atomId (ParAtom _ t _ _) = Just t
 atomId (RetAtom _ t _ _) = Just t
 atomId _ = Nothing
 
+isIntAtom :: Atom -> Bool
+isIntAtom (IntAtom _ _) = True
+isIntAtom _             = False
+
+isFltAtom :: Atom -> Bool
+isFltAtom (FltAtom _ _) = True
+isFltAtom _             = False
+
+isStrAtom :: Atom -> Bool
+isStrAtom (StrAtom _ _) = True
+isStrAtom _             = False
+
+isLitAtom :: Atom -> Bool
+isLitAtom atm = (isIntAtom atm) || (isFltAtom atm) || (isStrAtom atm)
+
+isFncAtom :: Atom -> Bool
+isFncAtom (FncAtom _ _ _ _) = True
+isFncAtom _                 = False
+
+isTypAtom :: Atom -> Bool
+isTypAtom (TypAtom _ _ _ _) = True
+isTypAtom _                 = False
+
+isVarAtom :: Atom -> Bool
+isVarAtom (VarAtom _ _ _ _) = True
+isVarAtom _                 = False
+
+isMutAtom :: Atom -> Bool
+isMutAtom (MutAtom _ _ _ _) = True
+isMutAtom _                 = False
+
+isTVrAtom :: Atom -> Bool
+isTVrAtom (TVrAtom _ _ _ _) = True
+isTVrAtom _                 = False
+
+isParAtom :: Atom -> Bool
+isParAtom (ParAtom _ _ _ _) = True
+isParAtom _                 = False
+
+isRetAtom :: Atom -> Bool
+isRetAtom (RetAtom _ _ _ _) = True
+isRetAtom _                 = False
+
+isLocalAtom :: Atom -> Bool
+isLocalAtom atm = (isVarAtom atm) || (isMutAtom atm)
+
+isGlobalAtom :: Atom -> Bool
+isGlobalAtom atm = (isFncAtom atm) || (isTypAtom atm)
+
+isIOAtom :: Atom -> Bool
+isIOAtom atm = (isParAtom atm) || (isRetAtom atm)
+
 
 
 
@@ -786,6 +838,7 @@ getIxContext (Context ((atoms, top, i):xs)) ix =
     else case (fmap (\x -> (x, i)) $ M.lookup ix atoms) of
           Nothing -> getIxContext (Context xs) ix
           ret     -> ret
+
 
 findId :: Context -> T.Text -> Maybe (Int64, Int64)
 findId (Context                   []) name = Nothing
