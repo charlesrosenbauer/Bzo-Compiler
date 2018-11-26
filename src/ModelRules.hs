@@ -111,7 +111,7 @@ getDefTable files =
       idlists :: [[(Text, Int64)]]
       idlists = L.groupBy (\(a,_) (b,_) -> a == b) $ L.map (\(a, b) -> (identifier a, b)) fileIxs
       idmap :: Map Text [Int64]
-      idmap   = M.fromList $ L.map (\xs -> (fst $ L.head xs, L.map (fromIntegral . snd) xs)) $ idlists
+      idmap   = toListMap M.empty $ L.map (\xs -> (fst $ L.head xs, L.map (fromIntegral . snd) xs)) $ idlists
 
       ctranges= L.zip defCts (L.tail defCts)
       ctspaces :: [[Int64]]
@@ -137,6 +137,12 @@ getDefTable files =
                                 in  replaceModel bfm model) filelist
 
   in (DefinitionTable defmap filelist' idmap (fromIntegral $ L.last defCts))
+  where toListMap :: Ord k => M.Map k [a] -> [(k, [a])] -> M.Map k [a]
+        toListMap mp []       = mp
+        toListMap mp ((k,a):xs) =
+          if (M.member k mp)
+            then toListMap (M.adjust (\as -> (a++as)) k mp) xs
+            else toListMap (M.insert k a mp) xs
 
 
 
