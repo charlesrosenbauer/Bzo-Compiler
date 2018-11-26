@@ -305,10 +305,12 @@ noOverloadTypes dt@(DefinitionTable defs files ids _) =
       xs -> L.map makeOverloadErr xs
 
   where makeOverloadErr :: Definition -> BzoErr
-        makeOverloadErr (TypeSyntax tname _ df) = TypeErr (pos df) $ pack $ (unpack tname) ++ " is defined in multiple places."
+        makeOverloadErr (TypeSyntax    tname _ df) = TypeErr (pos df) $ pack $ "Type "       ++ (unpack tname) ++ " is defined in multiple places."
+        makeOverloadErr (TyClassSyntax tname _ df) = TypeErr (pos df) $ pack $ "Type Class " ++ (unpack tname) ++ " is defined in multiple places."
 
         matchType :: Definition -> Definition -> Bool
-        matchType (TypeSyntax t0 f0 _) (TypeSyntax t1 f1 _) = (t0 == t1) && (f0 == f1)
+        matchType (TypeSyntax    t0 f0 _) (TypeSyntax    t1 f1 _) = (t0 == t1) && (f0 == f1)
+        matchType (TyClassSyntax t0 f0 _) (TyClassSyntax t1 f1 _) = (t0 == t1) && (f0 == f1)
         matchType _ _ = False
 
 
