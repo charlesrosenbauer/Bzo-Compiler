@@ -107,6 +107,10 @@ Function call (equivalent to q = a + b in C-like languages)
 [+: a, b] q
 Prefix function call (equivalent to q = a + b). This is just an alternative way to call functions that is more readable in some cases.
 
+[a, c] [_, b, _, d]
+[a, d] [+: _, b, c, _]
+Wildcards in expressions can be used to more cleanly separate expressions without nesting tuples.
+
 
 Type :: Def
 Simple Type Definition
@@ -151,7 +155,7 @@ a b`12`%+
 Here b and 12 is applied to %+, a modular addition function. This expression is desugared to (a. b. 12) %+.
 
 [a, b] c`%+
-This code is not valid however.
+This code is not a valid alternative however.
 
 a b c`%+
 Neither is this. Only one parameter must remain after partial application.
