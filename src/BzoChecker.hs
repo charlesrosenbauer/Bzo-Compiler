@@ -273,7 +273,7 @@ getNamespaceFiles (DefinitionTable _ files _ _) filepath =
 
 
 getVisible :: BzoFileModel ([Int64], [Int64]) -> [Int64]
-getVisible model = fst $ bfm_fileModel model
+getVisible model = snd $ bfm_fileModel model
 
 
 
@@ -413,6 +413,23 @@ getTypeIds (DefinitionTable defs files ids _) fname tname =
   in case matchingfiles of
       [] -> []
       fs -> L.intersect visible matchingdefs
+
+
+
+
+
+
+
+
+
+
+initializeTypeHeader :: BzoSyntax -> TypeHeader
+initializeTypeHeader ast =
+  let tvrs  = getTVars ast
+      tvrs' = L.nubBy nubfn tvrs
+  in  TyHeader $ M.fromList $ L.zip [1..] $ L.map (\(v,p) -> TVrAtom p v [] (UnresType $ BzS_Undefined p)) tvrs'
+  where nubfn :: (Text, BzoPos) -> (Text, BzoPos) -> Bool
+        nubfn (v0, p0) (v1, p1) = (v0 == v1) && (p0 < p1)
 
 
 
