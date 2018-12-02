@@ -423,13 +423,19 @@ getTypeIds (DefinitionTable defs files ids _) fname tname =
 
 
 
+-- Takes type parameters and returns an associated header
 initializeTypeHeader :: BzoSyntax -> TypeHeader
-initializeTypeHeader ast =
-  let tvrs  = getTVars ast
-      tvrs' = L.nubBy nubfn tvrs
-  in  TyHeader $ M.fromList $ L.zip [1..] $ L.map (\(v,p) -> TVrAtom p v [] (UnresType $ BzS_Undefined p)) tvrs'
-  where nubfn :: (Text, BzoPos) -> (Text, BzoPos) -> Bool
-        nubfn (v0, p0) (v1, p1) = (v0 == v1) && (p0 < p1)
+initializeTypeHeader (BzS_Expr _ [BzS_TyVar p v])        = TyHeader $ M.fromList [(1, TVrAtom p v        []                                   $ UnresType $ BzS_Undefined p)]
+initializeTypeHeader (BzS_Expr _ [BzS_FilterObj p v fs]) = TyHeader $ M.fromList [(1, TVrAtom p (sid v) (L.map (Constraint p $ UnresType) fs) $ UnresType $ BzS_Undefined p)]
+initializeTypeHeader (BzS_Cmpd _ vs) =
+  let atoms = L.map makeAtom vs
+  in  TyHeader $ M.fromList $ L.zip [1..] atoms
+  where makeAtom :: BzoSyntax -> Atom
+        makeAtom (BzS_TyVar     p v   ) = TVrAtom p      v  []                                    $ UnresType $ BzS_Undefined p
+        makeAtom (BzS_FilterObj p v fs) = TVrAtom p (sid v) (L.map (Constraint p $ UnresType) fs) $ UnresType $ BzS_Undefined p
+
+
+
 
 
 
