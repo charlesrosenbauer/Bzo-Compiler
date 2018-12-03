@@ -232,7 +232,7 @@ getVisibility (DefinitionTable _ files _ _) fname =
 
 
 getIds :: DefinitionTable -> Text -> [Int64] -> [Int64]
-getIds (DefinitionTable dfs files ids _) defid visible = Mb.fromMaybe [] $ M.lookup defid ids
+getIds (DefinitionTable dfs files ids _) defid visible = L.filter (\x -> L.elem x visible) $ Mb.fromMaybe [] $ M.lookup defid ids
 
 
 
