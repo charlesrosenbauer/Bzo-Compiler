@@ -495,6 +495,54 @@ makeSymbolTable dt fp =
 
 
 
+resolveGlobalId :: SymbolTable -> BzoSyntax -> [Int64]
+resolveGlobalId (SymbolTable dt fp ids) (BzS_Id       _ fn   ) = Mb.fromMaybe [] $ M.lookup fn (dt_ids dt)
+resolveGlobalId (SymbolTable dt fp ids) (BzS_TyId     _ ty   ) = Mb.fromMaybe [] $ M.lookup ty (dt_ids dt)
+resolveGlobalId (SymbolTable dt fp ids) (BzS_ExFunObj _ fn ns) =
+  let fn' = Mb.fromMaybe [] $ M.lookup fn (dt_ids dt)
+  in  L.filter (\i -> M.member i ids) fn'
+resolveGlobalId (SymbolTable dt fp ids) (BzS_ExTypObj _ ty ns) =
+  let ty' = Mb.fromMaybe [] $ M.lookup ty (dt_ids dt)
+  in  L.filter (\i -> M.member i ids) ty'
+resolveGlobalId _ _ = []
+
+
+
+
+
+
+
+
+
+
+resolveLocalId :: SymbolTable -> Context -> BzoSyntax -> [(Int64, Int64)]
+resolveLocalId st ctx v@(BzS_Id  _ fn) =
+  let fn' = findId ctx fn
+  in case fn' of
+      Just xs -> [xs]
+      Nothing -> L.map (\x -> (-1, x)) $ resolveGlobalId st v
+resolveLocalId st ctx   (BzS_MId _ mt) = Mb.catMaybes [findId ctx mt]
+resolveLocalId st ctx other = L.map (\x -> (-1, x)) $ resolveGlobalId st other
+
+
+
+
+
+
+
+
+
+--makeType :: SymbolTable -> TypeHeader -> BzoSyntax -> Either [BzoErr] Type
+
+
+
+
+
+
+
+
+
+
 
 
 -- modelTypeExpr
