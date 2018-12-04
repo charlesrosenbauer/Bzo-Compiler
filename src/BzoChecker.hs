@@ -8,6 +8,7 @@ import qualified Data.Map.Strict as M
 import qualified Data.Maybe as Mb
 import qualified Data.List as L
 import qualified Data.Set as S
+import qualified Data.Tuple as Tp
 import Control.Parallel.Strategies
 import Debug.Trace
 
@@ -243,8 +244,8 @@ getIds (DefinitionTable dfs files ids _) defid visible = L.filter (\x -> L.elem 
 
 
 
-getNamespaceFiles :: DefinitionTable -> FilePath -> [(Text, FilePath)]
-getNamespaceFiles (DefinitionTable _ files _ _) filepath =
+getNamespacePaths :: DefinitionTable -> FilePath -> [(Text, FilePath)]
+getNamespacePaths (DefinitionTable _ files _ _) filepath =
   let filemap = M.fromList $ L.map (\file -> (bfm_filepath file, file)) files
       file    = L.filter (\f -> filepath == (bfm_filepath f)) files
       file'   = L.head file
@@ -263,6 +264,22 @@ getNamespaceFiles (DefinitionTable _ files _ _) filepath =
   in case file of
       [] -> []
       _  -> imps ++ impsas ++ lnks ++ lnksas
+
+
+
+
+
+
+
+
+
+
+getNamespaceFiles :: DefinitionTable -> FilePath -> [(Text, BzoFileModel ([Int64], [Int64]))]
+getNamespaceFiles dt@(DefinitionTable _ files _ _) filepath =
+  let pairs  = getNamespacePaths dt filepath
+      paths  = S.fromList $ L.map snd pairs
+      files' = M.fromList $ L.map (\f -> (bfm_filepath f, f)) $ L.filter (\f -> S.member (bfm_filepath f) paths) files
+  in  L.map (\(ns, path) -> (ns, files' M.! path)) pairs
 
 
 
@@ -438,6 +455,21 @@ initializeTypeHeader (BzS_Cmpd _ vs) =
         makeAtom (BzS_FilterObj p v fs) =
           TVrAtom p (sid v) (L.map (\t -> Constraint p $ UnresType t) fs) $ UnresType $ BzS_Undefined p
 
+
+
+
+
+
+
+
+
+
+getNamespaceTags :: DefinitionTable -> FilePath -> [Int64] -> [(Int64, Text)]
+getNamespaceTags dt@(DefinitionTable defs files ids _) fname visible =
+  let namemap = M.fromList $ L.map Tp.swap $ getNamespacePaths dt fname
+      visset  = S.fromList visible
+      idpairs = M.assocs $ M.filterWithKey (\k def -> S.member k visset) defs
+  in  L.map (\(i, df) -> (i, namemap M.! (unpack $ hostfile df))) idpairs
 
 
 
