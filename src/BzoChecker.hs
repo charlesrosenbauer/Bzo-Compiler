@@ -480,6 +480,21 @@ getNamespaceTags dt@(DefinitionTable defs files ids _) fname visible =
 
 
 
+makeSymbolTable :: DefinitionTable -> FilePath -> SymbolTable
+makeSymbolTable dt fp =
+  let file = L.head $ L.filter (\fm -> fp == (bfm_filepath fm)) $ dt_files dt
+      vis  = getVisible file
+  in  (SymbolTable dt fp (M.fromList $ getNamespaceTags dt fp vis))
+
+
+
+
+
+
+
+
+
+
 
 
 -- modelTypeExpr

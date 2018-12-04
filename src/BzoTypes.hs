@@ -848,3 +848,14 @@ findId (Context ((atoms, top, i):xs)) name =
   in  case matches of
         [] -> findId (Context xs) name
         ms -> Just (fst $ L.head ms, i)
+
+
+
+
+
+
+
+
+
+
+data SymbolTable = SymbolTable DefinitionTable FilePath (M.Map Int64 T.Text)
