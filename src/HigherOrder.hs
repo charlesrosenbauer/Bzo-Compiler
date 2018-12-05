@@ -821,3 +821,20 @@ shrinkPairs3 xs =
       mp  = insertMany Mp.empty ks
       mp' = L.foldl' (\m (k, a, b, c) -> Mp.adjust (\(x, y, z) -> (x ++ a, y ++ b, z ++ c)) k m) mp xs
   in map (\(a, (b, c, d)) -> (a, b, c, d)) $ Mp.assocs mp'
+
+
+
+
+
+
+
+
+
+
+onAllPass :: [Either [a] b] -> (b -> c) -> Either [a] [c]
+onAllPass vals fn =
+  let ls = concat $ E.lefts  vals
+      rs =          E.rights vals
+  in case ls of
+      [] -> Left  ls
+      _  -> Right $ map fn rs
