@@ -831,10 +831,10 @@ shrinkPairs3 xs =
 
 
 
-onAllPass :: [Either [a] b] -> (b -> c) -> Either [a] [c]
+onAllPass :: [Either [a] b] -> ([b] -> c) -> Either [a] c
 onAllPass vals fn =
   let ls = concat $ E.lefts  vals
       rs =          E.rights vals
   in case ls of
       [] -> Left  ls
-      _  -> Right $ map fn rs
+      _  -> Right $ fn rs

@@ -532,8 +532,17 @@ resolveLocalId st ctx other = L.map (\x -> (-1, x)) $ resolveGlobalId st other
 
 
 
---makeType :: SymbolTable -> TypeHeader -> BzoSyntax -> Either [BzoErr] Type
-
+makeType :: SymbolTable -> TypeHeader -> BzoSyntax -> Either [BzoErr] Type
+makeType st th (BzS_Cmpd  p  xs) = onAllPass (L.map (makeType st th) xs) (\ys -> CmpdType p ys)
+makeType st th (BzS_Poly  p  xs) = onAllPass (L.map (makeType st th) xs) (\ys -> PolyType p ys)
+makeType st th (BzS_Int   p   n) = Right (IntType  p n)
+makeType st th (BzS_Flt   p   n) = Right (FltType  p n)
+makeType st th (BzS_Str   p   s) = Right (StrType  p s)
+makeType st th (BzS_Nil   p )    = Right (VoidType p)
+--makeType st th (BzS_TyId  p   t) = Right (LtrlType p t)
+--makeType st th (BzS_TyVar p   v) = Right (TVarType p v)
+makeType st th (BzS_Expr  p [x]) = makeType st th x
+makeType st th x = Left [TypeErr (pos x) $ pack "Malformed type expression."]
 
 
 
