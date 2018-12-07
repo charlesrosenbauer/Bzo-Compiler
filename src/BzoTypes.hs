@@ -691,6 +691,7 @@ data Type
   | VoidType  BzoPos
   | LtrlType  BzoPos TyId
   | TVarType  BzoPos TVId
+  | ArryType  BzoPos Integer Type
   deriving (Show, Eq)
 
 
