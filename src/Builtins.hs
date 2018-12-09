@@ -46,7 +46,7 @@ isBuiltinType "#UTF32"  = 19
 --Bools
 isBuiltinType "#BoolTF" = 20
 
---Slides
+--Shadows
 isBuiltinType "#S8"     = 21
 isBuiltinType "#S16"    = 22
 isBuiltinType "#S32"    = 23
@@ -54,6 +54,9 @@ isBuiltinType "#S64"    = 24
 isBuiltinType "#S128"   = 25
 isBuiltinType "#S256"   = 26
 isBuiltinType "#S512"   = 27
+
+--Regular Expressions
+isBuiltinType "#Regex"  = 28
 
 --Internal/Unsafe/FFI Types
 isBuiltinType "#Ptr"    = 10001
@@ -103,10 +106,10 @@ isBuiltinFunc "#slideInsert"  = 20020
 isBuiltinFunc "#slideRemove"  = 20021
 isBuiltinFunc "#slideRead"    = 20022
 isBuiltinFunc "#slideComp"    = 20023
-isBuiltinFunc "#slideUnion"   = 20024
-isBuiltinFunc "#slideIntersection" = 20025
-isBuiltinFunc "#slideDifference"   = 20026
-isBuiltinFunc "#slideInverse"      = 20027
+isBuiltinFunc "#shadeUnion"   = 20024
+isBuiltinFunc "#shadeIntersection" = 20025
+isBuiltinFunc "#shadeDifference"   = 20026
+isBuiltinFunc "#shadeInverse"      = 20027
 
 --Comparison
 isBuiltinFunc "#gtr-binop"    = 30001
@@ -166,6 +169,8 @@ isBuiltinFunc "#adjust"       = 40044
 isBuiltinFunc "#to-uppercase" = 50001
 isBuiltinFunc "#to-lowercase" = 50002
 isBuiltinFunc "#str-compare"  = 50003
+isBuiltinFunc "#compileRegex" = 50004
+isBuiltinFunc "#matchRegex"   = 50005
 
 --Math
 isBuiltinFunc "#exp-binop"    = 60001
