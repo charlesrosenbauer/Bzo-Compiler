@@ -815,16 +815,22 @@ data DefinitionTable
 
 
 
-data Context = Context [((M.Map Int64 Atom), Int64, Int64)]
+data ContextFrame
+  = ContextFrame{
+      cf_atomMap :: M.Map Int64 Atom,
+      cf_top     :: Int64,
+      cf_index   :: Int64 }
+
+data Context = Context [ContextFrame]
 
 
 addAtom :: Context -> Atom -> (Context, Int64)
-addAtom (Context ((atoms, top, i):xs)) atom = (Context (((M.insert (top+1) atom atoms), top+1, i+1):xs), top+1)
+addAtom (Context ((ContextFrame atoms top i):xs)) atom = (Context ((ContextFrame (M.insert (top+1) atom atoms) (top+1) (i+1)):xs), top+1)
 
 
 addContext :: Context -> Context
-addContext (Context ((atoms, top, i):xs)) = Context ((M.empty, top+1, i+1):(atoms, top, i):xs)
-addContext (Context [])                   = Context [(M.empty,     0,   0)]
+addContext (Context ((ContextFrame atoms top i):xs)) = Context ((ContextFrame M.empty (top+1) (i+1)):(ContextFrame atoms top i):xs)
+addContext (Context [])                              = Context [(ContextFrame M.empty 0 0)]
 
 
 popContext :: Context -> Context
@@ -833,7 +839,7 @@ popContext (Context (_:xs)) = Context xs
 
 getIxContext :: Context -> Int64 -> Maybe (Atom, Int64)
 getIxContext (Context []) ix = Nothing
-getIxContext (Context ((atoms, top, i):xs)) ix =
+getIxContext (Context ((ContextFrame atoms top i):xs)) ix =
   if (ix > top)
     then Nothing
     else case (fmap (\x -> (x, i)) $ M.lookup ix atoms) of
@@ -842,8 +848,8 @@ getIxContext (Context ((atoms, top, i):xs)) ix =
 
 
 findId :: Context -> T.Text -> Maybe (Int64, Int64)
-findId (Context                   []) name = Nothing
-findId (Context ((atoms, top, i):xs)) name =
+findId (Context                              []) name = Nothing
+findId (Context ((ContextFrame atoms top i):xs)) name =
   let pairs   = M.assocs atoms
       matches = L.filter (\(i, atm) -> name == (Mb.fromMaybe (T.pack "") (atomId atm))) pairs
   in  case matches of
