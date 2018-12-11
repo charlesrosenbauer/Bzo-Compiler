@@ -546,7 +546,15 @@ makeType st th ty@(BzS_TyId  p   t) =
       []  -> Left [TypeErr p $ pack ("Type " ++ (unpack t) ++ " is undefined.")]
       [x] -> Right (LtrlType p x)
       xs  -> Left [TypeErr p $ pack ("Ambiguous reference to type " ++ (unpack t) ++ ".")]
---makeType st th (BzS_TyVar p   v) = Right (TVarType p v)
+makeType st (TyHeader tvs) (BzS_TyVar p   v) =
+  let tvpairs = M.assocs tvs
+      tvnames = L.map (\(n,atm) -> (n, Mb.fromMaybe (pack "") $ atomId atm)) tvpairs
+      ids = L.map fst $ L.filter (\(n,atm) -> v == atm) tvnames
+  in case ids of
+      []  -> Left [TypeErr p $ pack ("Type Variable " ++ (unpack v) ++ " is not defined in the type header.")]
+      [x] -> Right (TVarType p x)
+      xs  -> Left [TypeErr p $ pack ("Ambiguous reference to type variable" ++ (unpack v) ++ ".")]
+
 makeType st th x = Left [TypeErr (pos x) $ pack "Malformed type expression."]
 
 
