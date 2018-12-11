@@ -838,3 +838,50 @@ onAllPass vals fn =
   in case ls of
       [] -> Left  ls
       _  -> Right $ fn rs
+
+
+
+
+
+
+
+
+
+
+isLeft :: Either a b -> Bool
+isLeft (Left  _) = True
+isLeft _         = False
+
+
+
+
+
+
+
+
+
+
+isRight :: Either a b -> Bool
+isRight (Right _) = True
+isRight _         = False
+
+
+
+
+
+
+
+
+
+
+sepEitherMaps :: Ord k => Mp.Map k (Either a b) -> (Mp.Map k a, Mp.Map k b)
+sepEitherMaps xs =
+  let assocs = Mp.assocs xs
+      rs     = Prelude.map extractRight $ L.filter (\(k,a) -> isRight a) assocs
+      ls     = Prelude.map extractLeft  $ L.filter (\(k,a) -> isLeft  a) assocs
+  in (Mp.fromList ls, Mp.fromList rs)
+  where extractLeft  :: (k, Either a b) -> (k, a)
+        extractLeft  (k, Left  x) = (k, x)
+
+        extractRight :: (k, Either a b) -> (k, b)
+        extractRight (k, Right x) = (k, x)
