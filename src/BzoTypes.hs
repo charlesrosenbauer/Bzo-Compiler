@@ -629,6 +629,7 @@ data Expr
   = CallExpr BzoPos  FnId  [LcId] [LcId]
   | PhiExpr  BzoPos [FnId] [LcId] [LcId]
   | OpExpr   BzoPos Opcode [LcId] [LcId]
+  | LetExpr  BzoPos ContextFrame  [Expr]
   deriving (Show, Eq)
 
 
@@ -820,6 +821,7 @@ data ContextFrame
       cf_atomMap :: M.Map Int64 Atom,
       cf_top     :: Int64,
       cf_index   :: Int64 }
+  deriving (Show, Eq)
 
 data Context = Context [ContextFrame]
 
