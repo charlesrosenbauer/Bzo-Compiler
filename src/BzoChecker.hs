@@ -4,6 +4,7 @@ import HigherOrder
 import Builtins
 import Data.Text
 import Data.Int
+import Data.Either
 import qualified Data.Map.Strict as M
 import qualified Data.Maybe as Mb
 import qualified Data.List as L
@@ -540,6 +541,7 @@ makeType st th (BzS_Flt   p   n) = Right (FltType  p n)
 makeType st th (BzS_Str   p   s) = Right (StrType  p s)
 makeType st th (BzS_Nil   p )    = Right (VoidType p)
 makeType st th (BzS_Expr  p [x]) = makeType st th x
+makeType st th (BzS_FnTy  p i o) = onAllPass (L.map (makeType st th) [i,o]) (\[i',o'] -> FuncType p i' o')
 makeType st th ty@(BzS_TyId  p   t) =
   let ids = resolveGlobalId st ty
   in case ids of
@@ -556,6 +558,26 @@ makeType st (TyHeader tvs) (BzS_TyVar p   v) =
       xs  -> Left [TypeErr p $ pack ("Ambiguous reference to type variable" ++ (unpack v) ++ ".")]
 
 makeType st th x = Left [TypeErr (pos x) $ pack "Malformed type expression."]
+
+
+
+
+
+
+
+
+
+
+modelDefs :: SymbolTable -> Definition -> Either [BzoErr] Definition
+modelDefs syms (FuncSyntax fnid fname ftyp fdefs) =
+  let fndefs = L.map (\x -> UnresExpr (pos x) x) fdefs   -- Change this when expression modelling exists
+      tyhead = initializeTypeHeader $ pars ftyp
+      fntype = makeType syms tyhead $ def  ftyp
+      fntype'= L.head $ rights [fntype]
+      errs   = lefts [fntype]
+  in case errs of
+      [] -> Right (FuncDef fnid fname tyhead fntype' [])
+      er -> Left $ L.concat er
 
 
 
