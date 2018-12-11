@@ -547,6 +547,11 @@ data Definition
     hostfile   :: T.Text,
     typehead   :: TypeHeader,
     typedef    :: Type }
+ | TyClassDef {
+    identifier :: T.Text,
+    hostfile   :: T.Text,
+    typehead   :: TypeHeader,
+    interface  :: [(T.Text, TypeHeader, Type)] }
  | FuncSyntax {
     identifier :: T.Text,
     hostfile   :: T.Text,
