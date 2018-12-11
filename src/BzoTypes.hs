@@ -539,12 +539,14 @@ data Definition
  = FuncDef {
     identifier :: T.Text,
     hostfile   :: T.Text,
-    typedef    :: TypeHeader,
+    typehead   :: TypeHeader,
+    functype   :: Type,
     definitions:: [(T.Text, Expr)] }
  | TypeDef {
     identifier :: T.Text,
     hostfile   :: T.Text,
-    typedef    :: TypeHeader }
+    typehead   :: TypeHeader,
+    typedef    :: Type }
  | FuncSyntax {
     identifier :: T.Text,
     hostfile   :: T.Text,
@@ -570,15 +572,17 @@ data Definition
 
 
 showDefinition :: Definition -> String
-showDefinition (FuncDef fnid file tyhd defs) = "  FNDEF:\n    " ++
+showDefinition (FuncDef fnid file tyhd fty defs) = "  FNDEF:\n    " ++
                                               (show fnid)  ++ "\n    " ++
                                               (show file)  ++ "\n        " ++
                                               (show tyhd)  ++ "\n" ++
+                                              (show fty)   ++ "\n" ++
                                               (show defs)  ++ "\n"
 
-showDefinition (TypeDef tyid file defs) = "  TYDEF:\n    " ++
+showDefinition (TypeDef tyid file thd defs) = "  TYDEF:\n    " ++
                                               (show tyid)  ++ "\n    " ++
                                               (show file)  ++ "\n        " ++
+                                              (show thd)   ++ "\n" ++
                                               (show defs)  ++ "\n"
 --
 showDefinition (FuncSyntax fnid file hedr defs) = "  FNSYN:\n    " ++
@@ -626,10 +630,11 @@ type LcId = Int64   -- Local Id
 data ExprHeader = ExprHeader (M.Map LcId Atom) deriving (Eq, Show)
 
 data Expr
-  = CallExpr BzoPos  FnId  [LcId] [LcId]
-  | PhiExpr  BzoPos [FnId] [LcId] [LcId]
-  | OpExpr   BzoPos Opcode [LcId] [LcId]
-  | LetExpr  BzoPos ContextFrame  [Expr]
+  = CallExpr  BzoPos  FnId  [LcId] [LcId]
+  | PhiExpr   BzoPos [FnId] [LcId] [LcId]
+  | OpExpr    BzoPos Opcode [LcId] [LcId]
+  | LetExpr   BzoPos ContextFrame  [Expr]
+  | UnresExpr BzoPos BzoSyntax
   deriving (Show, Eq)
 
 
@@ -683,6 +688,7 @@ data TypeHeader = TyHeader (M.Map TVId Atom) deriving (Eq, Show)
 data Type
   = UnresType BzoSyntax
   | ParamType BzoPos Pattern
+  | FuncType  BzoPos Type Type
   | CmpdType  BzoPos [Type]
   | PolyType  BzoPos [Type]
   | MakeType  BzoPos [Type]
