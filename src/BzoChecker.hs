@@ -547,7 +547,16 @@ makeType st th (BzS_Str   p   s) = Right (StrType  p s)
 makeType st th (BzS_Nil   p )    = Right (VoidType p)
 makeType st th (BzS_BTId  p bit) = Right (BITyType p $ isBuiltinType bit)
 makeType st th (BzS_ArrayObj p s x) = onAllPass [makeType st th x] (\[y] -> ArryType p s y)
-makeType st th (BzS_FnTy  p i o) = onAllPass (L.map (makeType st th) [i,o]) (\[i',o'] -> FuncType p i' o')
+makeType st th (BzS_FnTy  p i o) =
+  let i' = makeType st th i
+      o' = makeType st th o
+      io = rights [i', o']
+      er = lefts  [i', o']
+  in case (er, io) of
+      ([], [it, ot]) -> Right $ FuncType p it ot
+      (er,       _ ) -> Left  $ L.concat er
+
+makeType st th (BzS_Expr  p xs)  = onAllPass (L.map (makeType st th) xs) (\ys -> MakeType p ys)
 makeType st th ty@(BzS_TyId  p   t) =
   let ids = resolveGlobalId st ty
   in case ids of
@@ -644,10 +653,10 @@ modelProgram dt@(DefinitionTable defs files ids top) =
   let syms = M.fromList $ L.map (\f -> (pack $ bfm_filepath f, makeSymbolTable dt $ bfm_filepath f)) files
       defs'= M.map (\d -> modelDefs (syms M.! (hostfile d)) d) defs
       (ermp, dfmp) = sepEitherMaps defs'
-      errs = M.elems ermp
+      errs = L.concat $ M.elems ermp
   in case errs of
       [] -> Right (DefinitionTable dfmp files ids top, syms)
-      er -> Left  $ L.concat er
+      er -> Left  er
 
 
 
@@ -664,9 +673,9 @@ checkProgram dt@(DefinitionTable defs files ids _) =
   let err0 = noOverloadTypes dt
       err1 = noUndefinedErrs dt
       dfs  = modelProgram dt
-      (dt', _) = L.head   $ rights [dfs]
-      err2     = L.concat $ lefts  [dfs]
+      dts' = rights [dfs]
+      err2 = L.concat $ lefts [dfs]
       errs = err0 ++ err1 ++ err2
-  in case errs of
-      [] -> Right dt
-      er -> Left  er
+  in case (errs, dts') of
+      ([], [(dt',_)]) -> Right dt'
+      (er, _        ) -> Left  er
