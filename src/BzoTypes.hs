@@ -703,6 +703,7 @@ data Type
   | VoidType  BzoPos
   | LtrlType  BzoPos TyId
   | TVarType  BzoPos TVId
+  | BITyType  BzoPos TyId
   | ArryType  BzoPos Integer Type
   deriving (Show, Eq)
 

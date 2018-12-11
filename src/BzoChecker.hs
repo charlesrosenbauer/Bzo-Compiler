@@ -443,9 +443,11 @@ getTypeIds (DefinitionTable defs files ids _) fname tname =
 
 -- Takes type parameters and returns an associated header
 initializeTypeHeader :: BzoSyntax -> TypeHeader
-initializeTypeHeader (BzS_Expr _ [BzS_TyVar p v])        =
+initializeTypeHeader (BzS_Undefined p) = TyHeader M.empty
+initializeTypeHeader (BzS_Expr _ [x])  = initializeTypeHeader x
+initializeTypeHeader (BzS_TyVar p v)        =
   TyHeader $ M.fromList [(1, TVrAtom p v        []                                           $ UnresType $ BzS_Undefined p)]
-initializeTypeHeader (BzS_Expr _ [BzS_FilterObj p v fs]) =
+initializeTypeHeader (BzS_FilterObj p v fs) =
   TyHeader $ M.fromList [(1, TVrAtom p (sid v) (L.map (\t -> Constraint p $ UnresType t) fs) $ UnresType $ BzS_Undefined p)]
 initializeTypeHeader (BzS_Cmpd _ vs) =
   let atoms = L.map makeAtom vs
@@ -455,6 +457,7 @@ initializeTypeHeader (BzS_Cmpd _ vs) =
           TVrAtom p      v  []                                            $ UnresType $ BzS_Undefined p
         makeAtom (BzS_FilterObj p v fs) =
           TVrAtom p (sid v) (L.map (\t -> Constraint p $ UnresType t) fs) $ UnresType $ BzS_Undefined p
+        makeAtom (BzS_Expr _ [x]) = makeAtom x
 
 
 
@@ -534,13 +537,16 @@ resolveLocalId st ctx other = L.map (\x -> (-1, x)) $ resolveGlobalId st other
 
 
 makeType :: SymbolTable -> TypeHeader -> BzoSyntax -> Either [BzoErr] Type
+makeType st th (BzS_Expr   p  [x]) = makeType st th x
+makeType st th (BzS_Statement p x) = makeType st th x
 makeType st th (BzS_Cmpd  p  xs) = onAllPass (L.map (makeType st th) xs) (\ys -> CmpdType p ys)
 makeType st th (BzS_Poly  p  xs) = onAllPass (L.map (makeType st th) xs) (\ys -> PolyType p ys)
 makeType st th (BzS_Int   p   n) = Right (IntType  p n)
 makeType st th (BzS_Flt   p   n) = Right (FltType  p n)
 makeType st th (BzS_Str   p   s) = Right (StrType  p s)
 makeType st th (BzS_Nil   p )    = Right (VoidType p)
-makeType st th (BzS_Expr  p [x]) = makeType st th x
+makeType st th (BzS_BTId  p bit) = Right (BITyType p $ isBuiltinType bit)
+makeType st th (BzS_ArrayObj p s x) = onAllPass [makeType st th x] (\[y] -> ArryType p s y)
 makeType st th (BzS_FnTy  p i o) = onAllPass (L.map (makeType st th) [i,o]) (\[i',o'] -> FuncType p i' o')
 makeType st th ty@(BzS_TyId  p   t) =
   let ids = resolveGlobalId st ty
@@ -557,7 +563,8 @@ makeType st (TyHeader tvs) (BzS_TyVar p   v) =
       [x] -> Right (TVarType p x)
       xs  -> Left [TypeErr p $ pack ("Ambiguous reference to type variable" ++ (unpack v) ++ ".")]
 
-makeType st th x = Left [TypeErr (pos x) $ pack "Malformed type expression."]
+makeType st th ty@(BzS_Undefined _) = Right (UnresType ty)
+makeType st th x = Left [TypeErr (pos x) $ pack $ "Malformed type expression: " ++ show x]
 
 
 
@@ -569,16 +576,38 @@ makeType st th x = Left [TypeErr (pos x) $ pack "Malformed type expression."]
 
 
 modelDefs :: SymbolTable -> Definition -> Either [BzoErr] Definition
-modelDefs syms (FuncSyntax fnid fname ftyp fdefs) =
+modelDefs syms (FuncSyntax fnid fname (BzS_Undefined p) fdefs) =
   let fndefs = L.map (\x -> UnresExpr (pos x) x) fdefs   -- Change this when expression modelling exists
-      tyhead = initializeTypeHeader $ pars ftyp
-      fntype = makeType syms tyhead $ def  ftyp
+      tyhead = TyHeader M.empty
+      fntype = UnresType $ BzS_Expr p fdefs
+  in Right (FuncDef fnid fname tyhead fntype [])
+
+modelDefs syms (FuncSyntax fnid fname ftyp@(BzS_FnTypeDef _ ps _ tdef) fdefs) =
+  let fndefs = L.map (\x -> UnresExpr (pos x) x) fdefs   -- Change this when expression modelling exists
+      tyhead = initializeTypeHeader ps
+      fntype = makeType syms tyhead tdef
       fntype'= L.head $ rights [fntype]
       errs   = lefts [fntype]
   in case errs of
       [] -> Right (FuncDef fnid fname tyhead fntype' [])
       er -> Left $ L.concat er
 
+modelDefs syms (TypeSyntax tyid fname (BzS_TypDef p pars _ typ)) =
+  let tyhead = initializeTypeHeader pars
+      tydef  = makeType syms tyhead typ
+      tydef' = L.head $ rights [tydef]
+      errs   = lefts [tydef]
+  in case errs of
+      [] -> Right (TypeDef tyid fname tyhead tydef')
+      er -> Left $ L.concat er
+
+modelDefs syms (TyClassSyntax tcid fname (BzS_TyClassDef p pars _ defs)) =
+  let tyhead = initializeTypeHeader pars
+      tcdefs = []     -- Add this later. There'll be some complications with multiple type headers here.
+      errs   = []
+  in case errs of
+      [] -> Right (TyClassDef tcid fname tyhead tcdefs)
+      er -> Left er
 
 
 
@@ -610,11 +639,34 @@ modelDefs syms (FuncSyntax fnid fname ftyp fdefs) =
 
 
 
+modelProgram :: DefinitionTable -> Either [BzoErr] (DefinitionTable, M.Map Text SymbolTable)
+modelProgram dt@(DefinitionTable defs files ids top) =
+  let syms = M.fromList $ L.map (\f -> (pack $ bfm_filepath f, makeSymbolTable dt $ bfm_filepath f)) files
+      defs'= M.map (\d -> modelDefs (syms M.! (hostfile d)) d) defs
+      (ermp, dfmp) = sepEitherMaps defs'
+      errs = M.elems ermp
+  in case errs of
+      [] -> Right (DefinitionTable dfmp files ids top, syms)
+      er -> Left  $ L.concat er
+
+
+
+
+
+
+
+
+
+
+
 checkProgram :: DefinitionTable -> Either [BzoErr] DefinitionTable
 checkProgram dt@(DefinitionTable defs files ids _) =
   let err0 = noOverloadTypes dt
       err1 = noUndefinedErrs dt
-      errs = err0 ++ err1
+      dfs  = modelProgram dt
+      (dt', _) = L.head   $ rights [dfs]
+      err2     = L.concat $ lefts  [dfs]
+      errs = err0 ++ err1 ++ err2
   in case errs of
       [] -> Right dt
       er -> Left  er
