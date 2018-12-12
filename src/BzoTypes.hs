@@ -688,7 +688,7 @@ data Pattern
 
 
 
-data TypeHeader = TyHeader (M.Map TVId Atom) deriving (Eq, Show)
+data TypeHeader = TyHeader { tvarmap :: M.Map TVId Atom } deriving (Eq, Show)
 
 data Type
   = UnresType BzoSyntax

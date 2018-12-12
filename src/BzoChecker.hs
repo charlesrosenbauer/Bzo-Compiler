@@ -445,10 +445,13 @@ getTypeIds (DefinitionTable defs files ids _) fname tname =
 initializeTypeHeader :: BzoSyntax -> TypeHeader
 initializeTypeHeader (BzS_Undefined p) = TyHeader M.empty
 initializeTypeHeader (BzS_Expr _ [x])  = initializeTypeHeader x
+
 initializeTypeHeader (BzS_TyVar p v)        =
   TyHeader $ M.fromList [(1, TVrAtom p v        []                                           $ UnresType $ BzS_Undefined p)]
+
 initializeTypeHeader (BzS_FilterObj p v fs) =
   TyHeader $ M.fromList [(1, TVrAtom p (sid v) (L.map (\t -> Constraint p $ UnresType t) fs) $ UnresType $ BzS_Undefined p)]
+
 initializeTypeHeader (BzS_Cmpd _ vs) =
   let atoms = L.map makeAtom vs
   in  TyHeader $ M.fromList $ L.zip [1..] atoms
@@ -458,6 +461,31 @@ initializeTypeHeader (BzS_Cmpd _ vs) =
         makeAtom (BzS_FilterObj p v fs) =
           TVrAtom p (sid v) (L.map (\t -> Constraint p $ UnresType t) fs) $ UnresType $ BzS_Undefined p
         makeAtom (BzS_Expr _ [x]) = makeAtom x
+
+initializeTypeHeader (BzS_FnTypeDef _ ps _ (BzS_FnTy _ i o)) =
+  let tyhead = initializeTypeHeader ps
+
+      tvars :: [(Text, BzoPos)]
+      tvars  = (getTVars i) ++ (getTVars o)
+
+      vnames :: S.Set Text
+      vnames = S.fromList $ L.map fst tvars
+
+      tvatms :: [Atom]
+      tvatms = L.map (\(v,p) -> TVrAtom p v [] $ UnresType $ BzS_Undefined p) tvars
+      tvatms'= L.filter (\(TVrAtom _ x _ _) -> not $ S.member x vnames) tvatms
+
+      key :: Int64
+      key    = L.maximum $ [0] ++ (M.keys $ tvarmap tyhead)
+
+      tvsold :: [(TVId, Atom)]
+      tvsold = M.assocs $ tvarmap tyhead
+
+      tvsnew :: [(TVId, Atom)]
+      tvsnew = L.zip (L.map (key+) [1..]) tvatms'
+
+  in TyHeader (M.fromList $ tvsold ++ tvsnew)
+
 
 
 
@@ -593,7 +621,7 @@ modelDefs syms (FuncSyntax fnid fname (BzS_Undefined p) fdefs) =
 
 modelDefs syms (FuncSyntax fnid fname ftyp@(BzS_FnTypeDef _ ps _ tdef) fdefs) =
   let fndefs = L.map (\x -> UnresExpr (pos x) x) fdefs   -- Change this when expression modelling exists
-      tyhead = initializeTypeHeader ps
+      tyhead = initializeTypeHeader ftyp
       fntype = makeType syms tyhead tdef
       fntype'= L.head $ rights [fntype]
       errs   = lefts [fntype]
