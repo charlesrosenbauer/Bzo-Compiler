@@ -462,7 +462,7 @@ initializeTypeHeader (BzS_Cmpd _ vs) =
           TVrAtom p (sid v) (L.map (\t -> Constraint p $ UnresType t) fs) $ UnresType $ BzS_Undefined p
         makeAtom (BzS_Expr _ [x]) = makeAtom x
 
-initializeTypeHeader (BzS_FnTypeDef _ ps _ (BzS_FnTy _ i o)) =
+initializeTypeHeader (BzS_FnTypeDef _ ps fn (BzS_FnTy _ i o)) =
   let tyhead = initializeTypeHeader ps
 
       tvars :: [(Text, BzoPos)]
@@ -473,7 +473,7 @@ initializeTypeHeader (BzS_FnTypeDef _ ps _ (BzS_FnTy _ i o)) =
 
       tvatms :: [Atom]
       tvatms = L.map (\(v,p) -> TVrAtom p v [] $ UnresType $ BzS_Undefined p) tvars
-      tvatms'= L.filter (\(TVrAtom _ x _ _) -> not $ S.member x vnames) tvatms
+      tvatms'= L.nubBy (\(TVrAtom _ a _ _) (TVrAtom _ b _ _) -> a == b) $ L.filter (\(TVrAtom _ x _ _) -> S.member x vnames) tvatms
 
       key :: Int64
       key    = L.maximum $ [0] ++ (M.keys $ tvarmap tyhead)
@@ -484,7 +484,10 @@ initializeTypeHeader (BzS_FnTypeDef _ ps _ (BzS_FnTy _ i o)) =
       tvsnew :: [(TVId, Atom)]
       tvsnew = L.zip (L.map (key+) [1..]) tvatms'
 
-  in TyHeader (M.fromList $ tvsold ++ tvsnew)
+      tvsall :: [(TVId, Atom)] -- nubbing this probably isn't going to be a perfect solution; it could wind up tossing values with constraints and keeping constraint-less versions.
+      tvsall = L.nubBy (\(_, (TVrAtom _ a _ _)) (_, (TVrAtom _ b _ _)) -> a == b) $ tvsold ++ tvsnew
+
+  in TyHeader $ M.fromList tvsall
 
 
 
@@ -598,7 +601,7 @@ makeType st (TyHeader tvs) (BzS_TyVar p   v) =
   in case ids of
       []  -> Left [TypeErr p $ pack ("Type Variable " ++ (unpack v) ++ " is not defined in the type header.")]
       [x] -> Right (TVarType p x)
-      xs  -> Left [TypeErr p $ pack ("Ambiguous reference to type variable" ++ (unpack v) ++ ".")]
+      xs  -> Left [TypeErr p $ pack ("Ambiguous reference to type variable " ++ (unpack v) ++ ".")]
 
 makeType st th ty@(BzS_Undefined _) = Right (UnresType ty)
 makeType st th x = Left [TypeErr (pos x) $ pack $ "Malformed type expression: " ++ show x]
