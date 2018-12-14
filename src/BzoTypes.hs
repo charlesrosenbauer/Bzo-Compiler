@@ -589,6 +589,12 @@ showDefinition (TypeDef tyid file thd defs) = "  TYDEF:\n    " ++
                                               (show file)  ++ "\n        " ++
                                               (show thd)   ++ "\n" ++
                                               (show defs)  ++ "\n"
+
+showDefinition (TyClassDef tcid file thd ifac) = "  TCDEF:\n    " ++
+                                              (show tcid)  ++ "\n    " ++
+                                              (show file)  ++ "\n        " ++
+                                              (show thd)   ++ "\n" ++
+                                              (show ifac)  ++ "\n"
 --
 showDefinition (FuncSyntax fnid file hedr defs) = "  FNSYN:\n    " ++
                                               (show fnid)  ++ "\n    " ++
