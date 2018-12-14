@@ -484,8 +484,8 @@ initializeTypeHeader (BzS_FnTypeDef _ ps fn (BzS_FnTy _ i o)) =
       tvsnew :: [(TVId, Atom)]
       tvsnew = L.zip (L.map (key+) [1..]) tvatms'
 
-      tvsall :: [(TVId, Atom)] -- nubbing this probably isn't going to be a perfect solution; it could wind up tossing values with constraints and keeping constraint-less versions.
-      tvsall = L.nubBy (\(_, (TVrAtom _ a _ _)) (_, (TVrAtom _ b _ _)) -> a == b) $ tvsold ++ tvsnew
+      tvsall :: [(TVId, Atom)] -- I don't fully trust the nub here, but it seems to mostly work.
+      tvsall = L.nubBy (\(_, (TVrAtom _ a _ _)) (_, (TVrAtom _ b [] _)) -> a == b) $ tvsold ++ tvsnew
 
   in TyHeader $ M.fromList tvsall
 

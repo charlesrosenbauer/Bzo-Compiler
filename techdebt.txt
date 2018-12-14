@@ -1,0 +1,10 @@
+
+
+12/13/18:
+initializeTypeHeader in BzoChecker.hs uses nubBy to remove redundant references
+to type variables. I don't trust the implementation. It makes some assumptions
+with nubBy and the ordering of the list.
+
+The exact details seem to barely check out from my analysis, though I'm not
+reasoning about it too deeply at the moment. Just keep an eye on this in cases
+of errors with type variables with missing constraints.
