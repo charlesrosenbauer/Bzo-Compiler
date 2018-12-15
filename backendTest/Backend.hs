@@ -10,6 +10,25 @@ import System.IO
 
 
 
+data Expression
+  = FnCall Int Int [Int]
+  | Add    Int [Int]
+  | Sub    Int [Int]
+  | Mul    Int [Int]
+  | Div    Int [Int]
+  | Mod    Int [Int]
+  | IntLit Int Int
+  | FltLit Int Double
+
+
+
+
+
+
+
+
+
+
 printHeader :: String -> [String] -> String
 printHeader mname imports =
   "package " ++ mname ++ "\n\n" ++
