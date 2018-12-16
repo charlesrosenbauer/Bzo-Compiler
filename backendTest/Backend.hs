@@ -11,14 +11,53 @@ import System.IO
 
 
 data Expression
-  = FnCall Int Int [Int]
-  | Add    Int [Int]
-  | Sub    Int [Int]
-  | Mul    Int [Int]
-  | Div    Int [Int]
-  | Mod    Int [Int]
-  | IntLit Int Int
-  | FltLit Int Double
+  = FnCall [Int]  Int  [Int]
+  | Add     Int  [Int]
+  | Sub     Int  [Int]
+  | Mul     Int  [Int]
+  | Div     Int  [Int]
+  | Mod     Int  [Int]
+  | IntLit  Int   Int
+  | FltLit  Int   Double
+
+
+
+
+
+
+
+
+
+
+printFunc :: Int -> String
+printFunc 0 = "main"
+printFunc x = "F" ++ (show x)
+
+
+
+
+
+
+
+
+
+
+printType :: Int -> String
+printType 0 = "interface{}"
+printType x = "T" ++ (show x)
+
+
+
+
+
+
+
+
+
+
+printVar  :: Int -> String
+printVar 0 = "_"
+printVar x = "v" ++ (show x)
 
 
 
