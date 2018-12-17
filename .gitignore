@@ -2,4 +2,8 @@ src/*.hi
 src/*.o
 bin/bzo
 dist
-CodeGenTest/dist
+backendTest/*.hi
+backendTest/*.o
+backendTest/output
+backendTest/*.go
+backendTest/backend
