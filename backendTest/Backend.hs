@@ -70,6 +70,18 @@ printInter str xs = (concat $ intersperse str (map printVar xs))
 
 
 
+printDef :: (Int, Int) -> String
+printDef (v, t) = (printVar v) ++ " " ++ (printType t)
+
+
+
+
+
+
+
+
+
+
 printExpr :: Expression -> String
 printExpr (Add   q is) = (printVar q) ++ " := " ++ (printInter "+" is) ++ "\n"
 printExpr (Sub   q is) = (printVar q) ++ " := " ++ (printInter "-" is) ++ "\n"
@@ -170,7 +182,6 @@ printFnHeader fid ins exs =
 
 
 
--- Later, add contents parameter
 printFn :: Int -> [(Int, Int)] -> [(Int, Int)] -> [Expression] -> String
 printFn fid ins exs exprs =
   printFnHeader fid ins exs ++ (concatMap printExpr exprs) ++ "return\n}\n"
@@ -180,9 +191,30 @@ printFn fid ins exs exprs =
 
 
 
+
+
+
+
+printTy :: Int -> [(Int, Int)] -> String
+printTy tid fields =
+  "type T" ++ (show tid) ++ " struct {\n" ++
+  (concat $ intersperse "\n" $ map printDef fields) ++ "\n}\n"
+
+
+
+
+
+
+
+
+
+
+
+
 main :: IO ()
 main = do
   writeFile "output.go" ((printHeader "main" ["fmt"]) ++
+    (printTy 1 [(1, -1), (2, -2)]) ++
     (printFn 0 [] [] [(IntLit 1 1), (IntLit 2 2), (FnCall [3] 1 [1, 2]), (StrLit 4 "1 + 2 ="), (BICall [] "fmt.Println" [4, 3])]) ++
     (printFn 1 [(1, -4), (2, -4)] [(3, -4)] [(Add 4 [1, 2]), (Set 3 4)]))
   callCommand "go build output.go"
