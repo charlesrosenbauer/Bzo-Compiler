@@ -1,5 +1,6 @@
 module Main where
 import System.IO
+import System.Process
 import Data.List
 
 
@@ -180,7 +181,8 @@ printFn fid ins exs exprs =
 
 
 main :: IO ()
-main =
+main = do
   writeFile "output.go" ((printHeader "main" ["fmt"]) ++
     (printFn 0 [] [] [(IntLit 1 1), (IntLit 2 2), (FnCall [3] 1 [1, 2]), (StrLit 4 "1 + 2 ="), (BICall [] "fmt.Println" [4, 3])]) ++
     (printFn 1 [(1, -4), (2, -4)] [(3, -4)] [(Add 4 [1, 2]), (Set 3 4)]))
+  callCommand "go build output.go"
