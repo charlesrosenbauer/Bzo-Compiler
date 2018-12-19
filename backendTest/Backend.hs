@@ -25,6 +25,8 @@ data Expression
   | BICall [Int] String [Int]
   | Set     Int   Int
   | Struct  Int   Int   [Int]
+  | Ref     Int   Int
+  | Deref   Int   Int
 
 
 
@@ -98,6 +100,8 @@ printExpr (BICall [] fn is) = fn ++ (printPars is) ++ "\n"
 printExpr (BICall qs fn is) = (printRets qs) ++ fn ++ (printPars is) ++ "\n"
 printExpr (Set    q i) = (printVar q) ++ " = " ++ (printVar i) ++ "\n"
 printExpr (Struct q t xs)   = (printVar q) ++ " := " ++ (printType t) ++ "{" ++ (printInter ", " xs) ++ "}\n"
+printExpr (Ref    q i) = (printVar q) ++ " := &" ++ (printVar i) ++ "\n"
+printExpr (Deref  q i) = (printVar q) ++ " := *" ++ (printVar i) ++ "\n"
 
 
 
@@ -121,12 +125,20 @@ printFunc x = "F" ++ (show x)
 
 
 printType :: Int -> String
-printType (-1) = "int8"
-printType (-2) = "int16"
-printType (-3) = "int32"
-printType (-4) = "int64"
-printType   0  = "interface{}"
-printType   x  = "T" ++ (show x)
+printType (-1 ) = "int8"
+printType (-2 ) = "int16"
+printType (-3 ) = "int32"
+printType (-4 ) = "int64"
+printType (-5 ) = "uint8"
+printType (-6 ) = "uint16"
+printType (-7 ) = "uint32"
+printType (-8 ) = "uint64"
+printType (-9 ) = "string"
+printType (-10) = "bool"
+printType (-11) = "float32"
+printType (-12) = "float64"
+printType    0  = "interface{}"
+printType    x  = "T" ++ (show x)
 
 
 
