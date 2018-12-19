@@ -24,6 +24,7 @@ data Expression
   | StrLit  Int   String
   | BICall [Int] String [Int]
   | Set     Int   Int
+  | Struct  Int   Int   [Int]
 
 
 
@@ -83,11 +84,11 @@ printDef (v, t) = (printVar v) ++ " " ++ (printType t)
 
 
 printExpr :: Expression -> String
-printExpr (Add   q is) = (printVar q) ++ " := " ++ (printInter "+" is) ++ "\n"
-printExpr (Sub   q is) = (printVar q) ++ " := " ++ (printInter "-" is) ++ "\n"
-printExpr (Mul   q is) = (printVar q) ++ " := " ++ (printInter "*" is) ++ "\n"
-printExpr (Div   q is) = (printVar q) ++ " := " ++ (printInter "/" is) ++ "\n"
-printExpr (Mod   q is) = (printVar q) ++ " := " ++ (printInter "%" is) ++ "\n"
+printExpr (Add   q is) = (printVar q) ++ " := " ++ (printInter " + " is) ++ "\n"
+printExpr (Sub   q is) = (printVar q) ++ " := " ++ (printInter " - " is) ++ "\n"
+printExpr (Mul   q is) = (printVar q) ++ " := " ++ (printInter " * " is) ++ "\n"
+printExpr (Div   q is) = (printVar q) ++ " := " ++ (printInter " / " is) ++ "\n"
+printExpr (Mod   q is) = (printVar q) ++ " := " ++ (printInter " % " is) ++ "\n"
 printExpr (IntLit q i) = (printVar q) ++ " := int64(" ++ (show i) ++ ")\n"
 printExpr (FltLit q f) = (printVar q) ++ " := float64(" ++ (show f) ++ ")\n"
 printExpr (StrLit q s) = (printVar q) ++ " := \"" ++ s ++ "\"\n"
@@ -96,6 +97,7 @@ printExpr (FnCall qs fn is) = (printRets qs) ++ (printFunc fn) ++ (printPars is)
 printExpr (BICall [] fn is) = fn ++ (printPars is) ++ "\n"
 printExpr (BICall qs fn is) = (printRets qs) ++ fn ++ (printPars is) ++ "\n"
 printExpr (Set    q i) = (printVar q) ++ " = " ++ (printVar i) ++ "\n"
+printExpr (Struct q t xs)   = (printVar q) ++ " := " ++ (printType t) ++ "{" ++ (printInter ", " xs) ++ "}\n"
 
 
 
@@ -214,7 +216,7 @@ printTy tid fields =
 main :: IO ()
 main = do
   writeFile "output.go" ((printHeader "main" ["fmt"]) ++
-    (printTy 1 [(1, -1), (2, -2)]) ++
+    (printTy 1 [(1, -4), (2, -4)]) ++
     (printFn 0 [] [] [(IntLit 1 1), (IntLit 2 2), (FnCall [3] 1 [1, 2]), (StrLit 4 "1 + 2 ="), (BICall [] "fmt.Println" [4, 3])]) ++
-    (printFn 1 [(1, -4), (2, -4)] [(3, -4)] [(Add 4 [1, 2]), (Set 3 4)]))
+    (printFn 1 [(1, -4), (2, -4)] [(3, -4)] [(Add 4 [1, 2]), (Set 3 4), (Struct 5 1 [1, 2]), (Set 0 5)]))
   callCommand "go build output.go"
