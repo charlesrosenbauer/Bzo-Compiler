@@ -541,7 +541,7 @@ data Definition
     hostfile   :: T.Text,
     typehead   :: TypeHeader,
     functype   :: Type,
-    definitions:: [(T.Text, Expr)] }
+    definitions:: [(Pattern, Expr)] }
  | TypeDef {
     identifier :: T.Text,
     hostfile   :: T.Text,
@@ -682,6 +682,7 @@ data Pattern
   | FltPtrn   BzoPos Double
   | StrPtrn   BzoPos T.Text
   | WildPtrn  BzoPos
+  | ParamPtrn BzoPos Pattern Pattern
   | UnresPtrn BzoSyntax
   deriving (Show, Eq)
 

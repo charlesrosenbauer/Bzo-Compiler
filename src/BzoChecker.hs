@@ -485,7 +485,7 @@ initializeTypeHeader (BzS_FnTypeDef _ ps fn (BzS_FnTy _ i o)) =
       tvsnew = L.zip (L.map (key+) [1..]) tvatms'
 
       tvsall :: [(TVId, Atom)] -- I don't fully trust the nub here, but it seems to mostly work.
-      tvsall = L.nubBy (\(_, (TVrAtom _ a _ _)) (_, (TVrAtom _ b [] _)) -> a == b) $ tvsold ++ tvsnew
+      tvsall = L.nubBy (\(_, (TVrAtom _ a _ _)) (_, (TVrAtom _ b _ _)) -> a == b) $ tvsold ++ tvsnew
 
   in TyHeader $ M.fromList tvsall
 
@@ -615,21 +615,38 @@ makeType st th x = Left [TypeErr (pos x) $ pack $ "Malformed type expression: " 
 
 
 
+modelFuncExpr :: SymbolTable -> BzoSyntax -> (Pattern, Expr)
+modelFuncExpr syms (BzS_FunDef p ips fnid xps def) =
+  let ips' = (UnresPtrn ips)
+      xps' = (UnresPtrn xps)
+      def' = (UnresExpr (pos def) def)
+      pat  = (ParamPtrn p ips' xps')
+  in (pat, def')
+
+
+
+
+
+
+
+
+
+
 modelDefs :: SymbolTable -> Definition -> Either [BzoErr] Definition
 modelDefs syms (FuncSyntax fnid fname (BzS_Undefined p) fdefs) =
-  let fndefs = L.map (\x -> UnresExpr (pos x) x) fdefs   -- Change this when expression modelling exists
+  let fndefs = L.map (modelFuncExpr syms) fdefs   -- Change this when expression modelling exists
       tyhead = TyHeader M.empty
       fntype = UnresType $ BzS_Expr p fdefs
-  in Right (FuncDef fnid fname tyhead fntype [])
+  in Right (FuncDef fnid fname tyhead fntype fndefs)
 
 modelDefs syms (FuncSyntax fnid fname ftyp@(BzS_FnTypeDef _ ps _ tdef) fdefs) =
-  let fndefs = L.map (\x -> UnresExpr (pos x) x) fdefs   -- Change this when expression modelling exists
+  let fndefs = L.map (modelFuncExpr syms) fdefs   -- Change this when expression modelling exists
       tyhead = initializeTypeHeader ftyp
       fntype = makeType syms tyhead tdef
       fntype'= L.head $ rights [fntype]
       errs   = lefts [fntype]
   in case errs of
-      [] -> Right (FuncDef fnid fname tyhead fntype' [])
+      [] -> Right (FuncDef fnid fname tyhead fntype' fndefs)
       er -> Left $ L.concat er
 
 modelDefs syms (TypeSyntax tyid fname (BzS_TypDef p pars _ typ)) =
