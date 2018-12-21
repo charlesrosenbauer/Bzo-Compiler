@@ -454,7 +454,7 @@ lexSymbol =
   (lexStringToToken (pack ":")  (\p -> TkSepExpr   p)) <|>
   (lexStringToToken (pack ",")  (\p -> TkSepPoly   p)) <|>
   (lexStringToToken (pack "_")  (\p -> TkWildcard  p)) <|>
-  (lexStringToToken (pack "`")  (\p -> TkCurrySym  p)) <|>
+  --(lexStringToToken (pack "`")  (\p -> TkCurrySym  p)) <|>
   (lexStringToToken (pack "@")  (\p -> TkReference p))
 
 
@@ -467,7 +467,7 @@ lexSymbol =
 
 
 isLegalChar :: Char -> Bool
-isLegalChar c = (isPrint c) && (not $ isSpace c) && (not $ elem c "~@_#()[]{}:;\'\",`.")
+isLegalChar c = (isPrint c) && (not $ isSpace c) && (not $ elem c "~@_#()[]{}:;\'\",.")
 
 
 
