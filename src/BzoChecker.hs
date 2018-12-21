@@ -615,13 +615,13 @@ makeType st th x = Left [TypeErr (pos x) $ pack $ "Malformed type expression: " 
 
 
 
-modelFuncExpr :: SymbolTable -> BzoSyntax -> (Pattern, Expr)
+modelFuncExpr :: SymbolTable -> BzoSyntax -> Either [BzoErr] (Pattern, Expr)
 modelFuncExpr syms (BzS_FunDef p ips fnid xps def) =
   let ips' = (UnresPtrn ips)
       xps' = (UnresPtrn xps)
       def' = (UnresExpr (pos def) def)
       pat  = (ParamPtrn p ips' xps')
-  in (pat, def')
+  in Right (pat, def')
 
 
 
@@ -635,18 +635,24 @@ modelFuncExpr syms (BzS_FunDef p ips fnid xps def) =
 modelDefs :: SymbolTable -> Definition -> Either [BzoErr] Definition
 modelDefs syms (FuncSyntax fnid fname (BzS_Undefined p) fdefs) =
   let fndefs = L.map (modelFuncExpr syms) fdefs   -- Change this when expression modelling exists
+      fnerrs = lefts  fndefs
+      fndefs'= rights fndefs
       tyhead = TyHeader M.empty
       fntype = UnresType $ BzS_Expr p fdefs
-  in Right (FuncDef fnid fname tyhead fntype fndefs)
+  in case fnerrs of
+      [] -> Right (FuncDef fnid fname tyhead fntype fndefs')
+      _  -> Left  $ L.concat fnerrs
 
 modelDefs syms (FuncSyntax fnid fname ftyp@(BzS_FnTypeDef _ ps _ tdef) fdefs) =
   let fndefs = L.map (modelFuncExpr syms) fdefs   -- Change this when expression modelling exists
+      fnerrs = lefts  fndefs
+      fndefs'= rights fndefs
       tyhead = initializeTypeHeader ftyp
       fntype = makeType syms tyhead tdef
       fntype'= L.head $ rights [fntype]
       errs   = lefts [fntype]
-  in case errs of
-      [] -> Right (FuncDef fnid fname tyhead fntype' fndefs)
+  in case (errs ++ fnerrs) of
+      [] -> Right (FuncDef fnid fname tyhead fntype' fndefs')
       er -> Left $ L.concat er
 
 modelDefs syms (TypeSyntax tyid fname (BzS_TypDef p pars _ typ)) =
