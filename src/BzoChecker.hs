@@ -615,6 +615,19 @@ makeType st th x = Left [TypeErr (pos x) $ pack $ "Malformed type expression: " 
 
 
 
+data ValNest
+      = ValNest BzoPos [ValNest]
+      | ValAtom BzoPos Int Type
+
+
+
+
+
+
+
+
+
+
 modelFuncExpr :: SymbolTable -> BzoSyntax -> Either [BzoErr] (Pattern, Expr)
 modelFuncExpr syms (BzS_FunDef p ips fnid xps def) =
   let ips' = (UnresPtrn ips)
