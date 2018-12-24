@@ -143,22 +143,17 @@ Some Function definitions
 f..
 Map f to array
 
+x [_, y] [q, r]
+Hole expressions; values can be propagated through the expression using holes.
 
-x`f
-Partial application of f; behaves like a new function with x applied to the last argument of f.
-Due to ambiguities arising from the type system, all parameters but the first one must be passed in this way.
+[a, c] [_, b, _, d] [w, x, y, z]
+Holes can even be used for filling complex patterns.
 
-4 5`+
-Passing 4 into an addition function partially applied with 5. Returns 9.
+[+: a, b]
+For readability, expressions may also be formatted in a kind of prefix notation.
 
-a b`12`%+
-Here b and 12 is applied to %+, a modular addition function. This expression is desugared to (a. b. 12) %+.
-
-[a, b] c`%+
-This code is not a valid alternative however.
-
-a b c`%+
-Neither is this. Only one parameter must remain after partial application.
+xs sort [take: 5, _] ys
+Holes can be included in prefix expressions.
 
 
 ()
