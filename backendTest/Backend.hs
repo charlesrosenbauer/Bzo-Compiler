@@ -124,6 +124,20 @@ printFunc x = "F" ++ (show x)
 
 
 
+data Type
+  = BaseType    Int
+  | ArrayType   Int Type
+  | PointerType Type
+
+
+
+
+
+
+
+
+
+
 printType :: Int -> String
 printType (-1 ) = "int8"
 printType (-2 ) = "int16"
@@ -140,6 +154,20 @@ printType (-12) = "float64"
 printType    0  = "interface{}"
 printType    x  = "T" ++ (show x)
 
+
+
+
+
+
+
+
+
+
+printFullType :: Type -> String
+printFullType (BaseType    t) = printType t
+printFullType (ArrayType 0 t) = "[]" ++ (printFullType t)
+printFullType (ArrayType x t) = "["  ++ (show x) ++ "]" ++ (printFullType t)
+printFullType (PointerType t) = "*"  ++ (printFullType t)
 
 
 
