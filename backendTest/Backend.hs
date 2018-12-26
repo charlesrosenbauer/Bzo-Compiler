@@ -27,6 +27,7 @@ data Expression
   | Struct  Int   Int   [Int]
   | Ref     Int   Int
   | Deref   Int   Int
+  | Phi    [Int] [Int] Int Int Int
 
 
 
@@ -102,6 +103,7 @@ printExpr (Set    q i) = (printVar q) ++ " = " ++ (printVar i) ++ "\n"
 printExpr (Struct q t xs)   = (printVar q) ++ " := " ++ (printType t) ++ "{" ++ (printInter ", " xs) ++ "}\n"
 printExpr (Ref    q i) = (printVar q) ++ " := &" ++ (printVar i) ++ "\n"
 printExpr (Deref  q i) = (printVar q) ++ " := *" ++ (printVar i) ++ "\n"
+printExpr (Phi    qs is c f g) = "if " ++ (printVar c) ++ "{\n" ++ (printExpr (FnCall qs f is)) ++ "}else{\n" ++ (printExpr (FnCall qs g is)) ++ "}\n"
 
 
 
