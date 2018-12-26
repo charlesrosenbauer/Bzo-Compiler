@@ -19,6 +19,21 @@ data Expression
   | Mul     Int  [Int]
   | Div     Int  [Int]
   | Mod     Int  [Int]
+  | Less    Int   Int  Int
+  | Grtr    Int   Int  Int
+  | LsEq    Int   Int  Int
+  | GtEq    Int   Int  Int
+  | Eq      Int   Int  Int
+  | NEq     Int   Int  Int
+  | And     Int  [Int]
+  | Or      Int  [Int]
+  | Xor     Int  [Int]
+  | Not     Int   Int
+  | Shl     Int  [Int]
+  | Shr     Int  [Int]
+  | LAnd    Int  [Int]
+  | LOr     Int  [Int]
+  | LNot    Int   Int
   | IntLit  Int   Int
   | FltLit  Int   Double
   | StrLit  Int   String
@@ -92,6 +107,21 @@ printExpr (Sub   q is) = (printVar q) ++ " := " ++ (printInter " - " is) ++ "\n"
 printExpr (Mul   q is) = (printVar q) ++ " := " ++ (printInter " * " is) ++ "\n"
 printExpr (Div   q is) = (printVar q) ++ " := " ++ (printInter " / " is) ++ "\n"
 printExpr (Mod   q is) = (printVar q) ++ " := " ++ (printInter " % " is) ++ "\n"
+printExpr (Less q a b) = (printVar q) ++ " := " ++ (printVar a) ++ " < " ++ (printVar b) ++ "\n"
+printExpr (Grtr q a b) = (printVar q) ++ " := " ++ (printVar a) ++ " > " ++ (printVar b) ++ "\n"
+printExpr (LsEq q a b) = (printVar q) ++ " := " ++ (printVar a) ++ " <= " ++ (printVar b) ++ "\n"
+printExpr (GtEq q a b) = (printVar q) ++ " := " ++ (printVar a) ++ " >= " ++ (printVar b) ++ "\n"
+printExpr (Eq   q a b) = (printVar q) ++ " := " ++ (printVar a) ++ " == " ++ (printVar b) ++ "\n"
+printExpr (NEq  q a b) = (printVar q) ++ " := " ++ (printVar a) ++ " != " ++ (printVar b) ++ "\n"
+printExpr (And   q is) = (printVar q) ++ " := " ++ (printInter " & " is) ++ "\n"
+printExpr (Or   q is) = (printVar q) ++ " := " ++ (printInter " | " is) ++ "\n"
+printExpr (Xor   q is) = (printVar q) ++ " := " ++ (printInter " ^ " is) ++ "\n"
+printExpr (Not   q i ) = (printVar q) ++ " := " ++ "^"   ++ (printVar i) ++ "\n"
+printExpr (Shl   q is) = (printVar q) ++ " := " ++ (printInter " >> " is) ++ "\n"
+printExpr (Shr   q is) = (printVar q) ++ " := " ++ (printInter " << " is) ++ "\n"
+printExpr (LAnd  q is) = (printVar q) ++ " := " ++ (printInter " && " is) ++ "\n"
+printExpr (LOr   q is) = (printVar q) ++ " := " ++ (printInter " || " is) ++ "\n"
+printExpr (LNot  q i ) = (printVar q) ++ " := " ++ "!" ++ (printVar i) ++ "\n"
 printExpr (IntLit q i) = (printVar q) ++ " := int64(" ++ (show i) ++ ")\n"
 printExpr (FltLit q f) = (printVar q) ++ " := float64(" ++ (show f) ++ ")\n"
 printExpr (StrLit q s) = (printVar q) ++ " := \"" ++ s ++ "\"\n"
