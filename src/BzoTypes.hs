@@ -541,16 +541,19 @@ data Definition
     hostfile   :: T.Text,
     typehead   :: TypeHeader,
     functype   :: Type,
+    properties :: [DefProperty],
     definitions:: [(Pattern, Expr)] }
  | TypeDef {
     identifier :: T.Text,
     hostfile   :: T.Text,
     typehead   :: TypeHeader,
+    properties :: [DefProperty],
     typedef    :: Type }
  | TyClassDef {
     identifier :: T.Text,
     hostfile   :: T.Text,
     typehead   :: TypeHeader,
+    properties :: [DefProperty],
     interface  :: [(T.Text, TypeHeader, Type)] }
  | FuncSyntax {
     identifier :: T.Text,
@@ -576,24 +579,41 @@ data Definition
 
 
 
+data DefProperty
+  = AliasDef Int
+  | ConstDef [Atom]
+  deriving (Eq, Show)
+
+
+
+
+
+
+
+
+
+
 showDefinition :: Definition -> String
-showDefinition (FuncDef fnid file tyhd fty defs) = "  FNDEF:\n    " ++
+showDefinition (FuncDef fnid file tyhd fty prs defs) = "  FNDEF:\n    " ++
                                               (show fnid)  ++ "\n    " ++
                                               (show file)  ++ "\n        " ++
                                               (show tyhd)  ++ "\n" ++
                                               (show fty)   ++ "\n" ++
+                                              (show prs)   ++ "\n" ++
                                               (show defs)  ++ "\n"
 
-showDefinition (TypeDef tyid file thd defs) = "  TYDEF:\n    " ++
+showDefinition (TypeDef tyid file thd prs defs) = "  TYDEF:\n    " ++
                                               (show tyid)  ++ "\n    " ++
                                               (show file)  ++ "\n        " ++
                                               (show thd)   ++ "\n" ++
+                                              (show prs)   ++ "\n" ++
                                               (show defs)  ++ "\n"
 
-showDefinition (TyClassDef tcid file thd ifac) = "  TCDEF:\n    " ++
+showDefinition (TyClassDef tcid file thd prs ifac) = "  TCDEF:\n    " ++
                                               (show tcid)  ++ "\n    " ++
                                               (show file)  ++ "\n        " ++
                                               (show thd)   ++ "\n" ++
+                                              (show prs)   ++ "\n" ++
                                               (show ifac)  ++ "\n"
 --
 showDefinition (FuncSyntax fnid file hedr defs) = "  FNSYN:\n    " ++
