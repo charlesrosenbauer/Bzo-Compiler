@@ -38,7 +38,7 @@ isBuiltinType "#Pst32"  = 14
 isBuiltinType "#Pst64"  = 15
 
 --Text
-isBuiltinType "#ASCII"  = 16
+isBuiltinType "#String" = 16
 isBuiltinType "#UTF8"   = 17
 isBuiltinType "#UTF16"  = 18
 isBuiltinType "#UTF32"  = 19
@@ -227,3 +227,26 @@ topBuiltinFunc = 80000
 
 topBuiltin :: Int
 topBuiltin = 100000
+
+
+
+
+
+
+
+
+
+
+-- Constants for a bunch of primitive types
+t_i8   = 1
+t_i16  = 2
+t_i32  = 3
+t_i64  = 4
+t_u8   = 5
+t_u16  = 6
+t_u32  = 7
+t_u64  = 8
+t_f16  = 9
+t_f32  = 10
+t_f64  = 11
+t_str  = 16
