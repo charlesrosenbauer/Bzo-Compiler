@@ -43,6 +43,8 @@ data Expression
   | Ref     Int   Int
   | Deref   Int   Int
   | Phi    [Int] [Int] Int Int Int
+  | Field   Int   Int  Int
+  | Assert  Int   Int  Int Int
 
 
 
@@ -134,6 +136,8 @@ printExpr (Struct q t xs)   = (printVar q) ++ " := " ++ (printType t) ++ "{" ++ 
 printExpr (Ref    q i) = (printVar q) ++ " := &" ++ (printVar i) ++ "\n"
 printExpr (Deref  q i) = (printVar q) ++ " := *" ++ (printVar i) ++ "\n"
 printExpr (Phi    qs is c f g) = "if " ++ (printVar c) ++ "{\n" ++ (printExpr (FnCall qs f is)) ++ "}else{\n" ++ (printExpr (FnCall qs g is)) ++ "}\n"
+printExpr (Field  q  vr pr) = (printVar q) ++ " := " ++ (printVar vr) ++ "." ++ (printVar pr) ++ "\n"
+printExpr (Assert q  ok vr ty) = (printVar q) ++ ", " ++ (printVar ok) ++ " := " ++ (printVar vr) ++ ".(" ++ (printType ty) ++ ")\n"
 
 
 
