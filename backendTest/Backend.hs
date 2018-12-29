@@ -42,9 +42,10 @@ data Expression
   | Struct  Int   Int   [Int]
   | Ref     Int   Int
   | Deref   Int   Int
-  | Phi    [Int] [Int] Int Int Int
-  | Field   Int   Int  Int
-  | Assert  Int   Int  Int Int
+  | Phi    [Int] [Int]  Int  Int  Int
+  | Field   Int   Int   Int
+  | Assert  Int   Int   Int  Int
+  | Match  [Int] [Int] [Int] Int
 
 
 
@@ -138,6 +139,7 @@ printExpr (Deref  q i) = (printVar q) ++ " := *" ++ (printVar i) ++ "\n"
 printExpr (Phi    qs is c f g) = "if " ++ (printVar c) ++ "{\n" ++ (printExpr (FnCall qs f is)) ++ "}else{\n" ++ (printExpr (FnCall qs g is)) ++ "}\n"
 printExpr (Field  q  vr pr) = (printVar q) ++ " := " ++ (printVar vr) ++ "." ++ (printVar pr) ++ "\n"
 printExpr (Assert q  ok vr ty) = (printVar q) ++ ", " ++ (printVar ok) ++ " := " ++ (printVar vr) ++ ".(" ++ (printType ty) ++ ")\n"
+printExpr (Match  qs fs is df) = (concatMap (\f -> "if " ++ (printPtrn f) ++ (printPars is) ++ "{\n" ++ (printExpr (FnCall qs f is)) ++ "}else ") fs) ++ "{\n" ++ (printExpr (FnCall qs df is)) ++ "}\n"
 
 
 
