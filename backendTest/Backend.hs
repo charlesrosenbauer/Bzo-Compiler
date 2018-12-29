@@ -160,6 +160,17 @@ printFunc x = "F" ++ (show x)
 
 
 
+printPtrn :: Int -> String
+printPtrn x = "P" ++ (show x)
+
+
+
+
+
+
+
+
+
 data Type
   = BaseType    Int
   | ArrayType   Int Type
@@ -263,6 +274,34 @@ printFnHeader fid ins exs =
 printFn :: Int -> [(Int, Int)] -> [(Int, Int)] -> [Expression] -> String
 printFn fid ins exs exprs =
   printFnHeader fid ins exs ++ (concatMap printExpr exprs) ++ "return\n}\n"
+
+
+
+
+
+
+
+
+
+
+printPtHeader :: Int -> [(Int, Int)] -> String
+printPtHeader fid ins =
+  "func P" ++ (show fid) ++
+    "(" ++ (concatMap (\(a,b) -> (printVar a) ++ " " ++ (printType b) ++ ", ") ins) ++
+  ") bool {\n"
+
+
+
+
+
+
+
+
+
+
+printPt :: Int -> [(Int, Int)] -> [Expression] -> String
+printPt fid ins exprs =
+  printPtHeader fid ins ++ (concatMap printExpr exprs) ++ "return\n}\n"
 
 
 
