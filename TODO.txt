@@ -1,6 +1,7 @@
 TODO:
-  * Generate Definition Table from Calls.
-  * Figure out how context is going to work, implement it for scope.
-  * Convert BzoSyntax to Expr, Pattern, etc.
+  * Reorganize checking code - it's a mess
+  * For some reason, some type definitions seem to be getting omitted in
+    printout. Are they getting lost? It seems as though any type more complex
+    than an alias is getting dropped.
   * Type Checking
   * Golang Backend
