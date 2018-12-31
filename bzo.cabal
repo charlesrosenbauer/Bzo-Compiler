@@ -4,7 +4,7 @@ description:  A Compiler for the Implicitly Parallel Bzo Programming Language
 author: Charles Rosenbauer
 license: GPL
 license-file: LICENSE
-cabal-version: >=2.0
+cabal-version: >=1.2
 build-type: Simple
 
 executable main
@@ -39,3 +39,4 @@ executable main
       , Builtins
       , Backend
       , BackendTypes
+      , Query
