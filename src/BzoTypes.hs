@@ -541,19 +541,19 @@ data Definition
     hostfile   :: T.Text,
     typehead   :: TypeHeader,
     functype   :: Type,
-    properties :: [DefProperty],
+    fn_props   :: FuncProps,
     definitions:: [(Pattern, Expr)] }
  | TypeDef {
     identifier :: T.Text,
     hostfile   :: T.Text,
     typehead   :: TypeHeader,
-    properties :: [DefProperty],
+    ty_props   :: TypeProps,
     typedef    :: Type }
  | TyClassDef {
     identifier :: T.Text,
     hostfile   :: T.Text,
     typehead   :: TypeHeader,
-    properties :: [DefProperty],
+    tc_props :: TClsProps,
     interface  :: [(T.Text, TypeHeader, Type)] }
  | FuncSyntax {
     identifier :: T.Text,
@@ -569,6 +569,49 @@ data Definition
     hostfile   :: T.Text,
     typesyntax :: BzoSyntax }
   deriving Eq
+
+
+
+
+
+
+
+
+
+
+data FuncProps
+  = FuncProps [DefProperty]
+  | FuncPropEmpty
+  deriving (Eq, Show)
+
+
+
+
+
+
+
+
+
+
+
+data TypeProps
+  = TypeProps [DefProperty]
+  | TypePropEmpty
+  deriving (Eq, Show)
+
+
+
+
+
+
+
+
+
+
+data TClsProps
+  = TClsProps [DefProperty]
+  | TClsPropEmpty
+  deriving (Eq, Show)
 
 
 

@@ -653,7 +653,7 @@ modelDefs syms (FuncSyntax fnid fname (BzS_Undefined p) fdefs) =
       tyhead = TyHeader M.empty
       fntype = UnresType $ BzS_Expr p fdefs
   in case fnerrs of
-      [] -> Right (FuncDef fnid fname tyhead fntype [] fndefs')
+      [] -> Right (FuncDef fnid fname tyhead fntype FuncPropEmpty fndefs')
       _  -> Left  $ L.concat fnerrs
 
 modelDefs syms (FuncSyntax fnid fname ftyp@(BzS_FnTypeDef _ ps _ tdef) fdefs) =
@@ -665,7 +665,7 @@ modelDefs syms (FuncSyntax fnid fname ftyp@(BzS_FnTypeDef _ ps _ tdef) fdefs) =
       fntype'= L.head $ rights [fntype]
       errs   = lefts [fntype]
   in case (errs ++ fnerrs) of
-      [] -> Right (FuncDef fnid fname tyhead fntype' [] fndefs')
+      [] -> Right (FuncDef fnid fname tyhead fntype' FuncPropEmpty fndefs')
       er -> Left $ L.concat er
 
 modelDefs syms (TypeSyntax tyid fname (BzS_TypDef p pars _ typ)) =
@@ -674,7 +674,7 @@ modelDefs syms (TypeSyntax tyid fname (BzS_TypDef p pars _ typ)) =
       tydef' = L.head $ rights [tydef]
       errs   = lefts [tydef]
   in case errs of
-      [] -> Right (TypeDef tyid fname tyhead [] tydef')
+      [] -> Right (TypeDef tyid fname tyhead TypePropEmpty tydef')
       er -> Left $ L.concat er
 
 modelDefs syms (TyClassSyntax tcid fname (BzS_TyClassDef p pars _ defs)) =
@@ -682,7 +682,7 @@ modelDefs syms (TyClassSyntax tcid fname (BzS_TyClassDef p pars _ defs)) =
       tcdefs = []     -- Add this later. There'll be some complications with multiple type headers here.
       errs   = []
   in case errs of
-      [] -> Right (TyClassDef tcid fname tyhead [] tcdefs)
+      [] -> Right (TyClassDef tcid fname tyhead TClsPropEmpty tcdefs)
       er -> Left er
 
 
