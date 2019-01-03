@@ -775,6 +775,32 @@ data Type
   | TVarType  BzoPos TVId
   | BITyType  BzoPos TyId
   | ArryType  BzoPos Integer Type
+  | FLitType  BzoPos FnId
+  deriving (Show, Eq)
+
+
+
+
+
+
+
+
+
+
+data AbsType
+  = A_FuncType AbsType AbsType
+  | A_CmpdType [AbsType]
+  | A_PolyType [AbsType]
+  | A_MakeType TyId AbsType
+  | A_IntType  Integer
+  | A_FltType  Double
+  | A_StrType  T.Text
+  | A_VoidType
+  | A_LtrlType TyId
+  | A_TVarType TVId
+  | A_BITyType TyId
+  | A_ArryType Integer Type
+  | A_FLitType FnId
   deriving (Show, Eq)
 
 
