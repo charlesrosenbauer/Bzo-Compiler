@@ -46,6 +46,10 @@ data Expression
   | Field   Int   Int   Int
   | Assert  Int   Int   Int  Int
   | Match  [Int] [Int] [Int] Int
+  | For     Int   Int   Int  Int [Expression]
+  | ALen    Int   Int
+  | ARead   Int   Int   Int
+  | AWrite  Int   Int   Int
 
 
 
@@ -140,6 +144,14 @@ printExpr (Phi    qs is c f g) = "if " ++ (printVar c) ++ "{\n" ++ (printExpr (F
 printExpr (Field  q  vr pr) = (printVar q) ++ " := " ++ (printVar vr) ++ "." ++ (printVar pr) ++ "\n"
 printExpr (Assert q  ok vr ty) = (printVar q) ++ ", " ++ (printVar ok) ++ " := " ++ (printVar vr) ++ ".(" ++ (printType ty) ++ ")\n"
 printExpr (Match  qs fs is df) = (concatMap (\f -> "if " ++ (printPtrn f) ++ (printPars is) ++ "{\n" ++ (printExpr (FnCall qs f is)) ++ "}else ") fs) ++ "{\n" ++ (printExpr (FnCall qs df is)) ++ "}\n"
+printExpr (For  start stride end i block) =
+  "for " ++ (printVar i) ++ " := " ++ (printVar stride) ++ "; " ++
+            (printVar i) ++ " < " ++ (printVar end) ++ "; " ++
+            (printVar i) ++ " += " ++ (printVar stride) ++ "{\n" ++
+              (concatMap printExpr block) ++ "}\n"
+printExpr (ALen   q  ar)   = (printVar q) ++ " := len(" ++ (printVar ar) ++ ")\n"
+printExpr (ARead  q  ar i) = (printVar q) ++ " := " ++ (printVar ar) ++ "[" ++ (printVar i) ++ "]\n"
+printExpr (AWrite qa x  i) = (printVar qa) ++ "[" ++ (printVar i) ++ "] = " ++ (printVar i) ++ "\n"
 
 
 
