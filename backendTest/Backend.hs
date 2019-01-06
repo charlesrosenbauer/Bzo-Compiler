@@ -50,6 +50,7 @@ data Expression
   | ALen    Int   Int
   | ARead   Int   Int   Int
   | AWrite  Int   Int   Int
+  | Def     Int   Type
 
 
 
@@ -152,6 +153,7 @@ printExpr (For  start stride end i block) =
 printExpr (ALen   q  ar)   = (printVar q) ++ " := len(" ++ (printVar ar) ++ ")\n"
 printExpr (ARead  q  ar i) = (printVar q) ++ " := " ++ (printVar ar) ++ "[" ++ (printVar i) ++ "]\n"
 printExpr (AWrite qa x  i) = (printVar qa) ++ "[" ++ (printVar i) ++ "] = " ++ (printVar i) ++ "\n"
+printExpr (Def    q  t)    = "var " ++ (printVar q) ++ " " ++ (printFullType t) ++ "\n"
 
 
 
