@@ -256,34 +256,34 @@ modelFuncExpr syms (BzS_FunDef p ips fnid xps def) =
 modelDefs :: SymbolTable -> Definition -> Either [BzoErr] Definition
 modelDefs syms (FuncSyntax fnid fname (BzS_Undefined p) fdefs) =
   let fndefs = L.map (modelFuncExpr syms) fdefs   -- Change this when expression modelling exists
-      fnerrs = lefts  fndefs
+      fnerrs = L.concat $ lefts  fndefs
       fndefs'= rights fndefs
       tyhead = TyHeader M.empty
       fntype = UnresType $ BzS_Expr p fdefs
   in case fnerrs of
       [] -> Right (FuncDef fnid fname tyhead fntype FuncPropEmpty fndefs')
-      _  -> Left  $ L.concat fnerrs
+      _  -> Left  fnerrs
 
 modelDefs syms (FuncSyntax fnid fname ftyp@(BzS_FnTypeDef _ ps _ tdef) fdefs) =
   let fndefs = L.map (modelFuncExpr syms) fdefs   -- Change this when expression modelling exists
-      fnerrs = lefts  fndefs
+      fnerrs = L.concat $ lefts  fndefs
       fndefs'= rights fndefs
       tyhead = initializeTypeHeader ftyp
       fntype = makeType syms tyhead tdef
-      fntype'= L.head $ rights [fntype]
-      errs   = lefts [fntype]
+      fntype'= L.head $ (++ [InvalidType]) $ rights [fntype]
+      errs   = L.concat $ lefts [fntype]
   in case (errs ++ fnerrs) of
       [] -> Right (FuncDef fnid fname tyhead fntype' FuncPropEmpty fndefs')
-      er -> Left $ L.concat er
+      er -> Left er
 
 modelDefs syms (TypeSyntax tyid fname (BzS_TypDef p pars _ typ)) =
   let tyhead = initializeTypeHeader pars
       tydef  = makeType syms tyhead typ
-      tydef' = L.head $ rights [tydef]
-      errs   = lefts [tydef]
+      tydef' = L.head $ (++ [InvalidType]) $ rights [tydef]
+      errs   = L.concat $ lefts [tydef]
   in case errs of
       [] -> Right (TypeDef tyid fname tyhead TypePropEmpty tydef')
-      er -> Left $ L.concat er
+      er -> Left er
 
 modelDefs syms (TyClassSyntax tcid fname (BzS_TyClassDef p pars _ defs)) =
   let tyhead = initializeTypeHeader pars

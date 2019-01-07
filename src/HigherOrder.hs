@@ -885,3 +885,20 @@ sepEitherMaps xs =
 
         extractRight :: (k, Either a b) -> (k, b)
         extractRight (k, Right x) = (k, x)
+
+
+
+
+
+
+
+
+
+
+onLeft  :: Either a b -> (a -> c) -> c -> c
+onLeft  (Left  x) f _ = f x
+onLeft  _ _ def       = def
+
+onRight :: Either a b -> (b -> c) -> c -> c
+onRight (Right x) f _ = f x
+onRight _ _ def       = def
