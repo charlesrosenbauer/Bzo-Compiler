@@ -1,7 +1,5 @@
 TODO:
   * Reorganize checking code - it's a mess
-  * For some reason, some type definitions seem to be getting omitted in
-    printout. Are they getting lost? It seems as though any type more complex
-    than an alias is getting dropped.
+  * modelType seems to have some issues when type headers and records interact
   * Type Checking
   * Golang Backend
