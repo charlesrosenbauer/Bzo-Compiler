@@ -836,8 +836,8 @@ onAllPass vals fn =
   let ls = concat $ E.lefts  vals
       rs =          E.rights vals
   in case ls of
-      [] -> Left  ls
-      _  -> Right $ fn rs
+      [] -> Right $ fn rs
+      _  -> Left  ls
 
 
 
