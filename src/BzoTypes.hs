@@ -775,7 +775,7 @@ data Type
   | TVarType  BzoPos TVId
   | BITyType  BzoPos TyId
   | ArryType  BzoPos Integer Type
-  | FLitType  BzoPos FnId
+  | FLitType  BzoPos [FnId]
   | InvalidType
   deriving (Show, Eq)
 

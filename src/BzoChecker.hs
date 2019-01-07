@@ -211,6 +211,12 @@ makeType st (TyHeader tvs) (BzS_TyVar p   v) =
       [x] -> Right (TVarType p x)
       xs  -> Left [TypeErr p $ pack ("Ambiguous reference to type variable " ++ (unpack v) ++ ".")]
 
+makeType st th (BzS_Id p f) =
+  let fids = resolveGlobalId st (BzS_Id p f)
+  in case fids of
+      [] -> Left [TypeErr p $ pack $ "Function " ++ (unpack f) ++ " is not defined in this scope."]
+      xs -> Right (FLitType p xs)
+
 makeType st th ty@(BzS_Undefined _) = Right (UnresType ty)
 makeType st th x = Left [TypeErr (pos x) $ pack $ "Malformed type expression: " ++ show x]
 
