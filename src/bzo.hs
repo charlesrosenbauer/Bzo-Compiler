@@ -28,9 +28,27 @@ printIntro = do
   putStrLn "Created by Charles Rosenbauer (https://github.com/charlesrosenbauer)"
   putStrLn "Github for Compiler: https://github.com/charlesrosenbauer/Bzo-Compiler"
   putStrLn "Note: This is a work in progress. Don't expect everything to work right now."
-  putStrLn "This compiler is licensed under GPLv.3"
+  putStrLn "This compiler is licensed under GPLv.3\n"
   putStrLn "Enter \"#quit\" to exit\n"
+  putStrLn "Call the compiler with -help for help."
   return ()
+
+
+
+
+
+
+
+
+
+
+printHelp :: IO()
+printHelp = do
+  putStrLn "Bzo is very much a work in progress.\n"
+  putStrLn "If the compiler complains of an undefined environment, you need to provide it a path to a valid Bzo environment."
+  putStrLn "The environment (the standard library) can be downloaded at https://github.com/charlesrosenbauer/Bzo-Standard-Library."
+  putStrLn "Then, provide the compiler with the path using the -env= flag.\n"
+  return()
 
 
 
@@ -47,6 +65,7 @@ main = do
     case parseParameters args of
       Left  (ParamErr                         err) -> putStrLn $ unpack err
       Right (BzoSettings  []  []  [] Opt_None  []) -> do printIntro; (mainLoop_ (== "#quit") (readPrompt "\nBzo>>> ") (\s -> (putStrLn $ replExpression ("REPL", ((pack s) `append` (pack "\n"))))))
+      Right (BzoSettings  []  []  [Flag_HelpMePlease] _ []) -> do printHelp; return ()
       Right settings                               -> compileFilePass settings
       _                                            -> putStrLn "This shouldn't happen, but it stops a compiler warning."
 

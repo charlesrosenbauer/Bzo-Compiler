@@ -54,7 +54,7 @@ readIntMaybe s = L.foldl readIntMaybeIter (Just 0) s
 
 
 data SpecificFlags = Flag_OutputLLVM | Flag_OutputAssembly | Flag_FastMath
-                   | Flag_PureBzo     -- | Mostly placeholders, though these are likely to still be used
+                   | Flag_PureBzo    | Flag_HelpMePlease     -- | Mostly placeholders, though these are likely to still be used
                    deriving Show
 
 
@@ -223,7 +223,8 @@ parseSpecificFlags :: String -> Maybe SpecificFlags
 parseSpecificFlags s = lookup s [("-output-llvm"    , Flag_OutputLLVM    ),
                                  ("-output-assembly", Flag_OutputAssembly),
                                  ("-fastmath"       , Flag_FastMath      ),
-                                 ("-pure-bzo"       , Flag_PureBzo       )]
+                                 ("-pure-bzo"       , Flag_PureBzo       ),
+                                 ("-help"           , Flag_HelpMePlease  )]
 
 
 
