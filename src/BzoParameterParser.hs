@@ -53,8 +53,7 @@ readIntMaybe s = L.foldl readIntMaybeIter (Just 0) s
 
 
 
-data SpecificFlags = Flag_OutputLLVM | Flag_OutputAssembly | Flag_FastMath
-                   | Flag_PureBzo    | Flag_HelpMePlease     -- | Mostly placeholders, though these are likely to still be used
+data SpecificFlags = Flag_NoFlag | Flag_HelpMePlease     -- | Mostly placeholders, though these are likely to still be used
                    deriving Show
 
 
@@ -66,10 +65,7 @@ data SpecificFlags = Flag_OutputLLVM | Flag_OutputAssembly | Flag_FastMath
 
 
 
-data OptimizationSettings = Opt_OL1 | Opt_OL2 | Opt_OL3 | Opt_OL4 |          -- | Latency
-                            Opt_OS1 | Opt_OS2 | Opt_OS3 | Opt_OS4 |          -- | Size
-                            Opt_OT1 | Opt_OT2 | Opt_OT3 | Opt_OT4 |          -- | Throughput
-                            Opt_Nil | Opt_None                               -- | Nil
+data OptimizationSettings = Opt_Nil | Opt_None                               -- | Nil
                             deriving (Show, Eq)
 
 
@@ -83,9 +79,8 @@ data OptimizationSettings = Opt_OL1 | Opt_OL2 | Opt_OL3 | Opt_OL4 |          -- 
 
 data PrefixFlags
   = PathFlag {flgpath :: FilePath}
-  | GranFlag Int
-  | OutFlag {flgpath :: FilePath}
-  | EnvFlag {flgpath :: FilePath}
+  | OutFlag  {flgpath :: FilePath}
+  | EnvFlag  {flgpath :: FilePath}
   deriving Show
 
 
@@ -146,11 +141,7 @@ parsePrefixFlag s
   | L.isPrefixOf "-p="   s = Just $ PathFlag $ L.drop 3 s           -- Path to search for missing files
   | L.isPrefixOf "-o="   s = Just $ OutFlag  $ L.drop 3 s           -- Output Path
   | L.isPrefixOf "-env=" s = Just $ EnvFlag  $ L.drop 5 s           -- Environment Path
-  | L.isPrefixOf "-g="   s =
-      case (readIntMaybe $ L.drop 3 s) of
-        Just x  -> Just $ GranFlag x    -- Thread Granularity (add potential failure here if input is not a valid int)
-        Nothing -> Nothing
-  | otherwise          = Nothing
+  | otherwise              = Nothing
 
 
 
@@ -178,24 +169,6 @@ parseOptimization st s =
   if (optFlag st /= Opt_None)
     then Nothing
     else case s of
-          "-O"   -> Just Opt_OT2
-          "-O0"  -> Just Opt_Nil
-          "-O1"  -> Just Opt_OT1
-          "-O2"  -> Just Opt_OT2
-          "-O3"  -> Just Opt_OT3
-          "-O4"  -> Just Opt_OT4
-          "-OT1" -> Just Opt_OT1
-          "-OT2" -> Just Opt_OT2
-          "-OT3" -> Just Opt_OT3
-          "-OT4" -> Just Opt_OT4
-          "-OS1" -> Just Opt_OS1
-          "-OS2" -> Just Opt_OS2
-          "-OS3" -> Just Opt_OS3
-          "-OS4" -> Just Opt_OS4
-          "-OL1" -> Just Opt_OL1
-          "-OL2" -> Just Opt_OL2
-          "-OL3" -> Just Opt_OL3
-          "-OL4" -> Just Opt_OL4
           _      -> Nothing
 
 
@@ -220,11 +193,7 @@ addOptFlag (BzoSettings imp lib flg opt pfx) f = BzoSettings imp lib flg f pfx
 
 
 parseSpecificFlags :: String -> Maybe SpecificFlags
-parseSpecificFlags s = lookup s [("-output-llvm"    , Flag_OutputLLVM    ),
-                                 ("-output-assembly", Flag_OutputAssembly),
-                                 ("-fastmath"       , Flag_FastMath      ),
-                                 ("-pure-bzo"       , Flag_PureBzo       ),
-                                 ("-help"           , Flag_HelpMePlease  )]
+parseSpecificFlags s = lookup s [("-help"           , Flag_HelpMePlease  )]
 
 
 
