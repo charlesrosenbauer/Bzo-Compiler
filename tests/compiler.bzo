@@ -1,0 +1,40 @@
+Bzo #Module
+IO  #Import
+
+
+
+
+
+
+
+
+
+printIntro :: IO ;; IO
+[~io] printIntro :: {
+  ~io [println: _, '\n88888888ba   888888888888    ,ad8888ba,   ' ] ~io
+  ~io [println: _, '88      "8b           ,88   d8"\'    `"8b  '] ~io
+  ~io [println: _, '88      ,8P         ,88"   d8\'        `8b  ' ] ~io
+  ~io [println: _, '88aaaaaa8P\'       ,88"     88          88  ' ] ~io
+  ~io [println: _, '88""""""8b,     ,88"       88          88  '] ~io
+  ~io [println: _, '88      `8b   ,88"         Y8,        ,8P  ' ] ~io
+  ~io [println: _, '88      a8P  88"            Y8a.    .a8P   ' ] ~io
+  ~io [println: _, '88888888P"   888888888888    `"Y8888Y"\'\n' ] ~io
+  ~io [println: _, 'Created by Charles Rosenbauer (https://github.com/charlesrosenbauer)'] ~io
+  ~io [println: _, 'Github for Compiler: https://github.com/charlesrosenbauer/Bzo-Compiler'] ~io
+  ~io [println: _, 'Note: This is a work in progress. Don\'t expect everything to work right now.'] ~io
+  ~io [println: _, 'This compiler is licensed under GPLv.3'] ~io
+  ~io [println: _, 'Enter "#quit" to exit\n']
+}
+
+
+Opt-None :: []
+BzoSettings :: []
+
+main :: IO ;; IO
+[~io] main :: {
+  [~io, getArgs parseParameters] (
+    printErr,
+    [;[~io, [[], [], [], Opt-None, []].BzoSettings]{
+      ~io printIntro ~io
+      [mainLoop: [=: '#quit', _], [readPrompt: 'Bzo>>>', _], _]}],
+    compileFilePass )}
