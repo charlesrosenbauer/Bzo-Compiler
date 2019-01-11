@@ -638,26 +638,26 @@ data DefProperty
 
 showDefinition :: Definition -> String
 showDefinition (FuncDef fnid file tyhd fty prs defs) = "  FNDEF:\n    " ++
-                                              (show fnid)  ++ "\n    " ++
-                                              (show file)  ++ "\n        " ++
-                                              (show tyhd)  ++ "\n" ++
-                                              (show fty)   ++ "\n" ++
-                                              (show prs)   ++ "\n" ++
-                                              (show defs)  ++ "\n"
+                                              "FNID: " ++ (show fnid)  ++ "\n    " ++
+                                              "FILE: " ++ (show file)  ++ "\n    " ++
+                                              "TYHD: " ++ (show tyhd)  ++ "\n    " ++
+                                              "TYPE: " ++ (show fty)   ++ "\n    " ++
+                                              "PARS: " ++ (show prs)   ++ "\n    " ++
+                                              "DEFS: " ++ (show defs)  ++ "\n\n"
 
 showDefinition (TypeDef tyid file thd prs defs) = "  TYDEF:\n    " ++
-                                              (show tyid)  ++ "\n    " ++
-                                              (show file)  ++ "\n        " ++
-                                              (show thd)   ++ "\n" ++
-                                              (show prs)   ++ "\n" ++
-                                              (show defs)  ++ "\n"
+                                              "TYID: " ++ (show tyid)  ++ "\n    " ++
+                                              "FILE: " ++ (show file)  ++ "\n    " ++
+                                              "TYHD: " ++ (show thd)   ++ "\n    " ++
+                                              "PARS: " ++ (show prs)   ++ "\n    " ++
+                                              "DEFS: " ++ (show defs)  ++ "\n\n"
 
 showDefinition (TyClassDef tcid file thd prs ifac) = "  TCDEF:\n    " ++
-                                              (show tcid)  ++ "\n    " ++
-                                              (show file)  ++ "\n        " ++
-                                              (show thd)   ++ "\n" ++
-                                              (show prs)   ++ "\n" ++
-                                              (show ifac)  ++ "\n"
+                                              "TCID: " ++ (show tcid)  ++ "\n    " ++
+                                              "FILE: " ++ (show file)  ++ "\n    " ++
+                                              "TYHD: " ++ (show thd)   ++ "\n    " ++
+                                              "PARS: " ++ (show prs)   ++ "\n    " ++
+                                              "FNCS: " ++ (show ifac)  ++ "\n\n"
 --
 showDefinition (FuncSyntax fnid file hedr defs) = "  FNSYN:\n    " ++
                                               (show fnid)  ++ "\n    " ++
