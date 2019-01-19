@@ -3,3 +3,9 @@ TODO:
   * modelType seems to have some issues when type headers and records interact
   * Type Checking
   * Golang Backend
+
+
+----
+TODO for Next Iteration of Compiler:
+  * BzoPos should feature ranges - from LaCb -> LxCy
+  * BzoPos should feature a "derivedFrom" field as (tag, ()) to make debugging easier when dealing with metaprogramming code
