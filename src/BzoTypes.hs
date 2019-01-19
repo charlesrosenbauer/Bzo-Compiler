@@ -642,21 +642,21 @@ showDefinition (FuncDef fnid file tyhd fty prs defs) = "  FNDEF:\n    " ++
                                               "FILE: " ++ (show file)  ++ "\n    " ++
                                               "TYHD: " ++ (show tyhd)  ++ "\n    " ++
                                               "TYPE: " ++ (show fty)   ++ "\n    " ++
-                                              "PARS: " ++ (show prs)   ++ "\n    " ++
+                                              "PRPS: " ++ (show prs)   ++ "\n    " ++
                                               "DEFS: " ++ (show defs)  ++ "\n\n"
 
 showDefinition (TypeDef tyid file thd prs defs) = "  TYDEF:\n    " ++
                                               "TYID: " ++ (show tyid)  ++ "\n    " ++
                                               "FILE: " ++ (show file)  ++ "\n    " ++
                                               "TYHD: " ++ (show thd)   ++ "\n    " ++
-                                              "PARS: " ++ (show prs)   ++ "\n    " ++
+                                              "PRPS: " ++ (show prs)   ++ "\n    " ++
                                               "DEFS: " ++ (show defs)  ++ "\n\n"
 
 showDefinition (TyClassDef tcid file thd prs ifac) = "  TCDEF:\n    " ++
                                               "TCID: " ++ (show tcid)  ++ "\n    " ++
                                               "FILE: " ++ (show file)  ++ "\n    " ++
                                               "TYHD: " ++ (show thd)   ++ "\n    " ++
-                                              "PARS: " ++ (show prs)   ++ "\n    " ++
+                                              "PRPS: " ++ (show prs)   ++ "\n    " ++
                                               "FNCS: " ++ (show ifac)  ++ "\n\n"
 --
 showDefinition (FuncSyntax fnid file hedr defs) = "  FNSYN:\n    " ++
