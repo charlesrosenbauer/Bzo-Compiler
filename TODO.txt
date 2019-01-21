@@ -1,6 +1,5 @@
 TODO:
   * Reorganize checking code - it's a mess
-  * modelType seems to have some issues when type headers and records interact
   * Type Checking
   * Golang Backend
 

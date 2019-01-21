@@ -240,9 +240,15 @@ extractRecord ps tid depth (BzS_Cmpd       _     expr) = L.concatMap (\(d, xpr) 
 
         recordOp ps            tid depth (BzS_FilterObj p (BzS_Id _ rcid) [tdef]) =
           [(BzS_FunDef    p (makeDepthPattern p depth) rcid (BzS_Undefined p) (BzS_Id p $ pack "x")),
-           (BzS_FnTypeDef p (BzS_Undefined p) rcid (BzS_FnTy p (BzS_Expr p [BzS_TyId p tid, ps])      tdef))]
+           (BzS_FnTypeDef p ps rcid (BzS_FnTy p (BzS_Expr p [BzS_TyId p tid, stripParams ps])      tdef))]
 
         recordOp ps tid depth x = extractRecord ps tid depth x
+
+        stripParams :: BzoSyntax -> BzoSyntax
+        stripParams (BzS_Cmpd p xs) = (BzS_Cmpd p $ L.map stripParams xs)
+        stripParams (BzS_FilterObj p vr ty) = vr
+        stripParams (BzS_Expr p xs) = (BzS_Expr p $ L.map stripParams xs)
+        stripParams other = other
 extractRecord _ _ _ _                                 = []
 
 

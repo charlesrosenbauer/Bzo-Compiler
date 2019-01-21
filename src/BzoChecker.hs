@@ -270,21 +270,21 @@ modelDefs syms (FuncSyntax fnid fname (BzS_Undefined p) fdefs) =
       [] -> Right (FuncDef fnid fname tyhead fntype FuncPropEmpty fndefs')
       _  -> Left  fnerrs
 
-modelDefs syms (FuncSyntax fnid fname ftyp@(BzS_FnTypeDef _ ps _ tdef) fdefs) =
+modelDefs syms f@(FuncSyntax fnid fname ftyp@(BzS_FnTypeDef p ps _ tdef) fdefs) =
   let fndefs = L.map (modelFuncExpr syms) fdefs   -- Change this when expression modelling exists
       fnerrs = L.concat $ lefts  fndefs
       fndefs'= rights fndefs
       tyhead = initializeTypeHeader ftyp
-      fntype = makeType syms tyhead tdef
+      fntype = trace ("Modelling " ++ (unpack fnid) ++ " @ " ++ (show f) ++ "\n") $ makeType syms tyhead tdef
       fntype'= L.head $ (++ [InvalidType]) $ rights [fntype]
       errs   = L.concat $ lefts [fntype]
   in case (errs ++ fnerrs) of
       [] -> Right (FuncDef fnid fname tyhead fntype' FuncPropEmpty fndefs')
       er -> Left er
 
-modelDefs syms (TypeSyntax tyid fname (BzS_TypDef p pars _ typ)) =
+modelDefs syms t@(TypeSyntax tyid fname (BzS_TypDef p pars _ typ)) =
   let tyhead = initializeTypeHeader pars
-      tydef  = makeType syms tyhead typ
+      tydef  = trace ("Modelling " ++ (unpack tyid) ++ " @ " ++ (show t) ++ "\n") $ makeType syms tyhead typ
       tydef' = L.head $ (++ [InvalidType]) $ rights [tydef]
       errs   = L.concat $ lefts [tydef]
   in case errs of
