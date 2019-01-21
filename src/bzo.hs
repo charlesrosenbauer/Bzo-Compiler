@@ -48,6 +48,8 @@ printHelp = do
   putStrLn "If the compiler complains of an undefined environment, you need to provide it a path to a valid Bzo environment."
   putStrLn "The environment (the standard library) can be downloaded at https://github.com/charlesrosenbauer/Bzo-Standard-Library."
   putStrLn "Then, provide the compiler with the path using the -env= flag.\n"
+  putStrLn "For multiline REPL entries, enter #< to start multiline entry, and #> to exit.\n"
+  putStrLn "REPL currently is more of RPPL; Read, Parse, Print Loop. What is printed is the output of the parser, though it does not do as much parsing as the full compiler.\n"
   return()
 
 
@@ -64,7 +66,7 @@ main = do
     args <- getArgs
     case parseParameters args of
       Left  (ParamErr                         err) -> putStrLn $ unpack err
-      Right (BzoSettings  []  []  [] Opt_None  []) -> do printIntro; (mainLoop_ (== "#quit") (readPrompt "\nBzo>>> ") (\s -> (putStrLn $ replExpression ("REPL", ((pack s) `append` (pack "\n"))))))
+      Right (BzoSettings  []  []  [] Opt_None  []) -> do printIntro; (mainLoop{-_ (== "#quit") (readPrompt "\nBzo>>> ")-} (\s -> (putStrLn $ replExpression ("REPL", ((pack s) `append` (pack "\n"))))))
       Right (BzoSettings  []  []  [Flag_HelpMePlease] _ []) -> do printHelp; return ()
       Right settings                               -> compileFilePass settings
       _                                            -> putStrLn "This shouldn't happen, but it stops a compiler warning."
@@ -84,6 +86,39 @@ mainLoop_ endCond prompt action = do
     if endCond result
         then return ()
         else action result >> mainLoop_ endCond prompt action
+
+
+
+
+
+
+
+
+
+
+mainLoop :: (String -> IO()) -> IO ()
+mainLoop action = do
+  line <- readPrompt "\nBzo>>>"
+  case line of
+    "#quit" -> return ()
+    "#<"    -> (multilinePrompt "" "#>") >>= action >> mainLoop action
+    input   -> (action input           )            >> mainLoop action
+
+
+
+
+
+
+
+
+
+
+multilinePrompt :: String -> String -> IO String
+multilinePrompt totaltxt exittxt = do
+  line <- getLine
+  if (line == exittxt)
+    then return totaltxt
+    else multilinePrompt (totaltxt ++ line) exittxt
 
 
 
