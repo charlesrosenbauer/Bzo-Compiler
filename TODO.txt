@@ -3,7 +3,8 @@ TODO:
   * modelType seems to have some issues when type headers and records interact
   * Type Checking
   * Golang Backend
-
+  * Still seems to be bugs in multiline tuples. Ugh.
+  * Add multiline REPL input.
 
 ----
 TODO for Next Iteration of Compiler:
