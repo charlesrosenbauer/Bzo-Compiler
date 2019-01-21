@@ -1,5 +1,6 @@
 Bzo #Module
 IO  #Import
+String #Import
 
 
 
@@ -34,7 +35,22 @@ main :: IO ;; IO
 [~io] main :: {
   [~io, getArgs parseParameters] (
     printErr,
-    [;[~io, [[], [], [], Opt-None, []].BzoSettings]{
+    ;[~io, [[], [], [], Opt-None, []].BzoSettings]{
       ~io printIntro ~io
-      [mainLoop: [=: '#quit', _], [readPrompt: 'Bzo>>>', _], _]}],
+      [mainLoop: [=: '#quit', _], 'Bzo>>>', _]},
     compileFilePass )}
+
+
+
+
+
+
+
+
+
+
+mainLoop :: [[Str ;; Bl], Str, Str ;; Str, IO] ;; IO
+[endfn, prompt, action, ~io] mainLoop :: {
+  [~io, prompt] print ~io
+  ~io readline [line, ~io]
+  ~io [?: line endfn, id, [print: _, line action]] }
