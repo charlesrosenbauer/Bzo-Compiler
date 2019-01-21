@@ -53,4 +53,6 @@ mainLoop :: [[Str ;; Bl], Str, Str ;; Str, IO] ;; IO
 [endfn, prompt, action, ~io] mainLoop :: {
   [~io, prompt] print ~io
   ~io readline [line, ~io]
-  ~io [?: line endfn, id, [print: _, line action]] }
+  ~io [?: line endfn,
+        id,
+        [print: _, line action]] }

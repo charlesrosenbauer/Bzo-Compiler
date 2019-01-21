@@ -144,6 +144,9 @@ parserIter fname tokens ((BzS_Token _ (TkSepPoly p2))
                         :x@(BzS_Expr  p1 _)
                         :(BzS_LispHead p0 fn xs):stk)                   = parserIter fname tokens ((BzS_LispHead p0 fn (x:xs)):stk)
 
+parserIter fname tokens ((BzS_Token _ (TkNewline p2))
+                        :(BzS_LispHead p0 fn xs):stk)                   = parserIter fname tokens ((BzS_LispHead p0 fn xs):stk)
+
 parserIter fname tokens ((BzS_Token _ (TkSepPoly p2))
                         :x@(BzS_Expr  p1 _)
                         :(BzS_Token _ (TkStartDat p0)):stk)             = parserIter fname tokens ((BzS_CmpdHead p0 [x]):stk)
