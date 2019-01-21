@@ -66,26 +66,10 @@ main = do
     args <- getArgs
     case parseParameters args of
       Left  (ParamErr                         err) -> putStrLn $ unpack err
-      Right (BzoSettings  []  []  [] Opt_None  []) -> do printIntro; (mainLoop{-_ (== "#quit") (readPrompt "\nBzo>>> ")-} (\s -> (putStrLn $ replExpression ("REPL", ((pack s) `append` (pack "\n"))))))
+      Right (BzoSettings  []  []  [] Opt_None  []) -> do printIntro; (mainLoop (\s -> (putStrLn $ replExpression ("REPL", ((pack s) `append` (pack "\n"))))))
       Right (BzoSettings  []  []  [Flag_HelpMePlease] _ []) -> do printHelp; return ()
       Right settings                               -> compileFilePass settings
       _                                            -> putStrLn "This shouldn't happen, but it stops a compiler warning."
-
-
-
-
-
-
-
-
-
-
-mainLoop_ :: Monad m => (a -> Bool) -> m a -> (a -> m()) -> m()
-mainLoop_ endCond prompt action = do
-    result <- prompt
-    if endCond result
-        then return ()
-        else action result >> mainLoop_ endCond prompt action
 
 
 
@@ -118,7 +102,7 @@ multilinePrompt totaltxt exittxt = do
   line <- getLine
   if (line == exittxt)
     then return totaltxt
-    else multilinePrompt (totaltxt ++ line) exittxt
+    else multilinePrompt (totaltxt ++ line ++ "\n") exittxt
 
 
 
