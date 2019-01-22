@@ -2,6 +2,7 @@ TODO:
   * Reorganize checking code - it's a mess
   * Type Checking
   * Golang Backend
+  * Something seems to be broken in Type overload checks
 
 ----
 TODO for Next Iteration of Compiler:

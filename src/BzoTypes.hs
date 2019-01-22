@@ -551,37 +551,37 @@ adjustModel (BzoFileModel mn fp dm x fi fl ia la) f = (BzoFileModel mn fp dm (f 
 
 data Definition
  = FuncDef {
-    identifier :: T.Text,
-    hostfile   :: T.Text,
-    typehead   :: TypeHeader,
-    functype   :: Type,
-    fn_props   :: FuncProps,
-    definitions:: [(Pattern, Expr)] }
+    identifier :: !T.Text,
+    hostfile   :: !T.Text,
+    typehead   :: !TypeHeader,
+    functype   :: !Type,
+    fn_props   :: !FuncProps,
+    definitions:: ![(Pattern, Expr)] }
  | TypeDef {
-    identifier :: T.Text,
-    hostfile   :: T.Text,
-    typehead   :: TypeHeader,
-    ty_props   :: TypeProps,
-    typedef    :: Type }
+    identifier :: !T.Text,
+    hostfile   :: !T.Text,
+    typehead   :: !TypeHeader,
+    ty_props   :: !TypeProps,
+    typedef    :: !Type }
  | TyClassDef {
-    identifier :: T.Text,
-    hostfile   :: T.Text,
-    typehead   :: TypeHeader,
-    tc_props :: TClsProps,
-    interface  :: [(T.Text, TypeHeader, Type)] }
+    identifier :: !T.Text,
+    hostfile   :: !T.Text,
+    typehead   :: !TypeHeader,
+    tc_props   :: !TClsProps,
+    interface  :: ![(T.Text, TypeHeader, Type)] }
  | FuncSyntax {
-    identifier :: T.Text,
-    hostfile   :: T.Text,
-    ftyheader  :: BzoSyntax,
-    funcsyntax :: [BzoSyntax] }
+    identifier :: !T.Text,
+    hostfile   :: !T.Text,
+    ftyheader  :: !BzoSyntax,
+    funcsyntax :: ![BzoSyntax] }
  | TypeSyntax {
-    identifier :: T.Text,
-    hostfile   :: T.Text,
-    typesyntax :: BzoSyntax }
+    identifier :: !T.Text,
+    hostfile   :: !T.Text,
+    typesyntax :: !BzoSyntax }
  | TyClassSyntax {
-    identifier :: T.Text,
-    hostfile   :: T.Text,
-    typesyntax :: BzoSyntax }
+    identifier :: !T.Text,
+    hostfile   :: !T.Text,
+    typesyntax :: !BzoSyntax }
   deriving Eq
 
 
@@ -594,7 +594,7 @@ data Definition
 
 
 data FuncProps
-  = FuncProps [DefProperty]
+  = FuncProps ![DefProperty]
   | FuncPropEmpty
   deriving (Eq, Show)
 
@@ -609,7 +609,7 @@ data FuncProps
 
 
 data TypeProps
-  = TypeProps [DefProperty]
+  = TypeProps ![DefProperty]
   | TypePropEmpty
   deriving (Eq, Show)
 
@@ -623,7 +623,7 @@ data TypeProps
 
 
 data TClsProps
-  = TClsProps [DefProperty]
+  = TClsProps ![DefProperty]
   | TClsPropEmpty
   deriving (Eq, Show)
 
@@ -637,8 +637,8 @@ data TClsProps
 
 
 data DefProperty
-  = AliasDef Int
-  | ConstDef [Atom]
+  = AliasDef !Int
+  | ConstDef ![Atom]
   deriving (Eq, Show)
 
 
@@ -715,14 +715,14 @@ type LcId = Int64   -- Local Id
 
 
 
-data ExprHeader = ExprHeader (M.Map LcId Atom) deriving (Eq, Show)
+data ExprHeader = ExprHeader !(M.Map LcId Atom) deriving (Eq, Show)
 
 data Expr
-  = CallExpr  BzoPos  FnId  [LcId] [LcId]
-  | PhiExpr   BzoPos [FnId] [LcId] [LcId]
-  | OpExpr    BzoPos Opcode [LcId] [LcId]
-  | LetExpr   BzoPos ContextFrame  [Expr]
-  | UnresExpr BzoPos BzoSyntax
+  = CallExpr  !BzoPos  !FnId  ![LcId] ![LcId]
+  | PhiExpr   !BzoPos ![FnId] ![LcId] ![LcId]
+  | OpExpr    !BzoPos !Opcode ![LcId] ![LcId]
+  | LetExpr   !BzoPos !ContextFrame  ![Expr]
+  | UnresExpr !BzoPos !BzoSyntax
   deriving (Show, Eq)
 
 
@@ -750,17 +750,17 @@ data Opcode =
 
 
 data Pattern
-  = CmpdPtrn  BzoPos Type [Pattern]
-  | FiltPtrn  BzoPos Type [(Pattern, Int64)]
-  | PipePtrn  BzoPos Type [Pattern]
-  | TVarPtrn  BzoPos Type TVId
-  | VarPtrn   BzoPos Type VrId
-  | IntPtrn   BzoPos Integer
-  | FltPtrn   BzoPos Double
-  | StrPtrn   BzoPos T.Text
-  | WildPtrn  BzoPos
-  | ParamPtrn BzoPos Pattern Pattern
-  | UnresPtrn BzoSyntax
+  = CmpdPtrn  !BzoPos !Type ![Pattern]
+  | FiltPtrn  !BzoPos !Type ![(Pattern, Int64)]
+  | PipePtrn  !BzoPos !Type ![Pattern]
+  | TVarPtrn  !BzoPos !Type !TVId
+  | VarPtrn   !BzoPos !Type !VrId
+  | IntPtrn   !BzoPos !Integer
+  | FltPtrn   !BzoPos !Double
+  | StrPtrn   !BzoPos !T.Text
+  | WildPtrn  !BzoPos
+  | ParamPtrn !BzoPos !Pattern !Pattern
+  | UnresPtrn !BzoSyntax
   deriving (Show, Eq)
 
 
@@ -775,21 +775,21 @@ data Pattern
 data TypeHeader = TyHeader { tvarmap :: M.Map TVId Atom } deriving (Eq, Show)
 
 data Type
-  = UnresType BzoSyntax
-  | ParamType BzoPos Pattern
-  | FuncType  BzoPos Type Type
-  | CmpdType  BzoPos [Type]
-  | PolyType  BzoPos [Type]
-  | MakeType  BzoPos [Type]
-  | IntType   BzoPos Integer
-  | FltType   BzoPos Double
-  | StrType   BzoPos T.Text
-  | VoidType  BzoPos
-  | LtrlType  BzoPos TyId
-  | TVarType  BzoPos TVId
-  | BITyType  BzoPos TyId
-  | ArryType  BzoPos Integer Type
-  | FLitType  BzoPos [FnId]
+  = UnresType !BzoSyntax
+  | ParamType !BzoPos !Pattern
+  | FuncType  !BzoPos !Type !Type
+  | CmpdType  !BzoPos ![Type]
+  | PolyType  !BzoPos ![Type]
+  | MakeType  !BzoPos ![Type]
+  | IntType   !BzoPos !Integer
+  | FltType   !BzoPos !Double
+  | StrType   !BzoPos !T.Text
+  | VoidType  !BzoPos
+  | LtrlType  !BzoPos !TyId
+  | TVarType  !BzoPos !TVId
+  | BITyType  !BzoPos !TyId
+  | ArryType  !BzoPos !Integer !Type
+  | FLitType  !BzoPos ![FnId]
   | InvalidType
   deriving Eq
 
@@ -832,19 +832,19 @@ instance Show Type where show = showType
 
 
 data AbsType
-  = A_FuncType AbsType AbsType
-  | A_CmpdType [AbsType]
-  | A_PolyType [AbsType]
-  | A_MakeType TyId AbsType
-  | A_IntType  Integer
-  | A_FltType  Double
-  | A_StrType  T.Text
+  = A_FuncType !AbsType !AbsType
+  | A_CmpdType ![AbsType]
+  | A_PolyType ![AbsType]
+  | A_MakeType !TyId !AbsType
+  | A_IntType  !Integer
+  | A_FltType  !Double
+  | A_StrType  !T.Text
   | A_VoidType
-  | A_LtrlType TyId
-  | A_TVarType TVId
-  | A_BITyType TyId
-  | A_ArryType Integer Type
-  | A_FLitType FnId
+  | A_LtrlType !TyId
+  | A_TVarType !TVId
+  | A_BITyType !TyId
+  | A_ArryType !Integer !Type
+  | A_FLitType !FnId
   deriving (Show, Eq)
 
 
@@ -856,7 +856,7 @@ data AbsType
 
 
 
-data Constraint = Constraint BzoPos Type  deriving (Eq, Show)
+data Constraint = Constraint !BzoPos !Type  deriving (Eq, Show)
 
 
 
@@ -868,16 +868,16 @@ data Constraint = Constraint BzoPos Type  deriving (Eq, Show)
 
 
 data Atom
-  = IntAtom BzoPos Integer
-  | FltAtom BzoPos Double
-  | StrAtom BzoPos T.Text
-  | FncAtom BzoPos T.Text T.Text FnId
-  | TypAtom BzoPos T.Text T.Text TyId
-  | VarAtom BzoPos T.Text [Constraint] Type
-  | MutAtom BzoPos T.Text [Constraint] Type
-  | TVrAtom BzoPos T.Text [Constraint] Type
-  | ParAtom BzoPos T.Text [Constraint] Type
-  | RetAtom BzoPos T.Text [Constraint] Type
+  = IntAtom !BzoPos !Integer
+  | FltAtom !BzoPos !Double
+  | StrAtom !BzoPos !T.Text
+  | FncAtom !BzoPos !T.Text !T.Text !FnId
+  | TypAtom !BzoPos !T.Text !T.Text !TyId
+  | VarAtom !BzoPos !T.Text ![Constraint] !Type
+  | MutAtom !BzoPos !T.Text ![Constraint] !Type
+  | TVrAtom !BzoPos !T.Text ![Constraint] !Type
+  | ParAtom !BzoPos !T.Text ![Constraint] !Type
+  | RetAtom !BzoPos !T.Text ![Constraint] !Type
   deriving (Show, Eq)
 
 atomId :: Atom -> Maybe T.Text
@@ -953,10 +953,10 @@ isIOAtom atm = (isParAtom atm) || (isRetAtom atm)
 
 data DefinitionTable
   = DefinitionTable {
-      dt_defs :: M.Map Int64 Definition,
-      dt_files:: [BzoFileModel ([Int64], [Int64])], -- [(local defs, visible defs)]
-      dt_ids  :: M.Map T.Text [Int64],
-      dt_top  :: Int64 }
+      dt_defs ::  M.Map Int64 Definition,
+      dt_files:: ![BzoFileModel ([Int64], [Int64])], -- [(local defs, visible defs)]
+      dt_ids  ::  M.Map T.Text [Int64],
+      dt_top  :: !Int64 }
   deriving Show
 
 
@@ -970,12 +970,12 @@ data DefinitionTable
 
 data ContextFrame
   = ContextFrame{
-      cf_atomMap :: M.Map Int64 Atom,
-      cf_top     :: Int64,
-      cf_index   :: Int64 }
+      cf_atomMap ::  M.Map Int64 Atom,
+      cf_top     :: !Int64,
+      cf_index   :: !Int64 }
   deriving (Show, Eq)
 
-data Context = Context [ContextFrame]
+data Context = Context ![ContextFrame]
 
 
 addAtom :: Context -> Atom -> (Context, Int64)
