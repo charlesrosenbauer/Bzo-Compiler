@@ -115,7 +115,7 @@ data BzoPos = BzoPos {
   line     :: !Int,
   column   :: !Int,
   fileName :: !T.Text }
-  deriving (Eq, Show)
+  deriving Eq
 
 compareBzoPos :: BzoPos -> BzoPos -> Ordering
 compareBzoPos (BzoPos l0 c0 f0) (BzoPos l1 c1 f1)
@@ -125,6 +125,20 @@ compareBzoPos (BzoPos l0 c0 f0) (BzoPos l1 c1 f1)
   | otherwise                              = compare f0 f1
 
 instance Ord BzoPos where compare = compareBzoPos
+
+
+
+
+
+
+
+
+
+
+showPos :: BzoPos -> String
+showPos (BzoPos l c fname) = " " ++ (show fname) ++ "@L:" ++ (show l) ++ ",C:" ++ (show c) ++ " "
+instance Show BzoPos where show = showPos
+
 
 
 
@@ -777,7 +791,36 @@ data Type
   | ArryType  BzoPos Integer Type
   | FLitType  BzoPos [FnId]
   | InvalidType
-  deriving (Show, Eq)
+  deriving Eq
+
+
+
+
+
+
+
+
+
+
+showType :: Type -> String
+showType (UnresType     ast) = "[UnresType " ++ (show ast) ++ "]"
+showType (ParamType _   pat) = "[ParamType " ++ (show pat) ++ "]"
+showType (FuncType  _ ta tb) = "[FuncType "  ++ (show  ta) ++ " " ++ (show tb) ++ "]"
+showType (CmpdType  _    ts) = "[CmpdType "  ++ (L.concat $ L.intersperse " , "  $ L.map show ts) ++ "]"
+showType (PolyType  _    ts) = "[PolyType "  ++ (L.concat $ L.intersperse " , "  $ L.map show ts) ++ "]"
+showType (MakeType  _    ts) = "[MakeType "  ++ (L.concat $ L.intersperse " >> " $ L.map show ts) ++ "]"
+showType (IntType   _     i) = "[IntLit "    ++ (show   i) ++ "]"
+showType (FltType   _     f) = "[FltLit "    ++ (show   f) ++ "]"
+showType (StrType   _     s) = "[StrLit "    ++ (show   s) ++ "]"
+showType (VoidType  _      ) = "[VoidType]"
+showType (LtrlType  _    ty) = "TY:" ++ (show ty)
+showType (TVarType  _    tv) = "TV:" ++ (show tv)
+showType (BITyType  _    bt) = "BT:" ++ (show bt)
+showType (ArryType  _  i ty) = "[ArrayType [" ++ (show i) ++ "] " ++ (show ty) ++ "]"
+showType (FLitType  _    fn) = "FN:" ++ (show fn)
+showType (InvalidType      ) = "INVALIDTYPE"
+instance Show Type where show = showType
+
 
 
 
