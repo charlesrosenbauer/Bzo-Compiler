@@ -772,7 +772,7 @@ data Pattern
 
 
 
-data TypeHeader = TyHeader { tvarmap :: M.Map TVId Atom } deriving (Eq, Show)
+data TypeHeader = TyHeader { tvarmap :: !(M.Map TVId Atom) } deriving (Eq, Show)
 
 data Type
   = UnresType !BzoSyntax
@@ -953,9 +953,9 @@ isIOAtom atm = (isParAtom atm) || (isRetAtom atm)
 
 data DefinitionTable
   = DefinitionTable {
-      dt_defs ::  M.Map Int64 Definition,
+      dt_defs :: !(M.Map Int64 Definition),
       dt_files:: ![BzoFileModel ([Int64], [Int64])], -- [(local defs, visible defs)]
-      dt_ids  ::  M.Map T.Text [Int64],
+      dt_ids  :: !(M.Map T.Text [Int64]),
       dt_top  :: !Int64 }
   deriving Show
 
@@ -970,7 +970,7 @@ data DefinitionTable
 
 data ContextFrame
   = ContextFrame{
-      cf_atomMap ::  M.Map Int64 Atom,
+      cf_atomMap :: !(M.Map Int64 Atom),
       cf_top     :: !Int64,
       cf_index   :: !Int64 }
   deriving (Show, Eq)
@@ -1021,4 +1021,15 @@ findId (Context ((ContextFrame atoms top i):xs)) name =
 
 data SymbolTable = SymbolTable !DefinitionTable !FilePath !(M.Map Int64 T.Text)
 
---
+
+
+
+
+
+
+
+
+
+data NameTable   = NameTable   !(M.Map T.Text DomainTable)
+
+data DomainTable = DomainTable !(M.Map T.Text [Int64])
