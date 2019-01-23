@@ -136,7 +136,7 @@ instance Ord BzoPos where compare = compareBzoPos
 
 
 showPos :: BzoPos -> String
-showPos (BzoPos l c fname) = " " ++ (show fname) ++ "@L:" ++ (show l) ++ ",C:" ++ (show c) ++ " "
+showPos (BzoPos l c fname) = " [P:" ++ (show fname) ++ "@L:" ++ (show l) ++ ",C:" ++ (show c) ++ "] "
 instance Show BzoPos where show = showPos
 
 
@@ -1019,4 +1019,6 @@ findId (Context ((ContextFrame atoms top i):xs)) name =
 
 
 
-data SymbolTable = SymbolTable DefinitionTable FilePath (M.Map Int64 T.Text)
+data SymbolTable = SymbolTable !DefinitionTable !FilePath !(M.Map Int64 T.Text)
+
+--
