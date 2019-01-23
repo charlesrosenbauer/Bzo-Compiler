@@ -365,7 +365,7 @@ getNamespaceTags dt@(DefinitionTable defs files ids _) fname visible =
   let namemap = M.fromList $ L.map Tp.swap $ getNamespacePaths dt fname
       visset  = S.fromList visible
       idpairs = M.assocs $ M.filterWithKey (\k def -> S.member k visset) defs
-  in  L.map (\(i, df) -> trace ((show fname) ++ (show $ hostfile df) ++ (show namemap)) $ (i, namemap M.! (unpack $ hostfile df))) idpairs
+  in  L.map (\(i, df) -> (i, namemap M.! (unpack $ hostfile df))) idpairs
 
 
 
@@ -419,3 +419,92 @@ resolveLocalId st ctx v@(BzS_Id  _ fn) =
       Nothing -> L.map (\x -> (-1, x)) $ resolveGlobalId st v
 resolveLocalId st ctx   (BzS_MId _ mt) = Mb.catMaybes [findId ctx mt]
 resolveLocalId st ctx other = L.map (\x -> (-1, x)) $ resolveGlobalId st other
+
+
+
+
+
+
+
+
+
+
+makeNameTable :: DefinitionTable -> NameTable
+makeNameTable (DefinitionTable defs files _ _) =
+  let domaingroups  = L.groupBy (\a b -> (bfm_domain a) == (bfm_domain b)) files
+      domaingroups' = L.map (\x -> (bfm_domain $ L.head x, x)) domaingroups
+      domainmodules = L.map (\(d,ds) -> (d, M.fromList $ L.map (\x -> (bfm_moduleName x, fst $ bfm_fileModel x)) ds)) domaingroups'
+      domainmodules'= M.fromList $ L.map (\(d,mp) -> (d, DomainTable mp)) domainmodules
+  in  NameTable $ M.map (\(DomainTable xs) -> (DomainTable xs, L.concat $ M.elems xs)) domainmodules'
+
+
+
+
+
+
+
+
+
+
+inDomain :: NameTable -> Text -> Int64 -> Bool
+inDomain (NameTable nt) dm df =
+  let dom = M.lookup dm nt
+  in case dom of
+      Nothing      -> False
+      Just (_, ds) -> L.elem df ds
+
+
+
+
+
+
+
+
+
+
+inModule :: NameTable -> Text -> Text -> Int64 -> Bool
+inModule (NameTable nt) dm md df =
+  let dom = M.lookup dm nt
+  in case dom of
+      Nothing -> False
+      Just (DomainTable mods, _) ->
+        let mdl = M.lookup md mods
+        in case mdl of
+            Nothing -> False
+            Just ds -> L.elem df ds
+
+
+
+
+
+
+
+
+
+
+getDomainVis :: NameTable -> Text -> [Int64]
+getDomainVis (NameTable nt) dm =
+  let dom = M.lookup dm nt
+  in case dom of
+      Nothing      -> []
+      Just (_, ds) -> ds
+
+
+
+
+
+
+
+
+
+
+getModuleVis :: NameTable -> Text -> Text -> [Int64]
+getModuleVis (NameTable nt) dm md =
+  let dom = M.lookup dm nt
+  in case dom of
+      Nothing -> []
+      Just (DomainTable mods, _) ->
+        let mdl = M.lookup md mods
+        in case mdl of
+            Nothing -> []
+            Just ds -> ds

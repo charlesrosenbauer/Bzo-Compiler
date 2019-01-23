@@ -1030,6 +1030,6 @@ data SymbolTable = SymbolTable !DefinitionTable !FilePath !(M.Map Int64 T.Text)
 
 
 
-data NameTable   = NameTable   !(M.Map T.Text DomainTable)
+data NameTable   = NameTable   !(M.Map T.Text (DomainTable, [Int64]))
 
 data DomainTable = DomainTable !(M.Map T.Text [Int64])
