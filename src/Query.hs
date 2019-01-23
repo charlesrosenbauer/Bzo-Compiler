@@ -265,18 +265,20 @@ getNamespacePaths (DefinitionTable _ files _ _) filepath =
       domain  = bfm_domain file'
 
       local   = L.filter (\f -> domain == (bfm_domain f)) files
-      impfs   = L.filter (\f -> L.elem (bfm_moduleName f) $ bfm_fileImports f) local
+      impfs   = L.filter (\f -> L.elem (bfm_moduleName f) $ bfm_fileImports file') local
       imps    = L.map (\f -> (bfm_moduleName f, bfm_filepath f)) impfs
-      impfsas = L.filter (\f -> L.elem (bfm_moduleName f) $ L.map fst $ bfm_fileImportsAs f) local
+      impfsas = L.filter (\f -> L.elem (bfm_moduleName f) $ L.map fst $ bfm_fileImportsAs file') local
       impsas  = L.map (\f -> (bfm_moduleName f, bfm_filepath f)) impfsas
 
-      lnkfs   = L.filter (\f -> L.elem (bfm_moduleName f) $ bfm_fileLinks f) files
+      lnkfs   = L.filter (\f -> L.elem (bfm_moduleName f) $ bfm_fileLinks file') files
       lnks    = L.map (\f -> (bfm_domain     f, bfm_filepath f)) lnkfs
-      lnkfsas = L.filter (\f -> L.elem (bfm_moduleName f) $ L.map fst $ bfm_fileLinksAs f) files
+      lnkfsas = L.filter (\f -> L.elem (bfm_moduleName f) $ L.map fst $ bfm_fileLinksAs file') files
       lnksas  = L.map (\f -> (bfm_domain     f, bfm_filepath f)) lnkfsas
+
+      here    = [(domain, filepath)]
   in case file of
       [] -> []
-      _  -> imps ++ impsas ++ lnks ++ lnksas
+      _  -> here ++ imps ++ impsas ++ lnks ++ lnksas
 
 
 
@@ -363,7 +365,7 @@ getNamespaceTags dt@(DefinitionTable defs files ids _) fname visible =
   let namemap = M.fromList $ L.map Tp.swap $ getNamespacePaths dt fname
       visset  = S.fromList visible
       idpairs = M.assocs $ M.filterWithKey (\k def -> S.member k visset) defs
-  in  L.map (\(i, df) -> (i, namemap M.! (unpack $ hostfile df))) idpairs
+  in  L.map (\(i, df) -> trace ((show fname) ++ (show $ hostfile df) ++ (show namemap)) $ (i, namemap M.! (unpack $ hostfile df))) idpairs
 
 
 
