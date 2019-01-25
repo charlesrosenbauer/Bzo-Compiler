@@ -4,6 +4,8 @@ TODO:
   * Golang Backend
   * Something seems to be broken in Type overload checks
     * Specifically, it seems to be going on in Namespace management.
+  * Work out how to change namespace management to use NameTable
+  * Expression Modelling Code
 
 ----
 TODO for Next Iteration of Compiler:
