@@ -196,20 +196,20 @@ makeType st th (BzS_FnTy  p i o) =
       (er,       _ ) -> Left  $ L.concat er
 
 makeType st th (BzS_Expr  p xs)  = onAllPass (L.map (makeType st th) xs) (\ys -> MakeType p ys)
-makeType st th ty@(BzS_TyId  p   t) =
+makeType st@(SymbolTable _ _ vis) th ty@(BzS_TyId  p   t) =
   let ids = resolveGlobalId st ty
   in case ids of
       []  -> Left [TypeErr p $ pack ("Type " ++ (unpack t) ++ " is undefined.")]
       [x] -> Right (LtrlType p x)
-      xs  -> Left [TypeErr p $ pack ("Ambiguous reference to type " ++ (unpack t) ++ ".")]
-makeType st (TyHeader tvs) (BzS_TyVar p   v) =
+      xs  -> Left [TypeErr p $ pack ("Ambiguous reference to type " ++ (unpack t) ++ ": " ++ (show xs) ++ " / " ++ (show $ M.assocs vis))]
+makeType st@(SymbolTable _ _ vis) (TyHeader tvs) (BzS_TyVar p   v) =
   let tvpairs = M.assocs tvs
       tvnames = L.map (\(n,atm) -> (n, Mb.fromMaybe (pack "") $ atomId atm)) tvpairs
       ids = L.map fst $ L.filter (\(n,atm) -> v == atm) tvnames
   in case ids of
       []  -> Left [TypeErr p $ pack ("Type Variable " ++ (unpack v) ++ " is not defined in the type header.")]
       [x] -> Right (TVarType p x)
-      xs  -> Left [TypeErr p $ pack ("Ambiguous reference to type variable " ++ (unpack v) ++ ".")]
+      xs  -> Left [TypeErr p $ pack ("Ambiguous reference to type variable " ++ (unpack v) ++ ": " ++ (show xs) ++ " / " ++ (show $ M.assocs vis))]
 
 makeType st th (BzS_Id p f) =
   let fids = resolveGlobalId st (BzS_Id p f)
@@ -275,7 +275,7 @@ modelDefs syms f@(FuncSyntax fnid fname ftyp@(BzS_FnTypeDef p ps _ tdef) fdefs) 
       fnerrs = L.concat $ lefts  fndefs
       fndefs'= rights fndefs
       tyhead = initializeTypeHeader ftyp
-      fntype = trace ("Modelling " ++ (unpack fnid) ++ " @ " ++ (show f) ++ "\n") $ makeType syms tyhead tdef
+      fntype = Right $ UnresType tdef --makeType syms tyhead tdef
       fntype'= L.head $ (++ [InvalidType]) $ rights [fntype]
       errs   = L.concat $ lefts [fntype]
   in case (errs ++ fnerrs) of
@@ -284,7 +284,7 @@ modelDefs syms f@(FuncSyntax fnid fname ftyp@(BzS_FnTypeDef p ps _ tdef) fdefs) 
 
 modelDefs syms t@(TypeSyntax tyid fname (BzS_TypDef p pars _ typ)) =
   let tyhead = initializeTypeHeader pars
-      tydef  = trace ("Modelling " ++ (unpack tyid) ++ " @ " ++ (show t) ++ "\n") $ makeType syms tyhead typ
+      tydef  = Right $ UnresType typ --makeType syms tyhead typ
       tydef' = L.head $ (++ [InvalidType]) $ rights [tydef]
       errs   = L.concat $ lefts [tydef]
   in case errs of

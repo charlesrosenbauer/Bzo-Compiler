@@ -3,6 +3,7 @@ TODO:
   * Type Checking
   * Golang Backend
   * Something seems to be broken in Type overload checks
+    * Specifically, it seems to be going on in Namespace management.
 
 ----
 TODO for Next Iteration of Compiler:
