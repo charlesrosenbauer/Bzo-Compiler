@@ -275,7 +275,7 @@ modelDefs syms f@(FuncSyntax fnid fname ftyp@(BzS_FnTypeDef p ps _ tdef) fdefs) 
       fnerrs = L.concat $ lefts  fndefs
       fndefs'= rights fndefs
       tyhead = initializeTypeHeader ftyp
-      fntype = Right $ UnresType tdef --makeType syms tyhead tdef
+      fntype = {-Right $ UnresType tdef-} makeType syms tyhead tdef
       fntype'= L.head $ (++ [InvalidType]) $ rights [fntype]
       errs   = L.concat $ lefts [fntype]
   in case (errs ++ fnerrs) of
@@ -284,7 +284,7 @@ modelDefs syms f@(FuncSyntax fnid fname ftyp@(BzS_FnTypeDef p ps _ tdef) fdefs) 
 
 modelDefs syms t@(TypeSyntax tyid fname (BzS_TypDef p pars _ typ)) =
   let tyhead = initializeTypeHeader pars
-      tydef  = Right $ UnresType typ --makeType syms tyhead typ
+      tydef  = {-Right $ UnresType typ ---}makeType syms tyhead typ
       tydef' = L.head $ (++ [InvalidType]) $ rights [tydef]
       errs   = L.concat $ lefts [tydef]
   in case errs of
@@ -331,9 +331,18 @@ modelDefs syms (TyClassSyntax tcid fname (BzS_TyClassDef p pars _ defs)) =
 
 modelProgram :: DefinitionTable -> Either [BzoErr] (DefinitionTable, M.Map Text SymbolTable)
 modelProgram dt@(DefinitionTable defs files ids top) =
-  let syms = M.fromList $ L.map (\f -> (pack $ bfm_filepath f, makeSymbolTable dt $ bfm_filepath f)) files
+  let
+      syms :: M.Map Text SymbolTable
+      syms = M.fromList $ L.map (\f -> (pack $ bfm_filepath f, makeSymbolTable dt $ bfm_filepath f)) files
+
+      defs' :: M.Map Int64 (Either [BzoErr] Definition)
       defs'= M.map (\d -> modelDefs (syms M.! (hostfile d)) d) defs
+
+      ermp  :: M.Map Int64 [BzoErr]
+      dfmp  :: M.Map Int64 Definition
       (ermp, dfmp) = sepEitherMaps defs'
+
+      errs  :: [BzoErr]
       errs = L.concat $ M.elems ermp
   in case errs of
       [] -> Right (DefinitionTable dfmp files ids top, syms)
@@ -351,11 +360,23 @@ modelProgram dt@(DefinitionTable defs files ids top) =
 
 checkProgram :: DefinitionTable -> Either [BzoErr] DefinitionTable
 checkProgram dt@(DefinitionTable defs files ids _) =
-  let err0 = noOverloadTypes dt
+  let
+      err0 :: [BzoErr]
+      err0 = noOverloadTypes dt
+
+      err1 :: [BzoErr]
       err1 = noUndefinedErrs dt
+
+      dfs  :: Either [BzoErr] (DefinitionTable, M.Map Text SymbolTable)
       dfs  = modelProgram dt
+
+      dts' :: [(DefinitionTable, M.Map Text SymbolTable)]
       dts' = rights [dfs]
+
+      err2 :: [BzoErr]
       err2 = L.concat $ lefts [dfs]
+
+      errs :: [BzoErr]
       errs = err0 ++ err1 ++ err2
   in case (errs, dts') of
       ([], [(dt',_)]) -> Right dt'
