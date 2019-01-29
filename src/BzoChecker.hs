@@ -25,7 +25,11 @@ import Debug.Trace
 
 noOverloadTypes :: DefinitionTable -> [BzoErr]
 noOverloadTypes dt@(DefinitionTable defs files ids _) =
-  let types  = L.filter isType $ M.elems defs
+  let
+      types :: [Definition]
+      types  = L.filter isType $ M.elems defs
+
+      nubbed:: [Definition]
       nubbed = L.nubBy matchType types
   in case (types L.\\ nubbed) of
       [] -> []
@@ -261,39 +265,75 @@ modelFuncExpr syms (BzS_FunDef p ips fnid xps def) =
 
 modelDefs :: SymbolTable -> Definition -> Either [BzoErr] Definition
 modelDefs syms (FuncSyntax fnid fname (BzS_Undefined p) fdefs) =
-  let fndefs = L.map (modelFuncExpr syms) fdefs   -- Change this when expression modelling exists
+  let
+      fndefs :: [Either [BzoErr] (Pattern, Expr)]
+      fndefs = L.map (modelFuncExpr syms) fdefs   -- Change this when expression modelling exists
+
+      fnerrs :: [BzoErr]
       fnerrs = L.concat $ lefts  fndefs
+
+      fndefs':: [(Pattern, Expr)]
       fndefs'= rights fndefs
+
+      tyhead :: TypeHeader
       tyhead = TyHeader M.empty
+
+      fntype :: Type
       fntype = UnresType $ BzS_Expr p fdefs
   in case fnerrs of
       [] -> Right (FuncDef fnid fname tyhead fntype FuncPropEmpty fndefs')
       _  -> Left  fnerrs
 
 modelDefs syms f@(FuncSyntax fnid fname ftyp@(BzS_FnTypeDef p ps _ tdef) fdefs) =
-  let fndefs = L.map (modelFuncExpr syms) fdefs   -- Change this when expression modelling exists
+  let
+      fndefs :: [Either [BzoErr] (Pattern, Expr)]
+      fndefs = L.map (modelFuncExpr syms) fdefs   -- Change this when expression modelling exists
+
+      fnerrs :: [BzoErr]
       fnerrs = L.concat $ lefts  fndefs
+
+      fndefs':: [(Pattern, Expr)]
       fndefs'= rights fndefs
+
+      tyhead :: TypeHeader
       tyhead = initializeTypeHeader ftyp
+
+      fntype :: Either [BzoErr] Type
       fntype = {-Right $ UnresType tdef-} makeType syms tyhead tdef
+
+      fntype':: Type
       fntype'= L.head $ (++ [InvalidType]) $ rights [fntype]
+
+      errs   :: [BzoErr]
       errs   = L.concat $ lefts [fntype]
   in case (errs ++ fnerrs) of
       [] -> Right (FuncDef fnid fname tyhead fntype' FuncPropEmpty fndefs')
       er -> Left er
 
 modelDefs syms t@(TypeSyntax tyid fname (BzS_TypDef p pars _ typ)) =
-  let tyhead = initializeTypeHeader pars
+  let
+      tyhead :: TypeHeader
+      tyhead = initializeTypeHeader pars
       tydef  = {-Right $ UnresType typ ---}makeType syms tyhead typ
+
+      tydef' :: Type
       tydef' = L.head $ (++ [InvalidType]) $ rights [tydef]
+
+      errs   :: [BzoErr]
       errs   = L.concat $ lefts [tydef]
   in case errs of
       [] -> Right (TypeDef tyid fname tyhead TypePropEmpty tydef')
       er -> Left er
 
 modelDefs syms (TyClassSyntax tcid fname (BzS_TyClassDef p pars _ defs)) =
-  let tyhead = initializeTypeHeader pars
+  let
+      tyhead :: TypeHeader
+      tyhead = initializeTypeHeader pars
+
+      -- tcdefs :: --INSERT-TYPE-HERE--
       tcdefs = []     -- Add this later. There'll be some complications with multiple type headers here.
+
+      errs :: [BzoErr]
       errs   = []
   in case errs of
       [] -> Right (TyClassDef tcid fname tyhead TClsPropEmpty tcdefs)
