@@ -348,27 +348,6 @@ modelDefs syms (TyClassSyntax tcid fname (BzS_TyClassDef p pars _ defs)) =
 
 
 
--- modelTypeExpr
-  -- returns a Either Err TypeExpr
-  -- checks if all type references and constructors are valid
-  -- checks all type filters? maybe?
-
--- makeLocalScope
-  -- Generates a table of all visible ids, their definitions, and types
-
--- buildCheckedScope
-  -- takes a local scope,
-  --
-
-
-
-
-
-
-
-
-
-
 modelProgram :: DefinitionTable -> Either [BzoErr] (DefinitionTable, M.Map Text SymbolTable)
 modelProgram dt@(DefinitionTable defs files ids top) =
   let
@@ -409,6 +388,16 @@ checkProgram dt@(DefinitionTable defs files ids _) =
 
       dfs  :: Either [BzoErr] (DefinitionTable, M.Map Text SymbolTable)
       dfs  = modelProgram dt
+
+      -- A NameTable will allow for limiting searches to specific namespaces.
+      -- e.g, handling foo@Namespace requires this.
+      ntab :: NameTable
+      ntab = makeNameTable dt
+
+      -- A Type Table will make it much easier to figure out the type of something.
+      -- Good for faster type checking
+      --ttab :: Map Int64 AbsType
+      --ttab = ... make type table ...
 
       dts' :: [(DefinitionTable, M.Map Text SymbolTable)]
       dts' = rights [dfs]
