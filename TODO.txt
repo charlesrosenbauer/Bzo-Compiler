@@ -1,4 +1,7 @@
 TODO:
+
+  * Add scope tracking - scope ids, scope table
+  * Scope table should feature mapping from TextId -> Object(Def, Var)
   * Reorganize checking code - it's a mess
   * Type Checking
   * Golang Backend
