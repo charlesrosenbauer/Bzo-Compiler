@@ -399,6 +399,9 @@ checkProgram dt@(DefinitionTable defs files ids _) =
       --ttab :: Map Int64 AbsType
       --ttab = ... make type table ...
 
+      scopect :: [(Int64, Int, Int)]
+      !scopect = L.scanl (\(_, _, n) (k, dx) -> (k, n, dx+n)) (0, 1, 1) $ L.map (\(k, d) -> (k, ctDefScopes d)) $ M.assocs defs
+
       dts' :: [(DefinitionTable, M.Map Text SymbolTable)]
       dts' = rights [dfs]
 

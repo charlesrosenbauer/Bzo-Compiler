@@ -219,6 +219,53 @@ getNamespaces _                          = []
 
 
 
+ctScopes :: BzoSyntax -> Int
+ctScopes (BzS_Id         p     var) = 0
+ctScopes (BzS_MId        p     var) = 0
+ctScopes (BzS_BId        p     var) = 0
+ctScopes (BzS_ExFunObj   p var nsp) = 0
+ctScopes (BzS_Expr       _    expr) = sum $ L.map ctScopes expr
+ctScopes (BzS_Statement  _    expr) = ctScopes expr
+ctScopes (BzS_Cmpd       _    expr) = sum $ L.map ctScopes expr
+ctScopes (BzS_Poly       _    expr) = sum $ L.map ctScopes expr
+ctScopes (BzS_FnTy       _   ax bx) = (ctScopes ax) + (ctScopes bx)
+ctScopes (BzS_Block      _    expr) = 1 + (sum $ L.map ctScopes expr)
+ctScopes (BzS_TypDef     _ ps _ df) = (ctScopes ps) + (ctScopes df)
+ctScopes (BzS_TyClassDef _ ps _ df) = (ctScopes ps) + (sum $ L.map ctScopes df)
+ctScopes (BzS_FnTypeDef  _ ps _ df) = (ctScopes ps) + (ctScopes df)
+ctScopes (BzS_FunDef     _ i _ o x) = (ctScopes i)  + (ctScopes o)  + (ctScopes x)
+ctScopes (BzS_Calls      _      cs) = sum $ L.map ctScopes cs
+ctScopes (BzS_ArrayObj   _  _ expr) = ctScopes expr
+ctScopes (BzS_FilterObj  _ obj  fs) = (ctScopes obj) + (sum $ L.map ctScopes fs)
+ctScopes (BzS_CurryObj   _ obj  ps) = (ctScopes obj) + (sum $ L.map ctScopes ps)
+ctScopes (BzS_MapObj     _    expr) = (ctScopes expr)
+ctScopes (BzS_Lambda     _ ps expr) = (ctScopes ps)  + (ctScopes expr)
+ctScopes (BzS_LispCall   _ fn expr) = (ctScopes fn)  + (sum $ L.map ctScopes expr)
+ctScopes _                          = 0
+
+
+
+
+
+
+
+
+
+
+ctDefScopes :: Definition -> Int
+ctDefScopes (FuncSyntax _ _ _ def) = 1 + (L.length def) + (sum $ L.map ctScopes def)
+ctDefScopes (TypeSyntax _ _ _    ) = 1
+ctDefScopes (TyClassSyntax  _ _ _) = 1
+
+
+
+
+
+
+
+
+
+
 getNamespaceSet :: (Show a) => BzoFileModel a -> S.Set Text
 getNamespaceSet (BzoFileModel _ _ _ _ is ls ias las) = S.fromList $ (is ++ ls) ++ (L.map snd (ias ++ las))
 
