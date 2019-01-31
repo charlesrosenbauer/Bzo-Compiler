@@ -1,0 +1,39 @@
+
+## NOTE: Rules are applied in order: later rules re-colorize matching text.
+
+syntax "bzo" "\.bzo"
+
+# Strings
+color green "\'.*\'"
+color green start="\'.*\\$" end=".*\'"
+color green start="r#+\'" end="\'#+"
+
+# Comments
+color blue  "\".*\""
+color blue  start="\".*\\$" end=".*\""
+color blue start="r#+\"" end="\"#+"
+
+
+
+# Mutable Variables
+color red     "~[a-z_0-9\+\-\!\$\%\^\&\*\=\|\\\/\?\<\>]+[a-zA-Z_0-9\+\-\!\$\%\^\&\*\=\|\\\/\?\<\>]*"
+
+# Namespaces
+color yellow  "@[A-Z]+[a-z_0-9\+\-\!\$\%\^\&\*\=\|\\\/\?\<\>]*"
+
+# Builtins
+color brightgreen "#[a-zA-Z_0-9\+\-\!\$\%\^\&\*\=\|\\\/\?\<\>]+"
+
+# Constants
+color brightblue "[0-9.]+"
+
+# Functions/Variables
+color magenta "[a-z_0-9\+\-\!\$\%\^\&\*\=\|\\\/\?\<\>]+[a-zA-Z_0-9\+\-\!\$\%\^\&\*\=\|\\\/\?\<\>]*"
+
+# Types, TypeClasses, TypeVariables...
+color cyan    "[A-Z][A-Za-z0-9\+\-\!\$\%\^\&\*\=\|\\\/\?\<\>]+[\']*"
+
+
+# Some common markers
+color brightcyan "(XXX|TODO|FIXME|\?\?\?)"
+
