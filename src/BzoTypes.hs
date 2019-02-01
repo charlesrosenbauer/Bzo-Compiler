@@ -1033,3 +1033,24 @@ data SymbolTable = SymbolTable !DefinitionTable !FilePath !(M.Map Int64 T.Text)
 data NameTable   = NameTable   !(M.Map T.Text (DomainTable, [Int64]))
 
 data DomainTable = DomainTable !(M.Map T.Text [Int64])
+
+
+
+
+
+
+
+
+
+
+data ScopeTable = ScopeTable !(M.Map Int Scope)
+
+data Scope = Scope !(M.Map Int ScopeObj)
+
+data ScopeObj
+      = Sc_Func Int AbsType
+      | Sc_Type Int AbsType
+      | Sc_TyCs Int AbsType
+      | Sc_Var  Int AbsType [Constraint]
+      | Sc_TVar Int AbsType [Constraint]
+      | Sc_MVar Int AbsType [Constraint]
