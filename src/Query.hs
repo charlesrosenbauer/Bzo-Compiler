@@ -555,3 +555,15 @@ getModuleVis (NameTable nt) dm md =
         in case mdl of
             Nothing -> []
             Just ds -> ds
+
+
+
+
+
+
+
+
+
+
+initializeScopeTable :: Int -> ScopeTable
+initializeScopeTable ct = ScopeTable $ M.fromList $ L.zip [1..] (L.repeat $ Scope (M.empty) [1])

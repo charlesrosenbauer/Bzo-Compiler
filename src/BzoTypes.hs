@@ -1045,12 +1045,12 @@ data DomainTable = DomainTable !(M.Map T.Text [Int64])
 
 data ScopeTable = ScopeTable !(M.Map Int Scope)
 
-data Scope = Scope !(M.Map Int ScopeObj)
+data Scope = Scope !(M.Map Int ScopeObj) ![Int]  -- Object Table, Parent Scopes
 
 data ScopeObj
-      = Sc_Func Int AbsType
-      | Sc_Type Int AbsType
-      | Sc_TyCs Int AbsType
-      | Sc_Var  Int AbsType [Constraint]
-      | Sc_TVar Int AbsType [Constraint]
-      | Sc_MVar Int AbsType [Constraint]
+      = Sc_Func !Int !AbsType
+      | Sc_Type !Int !AbsType
+      | Sc_TyCs !Int !AbsType
+      | Sc_Var  !Int !AbsType ![Constraint]
+      | Sc_TVar !Int !AbsType ![Constraint]
+      | Sc_MVar !Int !AbsType ![Constraint]
