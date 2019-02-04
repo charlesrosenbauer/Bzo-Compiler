@@ -566,4 +566,4 @@ getModuleVis (NameTable nt) dm md =
 
 
 initializeScopeTable :: Int -> ScopeTable
-initializeScopeTable ct = ScopeTable $ M.fromList $ L.zip [1..] (L.repeat $ Scope (M.empty) [1])
+initializeScopeTable ct = ScopeTable $ M.fromList $ L.take ct $ L.zip [1..] (L.repeat $ Scope (M.empty) [1])
