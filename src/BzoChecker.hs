@@ -120,7 +120,7 @@ noUndefinedErrs dt@(DefinitionTable defs files ids _) =
 
 
 
-
+{-
 
 -- Takes type parameters and returns an associated header
 initializeTypeHeader :: BzoSyntax -> TypeHeader
@@ -223,6 +223,19 @@ makeType st th (BzS_Id p f) =
 
 makeType st th ty@(BzS_Undefined _) = Right (UnresType ty)
 makeType st th x = Left [TypeErr (pos x) $ pack $ "Malformed type expression: " ++ show x]
+
+
+
+
+
+
+
+
+
+
+--getDefType :: Definition -> Either [BzoErr] Type
+--getDefType ()
+
 
 
 
@@ -366,7 +379,7 @@ modelProgram dt@(DefinitionTable defs files ids top) =
   in case errs of
       [] -> Right (DefinitionTable dfmp files ids top, syms)
       er -> Left  er
-
+-}
 
 
 
@@ -386,8 +399,8 @@ checkProgram dt@(DefinitionTable defs files ids _) =
       err1 :: [BzoErr]
       err1 = noUndefinedErrs dt
 
-      dfs  :: Either [BzoErr] (DefinitionTable, M.Map Text SymbolTable)
-      dfs  = modelProgram dt
+      --dfs  :: Either [BzoErr] (DefinitionTable, M.Map Text SymbolTable)
+      --dfs  = modelProgram dt
 
       -- A NameTable will allow for limiting searches to specific namespaces.
       -- e.g, handling foo@Namespace requires this.
@@ -407,11 +420,11 @@ checkProgram dt@(DefinitionTable defs files ids _) =
 
       !x = trace (show scopetab) 0
 
-      dts' :: [(DefinitionTable, M.Map Text SymbolTable)]
-      dts' = rights [dfs]
+      --dts' :: [(DefinitionTable, M.Map Text SymbolTable)]
+      --dts' = rights [dfs]
 
-      err2 :: [BzoErr]
-      err2 = L.concat $ lefts [dfs]
+      --err2 :: [BzoErr]
+      --err2 = L.concat $ lefts [dfs]
 
       errs :: [BzoErr]
       errs = err0 ++ err1-- ++ err2

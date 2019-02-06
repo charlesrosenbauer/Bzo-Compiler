@@ -721,7 +721,7 @@ data Expr
   = CallExpr  !BzoPos  !FnId  ![LcId] ![LcId]
   | PhiExpr   !BzoPos ![FnId] ![LcId] ![LcId]
   | OpExpr    !BzoPos !Opcode ![LcId] ![LcId]
-  | LetExpr   !BzoPos !ContextFrame  ![Expr]
+  | LetExpr   !BzoPos !Int  ![Expr]
   | UnresExpr !BzoPos !BzoSyntax
   deriving (Show, Eq)
 
@@ -879,7 +879,7 @@ data Atom
   | ParAtom !BzoPos !T.Text ![Constraint] !Type
   | RetAtom !BzoPos !T.Text ![Constraint] !Type
   deriving (Show, Eq)
-
+{-
 atomId :: Atom -> Maybe T.Text
 atomId (FncAtom _ t _ _) = Just t
 atomId (TypAtom _ t _ _) = Just t
@@ -941,7 +941,7 @@ isGlobalAtom atm = (isFncAtom atm) || (isTypAtom atm)
 
 isIOAtom :: Atom -> Bool
 isIOAtom atm = (isParAtom atm) || (isRetAtom atm)
-
+-}
 
 
 
@@ -967,7 +967,7 @@ data DefinitionTable
 
 
 
-
+{-
 data ContextFrame
   = ContextFrame{
       cf_atomMap :: !(M.Map Int64 Atom),
@@ -1009,7 +1009,7 @@ findId (Context ((ContextFrame atoms top i):xs)) name =
   in  case matches of
         [] -> findId (Context xs) name
         ms -> Just (fst $ L.head ms, i)
-
+-}
 
 
 

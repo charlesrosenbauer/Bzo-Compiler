@@ -22,7 +22,7 @@ import Debug.Trace
 
 
 
-
+{-
 data Environment = Environment DefinitionTable SymbolTable Context Text
 
 
@@ -125,7 +125,7 @@ getFuns _                          = []
 
 
 
-
+-}
 getTypes :: BzoSyntax -> [(Text, BzoPos)]
 getTypes (BzS_TyId       p     var) = [(var, p)]
 getTypes (BzS_Expr       _    expr) = L.concatMap getTypes expr
@@ -277,7 +277,7 @@ getNamespaceSet (BzoFileModel _ _ _ _ is ls ias las) = S.fromList $ (is ++ ls) +
 
 
 
-
+{-
 getVisibility :: DefinitionTable -> Text -> [Int64]
 getVisibility (DefinitionTable _ files _ _) fname =
   let filematches = L.filter (\file -> fname == (pack $ bfm_filepath file)) files
@@ -302,7 +302,7 @@ getIds (DefinitionTable dfs files ids _) defid visible = L.filter (\x -> L.elem 
 
 
 
-
+-}
 
 getNamespacePaths :: DefinitionTable -> FilePath -> [(Text, FilePath)]
 getNamespacePaths (DefinitionTable _ files _ _) filepath =
@@ -328,7 +328,7 @@ getNamespacePaths (DefinitionTable _ files _ _) filepath =
       _  -> here ++ imps ++ impsas ++ lnks ++ lnksas
 
 
-
+{-
 
 
 
@@ -373,7 +373,7 @@ getNamesFromIds (DefinitionTable defs _ _ _) ids = L.map (\i -> (i, identifier $
 
 
 
-
+-}
 
 isType :: Definition -> Bool
 isType (TypeSyntax    _ _ _) = True
@@ -416,7 +416,7 @@ getNamespaceTags dt@(DefinitionTable defs files ids _) fname visible =
 
 
 
-
+{-
 
 
 
@@ -475,7 +475,7 @@ resolveLocalId st ctx other = L.map (\x -> (-1, x)) $ resolveGlobalId st other
 
 
 
-
+-}
 makeNameTable :: DefinitionTable -> NameTable
 makeNameTable (DefinitionTable defs files _ _) =
   let domaingroups  = L.groupBy (\a b -> (bfm_domain a) == (bfm_domain b)) files
@@ -483,7 +483,7 @@ makeNameTable (DefinitionTable defs files _ _) =
       domainmodules = L.map (\(d,ds) -> (d, M.fromList $ L.map (\x -> (bfm_moduleName x, fst $ bfm_fileModel x)) ds)) domaingroups'
       domainmodules'= M.fromList $ L.map (\(d,mp) -> (d, DomainTable mp)) domainmodules
   in  NameTable $ M.map (\(DomainTable xs) -> (DomainTable xs, L.concat $ M.elems xs)) domainmodules'
-
+{-
 
 
 
@@ -555,7 +555,7 @@ getModuleVis (NameTable nt) dm md =
         in case mdl of
             Nothing -> []
             Just ds -> ds
-
+-}
 
 
 
