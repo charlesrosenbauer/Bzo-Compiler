@@ -302,7 +302,7 @@ getIds (DefinitionTable dfs files ids _) defid visible = L.filter (\x -> L.elem 
 
 
 
--}
+
 
 getNamespacePaths :: DefinitionTable -> FilePath -> [(Text, FilePath)]
 getNamespacePaths (DefinitionTable _ files _ _) filepath =
@@ -328,7 +328,7 @@ getNamespacePaths (DefinitionTable _ files _ _) filepath =
       _  -> here ++ imps ++ impsas ++ lnks ++ lnksas
 
 
-{-
+
 
 
 
@@ -405,7 +405,7 @@ getTypeIds (DefinitionTable defs files ids _) fname tname =
 
 
 
-
+{-
 
 getNamespaceTags :: DefinitionTable -> FilePath -> [Int64] -> [(Int64, Text)]
 getNamespaceTags dt@(DefinitionTable defs files ids _) fname visible =
@@ -416,7 +416,7 @@ getNamespaceTags dt@(DefinitionTable defs files ids _) fname visible =
 
 
 
-{-
+
 
 
 

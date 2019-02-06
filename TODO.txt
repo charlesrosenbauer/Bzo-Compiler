@@ -1,12 +1,8 @@
 TODO:
-
-  * Add scope tracking - scope ids, scope table
   * Scope table should feature mapping from TextId -> Object(Def, Var)
   * Reorganize checking code - it's a mess
   * Type Checking
   * Golang Backend
-  * Something seems to be broken in Type overload checks
-    * Specifically, it seems to be going on in Namespace management.
   * Work out how to change namespace management to use NameTable
   * Expression Modelling Code
 
