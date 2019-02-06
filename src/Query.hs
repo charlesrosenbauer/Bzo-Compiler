@@ -567,3 +567,47 @@ getModuleVis (NameTable nt) dm md =
 
 initializeScopeTable :: Int -> ScopeTable
 initializeScopeTable ct = ScopeTable $ M.fromList $ L.take ct $ L.zip [1..] (L.repeat $ Scope (M.empty) [1])
+
+
+
+
+
+
+
+
+
+
+insertScopeObj :: ScopeTable -> Int -> Int -> ScopeObj -> ScopeTable
+insertScopeObj (ScopeTable sts) sc ix obj =
+  let st = M.lookup sc sts
+  in case st of
+      Just (Scope s ps) -> ScopeTable $ M.insert sc (Scope (M.insert ix obj s) ps) sts
+      Nothing           -> ScopeTable sts
+
+
+
+
+
+
+
+
+
+
+lookupScopeMap :: ScopeTable -> Int -> Maybe Scope
+lookupScopeMap (ScopeTable sts) sc = M.lookup sc sts
+
+
+
+
+
+
+
+
+
+
+lookupScopeObj :: ScopeTable -> Int -> Int -> Maybe ScopeObj
+lookupScopeObj sctab sc ix =
+  let smap = lookupScopeMap sctab sc
+  in case smap of
+      Nothing            -> Nothing
+      Just (Scope obs _) -> M.lookup ix obs
