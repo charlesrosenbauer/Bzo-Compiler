@@ -178,7 +178,7 @@ initializeTypeHeader (BzS_FnTypeDef _ ps fn (BzS_FnTy _ i o)) =
 
 
 
-
+-}
 makeType :: SymbolTable -> TypeHeader -> BzoSyntax -> Either [BzoErr] Type
 makeType st th (BzS_Expr   p  [x]) = makeType st th x
 makeType st th (BzS_Statement p x) = makeType st th x
@@ -223,7 +223,7 @@ makeType st th (BzS_Id p f) =
 
 makeType st th ty@(BzS_Undefined _) = Right (UnresType ty)
 makeType st th x = Left [TypeErr (pos x) $ pack $ "Malformed type expression: " ++ show x]
-
+{-
 
 
 
@@ -390,6 +390,20 @@ modelProgram dt@(DefinitionTable defs files ids top) =
 
 
 
+getDefType :: SymbolTable -> Definition -> Either [BzoErr] Type
+getDefType st (FuncSyntax _ _ tyhead _) = makeType st emptyheader tyhead
+getDefType st (TypeSyntax _ _ tyhead  ) = makeType st emptyheader tyhead
+getDefType st _                         = InvalidType
+
+
+
+
+
+
+
+
+
+
 checkProgram :: DefinitionTable -> Either [BzoErr] DefinitionTable
 checkProgram dt@(DefinitionTable defs files ids _) =
   let
@@ -406,6 +420,9 @@ checkProgram dt@(DefinitionTable defs files ids _) =
       -- e.g, handling foo@Namespace requires this.
       ntab :: NameTable
       ntab = makeNameTable dt
+
+      ttab :: M.Map Int64 (Either [BzoErr] Type)
+      ttab = M.map (\d -> getDefType (makeSymbolTable dt $ hostfile d) d) defs
 
       -- A Type Table will make it much easier to figure out the type of something.
       -- Good for faster type checking

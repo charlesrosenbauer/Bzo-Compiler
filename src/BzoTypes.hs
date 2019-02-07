@@ -774,6 +774,9 @@ data Pattern
 
 data TypeHeader = TyHeader { tvarmap :: !(M.Map TVId Atom) } deriving (Eq, Show)
 
+emptyheader :: TypeHeader
+emptyheader = TyHeader M.empty
+
 data Type
   = UnresType !BzoSyntax
   | ParamType !BzoPos !Pattern
@@ -879,7 +882,7 @@ data Atom
   | ParAtom !BzoPos !T.Text ![Constraint] !Type
   | RetAtom !BzoPos !T.Text ![Constraint] !Type
   deriving (Show, Eq)
-{-
+
 atomId :: Atom -> Maybe T.Text
 atomId (FncAtom _ t _ _) = Just t
 atomId (TypAtom _ t _ _) = Just t
@@ -890,6 +893,7 @@ atomId (ParAtom _ t _ _) = Just t
 atomId (RetAtom _ t _ _) = Just t
 atomId _ = Nothing
 
+{-
 isIntAtom :: Atom -> Bool
 isIntAtom (IntAtom _ _) = True
 isIntAtom _             = False

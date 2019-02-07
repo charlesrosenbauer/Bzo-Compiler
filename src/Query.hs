@@ -343,7 +343,7 @@ getNamespaceFiles dt@(DefinitionTable _ files _ _) filepath =
       files' = M.fromList $ L.map (\f -> (bfm_filepath f, f)) $ L.filter (\f -> S.member (bfm_filepath f) paths) files
   in  L.map (\(ns, path) -> (ns, files' M.! path)) pairs
 
-
+-}
 
 
 
@@ -354,7 +354,7 @@ getNamespaceFiles dt@(DefinitionTable _ files _ _) filepath =
 getVisible :: BzoFileModel ([Int64], [Int64]) -> [Int64]
 getVisible model = snd $ bfm_fileModel model
 
-
+{-
 
 
 
@@ -413,7 +413,7 @@ getNamespaceTags dt@(DefinitionTable defs files ids _) fname visible =
       visset  = S.fromList visible
       idpairs = M.assocs $ M.filterWithKey (\k def -> S.member k visset) defs
   in  L.map (\(i, df) -> (i, namemap M.! (unpack $ hostfile df))) idpairs
-
+-}
 
 
 
@@ -448,7 +448,7 @@ resolveGlobalId (SymbolTable dt fp ids) (BzS_ExTypObj _ ty ns) =
   let ty' = Mb.fromMaybe [] $ M.lookup ty (dt_ids dt)
   in  L.filter (\i -> M.member i ids) ty'
 resolveGlobalId _ _ = []
-
+{-
 
 
 
