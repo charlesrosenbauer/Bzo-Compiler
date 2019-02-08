@@ -1,4 +1,6 @@
 TODO:
+  * SymbolTable stuff seems confusing and unintuitive. I think replacing this with
+      the Scopetable code might be a good idea.
   * Scope table should feature mapping from TextId -> Object(Def, Var)
   * Reorganize checking code - it's a mess
   * Type Checking

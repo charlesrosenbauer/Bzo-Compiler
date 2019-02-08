@@ -393,7 +393,7 @@ modelProgram dt@(DefinitionTable defs files ids top) =
 getDefType :: SymbolTable -> Definition -> Either [BzoErr] Type
 getDefType st (FuncSyntax _ _ tyhead _) = makeType st emptyheader tyhead
 getDefType st (TypeSyntax _ _ tyhead  ) = makeType st emptyheader tyhead
-getDefType st _                         = InvalidType
+getDefType st _                         = Right $ InvalidType
 
 
 
@@ -422,7 +422,7 @@ checkProgram dt@(DefinitionTable defs files ids _) =
       ntab = makeNameTable dt
 
       ttab :: M.Map Int64 (Either [BzoErr] Type)
-      ttab = M.map (\d -> getDefType (makeSymbolTable dt $ hostfile d) d) defs
+      ttab = M.map (\d -> getDefType (makeSymbolTable dt $ unpack $ hostfile d) d) defs
 
       -- A Type Table will make it much easier to figure out the type of something.
       -- Good for faster type checking

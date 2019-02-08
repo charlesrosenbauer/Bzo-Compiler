@@ -875,3 +875,18 @@ onLeft  _ _ def       = def
 onRight :: Either a b -> (b -> c) -> c -> c
 onRight (Right x) f _ = f x
 onRight _ _ def       = def
+
+
+
+
+
+
+
+
+
+
+insertMapList :: (Ord k, Ord a) => Mp.Map k [a] -> k -> a -> Mp.Map k [a]
+insertMapList mp k a =
+  case (Mp.lookup k mp) of
+    Nothing -> Mp.insert k [a] mp
+    Just as -> Mp.adjust (L.insert a) k mp

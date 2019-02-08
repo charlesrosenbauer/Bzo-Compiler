@@ -427,7 +427,7 @@ makeSymbolTable :: DefinitionTable -> FilePath -> SymbolTable
 makeSymbolTable dt fp =
   let file = L.head $ L.filter (\fm -> fp == (bfm_filepath fm)) $ dt_files dt
       vis  = getVisible file
-  in  (SymbolTable dt fp (M.fromList $ getNamespaceTags dt fp vis))
+  in  (SymbolTable dt fp M.empty)--(M.fromList $ getNamespaceTags dt fp vis))
 
 
 
@@ -566,7 +566,7 @@ getModuleVis (NameTable nt) dm md =
 
 
 initializeScopeTable :: Int -> ScopeTable
-initializeScopeTable ct = ScopeTable $ M.fromList $ L.take ct $ L.zip [1..] (L.repeat $ Scope (M.empty) [1])
+initializeScopeTable ct = ScopeTable $ M.fromList $ L.take ct $ L.zip [1..] (L.repeat $ Scope (M.empty) (M.empty) [1])
 
 
 
@@ -577,12 +577,12 @@ initializeScopeTable ct = ScopeTable $ M.fromList $ L.take ct $ L.zip [1..] (L.r
 
 
 
-insertScopeObj :: ScopeTable -> Int -> Int -> ScopeObj -> ScopeTable
-insertScopeObj (ScopeTable sts) sc ix obj =
+insertScopeObj :: ScopeTable -> Int -> Int -> Text-> ScopeObj -> ScopeTable
+insertScopeObj (ScopeTable sts) sc ix nm obj =
   let st = M.lookup sc sts
   in case st of
-      Just (Scope s ps) -> ScopeTable $ M.insert sc (Scope (M.insert ix obj s) ps) sts
-      Nothing           -> ScopeTable sts
+      Just (Scope s ns ps) -> ScopeTable $ M.insert sc (Scope (M.insert ix obj s) (insertMapList ns nm ix) ps) sts
+      Nothing              -> ScopeTable sts
 
 
 
@@ -609,5 +609,21 @@ lookupScopeObj :: ScopeTable -> Int -> Int -> Maybe ScopeObj
 lookupScopeObj sctab sc ix =
   let smap = lookupScopeMap sctab sc
   in case smap of
-      Nothing            -> Nothing
-      Just (Scope obs _) -> M.lookup ix obs
+      Nothing              -> Nothing
+      Just (Scope obs _ _) -> M.lookup ix obs
+
+
+
+
+
+
+
+
+
+
+lookupScopeName :: ScopeTable -> Int -> Text -> [Int]
+lookupScopeName sctab sc nm =
+  let smap = lookupScopeMap sctab sc
+  in case smap of
+      Nothing              -> []
+      Just (Scope _ nms _) -> Mb.fromMaybe [] $ M.lookup nm nms
