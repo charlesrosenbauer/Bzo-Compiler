@@ -605,6 +605,7 @@ lookupScopeMap (ScopeTable sts) sc = M.lookup sc sts
 
 
 
+-- TODO: Adapt to perform lookups in parent scopes
 lookupScopeObj :: ScopeTable -> Int -> Int -> Maybe ScopeObj
 lookupScopeObj sctab sc ix =
   let smap = lookupScopeMap sctab sc
@@ -621,9 +622,49 @@ lookupScopeObj sctab sc ix =
 
 
 
+-- TODO: Adapt to perform lookups in parent scopes
 lookupScopeName :: ScopeTable -> Int -> Text -> [Int]
 lookupScopeName sctab sc nm =
   let smap = lookupScopeMap sctab sc
   in case smap of
       Nothing              -> []
       Just (Scope _ nms _) -> Mb.fromMaybe [] $ M.lookup nm nms
+
+
+
+
+
+
+
+
+
+
+-- TODO: Adapt to set includes/imports as parent scopes
+makeScopeTable :: DefinitionTable -> (ScopeTable, M.Map Text Int)
+makeScopeTable (DefinitionTable dfs fs ids _) =
+  let
+      modeldef :: (Int, Definition) -> (Text, ScopeObj)
+      modeldef = (\(i, df) -> case df of
+                    (FuncDef  _ h _ _ _ _) -> (h, (Sc_Func i A_InvalidType))
+                    (TypeDef    _ h _ _ _) -> (h, (Sc_Type i A_InvalidType))
+                    (TyClassDef _ h _ _ _) -> (h, (Sc_TyCs i A_InvalidType))
+                    (FuncSyntax   _ h _ _) -> (h, (Sc_Func i A_InvalidType))
+                    (TypeSyntax     _ h _) -> (h, (Sc_Type i A_InvalidType))
+                    (TyClassSyntax  _ h _) -> (h, (Sc_TyCs i A_InvalidType)))
+
+      scobjs  :: [(Text, ScopeObj)]
+      scobjs = L.map (\(i,d) -> modeldef (fromIntegral i, d)) $ M.assocs dfs
+
+      filemap :: M.Map Text Int
+      filemap = M.fromList $ L.zip (L.sort $ L.nub $ L.map fst scobjs) [1..]
+
+      scfpairs:: [(Text, [ScopeObj])]
+      scfpairs= L.map (\(x:xs) -> (fst x, L.map snd (x:xs))) $ L.groupBy (\(a,_) (b,_) -> a == b) $ L.sortBy (\(a,_) (b,_) -> compare a b) scobjs
+
+      scopes  :: [Scope]
+      scopes  = L.map (\(x, scs) -> Scope (M.fromList $ L.zip [1..] scs) M.empty []) scfpairs
+
+      scopemap:: M.Map Int Scope
+      scopemap= M.fromList $ L.zip [1..] scopes
+
+  in (ScopeTable M.empty, filemap)

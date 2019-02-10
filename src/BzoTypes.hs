@@ -848,6 +848,7 @@ data AbsType
   | A_BITyType !TyId
   | A_ArryType !Integer !Type
   | A_FLitType !FnId
+  | A_InvalidType
   deriving (Show, Eq)
 
 
