@@ -665,7 +665,7 @@ makeScopeTable (DefinitionTable dfs fs ids _) =
       oscnames= L.map (\(i,d) -> (hostfile d, identifier d, i)) $ M.assocs dfs
 
       fscnames:: [(Text, [(Text, Int64)])]
-      fscnames= L.map (\xs->  (  fst $ L.head xs,    L.map (\(_,b,c)-> (b,c) ) xs  )  ) $
+      fscnames= L.map (\xs->  (  fst3 $ L.head xs,    L.map dfst3 xs  )  ) $
                     L.groupBy (\(a,_,_)(b,_,_)-> a == b) $
                     L.sortBy  (\(a,_,_)(b,_,_)-> compare a b) oscnames
 

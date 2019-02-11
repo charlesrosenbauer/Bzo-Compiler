@@ -179,6 +179,42 @@ trd3 (a, b, c) = c
 
 
 
+dfst3 :: (a, b, c) -> (b, c)
+dfst3 (a, b, c) = (b, c)
+
+
+
+
+
+
+
+
+
+
+dsnd3 :: (a, b, c) -> (a, c)
+dsnd3 (a, b, c) = (a, c)
+
+
+
+
+
+
+
+
+
+
+dtrd3 :: (a, b, c) -> (a, b)
+dtrd3 (a, b, c) = (a, b)
+
+
+
+
+
+
+
+
+
+
 app_1_2 :: (a -> c) -> (a, b) -> (c, b)
 app_1_2 f (a, b) = (f a, b)
 
