@@ -432,8 +432,9 @@ checkProgram dt@(DefinitionTable defs files ids _) =
       scopect :: [(Int64, Int, Int)]
       !scopect = L.scanl (\(_, _, n) (k, dx) -> (k, n, dx+n)) (0, 1, 1) $ L.map (\(k, d) -> (k, ctDefScopes d)) $ M.assocs defs
 
-      scopetab :: ScopeTable
-      !scopetab = initializeScopeTable $ (\(_,_,x) -> x) $ L.last scopect
+      scopetab :: (ScopeTable, M.Map Text Int)
+      scopetab = makeScopeTable dt
+      -- !scopetab = initializeScopeTable $ (\(_,_,x) -> x) $ L.last scopect
 
       !x = trace (show scopetab) 0
 

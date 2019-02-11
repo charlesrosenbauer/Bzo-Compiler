@@ -659,7 +659,15 @@ makeScopeTable (DefinitionTable dfs fs ids _) =
       filemap = M.fromList $ L.zip (L.sort $ L.nub $ L.map fst scobjs) [1..]
 
       scfpairs:: [(Text, [ScopeObj])]
-      scfpairs= L.map (\(x:xs) -> (fst x, L.map snd (x:xs))) $ L.groupBy (\(a,_) (b,_) -> a == b) $ L.sortBy (\(a,_) (b,_) -> compare a b) scobjs
+      scfpairs= L.map (\xs -> (fst $ L.head xs, L.map snd xs)) $ L.groupBy (\(a,_) (b,_) -> a == b) $ L.sortBy (\(a,_) (b,_) -> compare a b) scobjs
+
+      oscnames:: [(Text, Text, Int64)]
+      oscnames= L.map (\(i,d) -> (hostfile d, identifier d, i)) $ M.assocs dfs
+
+      fscnames:: [(Text, [(Text, Int64)])]
+      fscnames= L.map (\xs->  (  fst $ L.head xs,    L.map (\(_,b,c)-> (b,c) ) xs  )  ) $
+                    L.groupBy (\(a,_,_)(b,_,_)-> a == b) $
+                    L.sortBy  (\(a,_,_)(b,_,_)-> compare a b) oscnames
 
       scopes  :: [Scope]
       scopes  = L.map (\(x, scs) -> Scope (M.fromList $ L.zip [1..] scs) M.empty []) scfpairs
@@ -667,4 +675,4 @@ makeScopeTable (DefinitionTable dfs fs ids _) =
       scopemap:: M.Map Int Scope
       scopemap= M.fromList $ L.zip [1..] scopes
 
-  in (ScopeTable M.empty, filemap)
+  in (ScopeTable scopemap, filemap)
