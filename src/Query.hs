@@ -605,7 +605,6 @@ lookupScopeMap (ScopeTable sts) sc = M.lookup sc sts
 
 
 
--- TODO: Adapt to perform lookups in parent scopes
 lookupScopeObj :: ScopeTable -> Int -> Int -> Maybe ScopeObj
 lookupScopeObj sctab sc ix =
   let smap = lookupScopeMap sctab sc
@@ -622,13 +621,16 @@ lookupScopeObj sctab sc ix =
 
 
 
--- TODO: Adapt to perform lookups in parent scopes
+-- TEST: Make sure recursive lookup works properly.
 lookupScopeName :: ScopeTable -> Int -> Text -> [Int]
 lookupScopeName sctab sc nm =
   let smap = lookupScopeMap sctab sc
   in case smap of
-      Nothing              -> []
-      Just (Scope _ nms _) -> Mb.fromMaybe [] $ M.lookup nm nms
+      Nothing               -> []
+      Just (Scope _ nms ps) ->
+        case (M.lookup nm nms) of
+          Nothing -> L.concatMap (\i->lookupScopeName sctab i nm) ps
+          Just xs -> xs
 
 
 
