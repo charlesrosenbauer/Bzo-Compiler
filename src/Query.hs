@@ -659,20 +659,41 @@ makeScopeTable (DefinitionTable dfs fs ids _) =
       filemap = M.fromList $ L.zip (L.sort $ L.nub $ L.map fst scobjs) [1..]
 
       scfpairs:: [(Text, [ScopeObj])]
-      scfpairs= L.map (\xs -> (fst $ L.head xs, L.map snd xs)) $ L.groupBy (\(a,_) (b,_) -> a == b) $ L.sortBy (\(a,_) (b,_) -> compare a b) scobjs
+      scfpairs= L.map (\xs -> (fst $ L.head xs, L.map snd xs)) $ L.groupBy groupair $ L.sortBy compair scobjs
 
       oscnames:: [(Text, Text, Int64)]
       oscnames= L.map (\(i,d) -> (hostfile d, identifier d, i)) $ M.assocs dfs
 
       fscnames:: [(Text, [(Text, Int64)])]
-      fscnames= L.map (\xs->  (  fst3 $ L.head xs,    L.map dfst3 xs  )  ) $
-                    L.groupBy (\(a,_,_)(b,_,_)-> a == b) $
-                    L.sortBy  (\(a,_,_)(b,_,_)-> compare a b) oscnames
+      fscnames= L.map (\xs->  (fst3 $ L.head xs, L.map dfst3 xs) ) $
+                    L.groupBy groutrip $
+                    L.sortBy  comtrip oscnames
+
+      iscnames:: [(Text, [(Text, [Int])])]
+      iscnames= L.map (\(f,xs) -> (f,
+                    L.map (\xs-> (fst $ L.head xs, L.map (fromIntegral . snd) xs)) $
+                    L.groupBy groupair $
+                    L.sortBy compair xs) ) fscnames
+
+      oscfmap :: M.Map Text (M.Map Text [Int])
+      oscfmap = M.fromList $ L.map (\(f,xs) -> (f, M.fromList xs)) iscnames
 
       scopes  :: [Scope]
-      scopes  = L.map (\(x, scs) -> Scope (M.fromList $ L.zip [1..] scs) M.empty []) scfpairs
+      scopes  = L.map (\(x, scs) -> Scope (M.fromList $ L.zip [1..] scs) (oscfmap M.! x) []) scfpairs
 
       scopemap:: M.Map Int Scope
       scopemap= M.fromList $ L.zip [1..] scopes
 
   in (ScopeTable scopemap, filemap)
+  where
+        compair :: Ord a => (a, b) -> (a, b) -> Ordering
+        compair (a,_) (b,_) = compare a b
+
+        comtrip :: Ord a => (a, b, c) -> (a, b, c) -> Ordering
+        comtrip (a,_,_) (b,_,_) = compare a b
+
+        groupair:: Eq  a => (a, b) -> (a, b) -> Bool
+        groupair(a,_) (b,_) = a == b
+
+        groutrip:: Eq  a => (a, b, c) -> (a, b, c) -> Bool
+        groutrip(a, _, _) (b, _, _) = a == b
