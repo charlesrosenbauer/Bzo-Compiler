@@ -566,7 +566,7 @@ getModuleVis (NameTable nt) dm md =
 
 
 initializeScopeTable :: Int -> ScopeTable
-initializeScopeTable ct = ScopeTable $ M.fromList $ L.take ct $ L.zip [1..] (L.repeat $ Scope (M.empty) (M.empty) [1])
+initializeScopeTable ct = ScopeTable (M.fromList $ L.take ct $ L.zip [1..] (L.repeat $ Scope (M.empty) (M.empty) [1])) ct
 
 
 
@@ -578,11 +578,11 @@ initializeScopeTable ct = ScopeTable $ M.fromList $ L.take ct $ L.zip [1..] (L.r
 
 
 insertScopeObj :: ScopeTable -> Int -> Int -> Text-> ScopeObj -> ScopeTable
-insertScopeObj (ScopeTable sts) sc ix nm obj =
+insertScopeObj (ScopeTable sts sz) sc ix nm obj =
   let st = M.lookup sc sts
   in case st of
-      Just (Scope s ns ps) -> ScopeTable $ M.insert sc (Scope (M.insert ix obj s) (insertMapList ns nm ix) ps) sts
-      Nothing              -> ScopeTable sts
+      Just (Scope s ns ps) -> ScopeTable (M.insert sc (Scope (M.insert ix obj s) (insertMapList ns nm ix) ps) sts) sz
+      Nothing              -> ScopeTable sts sz
 
 
 
@@ -594,7 +594,7 @@ insertScopeObj (ScopeTable sts) sc ix nm obj =
 
 
 lookupScopeMap :: ScopeTable -> Int -> Maybe Scope
-lookupScopeMap (ScopeTable sts) sc = M.lookup sc sts
+lookupScopeMap (ScopeTable sts _) sc = M.lookup sc sts
 
 
 
@@ -645,14 +645,15 @@ lookupScopeName sctab sc nm =
 makeScopeTable :: DefinitionTable -> (ScopeTable, M.Map Text Int)
 makeScopeTable (DefinitionTable dfs fs ids _) =
   let
+      -- TODO: get associated scopes working with this.
       modeldef :: (Int, Definition) -> (Text, ScopeObj)
       modeldef = (\(i, df) -> case df of
-                    (FuncDef  _ h _ _ _ _) -> (h, (Sc_Func i A_InvalidType))
-                    (TypeDef    _ h _ _ _) -> (h, (Sc_Type i A_InvalidType))
-                    (TyClassDef _ h _ _ _) -> (h, (Sc_TyCs i A_InvalidType))
-                    (FuncSyntax   _ h _ _) -> (h, (Sc_Func i A_InvalidType))
-                    (TypeSyntax     _ h _) -> (h, (Sc_Type i A_InvalidType))
-                    (TyClassSyntax  _ h _) -> (h, (Sc_TyCs i A_InvalidType)))
+                    (FuncDef  _ h _ _ _ _) -> (h, (Sc_Func i A_InvalidType []))
+                    (TypeDef    _ h _ _ _) -> (h, (Sc_Type i A_InvalidType  0))
+                    (TyClassDef _ h _ _ _) -> (h, (Sc_TyCs i A_InvalidType  0))
+                    (FuncSyntax   _ h _ _) -> (h, (Sc_Func i A_InvalidType []))
+                    (TypeSyntax     _ h _) -> (h, (Sc_Type i A_InvalidType  0))
+                    (TyClassSyntax  _ h _) -> (h, (Sc_TyCs i A_InvalidType  0)))
 
       scobjs  :: [(Text, ScopeObj)]
       scobjs = L.map (\(i,d) -> modeldef (fromIntegral i, d)) $ M.assocs dfs
@@ -686,7 +687,7 @@ makeScopeTable (DefinitionTable dfs fs ids _) =
       scopemap:: M.Map Int Scope
       scopemap= M.fromList $ L.zip [1..] scopes
 
-  in (ScopeTable scopemap, filemap)
+  in (ScopeTable scopemap (M.size scopemap), filemap)
   where
         compair :: Ord a => (a, b) -> (a, b) -> Ordering
         compair (a,_) (b,_) = compare a b
@@ -699,3 +700,30 @@ makeScopeTable (DefinitionTable dfs fs ids _) =
 
         groutrip:: Eq  a => (a, b, c) -> (a, b, c) -> Bool
         groutrip(a, _, _) (b, _, _) = a == b
+
+
+
+
+
+
+
+
+
+{-
+makeDefScope :: ScopeTable -> M.Map Text Int -> Definition -> (ScopeTable, Int)
+makeDefScope sctab@(ScopeTable scs top) ftab def =
+  let
+      host :: Text
+      host = hostfile def
+
+      hsid :: Int
+      hsid = ftab M.! host
+
+      scope:: Scope
+      scope= Scope
+
+      pscop:: Scope
+      pscop= scs M.! hsid
+
+  in
+-}
