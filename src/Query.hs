@@ -709,6 +709,27 @@ makeScopeTable (DefinitionTable dfs fs ids _) =
 
 
 
+
+getImports :: M.Map Text Int -> DefinitionTable -> M.Map Text [(Text, Int)]
+getImports filemap dt@(DefinitionTable _ files _ _) =
+  let
+      fdata :: M.Map Int (Text, Text, Text)
+      fdata =  M.fromList $ L.map (\(BzoFileModel mn fp dm _ _ _ _ _)-> (filemap M.! (pack fp), (pack fp, mn, dm))) files
+
+      fimps :: M.Map Int ([Text], [Text], [(Text, Text)], [(Text, Text)])
+      fimps =  M.fromList $ L.map (\(BzoFileModel _ fp _ _ is ls ias las)-> (filemap M.! (pack fp), (is, ls, ias, las))) files
+
+  in M.empty
+
+
+
+
+
+
+
+
+
+
 makeDefScope :: ScopeTable -> M.Map Text Int -> Definition -> (ScopeTable, Int)
 makeDefScope sctab@(ScopeTable scs top) ftab def =
   let
@@ -721,4 +742,4 @@ makeDefScope sctab@(ScopeTable scs top) ftab def =
       scope:: Scope
       scope= Scope M.empty M.empty [hsid]
 
-  in (ScopeTable (M.insert (top+1) scope scs) top+1, top+1)
+  in (ScopeTable (M.insert (top+1) scope scs) (top+1), top+1)
