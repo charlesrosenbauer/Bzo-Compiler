@@ -1050,7 +1050,7 @@ data DomainTable = DomainTable !(M.Map T.Text [Int64])
 
 data ScopeTable = ScopeTable !(M.Map Int Scope) !Int deriving Show
 
-data Scope = Scope !(M.Map Int ScopeObj) !(M.Map T.Text [Int]) ![Int] deriving Show -- Object Table, Parent Scopes
+data Scope = Scope !(M.Map Int ScopeObj) !(M.Map T.Text [Int]) ![Int] deriving Show -- Object Table, Name Table, Parent Scopes
 
 data ScopeObj
       = Sc_Func !Int !AbsType ![Int]    -- FID, AbsType, Associated Scopes

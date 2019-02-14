@@ -709,7 +709,6 @@ makeScopeTable (DefinitionTable dfs fs ids _) =
 
 
 
-{-
 makeDefScope :: ScopeTable -> M.Map Text Int -> Definition -> (ScopeTable, Int)
 makeDefScope sctab@(ScopeTable scs top) ftab def =
   let
@@ -720,10 +719,6 @@ makeDefScope sctab@(ScopeTable scs top) ftab def =
       hsid = ftab M.! host
 
       scope:: Scope
-      scope= Scope
+      scope= Scope M.empty M.empty [hsid]
 
-      pscop:: Scope
-      pscop= scs M.! hsid
-
-  in
--}
+  in (ScopeTable (M.insert (top+1) scope scs) top+1, top+1)
