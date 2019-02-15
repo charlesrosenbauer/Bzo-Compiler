@@ -710,16 +710,44 @@ makeScopeTable (DefinitionTable dfs fs ids _) =
 
 
 
-getImports :: M.Map Text Int -> DefinitionTable -> M.Map Text [(Text, Int)]
+getImports :: M.Map Text Int -> DefinitionTable -> M.Map Int [(Text, [Int])]
 getImports filemap dt@(DefinitionTable _ files _ _) =
   let
       fdata :: M.Map Int (Text, Text, Text)
       fdata =  M.fromList $ L.map (\(BzoFileModel mn fp dm _ _ _ _ _)-> (filemap M.! (pack fp), (pack fp, mn, dm))) files
 
-      fimps :: M.Map Int ([Text], [Text], [(Text, Text)], [(Text, Text)])
-      fimps =  M.fromList $ L.map (\(BzoFileModel _ fp _ _ is ls ias las)-> (filemap M.! (pack fp), (is, ls, ias, las))) files
+      fincs :: M.Map Int (Text, [Text], [Text], [(Text, Text)], [(Text, Text)])
+      fincs =  M.fromList $ L.map (\(BzoFileModel _ fp dm _ is ls ias las)-> (filemap M.! (pack fp), (dm, is, ls, ias, las))) files
 
-  in M.empty
+      filespace :: M.Map Text [(Text, Int)]
+      filespace = M.fromList $
+                  L.map (\xs -> (fst $ L.head xs, L.map snd xs)) $
+                  L.groupBy (\a b -> (fst a) == (fst b)) $
+                  L.map (\(BzoFileModel mn fp dm _ _ _ _ _)-> (mn, (dm, filemap M.! (pack fp)))) files
+
+      {-
+        This is interesting; building a function that does lookup on a data
+        strucutre built in local scope. I'm wondering if there's some kind of
+        strange optimization that could be done on cases like this in a future
+        version of Bzo.
+      -}
+      findImport :: Text -> Text -> [Int]
+      findImport dm mn =
+        case (L.lookup mn $ filespace M.! dm) of
+          Just x  -> [x]
+          Nothing -> []
+
+      findLink   :: Text -> [Int]
+      findLink dm = L.map snd $ filespace M.! dm
+
+      fimps :: M.Map Int [(Text, [Int])]
+      fimps = M.map (\(dm, is, ls, ias, las)->
+                  (L.map (\ i    -> (i, findImport dm i)) is )  ++
+                  (L.map (\(i,a) -> (a, findImport dm i)) ias)  ++
+                  (L.map (\ l    -> (l, findLink      l)) ls )  ++
+                  (L.map (\(l,a) -> (a, findLink      l)) las)) fincs
+
+  in fimps
 
 
 
