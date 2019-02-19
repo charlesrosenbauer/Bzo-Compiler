@@ -641,11 +641,10 @@ lookupScopeName sctab sc nm =
 
 
 
--- TODO: Adapt to set includes/imports as parent scopes
+
 makeScopeTable :: DefinitionTable -> (ScopeTable, M.Map Text Int)
 makeScopeTable dt@(DefinitionTable dfs fs ids _) =
   let
-      -- TODO: get associated scopes working with this.
       modeldef :: (Int, Definition) -> (Text, ScopeObj)
       modeldef = (\(i, df) -> case df of
                     (FuncDef  _ h _ _ _ _) -> (h, (Sc_Func i A_InvalidType []))
@@ -717,6 +716,7 @@ makeScopeTable dt@(DefinitionTable dfs fs ids _) =
 
 
 {-
+  BUG:
   It appears as though somehow missing files are getting through here?
 
   If a file import is missing, it will attempt to lookup and link the scopes.
