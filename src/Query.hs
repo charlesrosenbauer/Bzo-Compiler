@@ -566,7 +566,7 @@ getModuleVis (NameTable nt) dm md =
 
 
 initializeScopeTable :: Int -> ScopeTable
-initializeScopeTable ct = ScopeTable (M.fromList $ L.take ct $ L.zip [1..] (L.repeat $ Scope (M.empty) (M.empty) [1])) ct
+initializeScopeTable ct = ScopeTable (M.fromList $ L.take ct $ L.zip [1..] (L.repeat $ Scope (M.empty) (M.empty) [(pack "@", [1])])) ct
 
 
 
@@ -629,7 +629,7 @@ lookupScopeName sctab sc nm =
       Nothing               -> []
       Just (Scope _ nms ps) ->
         case (M.lookup nm nms) of
-          Nothing -> L.concatMap (\i->lookupScopeName sctab i nm) ps
+          Nothing -> L.concatMap (\i->lookupScopeName sctab i nm) $ L.concatMap snd ps
           Just xs -> xs
 
 
@@ -768,6 +768,6 @@ makeDefScope sctab@(ScopeTable scs top) ftab def =
       hsid = ftab M.! host
 
       scope:: Scope
-      scope= Scope M.empty M.empty [hsid]
+      scope= Scope M.empty M.empty [(pack "@", [hsid])]
 
   in (ScopeTable (M.insert (top+1) scope scs) (top+1), top+1)
