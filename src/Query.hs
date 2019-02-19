@@ -643,7 +643,7 @@ lookupScopeName sctab sc nm =
 
 -- TODO: Adapt to set includes/imports as parent scopes
 makeScopeTable :: DefinitionTable -> (ScopeTable, M.Map Text Int)
-makeScopeTable (DefinitionTable dfs fs ids _) =
+makeScopeTable dt@(DefinitionTable dfs fs ids _) =
   let
       -- TODO: get associated scopes working with this.
       modeldef :: (Int, Definition) -> (Text, ScopeObj)
@@ -659,7 +659,10 @@ makeScopeTable (DefinitionTable dfs fs ids _) =
       scobjs = L.map (\(i,d) -> modeldef (fromIntegral i, d)) $ M.assocs dfs
 
       filemap :: M.Map Text Int
-      filemap = M.fromList $ L.zip (L.sort $ L.nub $ L.map fst scobjs) [1..]
+      filemap = M.fromList $ L.zip (L.sort $ L.nub $ L.map fst scobjs) [2..]
+
+      invfmap :: M.Map Int Text
+      invfmap = M.fromList $ L.map Tp.swap $ M.assocs filemap
 
       scfpairs:: [(Text, [ScopeObj])]
       scfpairs= L.map (\xs -> (fst $ L.head xs, L.map snd xs)) $ L.groupBy groupair $ L.sortBy compair scobjs
@@ -681,11 +684,14 @@ makeScopeTable (DefinitionTable dfs fs ids _) =
       oscfmap :: M.Map Text (M.Map Text [Int])
       oscfmap = M.fromList $ L.map (\(f,xs) -> (f, M.fromList xs)) iscnames
 
+      impmap  :: M.Map Text [(Text, [Int])]
+      impmap  = M.fromList $ L.map (\(k,v)->(invfmap M.! k, v)) $ M.assocs $ getImports filemap dt
+
       scopes  :: [Scope]
-      scopes  = L.map (\(x, scs) -> Scope (M.fromList $ L.zip [1..] scs) (oscfmap M.! x) []) scfpairs
+      scopes  = L.map (\(x, scs) -> Scope (M.fromList $ L.zip [1..] scs) (oscfmap M.! x) (impmap M.! x)) scfpairs
 
       scopemap:: M.Map Int Scope
-      scopemap= M.fromList $ L.zip [1..] scopes
+      scopemap= M.fromList $ L.zip [2..] scopes
 
   in (ScopeTable scopemap (M.size scopemap), filemap)
   where
@@ -710,6 +716,12 @@ makeScopeTable (DefinitionTable dfs fs ids _) =
 
 
 
+{-
+  It appears as though somehow missing files are getting through here?
+
+  If a file import is missing, it will attempt to lookup and link the scopes.
+  If the file has not been imported, it crashes.
+-}
 getImports :: M.Map Text Int -> DefinitionTable -> M.Map Int [(Text, [Int])]
 getImports filemap dt@(DefinitionTable _ files _ _) =
   let
@@ -727,7 +739,7 @@ getImports filemap dt@(DefinitionTable _ files _ _) =
 
       {-
         This is interesting; building a function that does lookup on a data
-        strucutre built in local scope. I'm wondering if there's some kind of
+        structure built in local scope. I'm wondering if there's some kind of
         strange optimization that could be done on cases like this in a future
         version of Bzo.
       -}
@@ -738,7 +750,10 @@ getImports filemap dt@(DefinitionTable _ files _ _) =
           Nothing -> []
 
       findLink   :: Text -> [Int]
-      findLink dm = L.map snd $ filespace M.! dm
+      findLink dm = L.map snd $
+        case (M.lookup dm filespace) of
+          Just x  ->  x
+          Nothing -> []
 
       fimps :: M.Map Int [(Text, [Int])]
       fimps = M.map (\(dm, is, ls, ias, las)->
