@@ -6,6 +6,7 @@ import qualified Data.List as L hiding (foldl, map)
 import qualified Data.Either as E
 import qualified Data.Maybe as M
 import qualified Data.Map.Strict as Mp hiding (foldl, map)
+import Debug.Trace
 
 
 
@@ -926,3 +927,19 @@ insertMapList mp k a =
   case (Mp.lookup k mp) of
     Nothing -> Mp.insert k [a] mp
     Just as -> Mp.adjust (L.insert a) k mp
+
+
+
+
+
+
+
+
+
+
+debug :: Show a => a -> a
+debug a = trace ((show a) ++ "\n") a
+
+
+debugmsg :: Show a => String -> a -> a
+debugmsg str a = trace (str ++ ": " ++ (show a) ++ "\n") a
