@@ -404,6 +404,37 @@ getDefType st _                         = Right $ InvalidType
 
 
 
+--modelExpr :: DefinitionTable -> ScopeTable -> Definition -> Definition
+--modelExpr dt st (FuncSyntax i hid thead expr) =
+--  let
+--
+--  in
+
+
+
+
+
+
+
+
+
+
+--modelExprCmpd :: ScopeTable -> Type -> BzoSyntax -> Either [BzoErr] Expr
+--modelExprPoly :: ScopeTable -> Type -> BzoSyntax -> Either [BzoErr] Expr
+--modelExprPrfx :: ScopeTable -> Type -> BzoSyntax -> Either [BzoErr] Expr
+--modelExprInpt :: ScopeTable -> Type -> BzoSyntax -> Either [BzoErr] Expr
+--modelExprOtpt :: ScopeTable -> Type -> BzoSyntax -> Either [BzoErr] Expr
+--modelExpr     :: ScopeTable -> Type -> BzoSyntax -> Either [BzoErr] Expr
+
+
+
+
+
+
+
+
+
+
 checkProgram :: DefinitionTable -> Either [BzoErr] DefinitionTable
 checkProgram dt@(DefinitionTable defs files ids _) =
   let

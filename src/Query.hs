@@ -773,6 +773,10 @@ getImports filemap dt@(DefinitionTable _ files _ _) =
 
 
 
+{-
+  I think I might have to include something here to replace "@" with a domain
+    id. Seems like that might cause fewer problems upstream.
+-}
 makeDefScope :: ScopeTable -> M.Map Text Int -> Definition -> (ScopeTable, Int)
 makeDefScope sctab@(ScopeTable scs top) ftab def =
   let
