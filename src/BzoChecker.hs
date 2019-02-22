@@ -422,9 +422,51 @@ getDefType st _                         = Right $ InvalidType
 --modelExprCmpd :: ScopeTable -> Type -> BzoSyntax -> Either [BzoErr] Expr
 --modelExprPoly :: ScopeTable -> Type -> BzoSyntax -> Either [BzoErr] Expr
 --modelExprPrfx :: ScopeTable -> Type -> BzoSyntax -> Either [BzoErr] Expr
+--modelExprLmda :: ScopeTable -> Type -> BzoSyntax -> Either [BzoErr] Expr
+--modelExprBlck :: ScopeTable -> Type -> BzoSyntax -> Either [BzoErr] Expr
 --modelExprInpt :: ScopeTable -> Type -> BzoSyntax -> Either [BzoErr] Expr
 --modelExprOtpt :: ScopeTable -> Type -> BzoSyntax -> Either [BzoErr] Expr
 --modelExpr     :: ScopeTable -> Type -> BzoSyntax -> Either [BzoErr] Expr
+
+
+
+
+
+
+
+
+
+
+--tagScopes :: ScopeTable -> [Definition] -> (ScopeTable, M.Map BzoPos Int)
+--tagScopes st defs =
+--  let
+--
+--
+--  in  ()
+
+
+
+
+
+
+
+
+
+
+posScopes :: BzoSyntax -> [(BzoPos, [BzoPos])]
+posScopes (BzS_Block    p  xs) =
+  let scs = L.concatMap posScopes xs
+  in (p, L.map fst scs):scs
+
+posScopes (BzS_Statement  _ x ) = posScopes x
+posScopes (BzS_Lambda   _ _ x ) = posScopes x
+posScopes (BzS_MapObj     _ x ) = posScopes x
+posScopes (BzS_Expr       _ xs) = L.concatMap posScopes xs
+posScopes (BzS_Cmpd       _ xs) = L.concatMap posScopes xs
+posScopes (BzS_Poly       _ xs) = L.concatMap posScopes xs
+posScopes (BzS_LispCall _ f xs) = (posScopes f) ++ (L.concatMap posScopes xs)
+posScopes _ = []
+
 
 
 
