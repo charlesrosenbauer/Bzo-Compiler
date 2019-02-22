@@ -437,12 +437,36 @@ getDefType st _                         = Right $ InvalidType
 
 
 
---tagScopes :: ScopeTable -> [Definition] -> (ScopeTable, M.Map BzoPos Int)
---tagScopes st defs =
---  let
---
---
---  in  ()
+tagScopes :: (M.Map Text Int) -> ScopeTable -> [Definition] -> (ScopeTable, M.Map BzoPos Int)
+tagScopes ftab st defs =
+  let
+
+      dfs :: ([Definition], [Definition], [Definition])
+      dfs = L.foldl (\(a,b,c)(d,e,f)->(a++d, b++e, c++f)) ([], [], []) $
+            L.map (\d -> case d of
+                              f@(FuncSyntax  _ _ _ _) -> ([f], [], [])
+                              t@(TypeSyntax    _ _ _) -> ([], [t], [])
+                              c@(TyClassSyntax _ _ _) -> ([], [], [c])
+                              _                       -> ([], [], [] )) defs
+
+      flook :: (Text, a) -> (Int, a)
+      flook (t, x) = (ftab M.! t, x)
+
+      fns :: [(Int, (BzoPos, [BzoSyntax]))]
+      fns = L.map flook $ L.map (\f -> (hostfile f, (pos $  ftyheader f,  funcsyntax f ))) $ fst3 dfs
+
+      tys :: [(Int, (BzoPos, [BzoSyntax]))]
+      tys = L.map flook $ L.map (\t -> (hostfile t, (pos $ typesyntax t, [typesyntax t]))) $ snd3 dfs
+
+      tcs :: [(Int, (BzoPos, [BzoSyntax]))]
+      tcs = L.map flook $ L.map (\c -> (hostfile c, (pos $ typesyntax c, [typesyntax c]))) $ trd3 dfs
+
+
+      --scopes :: [(BzoPos, [BzoPos])]
+      --scopes = L.map (\(i, (p, syn)) -> (posScopes () syn)) (fns ++ tys ++ tcs)
+
+
+  in  (st, M.empty)
 
 
 
@@ -453,19 +477,19 @@ getDefType st _                         = Right $ InvalidType
 
 
 
-posScopes :: BzoSyntax -> [(BzoPos, [BzoPos])]
-posScopes (BzS_Block    p  xs) =
-  let scs = L.concatMap posScopes xs
-  in (p, L.map fst scs):scs
-
-posScopes (BzS_Statement  _ x ) = posScopes x
-posScopes (BzS_Lambda   _ _ x ) = posScopes x
-posScopes (BzS_MapObj     _ x ) = posScopes x
-posScopes (BzS_Expr       _ xs) = L.concatMap posScopes xs
-posScopes (BzS_Cmpd       _ xs) = L.concatMap posScopes xs
-posScopes (BzS_Poly       _ xs) = L.concatMap posScopes xs
-posScopes (BzS_LispCall _ f xs) = (posScopes f) ++ (L.concatMap posScopes xs)
-posScopes _ = []
+posScopes :: [BzoPos] -> BzoSyntax -> [(BzoPos, [BzoPos])]
+posScopes ps (BzS_Block          p xs) = (p, ps):(L.concatMap (posScopes (p:ps)) xs)
+posScopes ps (BzS_Statement      _ x ) = posScopes ps x
+posScopes ps (BzS_Lambda       _ _ x ) = posScopes ps x
+posScopes ps (BzS_MapObj         _ x ) = posScopes ps x
+posScopes ps (BzS_Expr           _ xs) = L.concatMap (posScopes ps) xs
+posScopes ps (BzS_Cmpd           _ xs) = L.concatMap (posScopes ps) xs
+posScopes ps (BzS_Poly           _ xs) = L.concatMap (posScopes ps) xs
+posScopes ps (BzS_LispCall     _ f xs) = (posScopes ps f) ++ (L.concatMap (posScopes ps) xs)
+posScopes ps (BzS_FunDef   p _ _ _  d) = (p, ps):(posScopes (p:ps) d)
+posScopes ps (BzS_TypDef     p _ _  d) = (p, ps):(posScopes (p:ps) d)
+posScopes ps (BzS_TyClassDef p _ _ ds) = (p, ps):(L.concatMap (\x -> [(pos x, (p:ps))]) ds)
+posScopes _ _ = []
 
 
 
