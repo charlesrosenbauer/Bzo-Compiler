@@ -621,6 +621,20 @@ lookupScopeObj sctab sc ix =
 
 
 
+lookupScopeParents :: ScopeTable -> Int -> [Int]
+lookupScopeParents sctab i =
+  case (lookupScopeMap sctab i) of
+    Just (Scope _ _ ps) -> L.concatMap snd ps
+    Nothing             -> []
+
+
+
+
+
+
+
+
+
 -- TEST: Make sure recursive lookup works properly.
 lookupScopeName :: ScopeTable -> Int -> Text -> [Int]
 lookupScopeName sctab sc nm =
