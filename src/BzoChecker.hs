@@ -438,7 +438,7 @@ getDefType st _                         = Right $ InvalidType
 
 
 tagScopes :: (M.Map Text Int) -> ScopeTable -> [Definition] -> (ScopeTable, M.Map BzoPos Int)
-tagScopes ftab st defs =
+tagScopes ftab st@(ScopeTable scs top) defs =
   let
 
       dfs :: ([Definition], [Definition], [Definition])
@@ -452,6 +452,11 @@ tagScopes ftab st defs =
       flook :: (Text, a) -> (Int, a)
       flook (t, x) = (ftab M.! t, x)
 
+      flkps :: BzoPos -> Int
+      flkps ps = ftab M.! (fileName ps)
+
+      ---
+
       fns :: [(Int, (BzoPos, [BzoSyntax]))]
       fns = L.map flook $ L.map (\f -> (hostfile f, (pos $  ftyheader f,  funcsyntax f ))) $ fst3 dfs
 
@@ -461,9 +466,19 @@ tagScopes ftab st defs =
       tcs :: [(Int, (BzoPos, [BzoSyntax]))]
       tcs = L.map flook $ L.map (\c -> (hostfile c, (pos $ typesyntax c, [typesyntax c]))) $ trd3 dfs
 
+      ---
 
-      --scopes :: [(BzoPos, [BzoPos])]
-      --scopes = L.map (\(i, (p, syn)) -> (posScopes () syn)) (fns ++ tys ++ tcs)
+      scopes :: [(BzoPos, [BzoPos])]
+      scopes = L.concatMap (\(i, (p, syn)) -> (L.concatMap (posScopes [p]) syn)) (fns ++ tys ++ tcs)
+
+      posmap :: M.Map BzoPos Int
+      posmap = M.fromList $ L.zip (L.map fst scopes) (L.map (+top) [1..])
+
+      newtop :: Int
+      newtop = (M.size posmap) + top
+
+      scopes':: [(Int, Scope, [BzoPos])]
+      scopes'= L.map (\(p, ps) -> (posmap M.! p, Scope M.empty M.empty [], ps)) scopes
 
 
   in  (st, M.empty)
@@ -476,7 +491,7 @@ tagScopes ftab st defs =
 
 
 
-
+-- Parents should be stored explicitly, but grandparents, etc. implicitly.
 posScopes :: [BzoPos] -> BzoSyntax -> [(BzoPos, [BzoPos])]
 posScopes ps (BzS_Block          p xs) = (p, ps):(L.concatMap (posScopes (p:ps)) xs)
 posScopes ps (BzS_Statement      _ x ) = posScopes ps x
