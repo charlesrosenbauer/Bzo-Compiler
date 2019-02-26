@@ -452,9 +452,6 @@ tagScopes ftab st@(ScopeTable scs top) defs =
       flook :: (Text, a) -> (Int, a)
       flook (t, x) = (ftab M.! t, x)
 
-      flkps :: BzoPos -> Int
-      flkps ps = ftab M.! (fileName ps)
-
       ---
 
       fns :: [(Int, (BzoPos, [BzoSyntax]))]
@@ -468,8 +465,8 @@ tagScopes ftab st@(ScopeTable scs top) defs =
 
       ---
 
-      scopes :: [(BzoPos, [BzoPos])]
-      scopes = L.concatMap (\(i, (p, syn)) -> (L.concatMap (posScopes [p]) syn)) (fns ++ tys ++ tcs)
+      scopes :: [(BzoPos, [BzoPos])]  -- NOTE: Not sure if p should be handled in some special way, but it currently causes crashes.
+      scopes = L.concatMap (\(i, (p, syn)) -> (L.concatMap (posScopes [{-p-}]) syn)) (fns ++ tys ++ tcs)
 
       posmap :: M.Map BzoPos Int
       posmap = M.fromList $ L.zip (L.map fst scopes) (L.map (+top) [1..])
@@ -555,7 +552,7 @@ checkProgram dt@(DefinitionTable defs files ids _) =
       postab   :: M.Map BzoPos Int
       (!scopetab', !postab) = tagScopes filetab scopetab (M.elems defs)
 
-      -- !x = debugmsg "Scopetab :" postab 
+      -- !x = debugmsg "Scopetab :" scopetab'
 
       --dts' :: [(DefinitionTable, M.Map Text SymbolTable)]
       --dts' = rights [dfs]
