@@ -477,23 +477,25 @@ tagScopes ftab st@(ScopeTable scs top) defs =
       newtop :: Int
       newtop = (M.size posmap) + top
 
-      scopes':: [(Int, Scope, [BzoPos])]
-      scopes'= L.map (\(p, ps) -> (posmap M.! p, Scope M.empty M.empty [], ps)) scopes
+      scopes':: [(Int, Scope)]
+      scopes'= L.map (\(p, ps) -> (posmap M.! p, Scope M.empty M.empty [(pack "#parent", (L.map (posmap M.!) ps))] )) scopes
 
+      scs'   :: M.Map Int Scope
+      scs'   = M.union scs $ M.fromList scopes'
 
-  in  (st, M.empty)
-
-
-
-
-
+  in  (ScopeTable scs' newtop, posmap)
 
 
 
 
--- Parents should be stored explicitly, but grandparents, etc. implicitly.
+
+
+
+
+
+
 posScopes :: [BzoPos] -> BzoSyntax -> [(BzoPos, [BzoPos])]
-posScopes ps (BzS_Block          p xs) = (p, ps):(L.concatMap (posScopes (p:ps)) xs)
+posScopes ps (BzS_Block          p xs) = (p, ps):(L.concatMap (posScopes [p]) xs)
 posScopes ps (BzS_Statement      _ x ) = posScopes ps x
 posScopes ps (BzS_Lambda       _ _ x ) = posScopes ps x
 posScopes ps (BzS_MapObj         _ x ) = posScopes ps x
@@ -501,9 +503,9 @@ posScopes ps (BzS_Expr           _ xs) = L.concatMap (posScopes ps) xs
 posScopes ps (BzS_Cmpd           _ xs) = L.concatMap (posScopes ps) xs
 posScopes ps (BzS_Poly           _ xs) = L.concatMap (posScopes ps) xs
 posScopes ps (BzS_LispCall     _ f xs) = (posScopes ps f) ++ (L.concatMap (posScopes ps) xs)
-posScopes ps (BzS_FunDef   p _ _ _  d) = (p, ps):(posScopes (p:ps) d)
-posScopes ps (BzS_TypDef     p _ _  d) = (p, ps):(posScopes (p:ps) d)
-posScopes ps (BzS_TyClassDef p _ _ ds) = (p, ps):(L.concatMap (\x -> [(pos x, (p:ps))]) ds)
+posScopes ps (BzS_FunDef   p _ _ _  d) = (p, ps):(posScopes [p] d)
+posScopes ps (BzS_TypDef     p _ _  d) = (p, ps):(posScopes [p] d)
+posScopes ps (BzS_TyClassDef p _ _ ds) = (p, ps):(L.concatMap (\x -> [(pos x, [p])]) ds)
 posScopes _ _ = []
 
 
@@ -544,11 +546,16 @@ checkProgram dt@(DefinitionTable defs files ids _) =
       scopect :: [(Int64, Int, Int)]
       !scopect = L.scanl (\(_, _, n) (k, dx) -> (k, n, dx+n)) (0, 1, 1) $ L.map (\(k, d) -> (k, ctDefScopes d)) $ M.assocs defs
 
-      scopetab :: (ScopeTable, M.Map Text Int)
-      scopetab = makeScopeTable dt
+      scopetab :: ScopeTable
+      filetab  :: M.Map Text Int
+      (scopetab, filetab) = makeScopeTable dt
       -- !scopetab = initializeScopeTable $ (\(_,_,x) -> x) $ L.last scopect
 
-      !x = trace (show scopetab) 0
+      scopetab':: ScopeTable
+      postab   :: M.Map BzoPos Int
+      (!scopetab', !postab) = tagScopes filetab scopetab (M.elems defs)
+
+      -- !x = debugmsg "Scopetab :" postab 
 
       --dts' :: [(DefinitionTable, M.Map Text SymbolTable)]
       --dts' = rights [dfs]
