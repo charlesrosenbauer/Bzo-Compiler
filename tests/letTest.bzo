@@ -1,5 +1,7 @@
-Let #Module
-IO  #Import
+Let   #Module
+StdIO #Import
+Bits  #Import
+Math  #Import
 
 
 
@@ -21,3 +23,8 @@ main :: IO ;; IO
 
   [v, ~io] print ~io
 }
+
+
+[R'.Real] Vec :: [x.R', y.R']
+
+[A', B'] Pair :: [a.A', b.B']

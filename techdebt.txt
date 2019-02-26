@@ -8,3 +8,9 @@ with nubBy and the ordering of the list.
 The exact details seem to barely check out from my analysis, though I'm not
 reasoning about it too deeply at the moment. Just keep an eye on this in cases
 of errors with type variables with missing constraints.
+
+
+02/26/19:
+tagscopes in BzoChecker.hs omits a position value while calculating scopes. It
+ideally should provide a real value, but for now it causes crashes so it is
+commented out.

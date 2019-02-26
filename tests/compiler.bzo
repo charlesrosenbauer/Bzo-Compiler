@@ -1,5 +1,5 @@
-Bzo #Module
-IO  #Import
+Bzo    #Module
+StdIO  #Import
 String #Import
 
 
@@ -13,7 +13,7 @@ String #Import
 printIntro :: IO ;; IO
 [~io] printIntro :: {
   ~io [println: _, '\n88888888ba   888888888888    ,ad8888ba,   ' ] ~io
-  ~io [println: _, '88      "8b           ,88   d8"\'    `"8b  '] ~io
+  ~io [println: _, '88      "8b           ,88   d8"\'    `"8b  '] ~io '"'
   ~io [println: _, '88      ,8P         ,88"   d8\'        `8b  ' ] ~io
   ~io [println: _, '88aaaaaa8P\'       ,88"     88          88  ' ] ~io
   ~io [println: _, '88""""""8b,     ,88"       88          88  '] ~io
