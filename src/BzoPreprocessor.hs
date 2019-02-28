@@ -180,6 +180,7 @@ wrappedPrepMap asts =
     er -> Left  er
 
   where getConts :: BzoSyntax -> Either BzoErr (BzoFileModel BzoSyntax)
+        getConts (BzS_File ps mnam fnam inc imp    []) = Left  (PrepErr (BzoPos 0 0 fnam) $ pack "File has no defined contents.")
         getConts (BzS_File ps mnam fnam inc imp conts) = Right (BzoFileModel mnam (unpack fnam) (pack "@") (BzS_Calls (pos $ L.head conts) conts) (getIncs inc) (getImps imp) (getIncAs inc) (getImpAs imp))
         getConts bzs                                   = Left  (PrepErr (pos bzs) $ pack "File is not properly formatted.")
 
