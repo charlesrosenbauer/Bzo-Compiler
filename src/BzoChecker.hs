@@ -465,8 +465,8 @@ tagScopes ftab st@(ScopeTable scs top) defs =
 
       ---
 
-      scopes :: [(BzoPos, [BzoPos])]  -- NOTE: Not sure if p should be handled in some special way, but it currently causes crashes.
-      scopes = L.concatMap (\(i, (p, syn)) -> (L.concatMap (posScopes [{-p-}]) syn)) (fns ++ tys ++ tcs)
+      scopes :: [(BzoPos, [BzoPos])]
+      scopes = L.concatMap (\(i, (p, syn)) -> (L.concatMap (posScopes []) syn)) (fns ++ tys ++ tcs)
 
       posmap :: M.Map BzoPos Int
       posmap = M.fromList $ L.zip (L.map fst scopes) (L.map (+top) [1..])
@@ -474,11 +474,17 @@ tagScopes ftab st@(ScopeTable scs top) defs =
       newtop :: Int
       newtop = (M.size posmap) + top
 
-      scopes':: [(Int, Scope)]
-      scopes'= L.map (\(p, ps) -> (posmap M.! p, Scope M.empty M.empty [(pack "#parent", (L.map (posmap M.!) ps))] )) scopes
+      scopes':: [(BzoPos, Int, Scope)]
+      scopes'= L.map (\(p, ps) -> (p, posmap M.! p, Scope M.empty M.empty [(pack "#parent", (L.map (posmap M.!) ps))] )) scopes
+
+      scopes'' ::[(Int, Scope)]
+      scopes'' = L.map (\(p, i, s) ->
+                          case s of
+                            (Scope a b [(par, [])]) -> (i, (Scope a b [(par, [ftab M.! (fileName p)])]))
+                            s'                      -> (i, s) ) scopes'
 
       scs'   :: M.Map Int Scope
-      scs'   = M.union scs $ M.fromList scopes'
+      scs'   = M.union scs $ M.fromList scopes''
 
   in  (ScopeTable scs' newtop, posmap)
 
