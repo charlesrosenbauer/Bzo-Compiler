@@ -437,6 +437,37 @@ getDefType st _                         = Right $ InvalidType
 
 
 
+modelExpr :: Int -> M.Map BzoPos Int -> ScopeTable -> BzoSyntax -> Either [BzoErr] Expr
+modelExpr scope pmap st (BzS_Block p xs) =
+  let scope' = pmap M.! p
+      exprs  = L.map (modelExpr scope' pmap st) xs
+      exprs' = rights exprs
+      errs   = L.concat $ lefts exprs
+  in case errs of
+      [] -> Right (LetExpr p scope' exprs')
+      _  -> Left  errs
+{-
+Move this code to another function, handle parameters, etc.
+modelExpr scope pmap st (BzS_FunDef p i f o def) =
+  let scope' = pmap M.! p
+      expr   = modelExpr scope' pmap st def
+      expr'  = rights [expr]
+      errs   = L.concat $ lefts  [expr]
+  in case errs of
+      [] ->
+-}
+
+modelExpr _ _ _ x = Right $ UnresExpr (pos x) x
+
+
+
+
+
+
+
+
+
+
 tagScopes :: (M.Map Text Int) -> ScopeTable -> [Definition] -> (ScopeTable, M.Map BzoPos Int)
 tagScopes ftab st@(ScopeTable scs top) defs =
   let
