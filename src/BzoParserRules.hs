@@ -159,6 +159,10 @@ parserIter fname tokens ((BzS_Token _ (TkEndDat p2))
                         :x@(BzS_Expr  p1 _)
                         :(BzS_CmpdHead p0 xs):stk)                      = parserIter fname tokens ((BzS_Expr p0 [BzS_Cmpd p0 (x:xs)]):stk)
 
+parserIter fname tokens ((BzS_Token _ (TkEndDat p2))
+                        :(BzS_Statement p1 x)
+                        :(BzS_CmpdHead p0 xs):stk)                      = parserIter fname tokens ((BzS_Expr p0 [BzS_Cmpd p0 (x:xs)]):stk)
+
 parserIter fname tokens ((BzS_Token _ (TkNewline _))
                         :x@(BzS_CmpdHead p0 xs):stk)                    = parserIter fname tokens (x:stk)
 
@@ -172,6 +176,10 @@ parserIter fname tokens ((BzS_Token _ (TkSepPoly p2))
 
 parserIter fname tokens ((BzS_Token _ (TkEndTup p2))
                         :x@(BzS_Expr  p1 _)
+                        :(BzS_PolyHead p0 xs):stk)                      = parserIter fname tokens ((BzS_Expr p0 [BzS_Poly p0 (x:xs)]):stk)
+
+parserIter fname tokens ((BzS_Token _ (TkEndTup p2))
+                        :(BzS_Statement p1 x)
                         :(BzS_PolyHead p0 xs):stk)                      = parserIter fname tokens ((BzS_Expr p0 [BzS_Poly p0 (x:xs)]):stk)
 
 parserIter fname tokens ((BzS_Token _ (TkNewline _))
