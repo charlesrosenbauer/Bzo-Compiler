@@ -486,7 +486,7 @@ tagScopes ftab st@(ScopeTable scs top) defs =
       ---
 
       fns :: [(Int, (BzoPos, [BzoSyntax]))]
-      fns = L.map flook $ L.map (\f -> (hostfile f, (pos $  ftyheader f,  funcsyntax f ))) $ fst3 dfs
+      fns = L.map flook $ L.map (\f -> (hostfile f, (pos $  ftyheader f, ((ftyheader f):(funcsyntax f))))) $ fst3 dfs
 
       tys :: [(Int, (BzoPos, [BzoSyntax]))]
       tys = L.map flook $ L.map (\t -> (hostfile t, (pos $ typesyntax t, [typesyntax t]))) $ snd3 dfs
@@ -537,8 +537,9 @@ posScopes ps (BzS_Expr           _ xs) = L.concatMap (posScopes ps) xs
 posScopes ps (BzS_Cmpd           _ xs) = L.concatMap (posScopes ps) xs
 posScopes ps (BzS_Poly           _ xs) = L.concatMap (posScopes ps) xs
 posScopes ps (BzS_LispCall     _ f xs) = (posScopes ps f) ++ (L.concatMap (posScopes ps) xs)
+posScopes ps (BzS_FnTypeDef  p _ _  _) = [(p, ps)]
 posScopes ps (BzS_FunDef   p _ _ _  d) = (p, ps):(posScopes [p] d)
-posScopes ps (BzS_TypDef     p _ _  d) = (p, ps):(posScopes [p] d)
+posScopes ps (BzS_TypDef     p _ _  d) = [(p, ps)]
 posScopes ps (BzS_TyClassDef p _ _ ds) = (p, ps):(L.concatMap (\x -> [(pos x, [p])]) ds)
 posScopes _ _ = []
 
@@ -589,7 +590,7 @@ checkProgram dt@(DefinitionTable defs files ids _) =
       postab   :: M.Map BzoPos Int
       (!scopetab', !postab) = tagScopes filetab scopetab (M.elems defs)
 
-      -- !x = debugmsg "Scopetab :" scopetab'
+      !x = debugmsg "Scopetab :" postab
 
       --dts' :: [(DefinitionTable, M.Map Text SymbolTable)]
       --dts' = rights [dfs]
