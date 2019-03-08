@@ -1053,10 +1053,12 @@ data ScopeTable = ScopeTable !(M.Map Int Scope) !Int deriving Show
 data Scope = Scope !(M.Map Int ScopeObj) !(M.Map T.Text [Int]) ![(T.Text, [Int])] deriving Show -- Object Table, Name Table, Parent Scopes
 
 data ScopeObj
-      = Sc_Func !Int !AbsType ![Int]    -- FID, AbsType, Associated Scopes
-      | Sc_Type !Int !AbsType ! Int
-      | Sc_TyCs !Int !AbsType ! Int
-      | Sc_Var  !Int !AbsType ![Constraint]
-      | Sc_TVar !Int !AbsType ![Constraint]
-      | Sc_MVar !Int !AbsType ![Constraint]
+      = Sc_Func !Int !AbsType    ![Int]    -- FID, AbsType, Associated Scopes
+      | Sc_Type !Int !AbsType    ! Int
+      | Sc_TyCs !Int !AbsType    ! Int
+      | Sc_Var  !Int !AbsType    ![Constraint]
+      | Sc_TVar !Int !AbsType    ![Constraint]
+      | Sc_MVar !Int !AbsType    ![Constraint]
+      | Sc_Inpt !AbsType !T.Text ![Constraint]
+      | Sc_Expt !AbsType !T.Text ![Constraint]
       deriving Show
