@@ -1059,6 +1059,8 @@ data ScopeObj
       | Sc_Var  !Int !AbsType    ![Constraint]
       | Sc_TVar !Int !AbsType    ![Constraint]
       | Sc_MVar !Int !AbsType    ![Constraint]
-      | Sc_Inpt !AbsType !T.Text ![Constraint]
-      | Sc_Expt !AbsType !T.Text ![Constraint]
+      | Sc_Inpt !AbsType !T.Text ![Constraint] ![Int]   -- Type, VID, Constraints, Location in input tuple
+      | Sc_MtIn !AbsType !T.Text ![Constraint] ![Int]
+      | Sc_Expt !AbsType !T.Text ![Constraint] ![Int]
+      | Sc_MtEx !AbsType !T.Text ![Constraint] ![Int]
       deriving Show
