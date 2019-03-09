@@ -467,6 +467,39 @@ modelExpr _ _ _ x = Right $ UnresExpr (pos x) x
 
 
 
+{-
+populateScopes :: (M.Map BzoPos Int) -> ScopeTable -> Definition -> ScopeTable
+populateScopes posmap st@(ScopeTable scs top) (FuncSyntax fnid host tyhead fdefs) =
+  let
+
+  in-}
+
+
+
+
+
+
+
+
+
+
+-- Nested Input Stuff
+getNestedCmpd :: BzoSyntax -> [Int] -> Maybe BzoSyntax
+getNestedCmpd expr            []     = Just expr
+getNestedCmpd (BzS_Cmpd _ xs) (i:is) =
+  case (L.drop i xs) of
+    []     -> Nothing
+    (y:ys) -> getNestedCmpd y is
+getNestedCmpd _               _      = Nothing
+
+
+
+
+
+
+
+
+
 
 tagScopes :: (M.Map Text Int) -> ScopeTable -> [Definition] -> (ScopeTable, M.Map BzoPos Int)
 tagScopes ftab st@(ScopeTable scs top) defs =
