@@ -485,7 +485,9 @@ populateScopes posmap st@(ScopeTable scs top) (FuncSyntax fnid host tyhead fdefs
 
 -- Nested Input Stuff
 getNestedCmpd :: BzoSyntax -> [Int] -> Maybe BzoSyntax
-getNestedCmpd expr            []     = Just expr
+getNestedCmpd expr                [] = Just expr
+getNestedCmpd (BzS_Expr      _ x) is = getNestedCmpd x is
+getNestedCmpd (BzS_Statement _ x) is = getNestedCmpd x is
 getNestedCmpd (BzS_Cmpd _ xs) (i:is) =
   case (L.drop i xs) of
     []     -> Nothing
