@@ -420,9 +420,17 @@ modelProgram dt@(DefinitionTable defs files ids top) =
 
 
 getDefType :: SymbolTable -> Definition -> Either [BzoErr] Type
-getDefType st (FuncSyntax _ _ f@(BzS_FnTypeDef _ ps _ ty) _) = makeType st (initializeTypeHeader f) ty
-getDefType st (TypeSyntax _ _ t@(BzS_TypDef    _ ps _ ty)  ) = makeType st (initializeTypeHeader t) ty
-getDefType st _                                              = Right $ InvalidType
+getDefType st (FuncSyntax    _ _ f@(BzS_FnTypeDef  _ ps _ ty) _) = makeType st (initializeTypeHeader f) ty
+getDefType st (TypeSyntax    _ _ t@(BzS_TypDef     _ ps _ ty)  ) = makeType st (initializeTypeHeader t) ty
+getDefType st (TyClassSyntax _ _ c@(BzS_TyClassDef p ps _ fs)  ) =
+  let tys = L.map (\f -> (fnid f, (initializeTypeHeader f), makeType st (initializeTypeHeader f) $ def f)) fs
+      err = L.concat $ lefts $ L.map trd3 tys
+      fts = L.map (\(a,b,t) -> (a,b, L.head $ rights [t])) $ L.filter (\(_,_,t) -> Data.Either.isRight t) tys
+  in case err of
+      [] -> Right $ TyCsType p fts
+      er -> Left  er
+
+getDefType st _                                                 = Right $ InvalidType
 
 
 

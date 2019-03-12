@@ -793,6 +793,7 @@ data Type
   | BITyType  !BzoPos !TyId
   | ArryType  !BzoPos !Integer !Type
   | FLitType  !BzoPos ![FnId]
+  | TyCsType  !BzoPos ![(T.Text, TypeHeader, Type)]
   | InvalidType
   deriving Eq
 
@@ -821,6 +822,7 @@ showType (TVarType  _    tv) = "TV:" ++ (show tv)
 showType (BITyType  _    bt) = "BT:" ++ (show bt)
 showType (ArryType  _  i ty) = "[ArrayType [" ++ (show i) ++ "] " ++ (show ty) ++ "]"
 showType (FLitType  _    fn) = "FN:" ++ (show fn)
+showType (TyCsType  _    fs) = "[TC " ++ (L.concat $ L.intersperse " ,\n    " $ L.map show fs) ++ "]"
 showType (InvalidType      ) = "INVALIDTYPE"
 instance Show Type where show = showType
 
