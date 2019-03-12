@@ -120,7 +120,7 @@ noUndefinedErrs dt@(DefinitionTable defs files ids _) =
 
 
 
-{-
+
 
 -- Takes type parameters and returns an associated header
 initializeTypeHeader :: BzoSyntax -> TypeHeader
@@ -170,6 +170,34 @@ initializeTypeHeader (BzS_FnTypeDef _ ps fn (BzS_FnTy _ i o)) =
 
   in TyHeader $ M.fromList tvsall
 
+initializeTypeHeader (BzS_TypDef _ ps ty tydef) =
+  let tyhead = initializeTypeHeader ps
+
+      tvars :: [(Text, BzoPos)]
+      tvars = getTVars tydef
+
+      vnames :: S.Set Text
+      vnames = S.fromList $ L.map fst tvars
+
+      tvatms :: [Atom]
+      tvatms = L.map (\(v,p) -> TVrAtom p v [] $ UnresType $ BzS_Undefined p) tvars
+      tvatms'= L.nubBy (\(TVrAtom _ a _ _) (TVrAtom _ b _ _) -> a == b) $ L.filter (\(TVrAtom _ x _ _) -> S.member x vnames) tvatms
+
+      key :: Int64
+      key    = L.maximum $ [0] ++ (M.keys $ tvarmap tyhead)
+
+      tvsold :: [(TVId, Atom)]
+      tvsold = M.assocs $ tvarmap tyhead
+
+      tvsnew :: [(TVId, Atom)]
+      tvsnew = L.zip (L.map (key+) [1..]) tvatms'
+
+      tvsall :: [(TVId, Atom)] -- I don't fully trust the nub here, but it seems to mostly work.
+      tvsall = L.nubBy (\(_, (TVrAtom _ a _ _)) (_, (TVrAtom _ b _ _)) -> a == b) $ tvsold ++ tvsnew
+
+  in TyHeader $ M.fromList tvsall
+
+initializeTypeHeader x = trace ("\n\nERROR:" ++ (show x) ++ "\n\n") TyHeader M.empty
 
 
 
@@ -178,7 +206,8 @@ initializeTypeHeader (BzS_FnTypeDef _ ps fn (BzS_FnTy _ i o)) =
 
 
 
--}
+
+
 makeType :: SymbolTable -> TypeHeader -> BzoSyntax -> Either [BzoErr] Type
 makeType st th (BzS_Expr   p  [x]) = makeType st th x
 makeType st th (BzS_Statement p x) = makeType st th x
@@ -391,9 +420,9 @@ modelProgram dt@(DefinitionTable defs files ids top) =
 
 
 getDefType :: SymbolTable -> Definition -> Either [BzoErr] Type
-getDefType st (FuncSyntax _ _ tyhead _) = makeType st emptyheader tyhead
-getDefType st (TypeSyntax _ _ tyhead  ) = makeType st emptyheader tyhead
-getDefType st _                         = Right $ InvalidType
+getDefType st (FuncSyntax _ _ f@(BzS_FnTypeDef _ ps _ ty) _) = makeType st (initializeTypeHeader f) ty
+getDefType st (TypeSyntax _ _ t@(BzS_TypDef    _ ps _ ty)  ) = makeType st (initializeTypeHeader t) ty
+getDefType st _                                              = Right $ InvalidType
 
 
 
@@ -485,9 +514,9 @@ populateScopes posmap st@(ScopeTable scs top) (FuncSyntax fnid host tyhead fdefs
 
 -- Nested Input Stuff
 getNestedCmpd :: BzoSyntax -> [Int] -> Maybe BzoSyntax
-getNestedCmpd expr                [] = Just expr
-getNestedCmpd (BzS_Expr      _ x) is = getNestedCmpd x is
-getNestedCmpd (BzS_Statement _ x) is = getNestedCmpd x is
+getNestedCmpd expr                  [] = Just expr
+getNestedCmpd (BzS_Expr      _ [x]) is = getNestedCmpd x is
+getNestedCmpd (BzS_Statement _  x ) is = getNestedCmpd x is
 getNestedCmpd (BzS_Cmpd _ xs) (i:is) =
   case (L.drop i xs) of
     []     -> Nothing
@@ -626,6 +655,11 @@ checkProgram dt@(DefinitionTable defs files ids _) =
       (!scopetab', !postab) = tagScopes filetab scopetab (M.elems defs)
 
       !x = debugmsg "Scopetab :" postab
+
+      !y = debugmsglist "TTab: " $ M.assocs ttab
+
+      --deftys :: [(Int64, Either [BzoErr] Type)]
+      --deftys = L.map (\i df -> (i, getDefType scopetab' df)) $ M.assocs defs
 
       --dts' :: [(DefinitionTable, M.Map Text SymbolTable)]
       --dts' = rights [dfs]

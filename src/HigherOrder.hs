@@ -943,3 +943,6 @@ debug a = trace ((show a) ++ "\n") a
 
 debugmsg :: Show a => String -> a -> a
 debugmsg str a = trace (str ++ ": " ++ (show a) ++ "\n") a
+
+debugmsglist :: Show a => String -> [a] -> [a]
+debugmsglist str a = trace (str ++ ": " ++ (L.concat $ L.intersperse "\n" $ map show a) ++ "\n") a

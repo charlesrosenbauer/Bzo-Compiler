@@ -24,7 +24,7 @@ import Debug.Trace
 
 {-
 data Environment = Environment DefinitionTable SymbolTable Context Text
-
+-}
 
 
 
@@ -60,7 +60,7 @@ getTVars _                          = []
 
 
 
-
+{-
 getVars :: BzoSyntax -> [(Text, BzoPos)]
 getVars (BzS_Id         p     var) = [(var, p)]
 getVars (BzS_MId        p     var) = [(var, p)]
