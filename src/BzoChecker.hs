@@ -252,6 +252,54 @@ makeType st th (BzS_Id p f) =
 
 makeType st th ty@(BzS_Undefined _) = Right (UnresType ty)
 makeType st th x = Left [TypeErr (pos x) $ pack $ "Malformed type expression: " ++ show x]
+
+
+
+
+
+
+
+
+
+
+checkType :: SymbolTable -> (TypeHeader, Type) -> (TypeHeader, Type) -> Bool
+checkType st (th0, (CmpdType _ xs)) (th1, (CmpdType _ ys)) =
+  let
+      xs' :: [(TypeHeader, Type)]
+      xs' = L.zip (L.repeat th0) xs
+
+      ys' :: [(TypeHeader, Type)]
+      ys' = L.zip (L.repeat th1) ys
+
+      xys :: [((TypeHeader, Type), (TypeHeader, Type))]
+      xys = L.zip xs' ys'
+
+      samelength :: Bool
+      samelength = (L.length xs) == (L.length ys)
+
+  in samelength && (L.any id $ L.map (\(x, y) -> checkType st x y) xys)
+
+-- TODO: this will have to be adapted to handle type classes, though that will
+-- require a lot more effort, including a full typeclass checker implementation.
+checkType st (th0, (LtrlType _ x)) (th1, (LtrlType _ y)) = (x == y)
+
+checkType st (th0, (IntType  _ x)) (th1, (IntType  _ y)) = (x == y)
+checkType st (th0, (FltType  _ x)) (th1, (FltType  _ y)) = (x == y)
+checkType st (th0, (StrType  _ x)) (th1, (StrType  _ y)) = (x == y)
+
+checkType st (th0, (FuncType _ w x)) (th1, (FuncType _ y z)) = (checkType st (th0, w) (th1, y)) && (checkType st (th0, x) (th1, z))
+
+checkType st (th0, (VoidType _  )) (th1, (VoidType _  )) = True
+
+{-
+TODO:
+  > Add integer/float/string checking. This will require some builtin analysis.
+  > Add poly checking. I'm not yet sure how to do this efficiently.
+  > "Make Type" checking. Not 100% how to do this either yet.
+  > TVar checking
+  > Array Type Checking - handle tuple/array conversion?
+-}
+
 {-
 
 
