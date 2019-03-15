@@ -835,6 +835,22 @@ instance Show Type where show = showType
 
 
 
+data Atm_Attrib = AA_I8 | AA_I16 | AA_I32 | AA_I64 |
+                  AA_U8 | AA_U16 | AA_U32 | AA_U64 |
+                  AA_P8 | AA_P16 | AA_P32 | AA_P64 |
+                  AA_Str| AA_F16 | AA_F32 | AA_F64
+                  deriving (Eq, Ord)
+
+
+
+
+
+
+
+
+
+
+
 
 data AbsType
   = A_FuncType !AbsType !AbsType

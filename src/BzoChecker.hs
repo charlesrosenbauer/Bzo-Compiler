@@ -300,6 +300,45 @@ TODO:
   > Array Type Checking - handle tuple/array conversion?
 -}
 
+
+
+
+
+
+
+
+
+
+-- TODO: Add support for specific values, e.g. T=(1, "x")
+typeAttribs :: BzoSyntax -> S.Set Atm_Attrib
+typeAttribs (BzS_Statement _ x) = typeAttribs x
+typeAttribs (BzS_Expr _ [x]) = typeAttribs x
+typeAttribs (BzS_Poly _  xs) = L.foldl S.union (S.empty) $ L.map typeAttribs xs
+typeAttribs (BzS_BTId _   i) =
+  case (isBuiltinType i) of
+    1 -> S.singleton AA_I8
+    2 -> S.singleton AA_I16
+    3 -> S.singleton AA_I32
+    4 -> S.singleton AA_I64
+    5 -> S.singleton AA_U8
+    6 -> S.singleton AA_U16
+    7 -> S.singleton AA_U32
+    8 -> S.singleton AA_U64
+    9 ->S.singleton AA_F16
+    10-> S.singleton AA_F32
+    11-> S.singleton AA_F64
+    12-> S.singleton AA_P8
+    13-> S.singleton AA_P16
+    14-> S.singleton AA_P32
+    15-> S.singleton AA_P64
+    16-> S.singleton AA_Str
+    _ -> S.empty
+typeAttribs _                = S.empty
+
+
+
+
+
 {-
 
 
