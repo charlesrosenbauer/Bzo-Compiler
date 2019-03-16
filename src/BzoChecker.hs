@@ -333,6 +333,9 @@ typeAttribs (BzS_BTId _   i) =
     15-> S.singleton AA_P64
     16-> S.singleton AA_Str
     _ -> S.empty
+typeAttribs (BzS_Int _ i) = S.singleton $ AL_Int  i
+typeAttribs (BzS_Flt _ f) = S.singleton $ AL_Real f
+typeAttribs (BzS_Str _ s) = S.singleton $ AL_Str  s
 typeAttribs _                = S.empty
 
 
