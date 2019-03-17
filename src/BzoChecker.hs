@@ -309,7 +309,6 @@ TODO:
 
 
 
--- TODO: Add support for specific values, e.g. T=(1, "x")
 typeAttribs :: BzoSyntax -> S.Set Atm_Attrib
 typeAttribs (BzS_Statement _ x) = typeAttribs x
 typeAttribs (BzS_Expr _ [x]) = typeAttribs x
@@ -338,7 +337,22 @@ typeAttribs (BzS_Flt _ f) = S.singleton $ AL_Real f
 typeAttribs (BzS_Str _ s) = S.singleton $ AL_Str  s
 typeAttribs _                = S.empty
 
+attribTrim :: S.Set Atm_Attrib -> S.Set Atm_Attrib
+attribTrim s =
+  let intset = S.fromList [AA_I8, AA_U8, AA_I16, AA_U16, AA_I32, AA_U32, AA_I64, AA_U64]
+      fltset = S.fromList [AA_P8,        AA_P16, AA_F16, AA_P32, AA_F32, AA_P64, AA_F64]
+      strset = S.fromList [AA_Str]
 
+      isInt  = not $ S.null $ S.intersection s intset
+      isFlt  = not $ S.null $ S.intersection s fltset
+      isStr  = not $ S.null $ S.intersection s strset
+
+  in S.fromList $ L.filter (\x ->
+                              case x of
+                                (AL_Int  _) -> not isInt
+                                (AL_Real _) -> not isFlt
+                                (AL_Str  _) -> not isStr
+                                _  -> True) $ S.elems s
 
 
 
