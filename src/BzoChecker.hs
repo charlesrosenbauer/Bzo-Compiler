@@ -287,6 +287,10 @@ checkType at st (th0, (IntType  _ x)) (th1, (IntType  _ y)) = (x == y)
 checkType at st (th0, (FltType  _ x)) (th1, (FltType  _ y)) = (x == y)
 checkType at st (th0, (StrType  _ x)) (th1, (StrType  _ y)) = (x == y)
 
+--checkType at st (th0, (IntType  _ x)) (th1, (LtrlType  _ y)) = (x == y)
+--checkType at st (th0, (FltType  _ x)) (th1, (LtrlType  _ y)) = (x == y)
+--checkType at st (th0, (StrType  _ x)) (th1, (LtrlType  _ y)) = (x == y)
+
 checkType at st (th0, (FuncType _ w x)) (th1, (FuncType _ y z)) = (checkType at st (th0, w) (th1, y)) && (checkType at st (th0, x) (th1, z))
 
 checkType at st (th0, (VoidType _  )) (th1, (VoidType _  )) = True
@@ -299,6 +303,30 @@ TODO:
   > TVar checking
   > Array Type Checking - handle tuple/array conversion?
 -}
+
+
+
+
+
+
+
+
+
+
+checkStrAttrib :: S.Set Atm_Attrib -> Text -> Bool
+checkStrAttrib ats t = (S.member (AL_Str t) ats) || (S.member (AA_Str) ats)
+
+checkIntAttrib :: S.Set Atm_Attrib -> Integer -> Bool
+checkIntAttrib ats i
+  | (i >=                 -128) && (i <=                  127) = (S.member (AL_Int i) ats) || (S.member (AA_I8 ) ats)
+  | (i >=                    0) && (i <=                  255) = (S.member (AL_Int i) ats) || (S.member (AA_U8 ) ats)
+  | (i >=               -32768) && (i <=                32767) = (S.member (AL_Int i) ats) || (S.member (AA_I16) ats)
+  | (i >=                    0) && (i <=                65535) = (S.member (AL_Int i) ats) || (S.member (AA_U16) ats)
+  | (i >=          -2147483648) && (i <=           2147483647) = (S.member (AL_Int i) ats) || (S.member (AA_I32) ats)
+  | (i >=                    0) && (i <=           4294967295) = (S.member (AL_Int i) ats) || (S.member (AA_U32) ats)
+  | (i >= -9223372036854775808) && (i <=  9223372036854775807) = (S.member (AL_Int i) ats) || (S.member (AA_I64) ats)
+  | (i >=                    0) && (i <= 18446744073709551615) = (S.member (AL_Int i) ats) || (S.member (AA_U64) ats)
+  | otherwise = False
 
 
 
