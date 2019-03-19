@@ -262,8 +262,8 @@ makeType st th x = Left [TypeErr (pos x) $ pack $ "Malformed type expression: " 
 
 
 
-checkType :: SymbolTable -> (TypeHeader, Type) -> (TypeHeader, Type) -> Bool
-checkType st (th0, (CmpdType _ xs)) (th1, (CmpdType _ ys)) =
+checkType :: AttribTable -> SymbolTable -> (TypeHeader, Type) -> (TypeHeader, Type) -> Bool
+checkType at st (th0, (CmpdType _ xs)) (th1, (CmpdType _ ys)) =
   let
       xs' :: [(TypeHeader, Type)]
       xs' = L.zip (L.repeat th0) xs
@@ -277,19 +277,19 @@ checkType st (th0, (CmpdType _ xs)) (th1, (CmpdType _ ys)) =
       samelength :: Bool
       samelength = (L.length xs) == (L.length ys)
 
-  in samelength && (L.any id $ L.map (\(x, y) -> checkType st x y) xys)
+  in samelength && (L.any id $ L.map (\(x, y) -> checkType at st x y) xys)
 
 -- TODO: this will have to be adapted to handle type classes, though that will
 -- require a lot more effort, including a full typeclass checker implementation.
-checkType st (th0, (LtrlType _ x)) (th1, (LtrlType _ y)) = (x == y)
+checkType at st (th0, (LtrlType _ x)) (th1, (LtrlType _ y)) = (x == y)
 
-checkType st (th0, (IntType  _ x)) (th1, (IntType  _ y)) = (x == y)
-checkType st (th0, (FltType  _ x)) (th1, (FltType  _ y)) = (x == y)
-checkType st (th0, (StrType  _ x)) (th1, (StrType  _ y)) = (x == y)
+checkType at st (th0, (IntType  _ x)) (th1, (IntType  _ y)) = (x == y)
+checkType at st (th0, (FltType  _ x)) (th1, (FltType  _ y)) = (x == y)
+checkType at st (th0, (StrType  _ x)) (th1, (StrType  _ y)) = (x == y)
 
-checkType st (th0, (FuncType _ w x)) (th1, (FuncType _ y z)) = (checkType st (th0, w) (th1, y)) && (checkType st (th0, x) (th1, z))
+checkType at st (th0, (FuncType _ w x)) (th1, (FuncType _ y z)) = (checkType at st (th0, w) (th1, y)) && (checkType at st (th0, x) (th1, z))
 
-checkType st (th0, (VoidType _  )) (th1, (VoidType _  )) = True
+checkType at st (th0, (VoidType _  )) (th1, (VoidType _  )) = True
 
 {-
 TODO:
@@ -299,6 +299,32 @@ TODO:
   > TVar checking
   > Array Type Checking - handle tuple/array conversion?
 -}
+
+
+
+
+
+
+
+
+
+
+type AttribTable = M.Map Int64 (S.Set Atm_Attrib)
+
+getAttribs :: DefinitionTable -> AttribTable
+getAttribs (DefinitionTable defs _ _ _) =
+  let
+      defs' :: [(Int64, Definition)]
+      defs' = M.assocs defs
+
+      tys   :: [(Int64, BzoSyntax)]
+      tys   = L.map (\(i, d) -> (i, typesyntax d)) $ L.filter isTDef defs'
+
+  in M.fromList $ L.map (\(i, s) -> (i, typeAttribs s)) tys
+  where
+        isTDef :: (a, Definition) -> Bool
+        isTDef (_, (TypeSyntax _ _ _)) = True
+        isTDef _ = False
 
 
 
