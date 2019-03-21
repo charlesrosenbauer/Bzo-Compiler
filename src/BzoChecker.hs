@@ -328,6 +328,10 @@ checkIntAttrib ats i
   | (i >=                    0) && (i <= 18446744073709551615) = (S.member (AL_Int i) ats) || (S.member (AA_U64) ats)
   | otherwise = False
 
+-- Not really robust, but good enough for now I guess.
+checkFltAttrib :: S.Set Atm_Attrib -> Double -> Bool
+checkFltAttrib ats f = (S.member (AL_Real f) ats) || (not $ S.null $ S.intersection ats (S.fromList [AA_P8, AA_P16, AA_P32, AA_P64, AA_F16, AA_F32, AA_F64]))
+
 
 
 
