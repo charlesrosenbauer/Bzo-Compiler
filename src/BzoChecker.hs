@@ -287,9 +287,9 @@ checkType at st (th0, (IntType  _ x)) (th1, (IntType  _ y)) = (x == y)
 checkType at st (th0, (FltType  _ x)) (th1, (FltType  _ y)) = (x == y)
 checkType at st (th0, (StrType  _ x)) (th1, (StrType  _ y)) = (x == y)
 
---checkType at st (th0, (IntType  _ x)) (th1, (LtrlType  _ y)) = (x == y)
---checkType at st (th0, (FltType  _ x)) (th1, (LtrlType  _ y)) = (x == y)
---checkType at st (th0, (StrType  _ x)) (th1, (LtrlType  _ y)) = (x == y)
+checkType at st (th0, (IntType  _ x)) (th1, (LtrlType  _ y)) = checkAttrib at y checkIntAttrib x
+checkType at st (th0, (FltType  _ x)) (th1, (LtrlType  _ y)) = checkAttrib at y checkFltAttrib x
+checkType at st (th0, (StrType  _ x)) (th1, (LtrlType  _ y)) = checkAttrib at y checkStrAttrib x
 
 checkType at st (th0, (FuncType _ w x)) (th1, (FuncType _ y z)) = (checkType at st (th0, w) (th1, y)) && (checkType at st (th0, x) (th1, z))
 
@@ -297,7 +297,6 @@ checkType at st (th0, (VoidType _  )) (th1, (VoidType _  )) = True
 
 {-
 TODO:
-  > Add integer/float/string checking. This will require some builtin analysis.
   > Add poly checking. I'm not yet sure how to do this efficiently.
   > "Make Type" checking. Not 100% how to do this either yet.
   > TVar checking
@@ -312,6 +311,12 @@ TODO:
 
 
 
+
+checkAttrib :: AttribTable -> Int64 -> (S.Set Atm_Attrib -> a -> Bool) -> a -> Bool
+checkAttrib atab i fn x =
+  case (M.lookup i atab) of
+    Nothing -> False
+    Just at -> fn at x
 
 checkStrAttrib :: S.Set Atm_Attrib -> Text -> Bool
 checkStrAttrib ats t = (S.member (AL_Str t) ats) || (S.member (AA_Str) ats)
