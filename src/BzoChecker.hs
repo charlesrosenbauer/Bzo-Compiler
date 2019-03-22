@@ -295,6 +295,14 @@ checkType at st (th0, (FuncType _ w x)) (th1, (FuncType _ y z)) = (checkType at 
 
 checkType at st (th0, (VoidType _  )) (th1, (VoidType _  )) = True
 
+-- Sizeless arrays
+checkType at st (th0, (ArryType _ _ x)) (th1, (ArryType _ 0 y)) = (checkType at st (th0, x) (th1, y))
+
+-- Sized arrays
+checkType at st (th0, (ArryType _ m x)) (th1, (ArryType _ n y)) = (checkType at st (th0, x) (th1, y)) && (m == n)
+
+-- Next: handle tuples cast to arrays
+
 {-
 TODO:
   > Add poly checking. I'm not yet sure how to do this efficiently.
@@ -386,7 +394,7 @@ typeAttribs (BzS_BTId _   i) =
     6 -> S.singleton AA_U16
     7 -> S.singleton AA_U32
     8 -> S.singleton AA_U64
-    9 ->S.singleton AA_F16
+    9 -> S.singleton AA_F16
     10-> S.singleton AA_F32
     11-> S.singleton AA_F64
     12-> S.singleton AA_P8
