@@ -303,14 +303,17 @@ checkType at st (th0, (ArryType _ _ x)) (th1, (ArryType _ 0 y)) = (checkType at 
 -- Sized arrays
 checkType at st (th0, (ArryType _ m x)) (th1, (ArryType _ n y)) = (checkType at st (th0, x) (th1, y)) && (m == n)
 
--- Next: handle tuples cast to arrays
+-- Handle tuples cast to arrays
+-- May need to add another case for checking "single element" arrays?
+checkType at st (th0, (CmpdType _  xs)) (th1, (ArryType _ n y)) =
+  ((L.length xs) == (fromIntegral n)) &&
+  (L.all (\x -> checkType at st (th0, x) (th1, y)) xs)
 
 {-
 TODO:
   > Add poly checking. I'm not yet sure how to do this efficiently.
   > "Make Type" checking. Not 100% how to do this either yet.
   > TVar checking
-  > Array Type Checking - handle tuple/array conversion?
 -}
 
 
