@@ -211,6 +211,8 @@ initializeTypeHeader x = trace ("\n\nERROR:" ++ (show x) ++ "\n\n") TyHeader M.e
 makeType :: SymbolTable -> TypeHeader -> BzoSyntax -> Either [BzoErr] Type
 makeType st th (BzS_Expr   p  [x]) = makeType st th x
 makeType st th (BzS_Statement p x) = makeType st th x
+makeType st th (BzS_Cmpd  p [x]) = makeType st th x
+makeType st th (BzS_Poly  p [x]) = makeType st th x
 makeType st th (BzS_Cmpd  p  xs) = onAllPass (L.map (makeType st th) xs) (\ys -> CmpdType p ys)
 makeType st th (BzS_Poly  p  xs) = onAllPass (L.map (makeType st th) xs) (\ys -> PolyType p ys)
 makeType st th (BzS_Int   p   n) = Right (IntType  p n)
