@@ -303,6 +303,9 @@ checkType at st (th0, (ArryType _ _ x)) (th1, (ArryType _ 0 y)) = (checkType at 
 -- Sized arrays
 checkType at st (th0, (ArryType _ m x)) (th1, (ArryType _ n y)) = (checkType at st (th0, x) (th1, y)) && (m == n)
 
+-- Nil values are just Empty arrays
+checkType at st (th0, (VoidType _    )) (th1, (ArryType _ 0 _)) = True
+
 -- Handle tuples cast to arrays
 -- May need to add another case for checking "single element" arrays?
 checkType at st (th0, (CmpdType _  xs)) (th1, (ArryType _ n y)) =
