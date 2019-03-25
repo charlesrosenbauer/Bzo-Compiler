@@ -11,6 +11,7 @@ import DefinitionTable
 import BzoChecker
 import HigherOrder
 import Backend
+import BzoTypeBackend
 import Debug.Trace
 
 

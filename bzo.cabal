@@ -40,3 +40,4 @@ executable main
       , Backend
       , BackendTypes
       , Query
+      , BzoTypeBackend
