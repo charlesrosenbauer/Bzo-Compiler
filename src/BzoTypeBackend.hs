@@ -1,6 +1,7 @@
 module BzoTypeBackend where
 import BzoTypes
 import HigherOrder
+import Data.Int
 import System.IO
 import Debug.Trace
 
@@ -14,7 +15,7 @@ import Debug.Trace
 
 --TODO: Add case for type classes, maybe?
 -- Not 100% sure we even need to account for type classes in the backend.
-printTDef :: Int -> Definition -> String
+printTDef :: Int64 -> Definition -> String
 printTDef i (TypeDef _ _ _ _ ty) = "\ntype T" ++ (show i) ++ (printType ty) ++ "\n"
 printTDef _ _ = ""
 
@@ -48,3 +49,29 @@ printType (ArryType _ sz t) = "[" ++ (show sz) ++ "]" ++ (printType t)
   * Handle Literal cases
   * Figure out what exactly to do with tvars (probably nothing)
 -}
+
+
+
+
+
+
+
+
+
+printHeader :: String -> [String] -> String
+printHeader mname imports =
+  "package " ++ mname ++ "\n\n" ++
+  "import (\n" ++ (concatMap (\x -> "\"" ++ x ++ "\"\n") imports) ++ ")\n\n"
+
+
+
+
+
+
+
+
+
+
+printTypes :: String -> [(Int64, Definition)] -> IO()
+printTypes file defs = do
+  writeFile file ((printHeader "types" ["fmt"]) ++ (concatMap (\(i,d) -> printTDef i d) defs))

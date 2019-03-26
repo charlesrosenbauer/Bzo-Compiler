@@ -2,6 +2,7 @@ module Compiler where
 import Data.Tuple
 import Data.List as L
 import Data.Text as T
+import Data.Map.Strict as M
 import BzoTypes
 import BzoPreprocessor
 import BzoParameterParser
@@ -39,6 +40,10 @@ compileFilePass (BzoSettings imp lib flg opt pfx) =
 
       -- TODO: Type Checker
       -- TODO: Code Generation
+      printTypes "types.go" $ case checkedast of
+                    Right dt -> M.assocs $ dt_defs dt
+                    Left ers -> []
+
       putStrLn $ case valid of
                   Nothing -> showOutput {-$ trace (show namemaps)-} checkedast
                   Just er -> show er
