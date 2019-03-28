@@ -4,7 +4,7 @@ import HigherOrder
 import Builtins
 import Data.Text
 import Data.Int
-import Data.Either
+import Data.Either as E
 import Query
 import qualified Data.Map.Strict as M
 import qualified Data.Maybe as Mb
@@ -608,7 +608,7 @@ getDefType st (TypeSyntax    _ _ t@(BzS_TypDef     _ ps _ ty)  ) = makeType st (
 getDefType st (TyClassSyntax _ _ c@(BzS_TyClassDef p ps _ fs)  ) =
   let tys = L.map (\f -> (fnid f, (initializeTypeHeader f), makeType st (initializeTypeHeader f) $ def f)) fs
       err = L.concat $ lefts $ L.map trd3 tys
-      fts = L.map (\(a,b,t) -> (a,b, L.head $ rights [t])) $ L.filter (\(_,_,t) -> Data.Either.isRight t) tys
+      fts = L.map (\(a,b,t) -> (a,b, L.head $ rights [t])) $ L.filter (\(_,_,t) -> E.isRight t) tys
   in case err of
       [] -> Right $ TyCsType p fts
       er -> Left  er
@@ -807,9 +807,31 @@ posScopes _ _ = []
 
 
 
+mapDefTypes :: (M.Map Int64 Type) -> (M.Map Int64 Definition) -> (M.Map Int64 Definition)
+mapDefTypes ttab dtab =
+  let
+      ttab' :: [(Int64, Type)]
+      ttab' = M.assocs ttab
+
+      dtab' :: [(Int64, Definition, Type)]
+      dtab' = L.map (\(i, t) -> (i, dtab M.! i, t)) ttab'
+
+  in M.fromList $ L.map (\(i,d,t) -> (i, case d of
+                      FuncSyntax    i h fh fd -> FuncDef    i h (TyHeader M.empty) t FuncPropEmpty []
+                      TypeSyntax    i h    td -> TypeDef    i h (TyHeader M.empty)   TypePropEmpty t
+                      TyClassSyntax i h    cd -> TyClassDef i h (TyHeader M.empty)   TClsPropEmpty [] )) dtab'
+
+
+
+
+
+
+
+
+
 
 checkProgram :: DefinitionTable -> Either [BzoErr] DefinitionTable
-checkProgram dt@(DefinitionTable defs files ids _) =
+checkProgram dt@(DefinitionTable defs files ids top) =
   let
       err0 :: [BzoErr]
       err0 = noOverloadTypes dt
@@ -827,6 +849,9 @@ checkProgram dt@(DefinitionTable defs files ids _) =
 
       ttab :: M.Map Int64 (Either [BzoErr] Type)
       ttab = M.map (\d -> getDefType (makeSymbolTable dt $ unpack $ hostfile d) d) defs
+
+      ttab':: M.Map Int64 Type
+      ttab'= M.map getRight ttab
 
       -- A Type Table will make it much easier to figure out the type of something.
       -- Good for faster type checking
@@ -861,5 +886,5 @@ checkProgram dt@(DefinitionTable defs files ids _) =
       errs :: [BzoErr]
       errs = err0 ++ err1-- ++ err2
   in case (errs) of
-      ([]) -> Right dt
+      ([]) -> Right (DefinitionTable (mapDefTypes ttab' defs) files ids top)
       (er) -> Left  er

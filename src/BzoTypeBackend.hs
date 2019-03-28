@@ -42,6 +42,7 @@ printType (CmpdType _ ts) =
 
 printType (ArryType _  0 t) = "[]" ++ (printType t)
 printType (ArryType _ sz t) = "[" ++ (show sz) ++ "]" ++ (printType t)
+printType _ = " //<???>"
 
 {-
   TODO:

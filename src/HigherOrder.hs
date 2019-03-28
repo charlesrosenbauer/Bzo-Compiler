@@ -946,3 +946,19 @@ debugmsg str a = trace (str ++ ": " ++ (show a) ++ "\n") a
 
 debugmsglist :: Show a => String -> [a] -> [a]
 debugmsglist str a = trace (str ++ ": " ++ (L.concat $ L.intersperse "\n" $ map show a) ++ "\n") a
+
+
+
+
+
+
+
+
+
+
+getRight :: Either a b -> b
+getRight (Right x) = x
+
+
+getLeft  :: Either a b -> a
+getLeft  (Left  x) = x
