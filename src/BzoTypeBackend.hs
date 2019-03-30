@@ -53,7 +53,7 @@ printTLit  x = "T" ++ (show x) ++ " "
 --TODO: Add case for type classes, maybe?
 -- Not 100% sure we even need to account for type classes in the backend.
 printTDef :: Int64 -> Definition -> String
-printTDef i (TypeDef tid _ _ _ ty) = "\n//" ++ (show tid) ++ "\ntype T" ++ (show i) ++ " " ++ (printType ty) ++ "\n"
+printTDef i (TypeDef tid _ _ _ ty) = "\n/*" ++ (show tid) ++ "\n" ++ (show ty) ++ "*/\ntype T" ++ (show i) ++ " " ++ (printType ty) ++ "\n"
 printTDef _ _ = ""
 
 
@@ -70,7 +70,7 @@ printType :: Type -> String
 printType (PolyType _ [x, (VoidType _)]) = "*" ++ (printType x)
 printType (PolyType _ [(VoidType _), x]) = "*" ++ (printType x)
 
-printType (PolyType _  _) = "interface{}"
+printType (PolyType _  _) = "interface{} "
 printType (CmpdType _ ts) =
   let fieldnames = map (\i -> "V" ++ (show i) ++ " ") [0..]
       tys        = map printType ts
@@ -82,11 +82,13 @@ printType (ArryType _ sz t) = "[" ++ (show sz) ++ "]" ++ (printType t)
 printType (FuncType _ i  o) = "func (" ++ (show i) ++ ")(" ++ (show o) ++ ")"
 printType (LtrlType _    t) = printTLit t
 printType (BITyType _    t) = printTLit t
+printType (TVarType _    _) = "interface{} "
 printType (IntType  _    i) = "int64 "
 printType (FltType  _    f) = "float64 "
 printType (StrType  _    s) = "string "
 printType (VoidType _     ) = "bool "  -- Until I find a better type to use.
-printType _ = " //<???>"
+printType (MakeType _   ts) = printType $ head ts
+printType t = " /*" ++ (show t) ++ "*/"
 
 {-
   TODO:
