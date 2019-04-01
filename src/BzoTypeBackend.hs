@@ -31,6 +31,9 @@ printTLit 13 = "float32 "  -- P16
 printTLit 14 = "float32 "  -- P32
 printTLit 15 = "float64 "  -- P64
 printTLit 16 = "string "
+printTLit 17 = "rune "
+printTLit 18 = "rune "
+printTLit 19 = "rune "
 printTLit 20 = "bool "
 printTLit 21 = "uint8 "
 printTLit 22 = "uint16 "
@@ -39,6 +42,7 @@ printTLit 24 = "uint64 "
 printTLit 25 = "[2]uint64 "
 printTLit 26 = "[4]uint64 "
 printTLit 27 = "[8]uint64 "
+printTLit 28 = "Regexp"
 printTLit  x = "T" ++ (show x) ++ " "
 
 
@@ -120,4 +124,4 @@ printHeader mname imports =
 
 printTypes :: String -> [(Int64, Definition)] -> IO()
 printTypes file defs = do
-  writeFile file ((printHeader "types" ["fmt"]) ++ (concatMap (\(i,d) -> printTDef i d) defs))
+  writeFile file ((printHeader "types" ["fmt", "regexp"]) ++ (concatMap (\(i,d) -> printTDef i d) defs))
