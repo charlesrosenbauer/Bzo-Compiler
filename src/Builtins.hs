@@ -39,9 +39,7 @@ isBuiltinType "#Pst64"  = 15
 
 --Text
 isBuiltinType "#String" = 16
-isBuiltinType "#UTF8"   = 17
-isBuiltinType "#UTF16"  = 18
-isBuiltinType "#UTF32"  = 19
+isBuiltinType "#Char"   = 17
 
 --Bools
 isBuiltinType "#BoolTF" = 20
