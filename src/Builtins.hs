@@ -62,6 +62,7 @@ isBuiltinType "#UntPtr" = 10002
 isBuiltinType "#Unique" = 10003
 isBuiltinType "#Effect" = 10004
 isBuiltinType "#Any"    = 10005
+isBuiltinType "#GenArr" = 10006
 
 isBuiltinType _         = 0
 

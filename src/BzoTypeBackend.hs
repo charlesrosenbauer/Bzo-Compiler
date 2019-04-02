@@ -43,6 +43,9 @@ printTLit 25 = "[2]uint64 "
 printTLit 26 = "[4]uint64 "
 printTLit 27 = "[8]uint64 "
 printTLit 28 = "Regexp"
+printTLit 10001 = "uintptr "
+printTLit 10002 = "uintptr "
+printTLit 10006 = "struct{Ptr uintptr, Size int, Stride int} "
 printTLit  x = "T" ++ (show x) ++ " "
 
 
