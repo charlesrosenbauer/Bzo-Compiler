@@ -78,6 +78,7 @@ printType (PolyType _ [x, (VoidType _)]) = "*" ++ (printType x)
 printType (PolyType _ [(VoidType _), x]) = "*" ++ (printType x)
 
 printType (PolyType _  _) = "interface{} "
+-- For now, empty interfaces are going to be used everywhere. Then just throw type assertions at problems.
 printType (CmpdType _ ts) =
   let fieldnames = map (\i -> "V" ++ (show i) ++ " ") [0..]
       tys        = map printType ts
@@ -90,10 +91,10 @@ printType (FuncType _ i  o) = "func (" ++ (show i) ++ ")(" ++ (show o) ++ ")"
 printType (LtrlType _    t) = printTLit t
 printType (BITyType _    t) = printTLit t
 printType (TVarType _    _) = "interface{} "
-printType (IntType  _    i) = "int64 "
-printType (FltType  _    f) = "float64 "
-printType (StrType  _    s) = "string "
-printType (VoidType _     ) = "bool "  -- Until I find a better type to use.
+printType (IntType  _    i) = "interface{} " --"int64 "
+printType (FltType  _    f) = "interface{} " --"float64 "
+printType (StrType  _    s) = "interface{} " --"string "
+printType (VoidType _     ) = "interface{} "
 printType (MakeType _   ts) = printType $ head ts
 printType t = " /*" ++ (show t) ++ "*/"
 
