@@ -11,7 +11,7 @@ import BzoTypes
 
 
 
-
+{-
 printGoHeader :: [String] -> String
 printGoHeader imports = "package main\n\nimport (\n" ++ (concatMap (\x -> "\"" ++ x ++"\"\n") imports) ++ ")\n\n"
 
@@ -71,3 +71,5 @@ printExpr (BGArith BGNZ   x _) = " (" ++ (printExpr x) ++ " != 0) "
 printExpr (BGArith op a b    ) = " ("  ++ (printExpr a) ++ (printBinop op) ++ (printExpr b) ++ ") "
 printExpr (BGVar    x)         = printId x
 printExpr (BGVrSet    vs expr) = (concatMap (\x -> (printId x) ++ ", ") vs) ++ " := " ++ (printExpr expr)
+
+-}

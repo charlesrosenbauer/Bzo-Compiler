@@ -3,7 +3,7 @@ module BackendTypes where
 
 
 
-
+{-
 type BGId   = Int
 
 
@@ -69,3 +69,32 @@ data BGOtherop =
   BGMpInst| BGMpRmov| BGMpGet   | BGMpAdjst| BGArGet   |
   BGArSet | BGMapOp | BGFold    | BGScan   | BGFilter  |
   BGSlice
+-}
+
+
+{-
+  PLAN:
+    Blocks will be generated as functions in the form : foo(in, out *interface{})bool
+
+    Inputs and outputs are just empty interface pointers.
+
+    Pattern matching is done in the block to try to extract the type from the interface.
+    If this fails, the function returns false.
+    If this succeeds, the function evaluates the actual block content, then returns true.
+
+    Sum expressions : in (foo, bar) out
+    ... are implemented by if-then-else-ing our way through a list of blocks.
+    If one fails pattern matching, we try the next one.
+    If all fail, then we just report an error. Try to keep the location of the
+      error for debugging and for treating the programmer humanely.
+
+    The benefits of this:
+      * All functions have the same type signature
+      * Complex logic turns into just guard expressions
+      * The abstract mental model of Bzo, as well as the syntax, remain quite
+          close to what is going on under the hood, simplifying the backend.
+
+
+
+-}
+--data BG_Block = BG_Block BG_Pattern [([Int], [Int], Expr)]
