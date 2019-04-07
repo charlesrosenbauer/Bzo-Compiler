@@ -3,7 +3,7 @@ module BackendTypes where
 
 
 
-{-
+
 type BGId   = Int
 
 
@@ -36,14 +36,15 @@ data BGArithop =
 
 
 data BGExpr =
-    BGArith BGArithop  BGExpr BGExpr
-  | BGOther BGOtherop [BGExpr]
+    BGArith BGArithop
+  | BGOther BGOtherop
   | BGVar   BGId
-  | BGCast  BGType BGExpr
-  | BGVrSet [BGId] BGExpr
-  | BGCall  BGId [BGExpr]
-  | BGCase  [(Pattern, BGExpr)]
-  | BGLmda  Pattern [BGType] [BGType] BGExpr
+  | BGCast  BGType
+  | BGVrSet [BGId]
+  | BGCall  BGId
+  | BGCase  [(BGId)]
+  | BGGroup [BGId]
+  | BGSplit -- Not sure how to handle this specifically.
 
 
 
@@ -69,7 +70,7 @@ data BGOtherop =
   BGMpInst| BGMpRmov| BGMpGet   | BGMpAdjst| BGArGet   |
   BGArSet | BGMapOp | BGFold    | BGScan   | BGFilter  |
   BGSlice
--}
+
 
 
 {-
@@ -97,4 +98,4 @@ data BGOtherop =
 
 
 -}
---data BG_Block = BG_Block BG_Pattern [([Int], [Int], Expr)]
+data BG_Block = BG_Block Pattern [([Int], [Int], BGExpr)]
