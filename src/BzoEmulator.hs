@@ -18,14 +18,15 @@ data Obj
   |  Obj_Str  Text
   |  Obj_Fnc  Int
   |  Obj_Typ  Int [Obj]
-  |  Obj_Nil  
+  |  Obj_Nil
   |  Obj_Arr  Int Int [Obj]
 
 
 
 data Expr
-  =  Exp_Binop
-  |  Exp_Unop
+  =  Exp_Binop Binop
+  |  Exp_Unop  Unop
+  |  Exp_Hof   HOF
   |  Exp_Func
   |  Exp_Map
   |  Exp_Join [Expr]
@@ -42,3 +43,45 @@ data Patn
   |  Patn_Str  Text
   |  Patn_Fnc  Int
   |  Patn_Typ  Int
+
+
+
+
+data Binop
+  = BO_Add
+  | BO_Sub
+  | BO_Mul
+  | BO_Div
+  | BO_Mod
+  | BO_Xor
+  | BO_And
+  | BO_Or
+  | BO_Rtr
+  | BO_Rtl
+  | BO_Shr
+  | BO_Shl
+  | BO_Drop
+  | BO_Take
+  | BO_Zip
+
+
+
+data Unop
+  = UO_Not
+  | UO_Neg
+  | UO_Rev
+  | UO_Sort
+  | UO_Nub
+  | UO_Unzip
+
+
+
+data HOF
+  = HF_Map
+  | HF_Fold
+  | HF_Scan
+  | HF_Zip
+  | HF_Filter
+  | HF_SortBy
+  | HF_NubBy
+  | HF_ZipBy
