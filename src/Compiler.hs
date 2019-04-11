@@ -13,6 +13,7 @@ import BzoChecker
 import HigherOrder
 import Backend
 import BzoTypeBackend
+import BzoEmulator
 import Debug.Trace
 
 
@@ -47,6 +48,8 @@ compileFilePass (BzoSettings imp lib flg opt pfx) =
       putStrLn $ case valid of
                   Nothing -> showOutput {-$ trace (show namemaps)-} checkedast
                   Just er -> show er
+
+      putStrLn $ "\n\n" ++ (show $ apply (Exp_Join [(Exp_Unop UO_Pct), (Exp_Binop BO_Add)]) (Obj_Cmpd [(Obj_Int 4), (Obj_Int 4)]))
 
 
 
