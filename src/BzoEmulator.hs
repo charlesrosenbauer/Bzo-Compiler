@@ -24,6 +24,7 @@ data Obj
   |  Obj_Arr  Int Int [Obj]
   |  Obj_Hole
   |  Obj_Fault Text
+  |  Obj_Expr Expr
   deriving Show
 
 
@@ -107,6 +108,12 @@ data FnTable = FnTable (Map Int (Patn, Expr))
 
 
 
+--checkPattern :: Obj -> Patn -> Bool
+--checkPattern
+
+
+
+
 lispiter :: [Obj] -> [Obj] -> [Obj]
 lispiter []  _ = []
 lispiter xs [] = xs
@@ -144,6 +151,11 @@ apply ft (Exp_Join fs) obj = Prelude.foldr (apply ft) obj fs
 
 apply ft (Exp_Lisp f xs) (Obj_Cmpd ys) = apply ft f $ Obj_Cmpd $ lispiter xs ys
 apply ft (Exp_Lisp f xs) y             = apply ft f $ Obj_Cmpd $ lispiter xs [y]
+
+apply ft (Exp_Map)           (Obj_Cmpd [(Obj_Expr f),    (Obj_Arr a b xs)]) = Obj_Arr a b $ Prelude.map   (apply ft f)   xs
+apply ft (Exp_Hof HF_Map   ) (Obj_Cmpd [(Obj_Expr f),    (Obj_Arr a b xs)]) = Obj_Arr a b $ Prelude.map   (apply ft f)   xs
+apply ft (Exp_Hof HF_Fold  ) (Obj_Cmpd [(Obj_Expr f), x, (Obj_Arr a b xs)]) =               Prelude.foldl (\x y -> apply ft f $ Obj_Cmpd [x, y]) x xs
+apply ft (Exp_Hof HF_Scan  ) (Obj_Cmpd [(Obj_Expr f), x, (Obj_Arr a b xs)]) = Obj_Arr a b $ Prelude.scanl (\x y -> apply ft f $ Obj_Cmpd [x, y]) x xs
 
 apply ft@(FnTable t) (Exp_Func f) x   = apply ft (snd $ t ! f) x
 
