@@ -22,6 +22,7 @@ data Obj
   |  Obj_Nil
   |  Obj_Arr  Int Int [Obj]
   |  Obj_Hole
+  |  Obj_Fault Text
   deriving Show
 
 
@@ -101,6 +102,14 @@ data HOF
 
 
 
+lispiter :: [Obj] -> [Obj] -> [Obj]
+lispiter []  _ = []
+lispiter xs [] = xs
+lispiter ((Obj_Hole):xs) (y:ys) = y:(lispiter xs ys)
+lispiter (x:xs) ys              = x:(lispiter xs ys)
+
+
+
 apply :: Expr -> Obj -> Obj
 apply (Exp_Binop BO_Add) (Obj_Cmpd [(Obj_Int a), (Obj_Int b)]) = (Obj_Int (a + b))
 apply (Exp_Binop BO_Sub) (Obj_Cmpd [(Obj_Int a), (Obj_Int b)]) = (Obj_Int (a - b))
@@ -128,6 +137,9 @@ apply (Exp_Unop  UO_CLZ) (Obj_Int x) = (Obj_Int (countLeadingZeros  x))
 
 apply (Exp_Join fs) obj = Prelude.foldr apply obj fs
 
-apply (Exp_Lisp f xs) (Obj_Cmpd ys) =
+apply (Exp_Lisp f xs) (Obj_Cmpd ys) = apply f $ Obj_Cmpd $ lispiter xs ys
+apply (Exp_Lisp f xs) y             = apply f $ Obj_Cmpd $ lispiter xs [y]
 
 apply f (Obj_Cmpd [x]) = apply f x
+
+apply f expr = Obj_Fault $ pack ("Error: missing case: " ++ (show f) ++ "\n:: applied to ::\n" ++ (show expr))
