@@ -49,7 +49,9 @@ compileFilePass (BzoSettings imp lib flg opt pfx) =
                   Nothing -> showOutput {-$ trace (show namemaps)-} checkedast
                   Just er -> show er
 
-      putStrLn $ "\n\n" ++ (show $ apply (Exp_Join [(Exp_Lisp (Exp_Binop BO_Sub) [(Obj_Hole), (Obj_Int 1)]), (Exp_Unop UO_Pct), (Exp_Binop BO_Add)]) (Obj_Cmpd [(Obj_Int 4), (Obj_Int 3)]))
+      putStrLn $ "\n\n" ++ (show $ apply (FnTable M.empty) (Exp_Join [(Exp_Lisp (Exp_Binop BO_Sub) [(Obj_Hole), (Obj_Int 1)]),
+                                                                      (Exp_Unop UO_Pct),
+                                                                      (Exp_Binop BO_Add)]) (Obj_Cmpd [(Obj_Int 4), (Obj_Int 3)]))
 
 
 
