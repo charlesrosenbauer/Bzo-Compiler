@@ -19,6 +19,7 @@ data Obj
   |  Obj_Flt  Double
   |  Obj_Str  Text
   |  Obj_Fnc  Int
+  |  Obj_Bl   Bool
   |  Obj_Typ  Int [Obj]
   |  Obj_Nil
   |  Obj_Arr  Int Int [Obj]
@@ -62,6 +63,12 @@ data Binop
   | BO_Mul
   | BO_Div
   | BO_Mod
+  | BO_Eq
+  | BO_NEq
+  | BO_Ls
+  | BO_Gt
+  | BO_Lse
+  | BO_Gte
   | BO_Xor
   | BO_And
   | BO_Or
@@ -78,7 +85,12 @@ data Binop
 
 data Unop
   = UO_Not
+  | UO_E0
+  | UO_E1
   | UO_Neg
+  | UO_Flt
+  | UO_Int
+  | UO_Str
   | UO_Rev
   | UO_Pct
   | UO_CLZ
@@ -142,6 +154,37 @@ apply ft (Exp_Binop BO_Rtr) (Obj_Cmpd [(Obj_Int a), (Obj_Int b)]) = (Obj_Int (ro
 apply ft (Exp_Binop BO_Xor) (Obj_Cmpd [(Obj_Int a), (Obj_Int b)]) = (Obj_Int (xor a b))
 apply ft (Exp_Binop BO_And) (Obj_Cmpd [(Obj_Int a), (Obj_Int b)]) = (Obj_Int (a .&. b))
 apply ft (Exp_Binop BO_Or ) (Obj_Cmpd [(Obj_Int a), (Obj_Int b)]) = (Obj_Int (a .|. b))
+
+apply ft (Exp_Binop BO_And) (Obj_Cmpd [(Obj_Bl  a), (Obj_Bl  b)]) = (Obj_Bl  (a && b))
+apply ft (Exp_Binop BO_Or ) (Obj_Cmpd [(Obj_Bl  a), (Obj_Bl  b)]) = (Obj_Bl  (a || b))
+
+apply ft (Exp_Binop BO_Ls ) (Obj_Cmpd [(Obj_Int a), (Obj_Int b)]) = (Obj_Bl  (a <  b))
+apply ft (Exp_Binop BO_Gt ) (Obj_Cmpd [(Obj_Int a), (Obj_Int b)]) = (Obj_Bl  (a >  b))
+apply ft (Exp_Binop BO_Lse) (Obj_Cmpd [(Obj_Int a), (Obj_Int b)]) = (Obj_Bl  (a <= b))
+apply ft (Exp_Binop BO_Gte) (Obj_Cmpd [(Obj_Int a), (Obj_Int b)]) = (Obj_Bl  (a >= b))
+apply ft (Exp_Binop BO_Eq ) (Obj_Cmpd [(Obj_Int a), (Obj_Int b)]) = (Obj_Bl  (a == b))
+apply ft (Exp_Binop BO_NEq) (Obj_Cmpd [(Obj_Int a), (Obj_Int b)]) = (Obj_Bl  (a /= b))
+
+apply ft (Exp_Binop BO_Ls ) (Obj_Cmpd [(Obj_Flt a), (Obj_Flt b)]) = (Obj_Bl  (a <  b))
+apply ft (Exp_Binop BO_Gt ) (Obj_Cmpd [(Obj_Flt a), (Obj_Flt b)]) = (Obj_Bl  (a >  b))
+apply ft (Exp_Binop BO_Lse) (Obj_Cmpd [(Obj_Flt a), (Obj_Flt b)]) = (Obj_Bl  (a <= b))
+apply ft (Exp_Binop BO_Gte) (Obj_Cmpd [(Obj_Flt a), (Obj_Flt b)]) = (Obj_Bl  (a >= b))
+apply ft (Exp_Binop BO_Eq ) (Obj_Cmpd [(Obj_Flt a), (Obj_Flt b)]) = (Obj_Bl  (a == b))
+apply ft (Exp_Binop BO_NEq) (Obj_Cmpd [(Obj_Flt a), (Obj_Flt b)]) = (Obj_Bl  (a /= b))
+
+apply ft (Exp_Unop  UO_Not) (Obj_Int x) = (Obj_Int (complement x))
+apply ft (Exp_Unop  UO_Neg) (Obj_Int x) = (Obj_Int (-x))
+apply ft (Exp_Unop  UO_E0 ) (Obj_Int x) = (Obj_Bl  (x == 0))
+apply ft (Exp_Unop  UO_E1 ) (Obj_Int x) = (Obj_Bl  (x == 1))
+
+apply ft (Exp_Unop  UO_Neg) (Obj_Flt x) = (Obj_Flt (-x))
+apply ft (Exp_Unop  UO_E0 ) (Obj_Flt x) = (Obj_Bl  (x == 0))
+apply ft (Exp_Unop  UO_E1 ) (Obj_Flt x) = (Obj_Bl  (x == 1))
+
+apply ft (Exp_Unop  UO_Flt) (Obj_Int x) = (Obj_Flt $ fromIntegral x)
+apply ft (Exp_Unop  UO_Int) (Obj_Flt x) = (Obj_Int $ truncate x)
+apply ft (Exp_Unop  UO_Str) (Obj_Flt x) = (Obj_Str $ pack $ show x)
+apply ft (Exp_Unop  UO_Str) (Obj_Int x) = (Obj_Str $ pack $ show x)
 
 apply ft (Exp_Unop  UO_Pct) (Obj_Int x) = (Obj_Int (popCount x))
 apply ft (Exp_Unop  UO_CTZ) (Obj_Int x) = (Obj_Int (countTrailingZeros x))
