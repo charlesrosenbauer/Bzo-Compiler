@@ -1,13 +1,12 @@
 TODO:
+  * Reorganize Code to be a bit less scattered
   * Type Checking
-  * Golang Backend
+  * Expression -> Interpreter Translator
+  * Interpreter
   * Work out how to change namespace management to use NameTable
-  * Expression Modelling Code
   * Issues seem to exist with namespaces sharing names with types
   * Matching on single-element arrays might pose an issue in the current
       implementation. This will have to get worked out eventually.
-  * Add some analysis for detecting recursive/infinite structs
-  * Start a function for converting types directly to a golang file.
 
 ----
 TODO for Next Iteration of Compiler:
