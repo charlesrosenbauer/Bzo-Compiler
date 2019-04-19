@@ -849,6 +849,14 @@ onAllPass vals fn =
       [] -> Right $ fn rs
       _  -> Left  ls
 
+allPass  :: [Either a b] -> Either [a] [b]
+allPass vals =
+  let ls = E.lefts  vals
+      rs = E.rights vals
+  in case ls of
+      [] -> Right rs
+      _  -> Left  ls
+
 
 
 
@@ -912,6 +920,14 @@ onLeft  _ _ def       = def
 onRight :: Either a b -> (b -> c) -> c -> c
 onRight (Right x) f _ = f x
 onRight _ _ def       = def
+
+toLeft  :: (a -> c) -> Either a b -> Either c b
+toLeft  f (Left  x) = Left  $ f x
+toLeft  f (Right x) = Right x
+
+toRight :: (b -> c) -> Either a b -> Either a c
+toRight f (Right x) = Right $ f x
+toRight f (Left  x) = Left  x
 
 
 
