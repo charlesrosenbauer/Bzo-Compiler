@@ -556,7 +556,7 @@ data Definition
     typehead   :: !TypeHeader,
     functype   :: !Type,
     fn_props   :: !FuncProps,
-    definitions:: ![(Pattern, Expr)] }
+    definitions:: ![(BzoSyntax)] }
  | TypeDef {
     identifier :: !T.Text,
     hostfile   :: !T.Text,
@@ -638,7 +638,7 @@ data TClsProps
 
 data DefProperty
   = AliasDef !Int
-  | ConstDef ![Atom]
+  | ConstDef -- ![Atom]
   deriving (Eq, Show)
 
 
@@ -715,63 +715,6 @@ type LcId = Int64   -- Local Id
 
 
 
-data ExprHeader = ExprHeader !(M.Map LcId Atom) deriving (Eq, Show)
-
-data Expr
-  = CallExpr  !BzoPos  !FnId  ![LcId] ![LcId]
-  | PhiExpr   !BzoPos ![FnId] ![LcId] ![LcId]
-  | OpExpr    !BzoPos !Opcode ![LcId] ![LcId]
-  | LetExpr   !BzoPos !Int  ![Expr]
-  | UnresExpr !BzoPos !BzoSyntax
-  deriving (Show, Eq)
-
-
-
-
-
-
-
-
-
-
-data Opcode =
-  OP_ADD  | OP_SUB  | OP_MUL  | OP_DIV  | OP_MOD  |
-  OP_XOR  | OP_OR   | OP_AND  | OP_NOT  | OP_PCT  |
-  OP_SHL  | OP_SHR
-  deriving (Show, Eq)
-
-
-
-
-
-
-
-
-
-
-data Pattern
-  = CmpdPtrn  !BzoPos !Type ![Pattern]
-  | FiltPtrn  !BzoPos !Type ![(Pattern, Int64)]
-  | PipePtrn  !BzoPos !Type ![Pattern]
-  | TVarPtrn  !BzoPos !Type !TVId
-  | VarPtrn   !BzoPos !Type !VrId
-  | IntPtrn   !BzoPos !Integer
-  | FltPtrn   !BzoPos !Double
-  | StrPtrn   !BzoPos !T.Text
-  | WildPtrn  !BzoPos
-  | ParamPtrn !BzoPos !Pattern !Pattern
-  | UnresPtrn !BzoSyntax
-  deriving (Show, Eq)
-
-
-
-
-
-
-
-
-
-
 data TypeHeader = TyHeader { tvarmap :: !(M.Map TVId Atom) } deriving (Eq, Show)
 
 emptyheader :: TypeHeader
@@ -779,7 +722,7 @@ emptyheader = TyHeader M.empty
 
 data Type
   = UnresType !BzoSyntax
-  | ParamType !BzoPos !Pattern
+  | ParamType !BzoPos !BzoSyntax
   | FuncType  !BzoPos !Type !Type
   | CmpdType  !BzoPos ![Type]
   | PolyType  !BzoPos ![Type]
@@ -891,81 +834,12 @@ data Constraint = Constraint !BzoPos !Type  deriving (Eq, Show)
 
 
 data Atom
-  = IntAtom !BzoPos !Integer
-  | FltAtom !BzoPos !Double
-  | StrAtom !BzoPos !T.Text
-  | FncAtom !BzoPos !T.Text !T.Text !FnId
-  | TypAtom !BzoPos !T.Text !T.Text !TyId
-  | VarAtom !BzoPos !T.Text ![Constraint] !Type
-  | MutAtom !BzoPos !T.Text ![Constraint] !Type
-  | TVrAtom !BzoPos !T.Text ![Constraint] !Type
-  | ParAtom !BzoPos !T.Text ![Constraint] !Type
-  | RetAtom !BzoPos !T.Text ![Constraint] !Type
+  = TVrAtom !BzoPos !T.Text ![Constraint] !Type
   deriving (Show, Eq)
 
 atomId :: Atom -> Maybe T.Text
-atomId (FncAtom _ t _ _) = Just t
-atomId (TypAtom _ t _ _) = Just t
-atomId (VarAtom _ t _ _) = Just t
-atomId (MutAtom _ t _ _) = Just t
 atomId (TVrAtom _ t _ _) = Just t
-atomId (ParAtom _ t _ _) = Just t
-atomId (RetAtom _ t _ _) = Just t
-atomId _ = Nothing
 
-{-
-isIntAtom :: Atom -> Bool
-isIntAtom (IntAtom _ _) = True
-isIntAtom _             = False
-
-isFltAtom :: Atom -> Bool
-isFltAtom (FltAtom _ _) = True
-isFltAtom _             = False
-
-isStrAtom :: Atom -> Bool
-isStrAtom (StrAtom _ _) = True
-isStrAtom _             = False
-
-isLitAtom :: Atom -> Bool
-isLitAtom atm = (isIntAtom atm) || (isFltAtom atm) || (isStrAtom atm)
-
-isFncAtom :: Atom -> Bool
-isFncAtom (FncAtom _ _ _ _) = True
-isFncAtom _                 = False
-
-isTypAtom :: Atom -> Bool
-isTypAtom (TypAtom _ _ _ _) = True
-isTypAtom _                 = False
-
-isVarAtom :: Atom -> Bool
-isVarAtom (VarAtom _ _ _ _) = True
-isVarAtom _                 = False
-
-isMutAtom :: Atom -> Bool
-isMutAtom (MutAtom _ _ _ _) = True
-isMutAtom _                 = False
-
-isTVrAtom :: Atom -> Bool
-isTVrAtom (TVrAtom _ _ _ _) = True
-isTVrAtom _                 = False
-
-isParAtom :: Atom -> Bool
-isParAtom (ParAtom _ _ _ _) = True
-isParAtom _                 = False
-
-isRetAtom :: Atom -> Bool
-isRetAtom (RetAtom _ _ _ _) = True
-isRetAtom _                 = False
-
-isLocalAtom :: Atom -> Bool
-isLocalAtom atm = (isVarAtom atm) || (isMutAtom atm)
-
-isGlobalAtom :: Atom -> Bool
-isGlobalAtom atm = (isFncAtom atm) || (isTypAtom atm)
-
-isIOAtom :: Atom -> Bool
-isIOAtom atm = (isParAtom atm) || (isRetAtom atm)
--}
 
 
 
@@ -983,57 +857,6 @@ data DefinitionTable
       dt_top  :: !Int64 }
   deriving Show
 
-
-
-
-
-
-
-
-
-{-
-data ContextFrame
-  = ContextFrame{
-      cf_atomMap :: !(M.Map Int64 Atom),
-      cf_top     :: !Int64,
-      cf_index   :: !Int64 }
-  deriving (Show, Eq)
-
-data Context = Context ![ContextFrame]
-
-
-addAtom :: Context -> Atom -> (Context, Int64)
-addAtom (Context ((ContextFrame atoms top i):xs)) atom = (Context ((ContextFrame (M.insert (top+1) atom atoms) (top+1) (i+1)):xs), top+1)
-
-
-addContext :: Context -> Context
-addContext (Context ((ContextFrame atoms top i):xs)) = Context ((ContextFrame M.empty (top+1) (i+1)):(ContextFrame atoms top i):xs)
-addContext (Context [])                              = Context [(ContextFrame M.empty 0 0)]
-
-
-popContext :: Context -> Context
-popContext (Context (_:xs)) = Context xs
-
-
-getIxContext :: Context -> Int64 -> Maybe (Atom, Int64)
-getIxContext (Context []) ix = Nothing
-getIxContext (Context ((ContextFrame atoms top i):xs)) ix =
-  if (ix > top)
-    then Nothing
-    else case (fmap (\x -> (x, i)) $ M.lookup ix atoms) of
-          Nothing -> getIxContext (Context xs) ix
-          ret     -> ret
-
-
-findId :: Context -> T.Text -> Maybe (Int64, Int64)
-findId (Context                              []) name = Nothing
-findId (Context ((ContextFrame atoms top i):xs)) name =
-  let pairs   = M.assocs atoms
-      matches = L.filter (\(i, atm) -> name == (Mb.fromMaybe (T.pack "") (atomId atm))) pairs
-  in  case matches of
-        [] -> findId (Context xs) name
-        ms -> Just (fst $ L.head ms, i)
--}
 
 
 
