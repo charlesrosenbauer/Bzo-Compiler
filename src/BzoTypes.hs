@@ -715,7 +715,7 @@ type LcId = Int64   -- Local Id
 
 
 
-data TypeHeader = TyHeader { tvarmap :: !(M.Map TVId Atom) } deriving (Eq, Show)
+data TypeHeader = TyHeader { tvarmap :: !(M.Map TVId THeadAtom) } deriving (Eq, Show)
 
 emptyheader :: TypeHeader
 emptyheader = TyHeader M.empty
@@ -833,11 +833,11 @@ data Constraint = Constraint !BzoPos !Type  deriving (Eq, Show)
 
 
 
-data Atom
+data THeadAtom
   = TVrAtom !BzoPos !T.Text ![Constraint] !Type
   deriving (Show, Eq)
 
-atomId :: Atom -> Maybe T.Text
+atomId :: THeadAtom -> Maybe T.Text
 atomId (TVrAtom _ t _ _) = Just t
 
 

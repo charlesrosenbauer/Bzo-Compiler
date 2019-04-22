@@ -136,7 +136,7 @@ initializeTypeHeader (BzS_FilterObj p v fs) =
 initializeTypeHeader (BzS_Cmpd _ vs) =
   let atoms = L.map makeAtom vs
   in  TyHeader $ M.fromList $ L.zip [1..] atoms
-  where makeAtom :: BzoSyntax -> Atom
+  where makeAtom :: BzoSyntax -> THeadAtom
         makeAtom (BzS_TyVar     p v   ) =
           TVrAtom p      v  []                                            $ UnresType $ BzS_Undefined p
         makeAtom (BzS_FilterObj p v fs) =
@@ -152,20 +152,20 @@ initializeTypeHeader (BzS_FnTypeDef _ ps fn (BzS_FnTy _ i o)) =
       vnames :: S.Set Text
       vnames = S.fromList $ L.map fst tvars
 
-      tvatms :: [Atom]
+      tvatms :: [THeadAtom]
       tvatms = L.map (\(v,p) -> TVrAtom p v [] $ UnresType $ BzS_Undefined p) tvars
       tvatms'= L.nubBy (\(TVrAtom _ a _ _) (TVrAtom _ b _ _) -> a == b) $ L.filter (\(TVrAtom _ x _ _) -> S.member x vnames) tvatms
 
       key :: Int64
       key    = L.maximum $ [0] ++ (M.keys $ tvarmap tyhead)
 
-      tvsold :: [(TVId, Atom)]
+      tvsold :: [(TVId, THeadAtom)]
       tvsold = M.assocs $ tvarmap tyhead
 
-      tvsnew :: [(TVId, Atom)]
+      tvsnew :: [(TVId, THeadAtom)]
       tvsnew = L.zip (L.map (key+) [1..]) tvatms'
 
-      tvsall :: [(TVId, Atom)] -- I don't fully trust the nub here, but it seems to mostly work.
+      tvsall :: [(TVId, THeadAtom)] -- I don't fully trust the nub here, but it seems to mostly work.
       tvsall = L.nubBy (\(_, (TVrAtom _ a _ _)) (_, (TVrAtom _ b _ _)) -> a == b) $ tvsold ++ tvsnew
 
   in TyHeader $ M.fromList tvsall
@@ -179,20 +179,20 @@ initializeTypeHeader (BzS_TypDef _ ps ty tydef) =
       vnames :: S.Set Text
       vnames = S.fromList $ L.map fst tvars
 
-      tvatms :: [Atom]
+      tvatms :: [THeadAtom]
       tvatms = L.map (\(v,p) -> TVrAtom p v [] $ UnresType $ BzS_Undefined p) tvars
       tvatms'= L.nubBy (\(TVrAtom _ a _ _) (TVrAtom _ b _ _) -> a == b) $ L.filter (\(TVrAtom _ x _ _) -> S.member x vnames) tvatms
 
       key :: Int64
       key    = L.maximum $ [0] ++ (M.keys $ tvarmap tyhead)
 
-      tvsold :: [(TVId, Atom)]
+      tvsold :: [(TVId, THeadAtom)]
       tvsold = M.assocs $ tvarmap tyhead
 
-      tvsnew :: [(TVId, Atom)]
+      tvsnew :: [(TVId, THeadAtom)]
       tvsnew = L.zip (L.map (key+) [1..]) tvatms'
 
-      tvsall :: [(TVId, Atom)] -- I don't fully trust the nub here, but it seems to mostly work.
+      tvsall :: [(TVId, THeadAtom)] -- I don't fully trust the nub here, but it seems to mostly work.
       tvsall = L.nubBy (\(_, (TVrAtom _ a _ _)) (_, (TVrAtom _ b _ _)) -> a == b) $ tvsold ++ tvsnew
 
   in TyHeader $ M.fromList tvsall
