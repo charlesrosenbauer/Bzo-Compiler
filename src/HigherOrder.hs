@@ -849,13 +849,13 @@ onAllPass vals fn =
       [] -> Right $ fn rs
       _  -> Left  ls
 
-allPass  :: [Either a b] -> Either [a] [b]
+allPass  :: [Either [a] b] -> Either [a] [b]
 allPass vals =
   let ls = E.lefts  vals
       rs = E.rights vals
   in case ls of
       [] -> Right rs
-      _  -> Left  ls
+      _  -> Left  $ concat ls
 
 
 

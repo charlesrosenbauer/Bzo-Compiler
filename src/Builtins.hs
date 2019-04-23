@@ -109,6 +109,8 @@ isBuiltinFunc "#shadeUnion"   = 20024
 isBuiltinFunc "#shadeIntersection" = 20025
 isBuiltinFunc "#shadeDifference"   = 20026
 isBuiltinFunc "#shadeInverse"      = 20027
+isBuiltinFunc "#rrotate-binop"= 20028
+isBuiltinFunc "#lrotate-binop"= 20029
 
 --Comparison
 isBuiltinFunc "#gtr-binop"    = 30001
