@@ -19,6 +19,7 @@ data Obj
   |  Obj_Flt  Double
   |  Obj_Str  Text
   |  Obj_Fnc  Int
+  |  Obj_Var  Int
   |  Obj_Bl   Bool
   |  Obj_Typ  Int [Obj]
   |  Obj_Nil
@@ -33,6 +34,7 @@ data Obj
 data Expr
   =  Exp_Binop Binop
   |  Exp_Unop  Unop
+  |  Exp_Lit   Obj
   |  Exp_Hof   HOF
   |  Exp_Func  Int
   |  Exp_Map
@@ -40,6 +42,8 @@ data Expr
   |  Exp_Cmpd [Expr]
   |  Exp_Case [(Patn, Expr)]
   |  Exp_Lisp Expr [Obj]
+  |  Exp_RVar  Int
+  |  Exp_WVar  Int
   deriving Show
 
 

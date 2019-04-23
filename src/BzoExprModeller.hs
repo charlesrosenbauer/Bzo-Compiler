@@ -46,9 +46,33 @@ data VarScope = VarScope [([Var], Int)]
 
 modelExpr :: VarScope -> BzoSyntax -> Either [BzoErr] Expr
 modelExpr vs (BzS_Cmpd  _ xs) = toRight (Exp_Cmpd) $ allPass $ Prelude.map (modelExpr vs) xs
---modelExpr vs (BzS_Int   _  i) = Right $ Obj_Int i
---modelExpr vs (BzS_Flt   _  f) = Right $ Obj_Flt f
---modelExpr vs (BzS_Str   _  s) = Right $ Obj_Str s
+modelExpr vs (BzS_Int   _  i) = Right $ Exp_Lit $ Obj_Int $ fromIntegral i
+modelExpr vs (BzS_Flt   _  f) = Right $ Exp_Lit $ Obj_Flt f
+modelExpr vs (BzS_Str   _  s) = Right $ Exp_Lit $ Obj_Str s
+modelExpr vs (BzS_LispCall _ xp os) =
+  let
+      xp' :: Either [BzoErr] Expr
+      xp' = modelExpr vs xp
+
+      os' :: Either [BzoErr] [Expr]
+      os' = allPass $ Prelude.map (modelExpr vs) os
+
+      os'':: Either [BzoErr] [Obj]
+      os'' = case os' of
+              Left ers -> Left ers
+              Right xs -> allPass $
+                            Prelude.map (\x -> case x of
+                                                (Exp_Lit o) -> Right o
+                                                x           -> Left [ModelErr (BzoPos 0 0 (pack "<pos lost>")) $ pack "Not a valid value for a prefix expression."]
+                                        ) xs
+
+
+
+  in case (xp', os'') of
+      (Left er0, Left er1) -> Left $ er0 ++ er1
+      (Left er0, _       ) -> Left er0
+      (_       , Left er1) -> Left er1
+      (Right x , Right o ) -> Right $ Exp_Lisp x o
 
 modelExpr vs (BzS_BId   p bid) =
   case (unpack bid) of
