@@ -14,14 +14,14 @@ import Data.Map.Strict
 
 data Obj
   =  Obj_Cmpd [Obj]
-  |  Obj_Poly Int Obj
+  |  Obj_Poly Int Obj   -- This is basically a tagged union
   |  Obj_Int  Int
   |  Obj_Flt  Double
   |  Obj_Str  Text
   |  Obj_Fnc  Int
   |  Obj_Var  Int
   |  Obj_Bl   Bool
-  |  Obj_Typ  Int [Obj]
+  |  Obj_Typ  Int [Obj]  -- This includes a type tag
   |  Obj_Nil
   |  Obj_Arr  Int [Obj]
   |  Obj_Hole
@@ -54,8 +54,11 @@ data Patn
   |  Patn_Int  Integer
   |  Patn_Flt  Double
   |  Patn_Str  Text
+  |  Patn_Bl   Bool
+  |  Patn_Nil
   |  Patn_Fnc  Int
-  |  Patn_Typ  Int
+  |  Patn_Typ  Int [Patn]
+  |  Patn_Wild
   deriving Show
 
 
@@ -124,8 +127,17 @@ data FnTable = FnTable (Map Int (Patn, Expr))
 
 
 
---checkPattern :: Obj -> Patn -> Bool
---checkPattern
+checkPattern :: Obj -> Patn -> Bool
+checkPattern (Obj_Int a)    (Patn_Int b)     = (a == (fromIntegral b))
+checkPattern (Obj_Flt a)    (Patn_Flt b)     = (a == b)
+checkPattern (Obj_Str a)    (Patn_Str b)     = (a == b)
+checkPattern (Obj_Bl  a)    (Patn_Bl  b)     = (a == b)
+checkPattern (Obj_Fnc a)    (Patn_Fnc b)     = (a == b)
+checkPattern (Obj_Nil)      (Patn_Nil)       = True
+checkPattern (Obj_Cmpd xs)  (Patn_Cmpd ys)   = ((Prelude.length xs) == (Prelude.length ys)) && (Prelude.all (\(x, y) -> checkPattern x y) $ Prelude.zip xs ys)
+checkPattern x              (Patn_Poly xs)   = Prelude.any (checkPattern x) xs
+checkPattern (Obj_Typ a xs) (Patn_Typ  b ys) = (a == b) && (Prelude.all (\(x,y) -> checkPattern x y) $ Prelude.zip xs ys)
+checkPattern _              (Patn_Wild)      = True
 
 
 
