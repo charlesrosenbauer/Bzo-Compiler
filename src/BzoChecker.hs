@@ -405,11 +405,13 @@ typeAttribs (BzS_BTId _   i) =
     9 -> S.singleton AA_F16
     10-> S.singleton AA_F32
     11-> S.singleton AA_F64
-    12-> S.singleton AA_P8
-    13-> S.singleton AA_P16
-    14-> S.singleton AA_P32
-    15-> S.singleton AA_P64
-    16-> S.singleton AA_Str
+    12-> S.singleton AA_I64
+    13-> S.singleton AA_F64
+    14-> S.singleton AA_Bl
+    15-> S.singleton AA_Bl
+    16-> S.singleton AA_Bl
+    17-> S.singleton AA_Str
+    18-> S.singleton AA_Str
     _ -> S.empty
 typeAttribs (BzS_Int _ i) = S.singleton $ AL_Int  i
 typeAttribs (BzS_Flt _ f) = S.singleton $ AL_Real f

@@ -30,28 +30,16 @@ isBuiltinType "#Unt64"  = 8
 isBuiltinType "#Flt16"  = 9
 isBuiltinType "#Flt32"  = 10
 isBuiltinType "#Flt64"  = 11
-
---Posits
-isBuiltinType "#Pst8"   = 12    -- I'm not sure if this will make it
-isBuiltinType "#Pst16"  = 13
-isBuiltinType "#Pst32"  = 14
-isBuiltinType "#Pst64"  = 15
+isBuiltinType "#Int"    = 12
+isBuiltinType "#Flt"    = 13
+isBuiltinType "#True"   = 14
+isBuiltinType "#False"  = 15
+isBuiltinType "#Bool"   = 16
 
 --Text
-isBuiltinType "#String" = 16
-isBuiltinType "#Char"   = 17
+isBuiltinType "#Str"    = 17
+isBuiltinType "#Char"   = 18
 
---Bools
-isBuiltinType "#BoolTF" = 20
-
---Shadows
-isBuiltinType "#S8"     = 21
-isBuiltinType "#S16"    = 22
-isBuiltinType "#S32"    = 23
-isBuiltinType "#S64"    = 24
-isBuiltinType "#S128"   = 25
-isBuiltinType "#S256"   = 26
-isBuiltinType "#S512"   = 27
 
 --Regular Expressions
 isBuiltinType "#Regex"  = 28
