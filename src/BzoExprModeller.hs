@@ -57,6 +57,7 @@ modelExpr vs (BzS_LispCall _ xp os) =
       os' :: Either [BzoErr] [Expr]
       os' = allPass $ Prelude.map (modelExpr vs) os
 
+      -- TODO: do this in a way that either preserves error locations or prevents errors
       os'':: Either [BzoErr] [Obj]
       os'' = case os' of
               Left ers -> Left ers
@@ -65,8 +66,6 @@ modelExpr vs (BzS_LispCall _ xp os) =
                                                 (Exp_Lit o) -> Right o
                                                 x           -> Left [ModelErr (BzoPos 0 0 (pack "<pos lost>")) $ pack "Not a valid value for a prefix expression."]
                                         ) xs
-
-
 
   in case (xp', os'') of
       (Left er0, Left er1) -> Left $ er0 ++ er1
@@ -95,4 +94,37 @@ modelExpr vs (BzS_BId   p bid) =
     "#not-op"        -> Right $ Exp_Unop  UO_CLZ
     "#trunc"         -> Right $ Exp_Unop  UO_Int
     "#floatcast"     -> Right $ Exp_Unop  UO_Flt
+    "#sine"          -> Right $ Exp_Unop UO_Sin
+    "#cosine"        -> Right $ Exp_Unop UO_Cos
+    "#tangent"       -> Right $ Exp_Unop UO_Tan
+    "#arcsine"       -> Right $ Exp_Unop UO_ASn
+    "#arccosine"     -> Right $ Exp_Unop UO_ACs
+    "#arctangent"    -> Right $ Exp_Unop UO_ATn
+    "#hsine"         -> Right $ Exp_Unop UO_Sinh
+    "#hcosine"       -> Right $ Exp_Unop UO_Cosh
+    "#htangent"      -> Right $ Exp_Unop UO_Tanh
+    "#arc-hsine"     -> Right $ Exp_Unop UO_ASnh
+    "#arc-hcosine"   -> Right $ Exp_Unop UO_ACsh
+    "#arc-htangent"  -> Right $ Exp_Unop UO_ATnh
+    "#log2"          -> Right $ Exp_Unop UO_Lg2
+    "#log10"         -> Right $ Exp_Unop UO_Lg10
+    "#ln-op"         -> Right $ Exp_Unop UO_Ln
+    "#sqrt"          -> Right $ Exp_Unop UO_Sqrt
+    "#cbrt"          -> Right $ Exp_Unop UO_Cbrt
+    "#exp-unop"      -> Right $ Exp_Unop UO_Exp
+    "#exp-binop"     -> Right $ Exp_Binop BO_Pow
+    "#surd-binop"    -> Right $ Exp_Binop BO_Srd
+    "#log-binop"     -> Right $ Exp_Binop BO_Log
     x                -> Left  $ [ModelErr p $ pack (x ++ " is not a recognized builtin operation.")]
+
+--modelExpr vs (BzS_Block p xs) =
+--  let
+--
+--
+--  in Left []
+
+-- TODO: handle lambdas and functions using input and output parameters
+
+-- TODO: find some way to handle function calls, type classes, and variables
+
+-- TODO: generate pattern matching structures from parameter lists

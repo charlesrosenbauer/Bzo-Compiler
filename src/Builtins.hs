@@ -30,6 +30,8 @@ isBuiltinType "#Unt64"  = 8
 isBuiltinType "#Flt16"  = 9
 isBuiltinType "#Flt32"  = 10
 isBuiltinType "#Flt64"  = 11
+
+--Primitives
 isBuiltinType "#Int"    = 12
 isBuiltinType "#Flt"    = 13
 isBuiltinType "#True"   = 14
@@ -189,6 +191,7 @@ isBuiltinFunc "#sqrt"         = 60024
 isBuiltinFunc "#cbrt"         = 60025
 isBuiltinFunc "#log2"         = 60026
 isBuiltinFunc "#log10"        = 60027
+isBuiltinFunc "#exp-unop"     = 60028
 
 --Effect / FFI / Unsafe
 isBuiltinFunc "#print"        = 70001

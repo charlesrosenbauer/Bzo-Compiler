@@ -83,6 +83,9 @@ data Binop
   | BO_Rtl
   | BO_Shr
   | BO_Shl
+  | BO_Log
+  | BO_Pow
+  | BO_Srd
   | BO_Drop
   | BO_Take
   | BO_Zip
@@ -102,6 +105,24 @@ data Unop
   | UO_Pct
   | UO_CLZ
   | UO_CTZ
+  | UO_Sin
+  | UO_Cos
+  | UO_Tan
+  | UO_ASn
+  | UO_ACs
+  | UO_ATn
+  | UO_Sinh
+  | UO_Cosh
+  | UO_Tanh
+  | UO_ASnh
+  | UO_ACsh
+  | UO_ATnh
+  | UO_Lg2
+  | UO_Lg10
+  | UO_Ln
+  | UO_Sqrt
+  | UO_Cbrt
+  | UO_Exp
   | UO_Sort
   | UO_Nub
   | UO_Unzip
@@ -161,6 +182,10 @@ apply ft (Exp_Binop BO_Add) (Obj_Cmpd [(Obj_Flt a), (Obj_Flt b)]) = (Obj_Flt (a 
 apply ft (Exp_Binop BO_Sub) (Obj_Cmpd [(Obj_Flt a), (Obj_Flt b)]) = (Obj_Flt (a - b))
 apply ft (Exp_Binop BO_Mul) (Obj_Cmpd [(Obj_Flt a), (Obj_Flt b)]) = (Obj_Flt (a * b))
 apply ft (Exp_Binop BO_Div) (Obj_Cmpd [(Obj_Flt a), (Obj_Flt b)]) = (Obj_Flt (a / b))
+
+apply ft (Exp_Binop BO_Log) (Obj_Cmpd [(Obj_Flt a), (Obj_Flt b)]) = (Obj_Flt (logBase a b))
+apply ft (Exp_Binop BO_Pow) (Obj_Cmpd [(Obj_Flt a), (Obj_Flt b)]) = (Obj_Flt (a ** b))
+apply ft (Exp_Binop BO_Srd) (Obj_Cmpd [(Obj_Flt a), (Obj_Flt b)]) = (Obj_Flt (a ** (1 / b)))
 --apply (Exp_Binop BO_Add) (Obj_Cmpd [(Obj_Flt a), (Obj_Flt b)]) = (Obj_Flt (a `mod` b))
 
 apply ft (Exp_Binop BO_Shl) (Obj_Cmpd [(Obj_Int a), (Obj_Int b)]) = (Obj_Int (shift  a   b ))
@@ -196,6 +221,25 @@ apply ft (Exp_Unop  UO_E1 ) (Obj_Int x) = (Obj_Bl  (x == 1))
 apply ft (Exp_Unop  UO_Neg) (Obj_Flt x) = (Obj_Flt (-x))
 apply ft (Exp_Unop  UO_E0 ) (Obj_Flt x) = (Obj_Bl  (x == 0))
 apply ft (Exp_Unop  UO_E1 ) (Obj_Flt x) = (Obj_Bl  (x == 1))
+
+apply ft (Exp_Unop  UO_Sin) (Obj_Flt x) = (Obj_Flt $ sin   x)
+apply ft (Exp_Unop  UO_Cos) (Obj_Flt x) = (Obj_Flt $ cos   x)
+apply ft (Exp_Unop  UO_Tan) (Obj_Flt x) = (Obj_Flt $ tan   x)
+apply ft (Exp_Unop  UO_ASn) (Obj_Flt x) = (Obj_Flt $ asin  x)
+apply ft (Exp_Unop  UO_ACs) (Obj_Flt x) = (Obj_Flt $ acos  x)
+apply ft (Exp_Unop  UO_ATn) (Obj_Flt x) = (Obj_Flt $ atan  x)
+apply ft (Exp_Unop  UO_Sinh)(Obj_Flt x) = (Obj_Flt $ sinh  x)
+apply ft (Exp_Unop  UO_Cosh)(Obj_Flt x) = (Obj_Flt $ cosh  x)
+apply ft (Exp_Unop  UO_Tanh)(Obj_Flt x) = (Obj_Flt $ tanh  x)
+apply ft (Exp_Unop  UO_ASnh)(Obj_Flt x) = (Obj_Flt $ asinh x)
+apply ft (Exp_Unop  UO_ACsh)(Obj_Flt x) = (Obj_Flt $ acosh x)
+apply ft (Exp_Unop  UO_ATnh)(Obj_Flt x) = (Obj_Flt $ atanh x)
+apply ft (Exp_Unop  UO_Lg2) (Obj_Flt x) = (Obj_Flt $ logBase 2  x)
+apply ft (Exp_Unop  UO_Lg10)(Obj_Flt x) = (Obj_Flt $ logBase 10 x)
+apply ft (Exp_Unop  UO_Ln ) (Obj_Flt x) = (Obj_Flt $ logBase (exp 1) x)
+apply ft (Exp_Unop  UO_Sqrt)(Obj_Flt x) = (Obj_Flt $ sqrt x)
+apply ft (Exp_Unop  UO_Cbrt)(Obj_Flt x) = (Obj_Flt $ x ** (1/3))
+apply ft (Exp_Unop  UO_Exp) (Obj_Flt x) = (Obj_Flt $ exp x)
 
 apply ft (Exp_Unop  UO_Flt) (Obj_Int x) = (Obj_Flt $ fromIntegral x)
 apply ft (Exp_Unop  UO_Int) (Obj_Flt x) = (Obj_Int $ truncate x)
