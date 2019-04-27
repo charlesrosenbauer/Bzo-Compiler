@@ -118,7 +118,7 @@ getScopeVars _                          = []
 
 
 -- Get all blocks and lambdas referenced in the current scope. Do not introspect them further.
-getSubScopes :: BzoSyntax -> [BzoSyntax]
+getSubScopes :: BzoSyntax -> [(BzoPos, BzoSyntax)]
 getSubScopes (BzS_Expr       _    expr) = L.concatMap getSubScopes expr
 getSubScopes (BzS_Statement  _    expr) = getSubScopes expr
 getSubScopes (BzS_Cmpd       _    expr) = L.concatMap getSubScopes expr
@@ -128,8 +128,8 @@ getSubScopes (BzS_ArrayObj   _  _ expr) = getSubScopes expr
 getSubScopes (BzS_FilterObj  _ obj  fs) = (getSubScopes obj) ++ (L.concatMap getSubScopes fs)
 getSubScopes (BzS_CurryObj   _ obj  ps) = (getSubScopes obj) ++ (L.concatMap getSubScopes ps)
 getSubScopes (BzS_MapObj     _    expr) = (getSubScopes expr)
-getSubScopes (BzS_Lambda     p ps expr) = [(BzS_Lambda     p ps expr)]
-getSubScopes (BzS_Block      p    expr) = [(BzS_Block      p    expr)]
+getSubScopes (BzS_Lambda     p ps expr) = [(p, BzS_Lambda     p ps expr)]
+getSubScopes (BzS_Block      p    expr) = [(p, BzS_Block      p    expr)]
 getSubScopes (BzS_LispCall   _ fn expr) = (getSubScopes fn)  ++ (L.concatMap getSubScopes expr)
 getSubScopes (BzS_TyClassDef _ ps _ df) = (getSubScopes ps) ++ (L.concatMap getSubScopes df)
 getSubScopes (BzS_FunDef     _ _ _ _ x) = (getSubScopes x)

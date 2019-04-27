@@ -2,7 +2,9 @@ module BzoExprModeller where
 import BzoTypes
 import BzoEmulator
 import HigherOrder
+import Query
 import Data.Text
+import Data.List as L
 
 
 
@@ -44,7 +46,7 @@ data VarScope = VarScope [([Var], Int)]
 
 
 
-modelExpr :: VarScope -> BzoSyntax -> Either [BzoErr] Expr
+modelExpr :: [VarScope] -> BzoSyntax -> Either [BzoErr] Expr
 modelExpr vs (BzS_Cmpd  _ xs) = toRight (Exp_Cmpd) $ allPass $ Prelude.map (modelExpr vs) xs
 modelExpr vs (BzS_Int   _  i) = Right $ Exp_Lit $ Obj_Int $ fromIntegral i
 modelExpr vs (BzS_Flt   _  f) = Right $ Exp_Lit $ Obj_Flt f
@@ -117,11 +119,25 @@ modelExpr vs (BzS_BId   p bid) =
     "#log-binop"     -> Right $ Exp_Binop BO_Log
     x                -> Left  $ [ModelErr p $ pack (x ++ " is not a recognized builtin operation.")]
 
---modelExpr vs (BzS_Block p xs) =
---  let
---
---
---  in Left []
+modelExpr vs b@(BzS_Block p xs) =
+  let
+      varrefs :: [(Text, BzoPos)]
+      varrefs = getScopeVars b
+
+      vardefs :: [(Text, BzoPos)]
+      vardefs = nubBy  (\(t0,p0)(t1,p1) -> (t0 == t1) && (p0 > p1)) $
+                sortBy (\(t0,p0)(t1,p1) -> compare p0 p1) varrefs
+
+      subscps :: [(BzoPos, BzoSyntax)]
+      subscps = L.concatMap getSubScopes xs
+
+      scope :: VarScope
+      scope = VarScope [] -- Placeholder
+
+      subexps :: [Either [BzoErr] Expr]
+      subexps = L.map (modelExpr (scope:vs)) $ L.map snd subscps
+
+  in Left []
 
 -- TODO: handle lambdas and functions using input and output parameters
 
