@@ -16,7 +16,7 @@ Here we initialize the file:
 
 Here we define a function:
 
-> ! :: Integral ;; Integral
+> ! :: Int ;; Int
 > [1] ! :: 1
 > [0] ! :: 1
 > [x] ! :: [?: x -?, 0, [x, x 1`- !]*]
@@ -25,3 +25,5 @@ The above function is a factorial function. If the input is negative, it returns
 If the value is 1 or 0, it returns 1.
 For all other values, we calculate the factorial recursively.
 It is valid for all Integer types.
+
+> T :: (!, 5)

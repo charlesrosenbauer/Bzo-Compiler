@@ -25,6 +25,6 @@ main :: IO ;; IO
 }
 
 
-[R'.Real] Vec :: [x.R', y.R']
+[F'.Flt] Vec :: [x.F', y.F']
 
 [A', B'] Pair :: [a.A', b.B']
