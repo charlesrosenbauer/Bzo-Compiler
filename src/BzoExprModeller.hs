@@ -39,6 +39,70 @@ modelFunctions (DefinitionTable defs fls ids _) =
 
 
 
+{-
+  Model Tacit Expressions:
+    > Expr with implicit inputs and outputs
+    > Convert AST to Expression, which should be pretty straightforward
+-}
+modelTacitExpr :: [VarScope] -> BzoSyntax -> Either [BzoErr] Expr
+modelTacitExpr vs (BzS_Expr _ xs) = Left []
+
+
+
+
+
+
+
+
+
+{-
+  Model Return Expressions:
+    > Expr with implicit output
+    > First expression is input
+-}
+modelRetExpr :: [VarScope] -> BzoSyntax -> Either [BzoErr] Expr
+modelRetExpr vs (BzS_Expr _ xs) =
+  let
+      par = L.head xs
+
+      def = L.tail xs
+
+  in Left []
+
+
+
+
+
+
+
+
+
+{-
+  Model Standard Expressions:
+    > Expr with explicit inputs and outputs
+    > First expression is input
+    > Last  Expression is output
+-}
+modelStdExpr :: [VarScope] -> BzoSyntax -> Either [BzoErr] Expr
+modelStdExpr vs (BzS_Expr _ xs) =
+  let
+      par = L.head xs
+
+      ret = L.last xs
+
+      def = L.init $ L.tail xs
+
+
+  in Left []
+
+
+
+
+
+
+
+
+
 
 data Var = Var Text BzoPos Int
 
