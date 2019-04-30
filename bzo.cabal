@@ -22,7 +22,6 @@ executable main
       , filepath >= 1.4
       , parallel >= 3.2.1.1
     other-modules:
-      --   BzoChecker
         BzoChecker
       , BzoConfigParser
       , BzoFileSorter
@@ -37,9 +36,6 @@ executable main
       , ModelRules
       , DefinitionTable
       , Builtins
-      , Backend
-      , BackendTypes
       , Query
-      , BzoTypeBackend
       , BzoEmulator
       , BzoExprModeller

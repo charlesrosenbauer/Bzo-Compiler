@@ -11,8 +11,6 @@ import ModelRules
 import DefinitionTable
 import BzoChecker
 import HigherOrder
-import Backend
-import BzoTypeBackend
 import BzoEmulator
 import BzoExprModeller
 import Debug.Trace
@@ -41,10 +39,6 @@ compileFilePass (BzoSettings imp lib flg opt pfx) =
       checkedast <- return $ applyWithErr checkProgram defs''
 
       -- TODO: Type Checker
-      -- TODO: Code Generation
-      printTypes "types.go" $ case checkedast of
-                    Right dt -> M.assocs $ dt_defs dt
-                    Left ers -> []
 
       putStrLn $ case valid of
                   Nothing -> showOutput {-$ trace (show namemaps)-} checkedast
