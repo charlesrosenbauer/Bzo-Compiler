@@ -312,9 +312,15 @@ checkType at st (th0, (CmpdType _  xs)) (th1, (ArryType _ n y)) =
   ((L.length xs) == (fromIntegral n)) &&
   (L.all (\x -> checkType at st (th0, x) (th1, y)) xs)
 
+checkType at st (th0, (PolyType p []    )) (th1,      (PolyType _ ys)) = True
+
+checkType at st (th0, (PolyType p (x:xs))) (th1, poly@(PolyType _ ys)) =
+    (checkType at st (th0, x) (th1, poly)) && (checkType at st (th0, (PolyType p xs)) (th1, poly))
+
+checkType at st t0 (th1, (PolyType _ xs)) = L.any (\x -> checkType at st t0 (th1, x)) xs
+
 {-
 TODO:
-  > Add poly checking. I'm not yet sure how to do this efficiently.
   > "Make Type" checking. Not 100% how to do this either yet.
   > TVar checking
 -}
