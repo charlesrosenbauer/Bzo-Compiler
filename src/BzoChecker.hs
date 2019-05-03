@@ -319,6 +319,22 @@ checkType at st (th0, (PolyType p (x:xs))) (th1, poly@(PolyType _ ys)) =
 
 checkType at st t0 (th1, (PolyType _ xs)) = L.any (\x -> checkType at st t0 (th1, x)) xs
 
+checkType at st (th0, (MakeType _ [])) (th1, (MakeType _ [])) = True
+
+checkType at st (th0, (MakeType p0 xs)) (th1, (MakeType p1 ys)) =
+  let
+      xlast = L.last xs
+      ylast = L.last ys
+
+      xinit = L.init xs
+      yinit = L.init ys
+
+      -- Also add check that parameters are valid
+
+  in ((L.length xs) == (L.length ys)) &&
+     (checkType at st (th0, xlast) (th1, ylast)) &&
+     (checkType at st (th0, (MakeType p0 xinit)) (th1, (MakeType p1 yinit)))
+
 {-
 TODO:
   > "Make Type" checking. Not 100% how to do this either yet.
