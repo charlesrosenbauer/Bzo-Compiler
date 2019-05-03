@@ -321,6 +321,12 @@ checkType at st t0 (th1, (PolyType _ xs)) = L.any (\x -> checkType at st t0 (th1
 
 checkType at st (th0, (MakeType _ [])) (th1, (MakeType _ [])) = True
 
+checkType at st (th0, (MakeType p0 [ix,ex])) (th1, (MakeType p1 [iy,ey])) = False -- NOTE: tempoary, please extend
+{-  let
+
+
+  in-}
+
 checkType at st (th0, (MakeType p0 xs)) (th1, (MakeType p1 ys)) =
   let
       xlast = L.last xs
@@ -601,9 +607,13 @@ mapDefTypes ttab dtab =
       dtab' :: [(Int64, Definition, Type)]
       dtab' = L.map (\(i, t) -> (i, dtab M.! i, t)) ttab'
 
+      mkHeader :: BzoSyntax -> TypeHeader
+      mkHeader (BzS_FnTypeDef _ ps _ _) = initializeTypeHeader ps
+      mkHeader (BzS_TypDef    _ ps _ _) = initializeTypeHeader ps
+
   in M.fromList $ L.map (\(i,d,t) -> (i, case d of
-                      FuncSyntax    i h fh fd -> FuncDef    i h (TyHeader M.empty) t FuncPropEmpty []
-                      TypeSyntax    i h    td -> TypeDef    i h (TyHeader M.empty)   TypePropEmpty t
+                      FuncSyntax    i h fh fd -> FuncDef    i h (mkHeader      fh) t FuncPropEmpty []
+                      TypeSyntax    i h    td -> TypeDef    i h (mkHeader      td)   TypePropEmpty t
                       TyClassSyntax i h    cd -> TyClassDef i h (TyHeader M.empty)   TClsPropEmpty [] )) dtab'
 
 
