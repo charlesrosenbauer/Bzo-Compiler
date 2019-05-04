@@ -128,19 +128,22 @@ initializeTypeHeader (BzS_Undefined p) = TyHeader M.empty
 initializeTypeHeader (BzS_Expr _ [x])  = initializeTypeHeader x
 
 initializeTypeHeader (BzS_TyVar p v)        =
-  TyHeader $ M.fromList [(1, TVrAtom p v        []                                           $ UnresType $ BzS_Undefined p)]
+  TyHeader $ M.fromList [(1, TVrAtom p v        []                                          )]
 
 initializeTypeHeader (BzS_FilterObj p v fs) =
-  TyHeader $ M.fromList [(1, TVrAtom p (sid v) (L.map (\t -> Constraint p $ UnresType t) fs) $ UnresType $ BzS_Undefined p)]
+  TyHeader $ M.fromList [(1, TVrAtom p (sid v) (L.map (\t -> Constraint p $ UnresType t) fs))]
 
 initializeTypeHeader (BzS_Cmpd _ vs) =
   let atoms = L.map makeAtom vs
   in  TyHeader $ M.fromList $ L.zip [1..] atoms
-  where makeAtom :: BzoSyntax -> THeadAtom
+  where
+        makeAtom :: BzoSyntax -> THeadAtom
         makeAtom (BzS_TyVar     p v   ) =
-          TVrAtom p      v  []                                            $ UnresType $ BzS_Undefined p
+          TVrAtom p v []
+
         makeAtom (BzS_FilterObj p v fs) =
-          TVrAtom p (sid v) (L.map (\t -> Constraint p $ UnresType t) fs) $ UnresType $ BzS_Undefined p
+          TVrAtom p (sid v) (L.map (\t -> Constraint p $ UnresType t) fs)
+
         makeAtom (BzS_Expr _ [x]) = makeAtom x
 
 initializeTypeHeader (BzS_FnTypeDef _ ps fn (BzS_FnTy _ i o)) =
@@ -153,8 +156,8 @@ initializeTypeHeader (BzS_FnTypeDef _ ps fn (BzS_FnTy _ i o)) =
       vnames = S.fromList $ L.map fst tvars
 
       tvatms :: [THeadAtom]
-      tvatms = L.map (\(v,p) -> TVrAtom p v [] $ UnresType $ BzS_Undefined p) tvars
-      tvatms'= L.nubBy (\(TVrAtom _ a _ _) (TVrAtom _ b _ _) -> a == b) $ L.filter (\(TVrAtom _ x _ _) -> S.member x vnames) tvatms
+      tvatms = L.map (\(v,p) -> TVrAtom p v []) tvars
+      tvatms'= L.nubBy (\(TVrAtom _ a _) (TVrAtom _ b _) -> a == b) $ L.filter (\(TVrAtom _ x _) -> S.member x vnames) tvatms
 
       key :: Int64
       key    = L.maximum $ [0] ++ (M.keys $ tvarmap tyhead)
@@ -166,7 +169,7 @@ initializeTypeHeader (BzS_FnTypeDef _ ps fn (BzS_FnTy _ i o)) =
       tvsnew = L.zip (L.map (key+) [1..]) tvatms'
 
       tvsall :: [(TVId, THeadAtom)] -- I don't fully trust the nub here, but it seems to mostly work.
-      tvsall = L.nubBy (\(_, (TVrAtom _ a _ _)) (_, (TVrAtom _ b _ _)) -> a == b) $ tvsold ++ tvsnew
+      tvsall = L.nubBy (\(_, (TVrAtom _ a _)) (_, (TVrAtom _ b _)) -> a == b) $ tvsold ++ tvsnew
 
   in TyHeader $ M.fromList tvsall
 
@@ -180,8 +183,8 @@ initializeTypeHeader (BzS_TypDef _ ps ty tydef) =
       vnames = S.fromList $ L.map fst tvars
 
       tvatms :: [THeadAtom]
-      tvatms = L.map (\(v,p) -> TVrAtom p v [] $ UnresType $ BzS_Undefined p) tvars
-      tvatms'= L.nubBy (\(TVrAtom _ a _ _) (TVrAtom _ b _ _) -> a == b) $ L.filter (\(TVrAtom _ x _ _) -> S.member x vnames) tvatms
+      tvatms = L.map (\(v,p) -> TVrAtom p v []) tvars
+      tvatms'= L.nubBy (\(TVrAtom _ a _) (TVrAtom _ b _) -> a == b) $ L.filter (\(TVrAtom _ x _) -> S.member x vnames) tvatms
 
       key :: Int64
       key    = L.maximum $ [0] ++ (M.keys $ tvarmap tyhead)
@@ -193,7 +196,7 @@ initializeTypeHeader (BzS_TypDef _ ps ty tydef) =
       tvsnew = L.zip (L.map (key+) [1..]) tvatms'
 
       tvsall :: [(TVId, THeadAtom)] -- I don't fully trust the nub here, but it seems to mostly work.
-      tvsall = L.nubBy (\(_, (TVrAtom _ a _ _)) (_, (TVrAtom _ b _ _)) -> a == b) $ tvsold ++ tvsnew
+      tvsall = L.nubBy (\(_, (TVrAtom _ a _)) (_, (TVrAtom _ b _)) -> a == b) $ tvsold ++ tvsnew
 
   in TyHeader $ M.fromList tvsall
 
