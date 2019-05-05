@@ -121,6 +121,30 @@ noUndefinedErrs dt@(DefinitionTable defs files ids _) =
 
 
 
+-- FIXME
+checkTypeHeader :: (TypeHeader, BzoSyntax) -> TypeHeader -> [BzoErr]
+checkTypeHeader (th, (BzS_Cmpd p xs)) (TyHeader ys) =
+  let
+      isSameLength :: Bool
+      isSameLength = (L.length xs) == (M.size ys)
+
+      headerList :: [THeadAtom]
+      headerList = L.map snd $ M.assocs ys
+
+      allMatch :: [BzoErr]
+      allMatch = []   -- FIXME: Add checking code here. Probably will need more function parameters for this.
+
+  in case (isSameLength) of
+      (False) -> [TypeErr p $ pack "Wrong number of parameters for type constructor"]
+      (True)  -> []
+
+
+
+
+
+
+
+
 
 -- Takes type parameters and returns an associated header
 initializeTypeHeader :: BzoSyntax -> TypeHeader
@@ -135,7 +159,7 @@ initializeTypeHeader (BzS_FilterObj p v fs) =
 
 initializeTypeHeader (BzS_Cmpd _ vs) =
   let atoms = L.map makeAtom vs
-  in  TyHeader $ M.fromList $ L.zip [1..] atoms
+  in  TyHeader $ M.fromList $ L.zip [1..] $ L.reverse atoms
   where
         makeAtom :: BzoSyntax -> THeadAtom
         makeAtom (BzS_TyVar     p v   ) =
@@ -267,8 +291,8 @@ makeType st th x = Left [TypeErr (pos x) $ pack $ "Malformed type expression: " 
 
 
 
-checkType :: AttribTable -> SymbolTable -> (TypeHeader, Type) -> (TypeHeader, Type) -> Bool
-checkType at st (th0, (CmpdType _ xs)) (th1, (CmpdType _ ys)) =
+checkType :: AttribTable -> SymbolTable -> (TypeHeader, Type) -> (TypeHeader, Type) -> [BzoErr]
+checkType at st (th0, (CmpdType p xs)) (th1, (CmpdType _ ys)) =
   let
       xs' :: [(TypeHeader, Type)]
       xs' = L.zip (L.repeat th0) xs
@@ -279,52 +303,52 @@ checkType at st (th0, (CmpdType _ xs)) (th1, (CmpdType _ ys)) =
       xys :: [((TypeHeader, Type), (TypeHeader, Type))]
       xys = L.zip xs' ys'
 
-      samelength :: Bool
-      samelength = (L.length xs) == (L.length ys)
+      samelength :: [BzoErr]
+      samelength = ife ((L.length xs) == (L.length ys)) [] [TypeErr p $ pack "Compound lengths do not match"]
 
-  in samelength && (L.any id $ L.map (\(x, y) -> checkType at st x y) xys)
+  in samelength ++ (L.concatMap (\(x, y) -> checkType at st x y) xys)
 
 -- TODO: this will have to be adapted to handle type classes, though that will
 -- require a lot more effort, including a full typeclass checker implementation.
-checkType at st (th0, (LtrlType _ x)) (th1, (LtrlType _ y)) = (x == y)
+checkType at st (th0, (LtrlType p x)) (th1, (LtrlType _ y)) = ife (x == y) [] [TypeErr p $ pack "Types do not match"]
 
-checkType at st (th0, (IntType  _ x)) (th1, (IntType  _ y)) = (x == y)
-checkType at st (th0, (FltType  _ x)) (th1, (FltType  _ y)) = (x == y)
-checkType at st (th0, (StrType  _ x)) (th1, (StrType  _ y)) = (x == y)
+checkType at st (th0, (IntType  p x)) (th1, (IntType  _ y)) = ife (x == y) [] [TypeErr p $ pack "Ints do not match"]
+checkType at st (th0, (FltType  p x)) (th1, (FltType  _ y)) = ife (x == y) [] [TypeErr p $ pack "Floats do not match"]
+checkType at st (th0, (StrType  p x)) (th1, (StrType  _ y)) = ife (x == y) [] [TypeErr p $ pack "Strings do not match"]
 
-checkType at st (th0, (IntType  _ x)) (th1, (LtrlType  _ y)) = checkAttrib at y checkIntAttrib x
-checkType at st (th0, (FltType  _ x)) (th1, (LtrlType  _ y)) = checkAttrib at y checkFltAttrib x
-checkType at st (th0, (StrType  _ x)) (th1, (LtrlType  _ y)) = checkAttrib at y checkStrAttrib x
+checkType at st (th0, (IntType  p x)) (th1, (LtrlType  _ y)) = ife (checkAttrib at y checkIntAttrib x) [] [TypeErr p $ pack "Unexpected Integer"]
+checkType at st (th0, (FltType  p x)) (th1, (LtrlType  _ y)) = ife (checkAttrib at y checkFltAttrib x) [] [TypeErr p $ pack "Unexpected Float"]
+checkType at st (th0, (StrType  p x)) (th1, (LtrlType  _ y)) = ife (checkAttrib at y checkStrAttrib x) [] [TypeErr p $ pack "Unexpected String"]
 
-checkType at st (th0, (FuncType _ w x)) (th1, (FuncType _ y z)) = (checkType at st (th0, w) (th1, y)) && (checkType at st (th0, x) (th1, z))
+checkType at st (th0, (FuncType _ w x)) (th1, (FuncType _ y z)) = (checkType at st (th0, w) (th1, y)) ++ (checkType at st (th0, x) (th1, z))
 
-checkType at st (th0, (VoidType _  )) (th1, (VoidType _  )) = True
+checkType at st (th0, (VoidType _  )) (th1, (VoidType _  )) = []
 
 -- Sizeless arrays
 checkType at st (th0, (ArryType _ _ x)) (th1, (ArryType _ 0 y)) = (checkType at st (th0, x) (th1, y))
 
 -- Sized arrays
-checkType at st (th0, (ArryType _ m x)) (th1, (ArryType _ n y)) = (checkType at st (th0, x) (th1, y)) && (m == n)
+checkType at st (th0, (ArryType p m x)) (th1, (ArryType _ n y)) = (checkType at st (th0, x) (th1, y)) ++ (ife (m == n) [] [TypeErr p $ pack "Array lengths do not match"])
 
 -- Nil values are just Empty arrays
-checkType at st (th0, (VoidType _    )) (th1, (ArryType _ 0 _)) = True
+checkType at st (th0, (VoidType _    )) (th1, (ArryType _ 0 _)) = []
 
 -- Handle tuples cast to arrays
 -- May need to add another case for checking "single element" arrays?
-checkType at st (th0, (CmpdType _  xs)) (th1, (ArryType _ n y)) =
-  ((L.length xs) == (fromIntegral n)) &&
-  (L.all (\x -> checkType at st (th0, x) (th1, y)) xs)
+checkType at st (th0, (CmpdType p  xs)) (th1, (ArryType _ n y)) =
+  (ife ((L.length xs) == (fromIntegral n)) [] [TypeErr p $ pack "Compound type has incorrect number of parameters"]) ++
+  (L.concatMap (\x -> checkType at st (th0, x) (th1, y)) xs)
 
-checkType at st (th0, (PolyType p []    )) (th1,      (PolyType _ ys)) = True
+checkType at st (th0, (PolyType p []    )) (th1,      (PolyType _ ys)) = []
 
 checkType at st (th0, (PolyType p (x:xs))) (th1, poly@(PolyType _ ys)) =
-    (checkType at st (th0, x) (th1, poly)) && (checkType at st (th0, (PolyType p xs)) (th1, poly))
+    (checkType at st (th0, x) (th1, poly)) ++ (checkType at st (th0, (PolyType p xs)) (th1, poly))
 
-checkType at st t0 (th1, (PolyType _ xs)) = L.any (\x -> checkType at st t0 (th1, x)) xs
+checkType at st t0 (th1, (PolyType _ xs)) = L.concatMap (\x -> checkType at st t0 (th1, x)) xs
 
-checkType at st (th0, (MakeType _ [])) (th1, (MakeType _ [])) = True
+checkType at st (th0, (MakeType _ [])) (th1, (MakeType _ [])) = []
 
-checkType at st (th0, (MakeType p0 [ix,ex])) (th1, (MakeType p1 [iy,ey])) = False -- NOTE: tempoary, please extend
+checkType at st (th0, (MakeType p0 [ix,ex])) (th1, (MakeType p1 [iy,ey])) = [] -- NOTE: tempoary, please extend
 {-  let
 
 
@@ -340,8 +364,8 @@ checkType at st (th0, (MakeType p0 xs)) (th1, (MakeType p1 ys)) =
 
       -- Also add check that parameters are valid
 
-  in ((L.length xs) == (L.length ys)) &&
-     (checkType at st (th0, xlast) (th1, ylast)) &&
+  in (ife ((L.length xs) == (L.length ys)) [] [TypeErr p0 $ pack "Incorrect nesting of make type"]) ++
+     (checkType at st (th0, xlast) (th1, ylast)) ++
      (checkType at st (th0, (MakeType p0 xinit)) (th1, (MakeType p1 yinit)))
 
 {-
