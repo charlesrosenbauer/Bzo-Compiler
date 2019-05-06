@@ -823,7 +823,11 @@ data AbsType
 
 
 
-data Constraint = Constraint !BzoPos !Type  deriving (Eq, Show)
+data Constraint = Constraint !BzoPos !Type  deriving Eq
+
+showConstraint :: Constraint -> String
+showConstraint (Constraint p t) = "[Constraint: " ++ (show t) ++ "]"
+instance Show Constraint where show = showConstraint
 
 
 
