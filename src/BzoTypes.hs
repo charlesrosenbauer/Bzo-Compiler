@@ -702,6 +702,7 @@ instance Show Definition where show = showDefinition
 
 type FnId = Int64   -- Function Id
 type TyId = Int64   -- Type Id
+type TCId = Int64   -- Type Class Id
 type VrId = Int64   -- Variable Id
 type TVId = Int64   -- Type Variable Id
 type LcId = Int64   -- Local Id

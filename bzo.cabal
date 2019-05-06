@@ -39,3 +39,4 @@ executable main
       , Query
       , BzoEmulator
       , BzoExprModeller
+      , TypeClass
