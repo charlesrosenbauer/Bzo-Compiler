@@ -672,7 +672,7 @@ showDefinition (TyClassDef tcid file thd prs ifac) = "  TCDEF:\n    " ++
                                               "TYHD: " ++ (show thd)   ++ "\n    " ++
                                               "PRPS: " ++ (show prs)   ++ "\n    " ++
                                               "FNCS: " ++ (show ifac)  ++ "\n\n"
-
+--
 showDefinition (FuncSyntax fnid file hedr defs) = "  FNSYN:\n    " ++
                                               (show fnid)  ++ "\n    " ++
                                               (show file)  ++ "\n    T:  " ++
@@ -683,7 +683,7 @@ showDefinition (TypeSyntax tyid file defs) = "  TYSYN:\n    " ++
                                               (show tyid)  ++ "\n    " ++
                                               (show file)  ++ "\n    D:  " ++
                                               (show defs)
-
+--
 showDefinition (TyClassSyntax tyid file defs) = "  TCSYN:\n    " ++
                                               (show tyid)  ++ "\n    " ++
                                               (show file)  ++ "\n    D:  " ++
@@ -779,6 +779,50 @@ instance Show Type where show = showType
 
 
 
+data Atm_Attrib = AA_I8 | AA_I16 | AA_I32 | AA_I64 |
+                  AA_U8 | AA_U16 | AA_U32 | AA_U64 |
+                  AA_P8 | AA_P16 | AA_P32 | AA_P64 |
+                  AA_Str| AA_F16 | AA_F32 | AA_F64 | AA_Bl |
+                  AL_Int Integer | AL_Real Double | AL_Str T.Text
+                  deriving (Eq, Ord)
+
+
+
+
+
+
+
+
+
+
+
+
+data AbsType
+  = A_FuncType !AbsType !AbsType
+  | A_CmpdType ![AbsType]
+  | A_PolyType ![AbsType]
+  | A_MakeType !TyId !AbsType
+  | A_IntType  !Integer
+  | A_FltType  !Double
+  | A_StrType  !T.Text
+  | A_VoidType
+  | A_LtrlType !TyId
+  | A_TVarType !TVId
+  | A_BITyType !TyId
+  | A_ArryType !Integer !Type
+  | A_FLitType !FnId
+  | A_InvalidType
+  deriving (Show, Eq)
+
+
+
+
+
+
+
+
+
+
 data Constraint = Constraint !BzoPos !Type  deriving Eq
 
 showConstraint :: Constraint -> String
@@ -821,3 +865,53 @@ data DefinitionTable
       dt_ids  :: !(M.Map T.Text [Int64]),
       dt_top  :: !Int64 }
   deriving Show
+
+
+
+
+
+
+
+
+
+
+data SymbolTable = SymbolTable !DefinitionTable !FilePath !(M.Map Int64 T.Text)
+
+
+
+
+
+
+
+
+
+
+data NameTable   = NameTable   !(M.Map T.Text (DomainTable, [Int64]))
+
+data DomainTable = DomainTable !(M.Map T.Text [Int64])
+
+
+
+
+
+
+
+
+
+
+data ScopeTable = ScopeTable !(M.Map Int Scope) !Int deriving Show
+
+data Scope = Scope !(M.Map Int ScopeObj) !(M.Map T.Text [Int]) ![(T.Text, [Int])] deriving Show -- Object Table, Name Table, Parent Scopes
+
+data ScopeObj
+      = Sc_Func !Int !AbsType    ![Int]    -- FID, AbsType, Associated Scopes
+      | Sc_Type !Int !AbsType    ! Int
+      | Sc_TyCs !Int !AbsType    ! Int
+      | Sc_Var  !Int !AbsType    ![Constraint]
+      | Sc_TVar !Int !AbsType    ![Constraint]
+      | Sc_MVar !Int !AbsType    ![Constraint]
+      | Sc_Inpt !AbsType !T.Text ![Constraint] ![Int]   -- Type, VID, Constraints, Location in input tuple
+      | Sc_MtIn !AbsType !T.Text ![Constraint] ![Int]
+      | Sc_Expt !AbsType !T.Text ![Constraint] ![Int]
+      | Sc_MtEx !AbsType !T.Text ![Constraint] ![Int]
+      deriving Show
