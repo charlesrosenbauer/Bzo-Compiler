@@ -120,6 +120,115 @@ noUndefinedErrs dt@(DefinitionTable defs files ids _) =
 
 
 
+
+
+
+-- Takes type parameters and returns an associated header
+initializeTypeHeader :: BzoSyntax -> TypeHeader
+initializeTypeHeader (BzS_Undefined p) = TyHeader M.empty
+initializeTypeHeader (BzS_Expr _ [x])  = initializeTypeHeader x
+
+initializeTypeHeader (BzS_TyVar p v)        =
+  TyHeader $ M.fromList [(1, TVrAtom p v        []                                          )]
+
+initializeTypeHeader (BzS_FilterObj p v fs) =
+  TyHeader $ M.fromList [(1, TVrAtom p (sid v) (L.map (\t -> Constraint p $ UnresType t) fs))]
+
+initializeTypeHeader (BzS_Cmpd _ vs) =
+  let atoms = L.map makeAtom vs
+  in  TyHeader $ M.fromList $ L.zip [1..] $ L.reverse atoms
+  where
+        makeAtom :: BzoSyntax -> THeadAtom
+        makeAtom (BzS_TyVar     p v   ) =
+          TVrAtom p v []
+
+        makeAtom (BzS_FilterObj p v fs) =
+          TVrAtom p (sid v) (L.map (\t -> Constraint p $ UnresType t) fs)
+
+        makeAtom (BzS_Expr _ [x]) = makeAtom x
+
+initializeTypeHeader (BzS_FnTypeDef _ ps fn (BzS_FnTy _ i o)) =
+  let tyhead = initializeTypeHeader ps
+
+      tvars :: [(Text, BzoPos)]
+      tvars  = (getTVars i) ++ (getTVars o)
+
+      vnames :: S.Set Text
+      vnames = S.fromList $ L.map fst tvars
+
+      tvatms :: [THeadAtom]
+      tvatms = L.map (\(v,p) -> TVrAtom p v []) tvars
+      tvatms'= L.nubBy (\(TVrAtom _ a _) (TVrAtom _ b _) -> a == b) $ L.filter (\(TVrAtom _ x _) -> S.member x vnames) tvatms
+
+      key :: Int64
+      key    = L.maximum $ [0] ++ (M.keys $ tvarmap tyhead)
+
+      tvsold :: [(TVId, THeadAtom)]
+      tvsold = M.assocs $ tvarmap tyhead
+
+      tvsnew :: [(TVId, THeadAtom)]
+      tvsnew = L.zip (L.map (key+) [1..]) tvatms'
+
+      tvsall :: [(TVId, THeadAtom)] -- I don't fully trust the nub here, but it seems to mostly work.
+      tvsall = L.nubBy (\(_, (TVrAtom _ a _)) (_, (TVrAtom _ b _)) -> a == b) $ tvsold ++ tvsnew
+
+  in TyHeader $ M.fromList tvsall
+
+initializeTypeHeader (BzS_TypDef _ ps ty tydef) =
+  let tyhead = initializeTypeHeader ps
+
+      tvars :: [(Text, BzoPos)]
+      tvars = getTVars tydef
+
+      vnames :: S.Set Text
+      vnames = S.fromList $ L.map fst tvars
+
+      tvatms :: [THeadAtom]
+      tvatms = L.map (\(v,p) -> TVrAtom p v []) tvars
+      tvatms'= L.nubBy (\(TVrAtom _ a _) (TVrAtom _ b _) -> a == b) $ L.filter (\(TVrAtom _ x _) -> S.member x vnames) tvatms
+
+      key :: Int64
+      key    = L.maximum $ [0] ++ (M.keys $ tvarmap tyhead)
+
+      tvsold :: [(TVId, THeadAtom)]
+      tvsold = M.assocs $ tvarmap tyhead
+
+      tvsnew :: [(TVId, THeadAtom)]
+      tvsnew = L.zip (L.map (key+) [1..]) tvatms'
+
+      tvsall :: [(TVId, THeadAtom)] -- I don't fully trust the nub here, but it seems to mostly work.
+      tvsall = L.nubBy (\(_, (TVrAtom _ a _)) (_, (TVrAtom _ b _)) -> a == b) $ tvsold ++ tvsnew
+
+  in TyHeader $ M.fromList tvsall
+
+
+
+
+
+
+
+
+
+makeTypes :: DefinitionTable -> Either [BzoErr] DefinitionTable
+makeTypes dt@(DefinitionTable defs files ids top) =
+  let
+      --translateDef :: Definition -> Definition
+      --translateDef (FuncSyntax fn host th ts) = (FuncDef fn host (initializeTypeHeader th) )
+
+
+  in case (errs) of
+      [] -> Right (DefinitionTable defs files ids top)
+      er -> Left  er
+
+
+
+
+
+
+
+
+
+
 checkProgram :: DefinitionTable -> Either [BzoErr] DefinitionTable
 checkProgram dt@(DefinitionTable defs files ids top) =
   let
