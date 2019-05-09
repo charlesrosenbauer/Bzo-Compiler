@@ -22,6 +22,33 @@ import Debug.Trace
 
 
 
+getTVars :: BzoSyntax -> [(Text, BzoPos)]
+getTVars (BzS_TyVar      p    tvar) = [(tvar, p)]
+getTVars (BzS_Expr       _    expr) = L.concatMap getTVars expr
+getTVars (BzS_Statement  _    expr) = getTVars expr
+getTVars (BzS_Cmpd       _    expr) = L.concatMap getTVars expr
+getTVars (BzS_Poly       _    expr) = L.concatMap getTVars expr
+getTVars (BzS_FnTy       _   ax bx) = (getTVars ax) ++ (getTVars bx)
+getTVars (BzS_Block      _    expr) = L.concatMap getTVars expr
+getTVars (BzS_TypDef     _ ps _ df) = (getTVars ps) ++ (getTVars df)
+getTVars (BzS_TyClassDef _ ps _ df) = (getTVars ps) ++ (L.concatMap getTVars df)
+getTVars (BzS_FnTypeDef  _ ps _ df) = (getTVars ps) ++ (getTVars df)
+getTVars (BzS_Calls      _      cs) = L.concatMap getTVars cs
+getTVars (BzS_ArrayObj   _  _ expr) = getTVars expr
+getTVars (BzS_FilterObj  _ obj  fs) = (getTVars obj) ++ (L.concatMap getTVars fs)
+getTVars (BzS_CurryObj   _ obj  ps) = (getTVars obj) ++ (L.concatMap getTVars ps)
+getTVars (BzS_LispCall   _ fn expr) = (getTVars fn)  ++ (L.concatMap getTVars expr)
+getTVars _                          = []
+
+
+
+
+
+
+
+
+
+
 getTypes :: BzoSyntax -> [(Text, BzoPos)]
 getTypes (BzS_TyId       p     var) = [(var, p)]
 getTypes (BzS_Expr       _    expr) = L.concatMap getTypes expr

@@ -212,9 +212,13 @@ initializeTypeHeader (BzS_TypDef _ ps ty tydef) =
 makeTypes :: DefinitionTable -> Either [BzoErr] DefinitionTable
 makeTypes dt@(DefinitionTable defs files ids top) =
   let
-      --translateDef :: Definition -> Definition
-      --translateDef (FuncSyntax fn host th ts) = (FuncDef fn host (initializeTypeHeader th) )
+      translateDef :: Definition -> Definition
+      translateDef (FuncSyntax    fn host fty@(BzS_FnTypeDef  _ ps _ ft) fs) = (FuncDef    fn host (initializeTypeHeader fty) (UnresType $ ft) fs)
+      translateDef (TypeSyntax    ty host tyd@(BzS_TypDef     _ ps _ td)   ) = (TypeDef    ty host (initializeTypeHeader tyd) (UnresType $ td)   )
+      translateDef (TyClassSyntax tc host tcd@(BzS_TyClassDef _ ps _ td)   ) = (TyClassDef tc host (initializeTypeHeader tcd) [])
 
+      errs :: [BzoErr]
+      errs = []
 
   in case (errs) of
       [] -> Right (DefinitionTable defs files ids top)

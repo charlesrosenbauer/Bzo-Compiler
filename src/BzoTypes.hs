@@ -555,19 +555,16 @@ data Definition
     hostfile   :: !T.Text,
     typehead   :: !TypeHeader,
     functype   :: !Type,
-    fn_props   :: !FuncProps,
     definitions:: ![(BzoSyntax)] }
  | TypeDef {
     identifier :: !T.Text,
     hostfile   :: !T.Text,
     typehead   :: !TypeHeader,
-    ty_props   :: !TypeProps,
     typedef    :: !Type }
  | TyClassDef {
     identifier :: !T.Text,
     hostfile   :: !T.Text,
     typehead   :: !TypeHeader,
-    tc_props   :: !TClsProps,
     interface  :: ![(T.Text, TypeHeader, Type)] }
  | FuncSyntax {
     identifier :: !T.Text,
@@ -593,84 +590,24 @@ data Definition
 
 
 
-data FuncProps
-  = FuncProps ![DefProperty]
-  | FuncPropEmpty
-  deriving (Eq, Show)
-
-
-
-
-
-
-
-
-
-
-
-data TypeProps
-  = TypeProps ![DefProperty]
-  | TypePropEmpty
-  deriving (Eq, Show)
-
-
-
-
-
-
-
-
-
-
-data TClsProps
-  = TClsProps ![DefProperty]
-  | TClsPropEmpty
-  deriving (Eq, Show)
-
-
-
-
-
-
-
-
-
-
-data DefProperty
-  = AliasDef !Int
-  | ConstDef -- ![Atom]
-  deriving (Eq, Show)
-
-
-
-
-
-
-
-
-
-
 showDefinition :: Definition -> String
-showDefinition (FuncDef fnid file tyhd fty prs defs) = "  FNDEF:\n    " ++
+showDefinition (FuncDef fnid file tyhd fty defs) = "  FNDEF:\n    " ++
                                               "FNID: " ++ (show fnid)  ++ "\n    " ++
                                               "FILE: " ++ (show file)  ++ "\n    " ++
                                               "TYHD: " ++ (show tyhd)  ++ "\n    " ++
                                               "TYPE: " ++ (show fty)   ++ "\n    " ++
-                                              "PRPS: " ++ (show prs)   ++ "\n    " ++
                                               "DEFS: " ++ (show defs)  ++ "\n\n"
 
-showDefinition (TypeDef tyid file thd prs defs) = "  TYDEF:\n    " ++
+showDefinition (TypeDef tyid file thd defs) = "  TYDEF:\n    " ++
                                               "TYID: " ++ (show tyid)  ++ "\n    " ++
                                               "FILE: " ++ (show file)  ++ "\n    " ++
                                               "TYHD: " ++ (show thd)   ++ "\n    " ++
-                                              "PRPS: " ++ (show prs)   ++ "\n    " ++
                                               "DEFS: " ++ (show defs)  ++ "\n\n"
 
-showDefinition (TyClassDef tcid file thd prs ifac) = "  TCDEF:\n    " ++
+showDefinition (TyClassDef tcid file thd ifac) = "  TCDEF:\n    " ++
                                               "TCID: " ++ (show tcid)  ++ "\n    " ++
                                               "FILE: " ++ (show file)  ++ "\n    " ++
                                               "TYHD: " ++ (show thd)   ++ "\n    " ++
-                                              "PRPS: " ++ (show prs)   ++ "\n    " ++
                                               "FNCS: " ++ (show ifac)  ++ "\n\n"
 
 showDefinition (FuncSyntax fnid file hedr defs) = "  FNSYN:\n    " ++
