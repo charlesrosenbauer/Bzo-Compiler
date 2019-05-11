@@ -266,9 +266,9 @@ makeType ft th x = Left [TypeErr (pos x) $ pack $ "Malformed type expression: " 
 
 
 
-data SymbolTable = SymbolTable (M.Map Text FileTable)
+data SymbolTable = SymbolTable (M.Map Text FileTable) deriving Show
 
-data FileTable   = FileTable   (M.Map Text [Int64])
+data FileTable   = FileTable   (M.Map Text [Int64])   deriving Show
 
 resolveId :: FileTable -> Text -> [Int64]
 resolveId (FileTable ds) d = Mb.fromMaybe [] $ M.lookup d ds
@@ -281,9 +281,47 @@ resolveId (FileTable ds) d = Mb.fromMaybe [] $ M.lookup d ds
 
 
 
+
+makeFileTable :: M.Map Text [Int64] -> BzoFileModel ([Int64], [Int64]) -> (Text, FileTable)
+makeFileTable dmap (BzoFileModel _ fp _ (_, vis) _ _ _ _) =
+  let
+      visset:: S.Set Int64
+      visset = S.fromList vis
+
+      dlist :: M.Map Text [Int64]
+      dlist = M.fromList $
+              L.filter (\(n, is) -> (L.length is) > 0) $
+              L.map (\(n, is) -> (n, L.filter (\v -> S.member v visset) is)) $
+              M.assocs dmap
+
+  in (pack fp, FileTable dlist)
+
+
+
+
+
+
+
+
+
+
+makeSymbolTable :: DefinitionTable -> SymbolTable
+makeSymbolTable (DefinitionTable defs files ids top) = SymbolTable $ M.fromList $ L.map (makeFileTable ids) files
+
+
+
+
+
+
+
+
+
 makeTypes :: DefinitionTable -> Either [BzoErr] DefinitionTable
 makeTypes dt@(DefinitionTable defs files ids top) =
   let
+      syms :: SymbolTable
+      syms = makeSymbolTable dt
+
       translateDef :: Definition -> Definition
       translateDef (FuncSyntax    fn host fty@(BzS_FnTypeDef  _ ps _ ft) fs) = (FuncDef    fn host (initializeTypeHeader fty) (UnresType $ ft) fs)
       translateDef (TypeSyntax    ty host tyd@(BzS_TypDef     _ ps _ td)   ) = (TypeDef    ty host (initializeTypeHeader tyd) (UnresType $ td)   )
@@ -293,7 +331,6 @@ makeTypes dt@(DefinitionTable defs files ids top) =
       xformTCFunc (BzS_FnTypeDef _ ps fn ft) = (fn, (initializeTypeHeader ps), (UnresType $ ft))
 
       -- TODO:
-      -- -- Generate SymbolTable for files
       -- -- Construct Types for all definitions
       -- -- Check that make types are all valid (e.g, nothing like "Int Bool" as a definition.)
 
