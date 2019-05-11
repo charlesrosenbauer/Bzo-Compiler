@@ -978,3 +978,16 @@ getRight (Right x) = x
 
 getLeft  :: Either a b -> a
 getLeft  (Left  x) = x
+
+
+
+
+
+
+
+
+
+
+splitEitherList :: Either [a] b -> ([a], [b])
+splitEitherList (Right x) = ([], [x])
+splitEitherList (Left  x) = (x , [])

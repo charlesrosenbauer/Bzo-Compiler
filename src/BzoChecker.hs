@@ -209,19 +209,99 @@ initializeTypeHeader (BzS_TypDef _ ps ty tydef) =
 
 
 
+
+makeType :: FileTable -> TypeHeader -> BzoSyntax -> Either [BzoErr] Type
+makeType ft th (BzS_Expr   p  [x]) = makeType ft th x
+makeType ft th (BzS_Statement p x) = makeType ft th x
+makeType ft th (BzS_Cmpd  p [x]) = makeType ft th x
+makeType ft th (BzS_Poly  p [x]) = makeType ft th x
+makeType ft th (BzS_Cmpd  p  xs) = onAllPass (L.map (makeType ft th) xs) (\ys -> CmpdType p ys)
+makeType ft th (BzS_Poly  p  xs) = onAllPass (L.map (makeType ft th) xs) (\ys -> PolyType p ys)
+makeType ft th (BzS_Int   p   n) = Right (IntType  p n)
+makeType ft th (BzS_Flt   p   n) = Right (FltType  p n)
+makeType ft th (BzS_Str   p   s) = Right (StrType  p s)
+makeType ft th (BzS_Nil   p )    = Right (VoidType p)
+makeType ft th (BzS_BTId  p bit) = Right (BITyType p $ isBuiltinType bit)
+makeType ft th (BzS_ArrayObj p s x) = onAllPass [makeType ft th x] (\[y] -> ArryType p s y)
+makeType ft th (BzS_FnTy  p i o) =
+  let i' = makeType ft th i
+      o' = makeType ft th o
+      io = rights [i', o']
+      er = lefts  [i', o']
+  in case (er, io) of
+      ([], [it, ot]) -> Right $ FuncType p it ot
+      (er,       _ ) -> Left  $ L.concat er
+
+makeType ft th (BzS_Expr  p xs)  = onAllPass (L.map (makeType ft th) xs) (\ys -> MakeType p ys)
+makeType ft th ty@(BzS_TyId  p   t) =
+  let ids = resolveId ft t
+  in case ids of
+      []  -> Left [TypeErr p $ pack ("Type " ++ (unpack t) ++ " is undefined.")]
+      [x] -> Right (LtrlType p x)
+      xs  -> Left [TypeErr p $ pack ("Ambiguous reference to type " ++ (unpack t) ++ ": " ++ (show xs) ++ " / ")]   -- TODO: Redesign this error message
+makeType ft (TyHeader tvs) (BzS_TyVar p   v) =
+  let tvpairs = M.assocs tvs
+      tvnames = L.map (\(n,atm) -> (n, Mb.fromMaybe (pack "") $ atomId atm)) tvpairs
+      ids = L.map fst $ L.filter (\(n,atm) -> v == atm) tvnames
+  in case ids of
+      []  -> Left [TypeErr p $ pack ("Type Variable " ++ (unpack v) ++ " is not defined in the type header.")]
+      [x] -> Right (TVarType p x)
+      xs  -> Left [TypeErr p $ pack ("Ambiguous reference to type variable " ++ (unpack v) ++ ": " ++ (show xs) ++ " / ")]  -- TODO: Redesign this error message
+
+makeType ft th (BzS_Id p f) =
+  let fids = resolveId ft f
+  in case fids of
+      [] -> Left [TypeErr p $ pack $ "Function " ++ (unpack f) ++ " is not defined in this scope."]
+      xs -> Right (FLitType p xs)
+
+makeType ft th ty@(BzS_Undefined _) = Right (UnresType ty)
+makeType ft th x = Left [TypeErr (pos x) $ pack $ "Malformed type expression: " ++ show x]
+
+
+
+
+
+
+
+
+
+
+data SymbolTable = SymbolTable (M.Map Text FileTable)
+
+data FileTable   = FileTable   (M.Map Text [Int64])
+
+resolveId :: FileTable -> Text -> [Int64]
+resolveId (FileTable ds) d = Mb.fromMaybe [] $ M.lookup d ds
+
+
+
+
+
+
+
+
+
 makeTypes :: DefinitionTable -> Either [BzoErr] DefinitionTable
 makeTypes dt@(DefinitionTable defs files ids top) =
   let
       translateDef :: Definition -> Definition
       translateDef (FuncSyntax    fn host fty@(BzS_FnTypeDef  _ ps _ ft) fs) = (FuncDef    fn host (initializeTypeHeader fty) (UnresType $ ft) fs)
       translateDef (TypeSyntax    ty host tyd@(BzS_TypDef     _ ps _ td)   ) = (TypeDef    ty host (initializeTypeHeader tyd) (UnresType $ td)   )
-      translateDef (TyClassSyntax tc host tcd@(BzS_TyClassDef _ ps _ td)   ) = (TyClassDef tc host (initializeTypeHeader tcd) [])
+      translateDef (TyClassSyntax tc host tcd@(BzS_TyClassDef _ ps _ td)   ) = (TyClassDef tc host (initializeTypeHeader  ps) $ L.map xformTCFunc td)
+
+      xformTCFunc :: BzoSyntax -> (Text, TypeHeader, Type)
+      xformTCFunc (BzS_FnTypeDef _ ps fn ft) = (fn, (initializeTypeHeader ps), (UnresType $ ft))
+
+      -- TODO:
+      -- -- Generate SymbolTable for files
+      -- -- Construct Types for all definitions
+      -- -- Check that make types are all valid (e.g, nothing like "Int Bool" as a definition.)
 
       errs :: [BzoErr]
       errs = []
 
   in case (errs) of
-      [] -> Right (DefinitionTable defs files ids top)
+      [] -> Right (DefinitionTable (M.map translateDef defs) files ids top)
       er -> Left  er
 
 
@@ -250,8 +330,13 @@ checkProgram dt@(DefinitionTable defs files ids top) =
         -- Check that types are valid - mostly that type constructors obey headers
         -- Construct type class models
 
+      err2 :: [BzoErr]
+      dt'  :: [DefinitionTable]
+      (err2, dt') = splitEitherList $ makeTypes dt
+
+
       errs :: [BzoErr]
-      errs = err0 ++ err1
+      errs = err0 ++ err1 ++ err2
   in case (errs) of
-      ([]) -> Right dt
+      ([]) -> Right $ L.head dt'
       (er) -> Left  er
