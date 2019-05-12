@@ -268,6 +268,9 @@ makeType ft th x = Left [TypeErr (pos x) $ pack $ "Malformed type expression: " 
 
 data SymbolTable = SymbolTable (M.Map Text FileTable) deriving Show
 
+getSymTable :: SymbolTable -> M.Map Text FileTable
+getSymTable (SymbolTable stab) = stab
+
 data FileTable   = FileTable   (M.Map Text [Int64])   deriving Show
 
 resolveId :: FileTable -> Text -> [Int64]
@@ -319,27 +322,74 @@ makeSymbolTable (DefinitionTable defs files ids top) = SymbolTable $ M.fromList 
 makeTypes :: DefinitionTable -> Either [BzoErr] DefinitionTable
 makeTypes dt@(DefinitionTable defs files ids top) =
   let
+      -- Make Symbol Table
       syms :: SymbolTable
       syms = makeSymbolTable dt
 
-      translateDef :: Definition -> Definition
-      translateDef (FuncSyntax    fn host fty@(BzS_FnTypeDef  _ ps _ ft) fs) = (FuncDef    fn host (initializeTypeHeader fty) (UnresType $ ft) fs)
-      translateDef (TypeSyntax    ty host tyd@(BzS_TypDef     _ ps _ td)   ) = (TypeDef    ty host (initializeTypeHeader tyd) (UnresType $ td)   )
-      translateDef (TyClassSyntax tc host tcd@(BzS_TyClassDef _ ps _ td)   ) = (TyClassDef tc host (initializeTypeHeader  ps) $ L.map xformTCFunc td)
+      -- Function for getting a File Table from a File Path
+      getFTab :: Text -> FileTable
+      getFTab fp = (getSymTable syms) M.! fp
 
-      xformTCFunc :: BzoSyntax -> (Text, TypeHeader, Type)
-      xformTCFunc (BzS_FnTypeDef _ ps fn ft) = (fn, (initializeTypeHeader ps), (UnresType $ ft))
+      -- Function for generating typeheaders, types, and packaging them up nicely with error handling
+      constructType :: BzoSyntax -> BzoSyntax -> Text -> (TypeHeader -> Type -> b) -> Either [BzoErr] b
+      constructType thead tdef host fn =
+        let
+            tyhead :: TypeHeader
+            tyhead = initializeTypeHeader thead
+
+            typ    :: Either [BzoErr] Type
+            typ    = makeType (getFTab host) tyhead tdef
+
+        in  applyRight (fn tyhead) typ
+
+      -- Function for translating definitions to use TYPE and TYPEHEADER rather than BZOSYNTAX.
+      translateDef :: Definition -> Either [BzoErr] Definition
+      translateDef (FuncSyntax    fn host fty@(BzS_FnTypeDef  _ ps _ ft) fs) = constructType fty ft host (\th t -> (FuncDef    fn host th t fs))
+      translateDef (TypeSyntax    ty host tyd@(BzS_TypDef     _ ps _ td)   ) = constructType tyd td host (\th t -> (TypeDef    ty host th t   ))
+      translateDef (TyClassSyntax tc host tcd@(BzS_TyClassDef _ ps _ td)   ) =
+        let
+            interface :: Either [BzoErr] [(Text, TypeHeader, Type)]
+            interface = allPass $ L.map (xformTCFunc host) td
+
+        in case interface of
+            Left errs -> Left errs
+            Right itf -> Right (TyClassDef tc host (initializeTypeHeader  ps) itf)
+
+      -- Function for reformatting typeclass interfaces
+      xformTCFunc :: Text -> BzoSyntax -> Either [BzoErr] (Text, TypeHeader, Type)
+      xformTCFunc host (BzS_FnTypeDef _ ps fn ft) =
+        let
+            thead:: TypeHeader
+            thead= initializeTypeHeader ps
+
+            ftyp :: Either [BzoErr] Type
+            ftyp = makeType (getFTab host) thead ft
+
+        in case ftyp of
+            Right typ -> Right (fn, thead, typ)
+            Left  err -> Left  err
+
+      -- Helper function for applying xforms to key-value pairs with error handling
+      preserveId :: (b -> Either [c] d) -> (a, b) -> Either [c] (a, d)
+      preserveId f (i, x) =
+        case (f x) of
+          Left err -> Left  err
+          Right x' -> Right (i, x')
+
+      -- Xformed Definitions
+      results :: Either [BzoErr] (M.Map Int64 Definition)
+      results = toRight M.fromList $ allPass $ L.map (preserveId translateDef) $ M.assocs defs
 
       -- TODO:
-      -- -- Construct Types for all definitions
+      -- -- FIXME: Fix bug where tvars undefined in the header cause type errors.
       -- -- Check that make types are all valid (e.g, nothing like "Int Bool" as a definition.)
 
       errs :: [BzoErr]
       errs = []
 
-  in case (errs) of
-      [] -> Right (DefinitionTable (M.map translateDef defs) files ids top)
-      er -> Left  er
+  in case (results) of
+      Right defs' -> Right (DefinitionTable defs' files ids top)
+      Left  er    -> Left  er
 
 
 
