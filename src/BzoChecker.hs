@@ -124,19 +124,19 @@ noUndefinedErrs dt@(DefinitionTable defs files ids _) =
 
 
 -- Takes type parameters and returns an associated header
-initializeTypeHeader :: BzoSyntax -> TypeHeader
-initializeTypeHeader (BzS_Undefined p) = TyHeader [] M.empty
-initializeTypeHeader (BzS_Expr _ [x])  = initializeTypeHeader x
+initializeTypeHeader :: Int64 -> BzoSyntax -> TypeHeader
+initializeTypeHeader n (BzS_Undefined p) = TyHeader [] M.empty
+initializeTypeHeader n (BzS_Expr _ [x])  = initializeTypeHeader n x
 
-initializeTypeHeader (BzS_TyVar p v)        =
-  TyHeader [] $ M.fromList [(1, TVrAtom p v        []                                          )]
+initializeTypeHeader n (BzS_TyVar p v)        =
+  TyHeader [] $ M.fromList [(n, TVrAtom p v        []                                          )]
 
-initializeTypeHeader (BzS_FilterObj p v fs) =
-  TyHeader [] $ M.fromList [(1, TVrAtom p (sid v) (L.map (\t -> Constraint p $ UnresType t) fs))]
+initializeTypeHeader n (BzS_FilterObj p v fs) =
+  TyHeader [] $ M.fromList [(n, TVrAtom p (sid v) (L.map (\t -> Constraint p $ UnresType t) fs))]
 
-initializeTypeHeader (BzS_Cmpd _ vs) =
+initializeTypeHeader n (BzS_Cmpd _ vs) =
   let atoms = L.map makeAtom vs
-  in  TyHeader [] $ M.fromList $ L.zip [1..] $ L.reverse atoms
+  in  TyHeader [] $ M.fromList $ L.zip [n..] $ L.reverse atoms
   where
         makeAtom :: BzoSyntax -> THeadAtom
         makeAtom (BzS_TyVar     p v   ) =
@@ -147,8 +147,8 @@ initializeTypeHeader (BzS_Cmpd _ vs) =
 
         makeAtom (BzS_Expr _ [x]) = makeAtom x
 
-initializeTypeHeader (BzS_FnTypeDef _ ps fn (BzS_FnTy _ i o)) =
-  let tyhead = initializeTypeHeader ps
+initializeTypeHeader n (BzS_FnTypeDef _ ps fn (BzS_FnTy _ i o)) =
+  let tyhead = initializeTypeHeader n ps
 
       tvars :: [(Text, BzoPos)]
       tvars  = (getTVars i) ++ (getTVars o)
@@ -174,8 +174,8 @@ initializeTypeHeader (BzS_FnTypeDef _ ps fn (BzS_FnTy _ i o)) =
 
   in TyHeader [] $ M.fromList tvsall
 
-initializeTypeHeader (BzS_TypDef _ ps ty tydef) =
-  let tyhead = initializeTypeHeader ps
+initializeTypeHeader n (BzS_TypDef _ ps ty tydef) =
+  let tyhead = initializeTypeHeader n ps
 
       tvars :: [(Text, BzoPos)]
       tvars = getTVars tydef
@@ -200,6 +200,9 @@ initializeTypeHeader (BzS_TypDef _ ps ty tydef) =
       tvsall = L.nubBy (\(_, (TVrAtom _ a _)) (_, (TVrAtom _ b _)) -> a == b) $ tvsold ++ tvsnew
 
   in TyHeader [] $ M.fromList tvsall
+
+initializeTypeHeader' :: BzoSyntax -> TypeHeader
+initializeTypeHeader' ast = initializeTypeHeader 0 ast
 
 
 
@@ -335,7 +338,7 @@ makeTypes dt@(DefinitionTable defs files ids top) =
       constructType thead tdef host fn =
         let
             tyhead :: TypeHeader
-            tyhead = initializeTypeHeader thead
+            tyhead = initializeTypeHeader' thead
 
             typ    :: Either [BzoErr] Type
             typ    = makeType (getFTab host) tyhead tdef
@@ -348,25 +351,31 @@ makeTypes dt@(DefinitionTable defs files ids top) =
       translateDef (TypeSyntax    ty host tyd@(BzS_TypDef     _ ps _ td)   ) = constructType tyd td host (\th t -> (TypeDef    ty host th t   ))
       translateDef (TyClassSyntax tc host tcd@(BzS_TyClassDef _ ps _ td)   ) =
         let
+            thead :: TypeHeader
+            thead = (initializeTypeHeader' ps)
+
             interface :: Either [BzoErr] [(Text, TypeHeader, Type)]
-            interface = allPass $ L.map (xformTCFunc host) td
+            interface = allPass $ L.map (xformTCFunc host thead) td
 
         in case interface of
             Left errs -> Left errs
-            Right itf -> Right (TyClassDef tc host (initializeTypeHeader  ps) itf)
+            Right itf -> Right (TyClassDef tc host thead itf)
 
       -- Function for reformatting typeclass interfaces
-      xformTCFunc :: Text -> BzoSyntax -> Either [BzoErr] (Text, TypeHeader, Type)
-      xformTCFunc host (BzS_FnTypeDef _ ps fn ft) =
+      xformTCFunc :: Text -> TypeHeader -> BzoSyntax -> Either [BzoErr] (Text, TypeHeader, Type)
+      xformTCFunc host th fty@(BzS_FnTypeDef _ ps fn ft) =
         let
             thead:: TypeHeader
-            thead= initializeTypeHeader ps
+            thead= initializeTypeHeader (fromIntegral $ M.size $ tvarmap th) fty
+
+            thead'::TypeHeader
+            thead'= TyHeader ((header th) ++ (header thead)) (M.union (tvarmap th) (tvarmap thead))
 
             ftyp :: Either [BzoErr] Type
-            ftyp = makeType (getFTab host) thead ft
+            ftyp = makeType (getFTab host) thead' ft
 
         in case ftyp of
-            Right typ -> Right (fn, thead, typ)
+            Right typ -> Right (fn, thead', typ)
             Left  err -> Left  err
 
       -- Helper function for applying xforms to key-value pairs with error handling
@@ -382,6 +391,7 @@ makeTypes dt@(DefinitionTable defs files ids top) =
 
       -- TODO:
       -- -- FIXME: Fix bug where tvars undefined in the header cause type errors.
+      -- -- Add proper parameter modelling to
       -- -- Check that make types are all valid (e.g, nothing like "Int Bool" as a definition.)
 
       errs :: [BzoErr]
