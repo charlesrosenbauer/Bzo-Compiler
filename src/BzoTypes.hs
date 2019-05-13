@@ -653,10 +653,10 @@ type LcId = Int64   -- Local Id
 
 
 
-data TypeHeader = TyHeader { tvarmap :: !(M.Map TVId THeadAtom) } deriving (Eq, Show)
+data TypeHeader = TyHeader { header :: ![TVId], tvarmap :: !(M.Map TVId THeadAtom) } deriving (Eq, Show)
 
 emptyheader :: TypeHeader
-emptyheader = TyHeader M.empty
+emptyheader = TyHeader [] M.empty
 
 data Type
   = UnresType !BzoSyntax

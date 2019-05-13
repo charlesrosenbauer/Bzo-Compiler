@@ -125,18 +125,18 @@ noUndefinedErrs dt@(DefinitionTable defs files ids _) =
 
 -- Takes type parameters and returns an associated header
 initializeTypeHeader :: BzoSyntax -> TypeHeader
-initializeTypeHeader (BzS_Undefined p) = TyHeader M.empty
+initializeTypeHeader (BzS_Undefined p) = TyHeader [] M.empty
 initializeTypeHeader (BzS_Expr _ [x])  = initializeTypeHeader x
 
 initializeTypeHeader (BzS_TyVar p v)        =
-  TyHeader $ M.fromList [(1, TVrAtom p v        []                                          )]
+  TyHeader [] $ M.fromList [(1, TVrAtom p v        []                                          )]
 
 initializeTypeHeader (BzS_FilterObj p v fs) =
-  TyHeader $ M.fromList [(1, TVrAtom p (sid v) (L.map (\t -> Constraint p $ UnresType t) fs))]
+  TyHeader [] $ M.fromList [(1, TVrAtom p (sid v) (L.map (\t -> Constraint p $ UnresType t) fs))]
 
 initializeTypeHeader (BzS_Cmpd _ vs) =
   let atoms = L.map makeAtom vs
-  in  TyHeader $ M.fromList $ L.zip [1..] $ L.reverse atoms
+  in  TyHeader [] $ M.fromList $ L.zip [1..] $ L.reverse atoms
   where
         makeAtom :: BzoSyntax -> THeadAtom
         makeAtom (BzS_TyVar     p v   ) =
@@ -172,7 +172,7 @@ initializeTypeHeader (BzS_FnTypeDef _ ps fn (BzS_FnTy _ i o)) =
       tvsall :: [(TVId, THeadAtom)] -- I don't fully trust the nub here, but it seems to mostly work.
       tvsall = L.nubBy (\(_, (TVrAtom _ a _)) (_, (TVrAtom _ b _)) -> a == b) $ tvsold ++ tvsnew
 
-  in TyHeader $ M.fromList tvsall
+  in TyHeader [] $ M.fromList tvsall
 
 initializeTypeHeader (BzS_TypDef _ ps ty tydef) =
   let tyhead = initializeTypeHeader ps
@@ -199,7 +199,7 @@ initializeTypeHeader (BzS_TypDef _ ps ty tydef) =
       tvsall :: [(TVId, THeadAtom)] -- I don't fully trust the nub here, but it seems to mostly work.
       tvsall = L.nubBy (\(_, (TVrAtom _ a _)) (_, (TVrAtom _ b _)) -> a == b) $ tvsold ++ tvsnew
 
-  in TyHeader $ M.fromList tvsall
+  in TyHeader [] $ M.fromList tvsall
 
 
 
@@ -239,7 +239,7 @@ makeType ft th ty@(BzS_TyId  p   t) =
       []  -> Left [TypeErr p $ pack ("Type " ++ (unpack t) ++ " is undefined.")]
       [x] -> Right (LtrlType p x)
       xs  -> Left [TypeErr p $ pack ("Ambiguous reference to type " ++ (unpack t) ++ ": " ++ (show xs) ++ " / ")]   -- TODO: Redesign this error message
-makeType ft (TyHeader tvs) (BzS_TyVar p   v) =
+makeType ft (TyHeader _ tvs) (BzS_TyVar p   v) =
   let tvpairs = M.assocs tvs
       tvnames = L.map (\(n,atm) -> (n, Mb.fromMaybe (pack "") $ atomId atm)) tvpairs
       ids = L.map fst $ L.filter (\(n,atm) -> v == atm) tvnames
