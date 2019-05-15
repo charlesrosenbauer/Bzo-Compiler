@@ -739,8 +739,8 @@ showTHead :: THeadAtom -> String
 showTHead (TVrAtom _ k cs) = "[" ++ (show k) ++ " . " ++ (show cs) ++ "]"
 instance Show THeadAtom where show = showTHead
 
-atomId :: THeadAtom -> Maybe T.Text
-atomId (TVrAtom _ t _) = Just t
+atomId :: THeadAtom -> T.Text
+atomId (TVrAtom _ t _) = t
 
 
 

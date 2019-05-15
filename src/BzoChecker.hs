@@ -124,19 +124,19 @@ noUndefinedErrs dt@(DefinitionTable defs files ids _) =
 
 
 -- Takes type parameters and returns an associated header
-initializeTypeHeader :: Int64 -> BzoSyntax -> TypeHeader
-initializeTypeHeader n (BzS_Undefined p) = TyHeader [] M.empty
-initializeTypeHeader n (BzS_Expr _ [x])  = initializeTypeHeader n x
+initializeTypeHeader :: TypeHeader -> BzoSyntax -> TypeHeader
+initializeTypeHeader hd (BzS_Undefined p) = TyHeader [] M.empty
+initializeTypeHeader hd (BzS_Expr _ [x])  = initializeTypeHeader hd x
 
-initializeTypeHeader n (BzS_TyVar p v)        =
-  TyHeader [] $ M.fromList [(n, TVrAtom p v        []                                          )]
+initializeTypeHeader (TyHeader ps mp) (BzS_TyVar p v)        =
+  TyHeader ps $ M.union mp $ M.fromList [(fromIntegral $ M.size mp, TVrAtom p v [])]
 
-initializeTypeHeader n (BzS_FilterObj p v fs) =
-  TyHeader [] $ M.fromList [(n, TVrAtom p (sid v) (L.map (\t -> Constraint p $ UnresType t) fs))]
+initializeTypeHeader (TyHeader ps mp) (BzS_FilterObj p v fs) =
+  TyHeader ps $ M.union mp $ M.fromList [(fromIntegral $ M.size mp, TVrAtom p (sid v) (L.map (\t -> Constraint p $ UnresType t) fs))]
 
-initializeTypeHeader n (BzS_Cmpd _ vs) =
+initializeTypeHeader (TyHeader ps mp) (BzS_Cmpd _ vs) =
   let atoms = L.map makeAtom vs
-  in  TyHeader [] $ M.fromList $ L.zip [n..] $ L.reverse atoms
+  in  TyHeader ps $ M.union mp $ M.fromList $ L.map (\(a,b) -> (fromIntegral $ a+(M.size mp), b)) $ L.zip [0..] $ L.reverse atoms
   where
         makeAtom :: BzoSyntax -> THeadAtom
         makeAtom (BzS_TyVar     p v   ) =
@@ -147,8 +147,8 @@ initializeTypeHeader n (BzS_Cmpd _ vs) =
 
         makeAtom (BzS_Expr _ [x]) = makeAtom x
 
-initializeTypeHeader n (BzS_FnTypeDef _ ps fn (BzS_FnTy _ i o)) =
-  let tyhead = initializeTypeHeader n ps
+initializeTypeHeader hd@(TyHeader ips imp) (BzS_FnTypeDef _ ps fn (BzS_FnTy _ i o)) =
+  let tyhead = initializeTypeHeader hd ps
 
       tvars :: [(Text, BzoPos)]
       tvars  = (getTVars i) ++ (getTVars o)
@@ -172,10 +172,10 @@ initializeTypeHeader n (BzS_FnTypeDef _ ps fn (BzS_FnTy _ i o)) =
       tvsall :: [(TVId, THeadAtom)] -- I don't fully trust the nub here, but it seems to mostly work.
       tvsall = L.nubBy (\(_, (TVrAtom _ a _)) (_, (TVrAtom _ b _)) -> a == b) $ tvsold ++ tvsnew
 
-  in TyHeader [] $ M.fromList tvsall
+  in TyHeader ips $ M.union imp $ M.fromList tvsall
 
-initializeTypeHeader n (BzS_TypDef _ ps ty tydef) =
-  let tyhead = initializeTypeHeader n ps
+initializeTypeHeader hd (BzS_TypDef _ ps ty tydef) =
+  let tyhead = initializeTypeHeader hd ps
 
       tvars :: [(Text, BzoPos)]
       tvars = getTVars tydef
@@ -202,7 +202,7 @@ initializeTypeHeader n (BzS_TypDef _ ps ty tydef) =
   in TyHeader [] $ M.fromList tvsall
 
 initializeTypeHeader' :: BzoSyntax -> TypeHeader
-initializeTypeHeader' ast = initializeTypeHeader 0 ast
+initializeTypeHeader' ast = initializeTypeHeader (TyHeader [] M.empty) ast
 
 
 
@@ -244,12 +244,12 @@ makeType ft th ty@(BzS_TyId  p   t) =
       xs  -> Left [TypeErr p $ pack ("Ambiguous reference to type " ++ (unpack t) ++ ": " ++ (show xs) ++ " / ")]   -- TODO: Redesign this error message
 makeType ft (TyHeader _ tvs) (BzS_TyVar p   v) =
   let tvpairs = M.assocs tvs
-      tvnames = L.map (\(n,atm) -> (n, Mb.fromMaybe (pack "") $ atomId atm)) tvpairs
+      tvnames = L.map (\(n,atm) -> (n, atomId atm)) tvpairs
       ids = L.map fst $ L.filter (\(n,atm) -> v == atm) tvnames
   in case ids of
       []  -> Left [TypeErr p $ pack ("Type Variable " ++ (unpack v) ++ " is not defined in the type header.")]
       [x] -> Right (TVarType p x)
-      xs  -> Left [TypeErr p $ pack ("Ambiguous reference to type variable " ++ (unpack v) ++ ": " ++ (show xs) ++ " / ")]  -- TODO: Redesign this error message
+      xs  -> Left [TypeErr p $ pack ("Ambiguous reference to type variable " ++ (unpack v) ++ ": " ++ (show xs) ++ " / " ++ (show tvs))]  -- TODO: Redesign this error message
 
 makeType ft th (BzS_Id p f) =
   let fids = resolveId ft f
@@ -366,7 +366,7 @@ makeTypes dt@(DefinitionTable defs files ids top) =
       xformTCFunc host th fty@(BzS_FnTypeDef _ ps fn ft) =
         let
             thead:: TypeHeader
-            thead= initializeTypeHeader (fromIntegral $ M.size $ tvarmap th) fty
+            thead= initializeTypeHeader th fty
 
             thead'::TypeHeader
             thead'= TyHeader ((header th) ++ (header thead)) (M.union (tvarmap th) (tvarmap thead))
