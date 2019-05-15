@@ -150,11 +150,14 @@ initializeTypeHeader (TyHeader ps mp) (BzS_Cmpd _ vs) =
 initializeTypeHeader hd@(TyHeader ips imp) (BzS_FnTypeDef _ ps fn (BzS_FnTy _ i o)) =
   let tyhead = initializeTypeHeader hd ps
 
+      importVars :: S.Set Text
+      importVars = S.fromList $ L.map atomId $ M.elems imp
+
       tvars :: [(Text, BzoPos)]
       tvars  = (getTVars i) ++ (getTVars o)
 
       vnames :: S.Set Text
-      vnames = S.fromList $ L.map fst tvars
+      vnames = S.fromList $ L.filter (\x -> S.notMember x importVars) $ L.map fst tvars
 
       tvatms :: [THeadAtom]
       tvatms = L.map (\(v,p) -> TVrAtom p v []) tvars
@@ -390,8 +393,7 @@ makeTypes dt@(DefinitionTable defs files ids top) =
       results = toRight M.fromList $ allPass $ L.map (preserveId translateDef) $ M.assocs defs
 
       -- TODO:
-      -- -- FIXME: Fix bug where tvars undefined in the header cause type errors.
-      -- -- Add proper parameter modelling to
+      -- -- Add proper parameter modelling to types and typeclasses
       -- -- Check that make types are all valid (e.g, nothing like "Int Bool" as a definition.)
 
       errs :: [BzoErr]
