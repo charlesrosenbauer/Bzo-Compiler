@@ -1,4 +1,10 @@
 # Bzo-Compiler
+
+
+*NOTE*
+This is a branch and is under construction
+
+
 Compiler for a custom programming language I'm developing called Bzo
 
 This file is of course not final, and will be updated as the project progresses.
