@@ -202,7 +202,10 @@ initializeTypeHeader hd (BzS_TypDef _ ps ty tydef) =
       tvsall :: [(TVId, THeadAtom)] -- I don't fully trust the nub here, but it seems to mostly work.
       tvsall = L.nubBy (\(_, (TVrAtom _ a _)) (_, (TVrAtom _ b _)) -> a == b) $ tvsold ++ tvsnew
 
-  in TyHeader [] $ M.fromList tvsall
+      tpars :: [TVId]
+      tpars = L.take (L.length tvsall) [0..]
+
+  in TyHeader tpars $ M.fromList tvsall
 
 initializeTypeHeader' :: BzoSyntax -> TypeHeader
 initializeTypeHeader' ast = initializeTypeHeader (TyHeader [] M.empty) ast
