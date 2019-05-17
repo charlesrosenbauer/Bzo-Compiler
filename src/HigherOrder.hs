@@ -991,3 +991,16 @@ getLeft  (Left  x) = x
 splitEitherList :: Either [a] b -> ([a], [b])
 splitEitherList (Right x) = ([], [x])
 splitEitherList (Left  x) = (x , [])
+
+
+
+
+
+
+
+
+
+
+fuseEither :: Either a a -> a
+fuseEither (Left  x) = x
+fuseEither (Right x) = x

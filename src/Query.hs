@@ -157,4 +157,14 @@ getNamespaceSet (BzoFileModel _ _ _ _ is ls ias las) = S.fromList $ (is ++ ls) +
 isType :: Definition -> Bool
 isType (TypeSyntax    _ _ _) = True
 isType (TyClassSyntax _ _ _) = True
+isType (TypeDef     _ _ _ _) = True
+isType (TyClassDef  _ _ _ _) = True
 isType _ = False
+
+
+isStructType :: Definition -> Bool
+isStructType (TypeSyntax    _ _ _) = True
+isStructType (TyClassSyntax _ _ _) = True
+isStructType (TypeDef     _ _ _ _) = True
+isStructType (TyClassDef  _ _ _ _) = True
+isStructType _ = False
