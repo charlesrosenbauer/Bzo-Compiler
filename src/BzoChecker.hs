@@ -275,6 +275,23 @@ makeType ft th x = Left [TypeErr (pos x) $ pack $ "Malformed type expression: " 
 
 
 
+getTyId :: DefinitionTable -> Int64 -> Text
+getTyId (DefinitionTable defs _ _ _) t = identifier $ defs M.! t
+
+checkType :: DefinitionTable -> (TypeHeader, Type) -> (TypeHeader, Type) -> [BzoErr]
+checkType _ (_, VoidType    _) (_, VoidType    _) = []
+checkType _ (_, IntType  p i0) (_, IntType  _ i1) = ife (i0 == i1) [] [TypeErr p $ pack $ "Integer types " ++ (show i0) ++ " and " ++ (show i1) ++ " do not match."]
+checkType _ (_, FltType  p f0) (_, FltType  _ f1) = ife (f0 == f1) [] [TypeErr p $ pack $ "Integer types " ++ (show f0) ++ " and " ++ (show f1) ++ " do not match."]
+checkType _ (_, StrType  p s0) (_, StrType  _ s1) = ife (s0 == s1) [] [TypeErr p $ pack $ "Integer types " ++ (show s0) ++ " and " ++ (show s1) ++ " do not match."]
+checkType d (_, LtrlType p t0) (_, LtrlType _ t1) = ife (t0 == t1) [] [TypeErr p $ pack $ "Types " ++ (show $ getTyId d t0) ++ " and " ++ (show $ getTyId d t1) ++ " do not match."]
+
+
+
+
+
+
+
+
 data SymbolTable = SymbolTable (M.Map Text FileTable) deriving Show
 
 getSymTable :: SymbolTable -> M.Map Text FileTable
@@ -396,7 +413,6 @@ makeTypes dt@(DefinitionTable defs files ids top) =
       results = toRight M.fromList $ allPass $ L.map (preserveId translateDef) $ M.assocs defs
 
       -- TODO:
-      -- -- Add proper parameter modelling to types and typeclasses
       -- -- Check that make types are all valid (e.g, nothing like "Int Bool" as a definition.)
 
       errs :: [BzoErr]
