@@ -475,11 +475,11 @@ makeTypes dt@(DefinitionTable defs files ids top) =
       -- -- Check that make types are all valid (e.g, nothing like "Int Bool" as a definition.)
 
       errs :: [BzoErr]
-      errs = []
+      errs = (fromLeft [] results) ++ validErr
 
-  in case (results) of
-      Right defs' -> Right (DefinitionTable defs' files ids top)
-      Left  er    -> Left  er
+  in case (errs) of
+      [] -> Right (DefinitionTable (getRight results) files ids top)
+      er    -> Left  er
 
 
 

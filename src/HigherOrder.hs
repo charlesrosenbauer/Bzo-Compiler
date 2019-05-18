@@ -980,6 +980,15 @@ getLeft  :: Either a b -> a
 getLeft  (Left  x) = x
 
 
+fromRight :: b -> Either a b -> b
+fromRight b (Right x) = x
+fromRight b _         = b
+
+fromLeft :: a -> Either a b -> a
+fromLeft a (Left  x) = x
+fromLeft a _         = a
+
+
 
 
 
