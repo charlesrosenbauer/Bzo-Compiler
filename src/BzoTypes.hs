@@ -678,6 +678,24 @@ data Type
   | InvalidType
   deriving Eq
 
+typos :: Type -> BzoPos
+typos (UnresType   ast) = pos ast
+typos (ParamType p _  ) = p
+typos (FuncType  p _ _) = p
+typos (CmpdType  p   _) = p
+typos (PolyType  p   _) = p
+typos (MakeType  p   _) = p
+typos (IntType   p   _) = p
+typos (FltType   p   _) = p
+typos (StrType   p   _) = p
+typos (VoidType  p    ) = p
+typos (LtrlType  p   _) = p
+typos (TVarType  p   _) = p
+typos (BITyType  p   _) = p
+typos (ArryType  p _ _) = p
+typos (FLitType  p   _) = p
+typos (TyCsType  p   _) = p
+
 
 
 

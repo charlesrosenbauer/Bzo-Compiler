@@ -163,8 +163,8 @@ isType _ = False
 
 
 isStructType :: Definition -> Bool
-isStructType (TypeSyntax    _ _ _) = True
-isStructType (TyClassSyntax _ _ _) = True
+--isStructType (TypeSyntax    _ _ _) = True
+--isStructType (TyClassSyntax _ _ _) = True
 isStructType (TypeDef     _ _ _ _) = True
 isStructType (TyClassDef  _ _ _ _) = True
 isStructType _ = False
