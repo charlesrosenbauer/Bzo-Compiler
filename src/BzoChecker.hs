@@ -377,7 +377,7 @@ isTypeValid dt th (MakeType p  [(LtrlType p1 t),(CmpdType p2 xs)]) =
       tdef = (dt_defs dt) M.! t
 
       thead:: TypeHeader
-      thead= typehead tdef
+      thead= trace (show tdef) $ typehead tdef
 
       tparct:: Int
       tparct= L.length $ header thead
@@ -396,7 +396,7 @@ isTypeValid dt th (MakeType p  [(LtrlType p1 t0),(LtrlType p2 t1)]) =
       tdef = (dt_defs dt) M.! t0
 
       thead:: TypeHeader
-      thead= typehead tdef
+      thead= trace (show tdef) $ typehead tdef
 
       tparct:: Int
       tparct= L.length $ header thead
@@ -483,10 +483,10 @@ makeTypes dt@(DefinitionTable defs files ids top) =
       results :: Either [BzoErr] (M.Map Int64 Definition)
       results = toRight M.fromList $ allPass $ L.map (preserveId translateDef) $ M.assocs defs
 
-      validate :: M.Map a Definition -> [BzoErr]
+      validate :: M.Map Int64 Definition -> [BzoErr]
       validate ds = L.concatMap (\x ->
                                   case x of
-                                    TypeDef i h th td -> (isTypeValid dt th td)
+                                    TypeDef i h th td -> (isTypeValid (DefinitionTable ds files ids top) th td)
                                     _                 -> []
                                 ) $ M.elems ds
 
