@@ -40,3 +40,4 @@ executable main
       , BzoEmulator
       , BzoExprModeller
       , TypeClass
+      , TypeChecker
