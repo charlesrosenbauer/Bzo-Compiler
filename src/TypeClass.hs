@@ -1,16 +1,19 @@
 module TypeClass where
 import BzoTypes
+import Query
 import HigherOrder
 import Data.Text
-import Data.Map.Strict
+import Data.Int
+import Data.List as L
+import Data.Map.Strict as M
 import Debug.Trace
 
 
 
 
-data TyClassObj = TyClassObj Map TyId [(Text, FnId)]
+data TyClassObj = TyClassObj (Map TyId [(Text, FnId)])
 
-data TyClassTable = TyClassTable Map TCId TyClassObj
+data TyClassTable = TyClassTable (Map TCId TyClassObj)
 
 
 
@@ -29,3 +32,10 @@ data TyClassTable = TyClassTable Map TCId TyClassObj
       - table should contain a mapping from types with valid interfaces to
           their interfaces
 -}
+makeTyClassTable :: DefinitionTable -> TyClassTable
+makeTyClassTable (DefinitionTable defs files ids top) =
+  let
+      classes :: [(Int64, Definition)]
+      classes = L.filter (\(a,b) -> isTyClass b) $ assocs defs
+
+  in TyClassTable M.empty
