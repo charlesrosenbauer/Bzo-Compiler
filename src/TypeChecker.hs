@@ -43,6 +43,9 @@ checkType _ (_, VoidType    _) (_, VoidType    _) = []
 checkType _ (_, IntType  p i0) (_, IntType  _ i1) = ife (i0 == i1) [] [TypeErr p $ pack $ "Integer types " ++ (show i0) ++ " and " ++ (show i1) ++ " do not match."]
 checkType _ (_, FltType  p f0) (_, FltType  _ f1) = ife (f0 == f1) [] [TypeErr p $ pack $ "Integer types " ++ (show f0) ++ " and " ++ (show f1) ++ " do not match."]
 checkType _ (_, StrType  p s0) (_, StrType  _ s1) = ife (s0 == s1) [] [TypeErr p $ pack $ "Integer types " ++ (show s0) ++ " and " ++ (show s1) ++ " do not match."]
+
+checkType d (h0,FuncType _ i0 o0) (h1,FuncType _ i1 o1) = (checkType d (h0, i0) (h1, i1)) ++ (checkType d (h0, o0) (h1, o1)) 
+
 checkType d (_, LtrlType p t0) (_, LtrlType _ t1) =
   let
       -- TODO: Add extra cases for typeclass checking, subtype checking, etc.
