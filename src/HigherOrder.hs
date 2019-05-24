@@ -1013,3 +1013,15 @@ splitEitherList (Left  x) = (x , [])
 fuseEither :: Either a a -> a
 fuseEither (Left  x) = x
 fuseEither (Right x) = x
+
+
+
+
+
+
+
+
+
+
+concatUnzip :: [([a],[b])] -> ([a], [b])
+concatUnzip xs = (\(a,b) -> (L.concat a, L.concat b)) $ L.unzip xs
