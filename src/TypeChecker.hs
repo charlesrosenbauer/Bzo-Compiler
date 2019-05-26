@@ -84,7 +84,20 @@ checkType' k d (h0,CmpdType p xs) (h1,CmpdType _ ys) =
   in (errs, eachvar)
 
 -- These two will probably spit out some gnarly error messages. Tech debt?
-checkType' k d (h0, PolyType _ xs) (h1, PolyType p ys) = (L.concatMap (\x -> checkType d (h0, x) (h1, PolyType p ys)) xs, [])   -- TODO: don't forget this case
+checkType' k d (h0, PolyType _ xs) (h1, PolyType p ys) =
+  let
+      each :: [([BzoErr], [(TVId, Type, IOKind)])]
+      each = L.map (\x -> checkType' k d (h0, x) (h1, PolyType p ys)) xs
+
+      eacherrs :: [Either [BzoErr] [(TVId, Type, IOKind)]]
+      eacherrs = L.map (\(xs,ys) -> case xs of
+                                      [] -> Right ys
+                                      _  -> Left  xs) each
+
+  in  if (L.any E.isRight eacherrs)
+        then ([], L.concat $ rights eacherrs)
+        else (L.concat $ lefts eacherrs, [])
+
 checkType' k d (h0, t) (h1, PolyType _ ys) =
   let
       -- Vars should be filtered to only those with no corresponding errors.
