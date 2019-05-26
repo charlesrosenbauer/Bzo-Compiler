@@ -88,12 +88,17 @@ checkType' k d (h0, PolyType _ xs) (h1, PolyType p ys) = (L.concatMap (\x -> che
 checkType' k d (h0, t) (h1, PolyType _ ys) =
   let
       -- Vars should be filtered to only those with no corresponding errors.
-      each :: [[BzoErr]]
-      each = L.map (\y -> checkType d (h0, t) (h1, y)) ys
+      each :: [([BzoErr], [(TVId, Type, IOKind)])]
+      each = L.map (\y -> checkType' k d (h0, t) (h1, y)) ys
 
-  in if (L.any L.null each)
-      then ([], [])
-      else (L.concat each, [])
+      eacherrs :: [Either [BzoErr] [(TVId, Type, IOKind)]]
+      eacherrs = L.map (\(xs,ys) -> case xs of
+                                      [] -> Right ys
+                                      _  -> Left  xs) each
+
+  in if (L.any E.isRight eacherrs)
+      then ([], L.concat $ rights eacherrs)
+      else (L.concat $ lefts eacherrs, [])
 
 checkType' k d (h0, TVarType p v) (h1, t) = ([], [(v, t, k)])
 
