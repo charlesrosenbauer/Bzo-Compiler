@@ -676,7 +676,28 @@ data Type
   | FLitType  !BzoPos ![FnId]
   | TyCsType  !BzoPos ![(T.Text, TypeHeader, Type)]
   | InvalidType
-  deriving Eq
+
+eqType :: Type -> Type -> Bool
+eqType (UnresType      _) (UnresType      _) = True
+eqType (ParamType    _ a) (ParamType    _ b) = (a == b)
+eqType (FuncType _ i0 o0) (FuncType _ i1 o1) = (i0 == i1) && (o0 == o1)
+eqType (CmpdType _    xs) (CmpdType _    ys) = ((L.length xs) == (L.length ys)) && (L.all (\(a,b) -> a == b) $ L.zip xs ys)
+eqType (PolyType _    xs) (PolyType _    ys) = ((L.length xs) == (L.length ys)) && (L.all (\(a,b) -> a == b) $ L.zip xs ys)
+eqType (MakeType _    xs) (PolyType _    ys) = ((L.length xs) == (L.length ys)) && (L.all (\(a,b) -> a == b) $ L.zip xs ys)
+eqType (IntType  _     a) (IntType  _     b) = (a == b)
+eqType (FltType  _     a) (FltType  _     b) = (a == b)
+eqType (StrType  _     a) (StrType  _     b) = (a == b)
+eqType (VoidType _      ) (VoidType _      ) = True
+eqType (LtrlType _    t0) (LtrlType _    t1) = (t0 == t1)
+eqType (TVarType _    v0) (TVarType _    v1) = (v0 == v1)
+eqType (BITyType _    b0) (BITyType _    b1) = (b0 == b1)
+eqType (ArryType _ i0 t0) (ArryType _ i1 t1) = (i0 == i1) && (t0 == t1)
+eqType (FLitType _    f0) (FLitType _    f1) = ((L.sort f0) == (L.sort f1))
+eqType (TyCsType _    i0) (TyCsType _    i1) = True -- TODO: make this more robust later
+eqType InvalidType        InvalidType        = True
+eqType _ _ = False
+instance Eq Type where (==) = eqType
+                       (/=) = (\a b-> not $ eqType a b)
 
 typos :: Type -> BzoPos
 typos (UnresType   ast) = pos ast
