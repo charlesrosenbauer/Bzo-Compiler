@@ -38,7 +38,7 @@ getTyId (DefinitionTable defs _ _ _) t = identifier $ defs M.! t
     * Tuple-array casting
     * Builtin checks
 -}
-data IOKind = InKind | ExKind
+data IOKind = InKind | ExKind deriving Eq
 
 checkType' :: IOKind -> DefinitionTable -> (TypeHeader, Type) -> (TypeHeader, Type) -> ([BzoErr], [(TVId, Type, IOKind)])
 checkType' _ _ (_, VoidType    _) (_, VoidType    _) = ([], [])
@@ -121,4 +121,50 @@ checkType' _ _ (_, x) (_, _) = ([TypeErr (typos x) $ pack "Type Mismatch"], [])
 
 
 checkType :: DefinitionTable -> (TypeHeader, Type) -> (TypeHeader, Type) -> [BzoErr]
-checkType d a b = fst $ checkType' InKind d a b
+checkType d a@(h0,t0) b@(h1,t1) =
+  let
+      errs :: [BzoErr]
+      vals :: [(TVId, Type, IOKind)]
+      (errs, vals) = checkType' InKind d a b
+
+      groupVars :: [(TVId, Type, IOKind)] -> [[(TVId, Type, IOKind)]]
+      groupVars xs = L.groupBy (\(v0,_,_)(v1,_,_) -> v0 == v1) $ L.sortBy (\(v0,_,_)(v1,_,_) -> compare v0 v1) xs
+
+      ins :: [[(TVId, Type, IOKind)]]
+      exs :: [[(TVId, Type, IOKind)]]
+      (ins, exs) = (\(a,b) -> (groupVars a, groupVars b)) $ L.partition (\(_,_,k) -> k==InKind) vals
+
+      ts :: M.Map TVId Type
+      ts = M.fromList $ L.map (\((v,t,_):xs) -> (v,t)) ins
+
+      -- This might not be good enough, but should be fine for now
+      testMatch :: [(TVId, Type, IOKind)] -> [BzoErr]
+      testMatch xs =
+        let
+            vtyp :: Type
+            vtyp = ts M.! (fst3 $ L.head xs)
+
+            nonmatches :: [(TVId, Type, IOKind)]
+            nonmatches = L.filter (\(v, t', _) -> t' /= vtyp) $ L.tail xs
+        in  if (L.null nonmatches)
+              then []
+              else [TypeErr (typos vtyp) $ pack "Tyvars do not match."]  -- TODO: get a better error message
+
+      testSubtype :: [(TVId, Type, IOKind)] -> [BzoErr]
+      testSubtype xs =
+        let
+            vtyp :: Type
+            vtyp = ts M.! (fst3 $ L.head xs)
+
+            errs :: [[BzoErr]]
+            --vals :: [[(TVId, Type, IOKind)]]
+            (errs, _) = L.unzip $ L.map (\(_,x,_) -> checkType' ExKind d (h1, vtyp) (h1, x)) xs
+        in  if (L.null $ L.concat errs)
+              then []
+              else [TypeErr (typos vtyp) $ pack "Output type is not a subtype of prototype"]
+
+      errs' :: [BzoErr]
+      errs' = errs -- ++ otherErrs
+  in case errs' of
+      [] -> []
+      er -> er
