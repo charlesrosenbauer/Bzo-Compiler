@@ -1,0 +1,216 @@
+
+Low-level Optimizations:
+  * Conditionally Correct, Cached Superoptimization
+  * Dead Code Elimination
+    * This is a pretty common optimization. We should be able to use hashing for
+      this. We could even detect when two different functions are equivalent and
+      remove redundancies with the same pass.
+  * Constant Folding
+  * Common Subexpression Elimination
+  * Strength Reduction
+  * Lattice-based Branch Removal
+    * If due to inlining, pattern matching, etc., a particular path through a
+      branch is inaccessible, we should be able to prove this is most cases with
+      the lattice analysis mentioned below. This will remove unnecessary branches,
+      shortening code and decluttering the branch predictor.
+
+  * Bloom Filter Insertions (!)
+    * There may be many cases where we need to check if a value is part of a set.
+      Using bloom filters can help with this. We can even utilize multiple bloom
+      filters and in some cases even formally prove that the filters cannot create
+      false positives. This can be done if there are a relatively small number of
+      cases to check, e.g. checking if a particular type id is part of a type set
+      during pattern matching. We just need to prove that the subsets we are trying
+      to separate map to disjoint index sets.
+    * This will mostly come up in pattern matching, but will likely be a powerful
+      optimization, significantly reducing the number of instructions and branches
+      to perform matching.
+    * Hashes don't need to be cryptographic, or even unpredictable at all. If we
+      know that values in our set tend to be clustered, one of our hashes can be
+      calculated with something simple like (1 << (x / k)). This is easy to
+      reason about, as it's not too different from just looking at some packed
+      subset of the bits.
+
+Analysis:
+  * Lattice Analysis
+    * Lattices from Order Theory are pretty good for analysis, as they place
+      variables within partial orderings to constrain their value spaces. We can
+      use simple ordering (>=), strong ordering (>), bit sub/supersets, factors
+      (x = k * y, where k is constant), data structure sub/supersets (on set, slide,
+      map, array, etc. types), various modulo properties, etc.
+    * Keeping track of metadata on variables, such as popcount ranges, data structure
+      sizes, etc.
+    * Making this a bit more sophisticated to handle complex situations may be
+      valuable as well. For example, a variable may be provably outside of a specific
+      range.
+
+  * Known Bit Analysis
+    * Keep track of which bits are known at compile time. Add/sub/mul/div/mod, xor/or/
+      and/not/shl/shr/rtl/rtr/pct/ctz/clz/max/min/set all have properties that allow
+      for bit tracking to happen in certain cases.
+    * There are correlations between bits in certain cases. For example, known lower
+      bits in multiplied values can determine known lower bits in the result. There
+      are also connections with odd/even multiples and zero/nonzero bits. E.g, x * 8k
+      will have bits 0-2 zero. Bit 3 = (x % 2) & (k % 2).
+
+  * Polynomial Analysis (!)
+    * This is fancy stuff. Because all numbers in positional notation can be
+      represented by a polynomial with integer terms (b^0 * x0 + b^1 * x1 + b^2 * x2 ...),
+      we can model variables as polynomials with ranges on each term. This would be
+      quite good at picking out properties of code when bitwise and arithmetic operations
+      are combined. It could probably improve Conditionally Correct Superoptimization.
+
+  * Carry Analysis
+    * Keep track of places where carries happen in addition, subtraction, etc. Might be
+      useful in maintaining known bit info.
+
+  * Bit Dependency Analysis
+    * Keep track of which bits in each variable are dependent on which others. This
+      should have a large number of ways of being optimized. Combined with carry and
+      polynomial analysis, and lattice and bit knowledge data, this should be able to
+      cover a truly massive number of analysis cases.
+    * This may require large amounts of memory in same cases. Perhaps recompute is
+      faster than lookup?
+
+  * Trajectory Analysis
+    * There should be cases where we can prove how long a loop will run. Map, fold, scan,
+      iter, filter, etc. are easy cases. We could also handle cases like iterative math
+      functions in many cases. If we can determine which variable affects the termination
+      of the loop, and whether it has a predictable trajectory, we can at least place an
+      upper bound on many loops.
+    * This can be used for cost modelling, which can be pretty valuable for implicit
+      parallelism and various types of optimization.
+
+  * Fold Analysis
+    * There should be many kinds of analysis that could be implemented as a bottom-up or
+      top-down iteration through a function graph with each node looking only at its
+      inputs/outputs. If we include tagging (for example, hashing subexpressions), this
+      could be a pretty versatile tool that could be used to implement almost every type
+      of analysis mentioned here.
+
+  * Dependency Analysis
+    * It's valuable to know the dependency graph of a function. This can be used for
+      Static Laziness, DCE, etc.
+
+High-Level Optimizations:
+  * SoA Formatting
+    * Structure of Array formatting. Instead of formatting an array as a bunch of
+      structs evenly spaced in memory, we represent it as a struct of field arrays.
+      This dramatically improves cache performance, makes the code much easier to
+      vectorize, and can even save memory by eliminating gaps due to alignment and
+      packing.
+  * Function Fusion
+    * (x f.. g..)
+      (x [f g]..)
+      Both of the above fragments do the same thing, however the difference is in
+      performance. The top uses twice the memory bandwidth assuming that x is too
+      big to fit in the top level cache. There are other problems as well.
+      The solution is to convert it to the bottom. There are many other cases like
+      this, for example when combining map and fold, map and zip, and all the
+      combinations of these, as well as many more.
+  * Project
+    * project :: [[:K'], [K',A']Dict] ;; [:A']
+      This function, or one like it, would traditionally be extremely expensive on
+      most architectures, being phenomenally prone to cache misses. By breaking the
+      input array into smaller blocks and interleaving memory requests using explicit
+      prefetches, we should be able to completely hide memory latencies, improving
+      the performance of this algorithm by ~300x.
+
+
+
+Very High-Level Optimizations:
+  * Implicit Parallelism
+  * Smart Allocation
+  * Static Laziness
+  * Speculative Evaluation
+
+
+
+Algorithms and Data Structures:
+  * Shadows
+    * A variation on Bit Vectors with some additional use cases
+  * Blooms
+    * Just Bzo's implementation of Bloom Filters
+  * Sketches
+    * A variation on Sparse Distributed Memory that's useful for calculating
+      approximate similarity scores between complex data structures.
+  * Sketch Maps:
+    * An associative data structure that maps sketches to values. It returns a
+      subtree of matches and their subsets, ranked by their similarity to the
+      original, and by each nodes similarity to its parent.
+
+
+
+
+Abstract/Higher Order Functions (104 so far):
+
+Mapping (2):
+map, imap
+
+Filter (6):
+filter, partition, unique, unique-by, count, filt-count
+
+Grouping (8):
+zip, unzip, square, cube, tesseract, fill, permute, lex-comp
+
+Folding (4):
+sfold, pfold, sscan, pscan
+
+Detection (3):
+any, all, none
+
+Lookup/Table (13):
+lookup, index, gather, adjust, insert, remove, merge-tab, assocs, keys, elems,
+elem, from-arr, to-arr
+
+Sorting (6):
+sort, merge, first-n, last-n, min, max
+
+Iterator/Slice (14):
+reverse, seq, cycle, take, drop, head, tail, last, init, stride, rotate, slice,
+repeat, mismatch
+
+Looping (3):
+iter, while, iterate
+
+Array (5):
+concat, concatmap, group, group-by, shuffle
+
+Collection (3):
+size, to-arr, from-arr
+
+Set (6):
+union, difference, intersect, insert, remove, includes
+
+Crypto (5):
+encrypt, decrypt, hash, fasthash, sign
+
+Serial (2):
+serialize, deserialize
+
+Control (4):
+case, ife, default, match
+
+Tuple (5):
+fst, snd, trd, frt, fft
+
+Graph (15):
+add-node, del-node, add-edge, del-edge, merge, df-search, bf-search, lookup,
+follow, ct-edges, ct-nodes, nodes, edges, dijkstra-path, a*-path
+
+
+
+
+
+[seq: 0,  1] --> [0,  1,  2,  3, ...]
+[seq: 0,  2] --> [0,  2,  4,  6, ...]
+[seq: 0, -1] --> [0, -1, -2, -3, ...]
+[seq: 1,  2,  4] --> [1, 2, 4, 8, 16, ...]
+
+[tag: 'checkbounds']
+
+[tagfns: 'checkbounds']
+
+[tagtys: 'compress']
+
+[tagall: 'invisible']
