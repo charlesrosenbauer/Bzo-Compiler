@@ -72,7 +72,7 @@ checkType' k d (h0,CmpdType p xs) (h1,CmpdType _ ys) =
       ylen = L.length ys
 
       samelength :: [BzoErr]
-      samelength = ife (xlen == ylen) [] [TypeErr p $ pack $ "Expeted tuple with " ++ (show xlen) ++ " elements, found " ++ (show ylen) ++ "elements instead."]
+      samelength = ife (xlen == ylen) [] [TypeErr p $ pack $ "Expeted tuple with " ++ (show xlen) ++ " elements, found " ++ (show ylen) ++ " elements instead."]
 
       eacherr :: [BzoErr]
       eachvar :: [(TVId, Type, IOKind)]
@@ -120,6 +120,13 @@ checkType' _ _ (_, x) (_, _) = ([TypeErr (typos x) $ pack "Type Mismatch"], [])
 
 
 
+
+
+
+
+
+
+--TODO: !!TEST THIS CODE!!
 checkType :: DefinitionTable -> (TypeHeader, Type) -> (TypeHeader, Type) -> [BzoErr]
 checkType d a@(h0,t0) b@(h1,t1) =
   let
@@ -168,3 +175,27 @@ checkType d a@(h0,t0) b@(h1,t1) =
   in case errs' of
       [] -> []
       er -> er
+
+
+
+
+
+
+
+
+
+
+testTypeCheck :: DefinitionTable -> [BzoErr]
+testTypeCheck dt =
+  let
+      p1 = (\x -> BzoPos x 0 $ pack "Test-Inpos")
+      p2 = (\x -> BzoPos x 0 $ pack "Test-Expos")
+
+      err0 = checkType dt (TyHeader [] M.empty, CmpdType (p1 0) [VoidType (p1 0)]) (TyHeader [] M.empty, CmpdType (p2 0) [VoidType (p2 0)])
+      err1 = checkType dt (TyHeader [] M.empty, PolyType (p1 1) [VoidType (p1 1)]) (TyHeader [] M.empty, PolyType (p2 1) [VoidType (p2 1), VoidType (p2 1)])
+      err2 = checkType dt (TyHeader [] M.empty, PolyType (p1 2) [VoidType (p1 2)]) (TyHeader [] M.empty, PolyType (p2 2) [VoidType (p2 2), PolyType (p2 2) [IntType (p2 2) 0, IntType (p2 2) 2]])
+
+      -- These next two should produce errors
+      err3 = checkType dt (TyHeader [] M.empty, PolyType (p1 3) [VoidType (p1 3), PolyType (p1 3) [IntType (p1 3) 0, IntType (p1 3) 3]]) (TyHeader [] M.empty, PolyType (p2 3) [VoidType (p2 3)])
+      err4 = checkType dt (TyHeader [] M.empty, PolyType (p1 4) [VoidType (p1 4), IntType  (p1 4) 0, IntType (p1 4) 3]) (TyHeader [] M.empty, PolyType (p2 4) [VoidType (p2 4)])
+  in err0 ++ err1 ++ err2 ++ err3

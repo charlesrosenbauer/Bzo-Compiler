@@ -499,6 +499,7 @@ checkProgram dt@(DefinitionTable defs files ids top) =
       dt'  :: [DefinitionTable]
       (err2, dt') = splitEitherList $ makeTypes dt
 
+      !testerr = (\x -> trace ("Errs:" ++ (show x)) x) $ testTypeCheck $ L.head dt'
 
       errs :: [BzoErr]
       errs = err0 ++ err1 ++ err2
