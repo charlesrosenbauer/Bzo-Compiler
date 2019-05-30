@@ -79,15 +79,15 @@ data BzoErr = Other
 
 
 showBzErr :: BzoErr -> String
-showBzErr (StringErr  p st) = "Bzo Error:\n" ++ (showErrPos p) ++ (show st)
-showBzErr (LexErr     p st) = "Lexer Error:\n" ++ (showErrPos p) ++ (show st)
-showBzErr (ParseErr   p st) = "Parse Error:\n" ++ (showErrPos p) ++ (show st)
-showBzErr (TypeErr    p st) = "Type Error:\n" ++ (showErrPos p) ++ (show st)
-showBzErr (SntxErr    p st) = "Syntax Error:\n " ++ (showErrPos p) ++ (show st)
-showBzErr (DepErr       st) = "Dependency Error:\n" ++ (show st)
-showBzErr (ParamErr     st) = "Parameter Error:\n" ++ (show st)
-showBzErr (CfgErr       st) = "Configuration Error:\n" ++ (show st)
-showBzErr (PrepErr    p st) = "Preprocessor Error:\n" ++ (showErrPos p) ++ (show st)
+showBzErr (StringErr  p st) = "Bzo Error:\n" ++ (showErrPos p) ++ (T.unpack st) ++ "\n\n"
+showBzErr (LexErr     p st) = "Lexer Error:\n" ++ (showErrPos p) ++ (T.unpack st) ++ "\n\n"
+showBzErr (ParseErr   p st) = "Parse Error:\n" ++ (showErrPos p) ++ (T.unpack st) ++ "\n\n"
+showBzErr (TypeErr    p st) = "Type Error:\n" ++ (showErrPos p) ++ (T.unpack st) ++ "\n\n"
+showBzErr (SntxErr    p st) = "Syntax Error:\n " ++ (showErrPos p) ++ (T.unpack st) ++ "\n\n"
+showBzErr (DepErr       st) = "Dependency Error:\n" ++ (T.unpack st) ++ "\n\n"
+showBzErr (ParamErr     st) = "Parameter Error:\n" ++ (T.unpack st) ++ "\n\n"
+showBzErr (CfgErr       st) = "Configuration Error:\n" ++ (T.unpack st) ++ "\n\n"
+showBzErr (PrepErr    p st) = "Preprocessor Error:\n" ++ (showErrPos p) ++ (T.unpack st) ++ "\n\n"
 instance Show BzoErr where show = showBzErr
 
 
