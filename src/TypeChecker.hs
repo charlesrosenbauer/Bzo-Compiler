@@ -83,8 +83,12 @@ checkType' k d (h0,CmpdType p xs) (h1,CmpdType _ ys) =
 
   in (errs, eachvar)
 
+checkType' k d (h0, PolyType _ [t0]) (h1, t1) = checkType' k d (h0, t0) (h1, t1)
+
+checkType' k d (h0, t0) (h1, PolyType _ [t1]) = checkType' k d (h0, t0) (h1, t1)
+
 -- These two will probably spit out some gnarly error messages. Tech debt?
-checkType' k d (h0, PolyType _ xs) (h1, PolyType p ys) =
+checkType' k d (h0, PolyType _ ys) (h1, PolyType p xs) =
   let
       each :: [([BzoErr], [(TVId, Type, IOKind)])]
       each = L.map (\x -> checkType' k d (h0, x) (h1, PolyType p ys)) xs
@@ -98,7 +102,7 @@ checkType' k d (h0, PolyType _ xs) (h1, PolyType p ys) =
         then ([], L.concat $ rights eacherrs)
         else (L.concat $ lefts eacherrs, [])
 
-checkType' k d (h0, t) (h1, PolyType _ ys) =
+checkType' k d (h1, PolyType _ ys) (h0, t) =
   let
       -- Vars should be filtered to only those with no corresponding errors.
       each :: [([BzoErr], [(TVId, Type, IOKind)])]
@@ -115,7 +119,7 @@ checkType' k d (h0, t) (h1, PolyType _ ys) =
 
 checkType' k d (h0, TVarType p v) (h1, t) = ([], [(v, t, k)])
 
-checkType' _ _ (_, x) (_, _) = ([TypeErr (typos x) $ pack "Type Mismatch"], [])
+checkType' _ _ (_, x) (_, y) = ([TypeErr (typos x) $ pack ("Type Mismatch:\n" ++ (show x) ++ "\n&&\n" ++ (show y))], [])
 
 
 
