@@ -42,9 +42,13 @@ data IOKind = InKind | ExKind deriving Eq
 
 checkType' :: IOKind -> DefinitionTable -> (TypeHeader, Type) -> (TypeHeader, Type) -> ([BzoErr], [(TVId, Type, IOKind)])
 checkType' _ _ (_, VoidType    _) (_, VoidType    _) = ([], [])
-checkType' _ _ (_, IntType  p i0) (_, IntType  _ i1) = (ife (i0 == i1) [] [TypeErr p $ pack $ "Integer types " ++ (show i0) ++ " and " ++ (show i1) ++ " do not match."], [])
-checkType' _ _ (_, FltType  p f0) (_, FltType  _ f1) = (ife (f0 == f1) [] [TypeErr p $ pack $ "Integer types " ++ (show f0) ++ " and " ++ (show f1) ++ " do not match."], [])
-checkType' _ _ (_, StrType  p s0) (_, StrType  _ s1) = (ife (s0 == s1) [] [TypeErr p $ pack $ "Integer types " ++ (show s0) ++ " and " ++ (show s1) ++ " do not match."], [])
+checkType' _ _ (_, IntType  p i0) (_, IntType  _ i1) = (ife (i0 == i1) [] [TypeErr p $ pack $ "Integer literals "   ++ (show i0) ++ " and " ++ (show i1) ++ " do not match."], [])
+checkType' _ _ (_, FltType  p f0) (_, FltType  _ f1) = (ife (f0 == f1) [] [TypeErr p $ pack $ "Float literals "     ++ (show f0) ++ " and " ++ (show f1) ++ " do not match."], [])
+checkType' _ _ (_, StrType  p s0) (_, StrType  _ s1) = (ife (s0 == s1) [] [TypeErr p $ pack $ "String literals "    ++ (show s0) ++ " and " ++ (show s1) ++ " do not match."], [])
+checkType' _ _ (_, FLitType p s0) (_, FLitType _ s1) = (ife (s0 == s1) [] [TypeErr p $ pack $ "Function literals "  ++ (show s0) ++ " and " ++ (show s1) ++ " do not match."], [])
+checkType' _ _ (_, IntType  p i0) (_, BITyType _  b) = (ife (b  == 12) [] [TypeErr p $ pack $ "Expected int builtin"], [])
+checkType' _ _ (_, FltType  p f0) (_, BITyType _  b) = (ife (b  == 13) [] [TypeErr p $ pack $ "Expected float builtin"], [])
+checkType' _ _ (_, StrType  p s0) (_, BITyType _  b) = (ife (b  == 17) [] [TypeErr p $ pack $ "Expected string builtin"], [])
 
 checkType' _ d (h0,FuncType _ i0 o0) (h1,FuncType _ i1 o1) =
   let
@@ -88,7 +92,7 @@ checkType' k d (h0, PolyType _ [t0]) (h1, t1) = checkType' k d (h0, t0) (h1, t1)
 checkType' k d (h0, t0) (h1, PolyType _ [t1]) = checkType' k d (h0, t0) (h1, t1)
 
 -- These two will probably spit out some gnarly error messages. Tech debt?
-checkType' k d (h0, PolyType _ ys) (h1, PolyType p xs) =
+checkType' k d (h1, PolyType p xs) (h0, PolyType _ ys) =
   let
       each :: [([BzoErr], [(TVId, Type, IOKind)])]
       each = L.map (\x -> checkType' k d (h0, x) (h1, PolyType p ys)) xs
@@ -102,7 +106,7 @@ checkType' k d (h0, PolyType _ ys) (h1, PolyType p xs) =
         then ([], L.concat $ rights eacherrs)
         else (L.concat $ lefts eacherrs, [])
 
-checkType' k d (h1, PolyType _ ys) (h0, t) =
+checkType' k d (h0, t) (h1, PolyType _ ys) =
   let
       -- Vars should be filtered to only those with no corresponding errors.
       each :: [([BzoErr], [(TVId, Type, IOKind)])]
