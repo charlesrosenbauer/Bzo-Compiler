@@ -40,6 +40,9 @@ getTyId (DefinitionTable defs _ _ _) t = identifier $ defs M.! t
 -}
 data IOKind = InKind | ExKind deriving Eq
 
+{-
+  A <= B
+-}
 checkType' :: IOKind -> DefinitionTable -> (TypeHeader, Type) -> (TypeHeader, Type) -> ([BzoErr], [(TVId, Type, IOKind)])
 checkType' _ _ (_, VoidType    _) (_, VoidType    _) = ([], [])
 checkType' _ _ (_, IntType  p i0) (_, IntType  _ i1) = (ife (i0 == i1) [] [TypeErr p $ pack $ "Integer literals "   ++ (show i0) ++ " and " ++ (show i1) ++ " do not match."], [])
@@ -49,6 +52,15 @@ checkType' _ _ (_, FLitType p s0) (_, FLitType _ s1) = (ife (s0 == s1) [] [TypeE
 checkType' _ _ (_, IntType  p i0) (_, BITyType _  b) = (ife (b  == 12) [] [TypeErr p $ pack $ "Expected int builtin"], [])
 checkType' _ _ (_, FltType  p f0) (_, BITyType _  b) = (ife (b  == 13) [] [TypeErr p $ pack $ "Expected float builtin"], [])
 checkType' _ _ (_, StrType  p s0) (_, BITyType _  b) = (ife (b  == 17) [] [TypeErr p $ pack $ "Expected string builtin"], [])
+
+checkType' k d (h0, ArryType p 0  _ ) (h1, ArryType _ _ _) = ([TypeErr p $ pack $ "Cannot constrain array size."], [])
+
+checkType' k d (h0, ArryType _ _  t0) (h1, ArryType _ 0  t1) = checkType' k d (h0, t0) (h1, t1)
+
+checkType' k d (h0, ArryType p s0 t0) (h1, ArryType _ s1 t1) =
+  ife (s0 /= s1)
+    ([TypeErr p $ pack $ "Expected array of size " ++ (show s1) ++ ", found one of size " ++ (show s0) ++ "."], [])
+    (checkType' k d (h0, t0) (h1, t1))
 
 checkType' _ d (h0,FuncType _ i0 o0) (h1,FuncType _ i1 o1) =
   let
@@ -92,7 +104,7 @@ checkType' k d (h0, PolyType _ [t0]) (h1, t1) = checkType' k d (h0, t0) (h1, t1)
 checkType' k d (h0, t0) (h1, PolyType _ [t1]) = checkType' k d (h0, t0) (h1, t1)
 
 -- These two will probably spit out some gnarly error messages. Tech debt?
-checkType' k d (h1, PolyType p xs) (h0, PolyType _ ys) =
+checkType' k d (h0, PolyType p xs) (h1, PolyType _ ys) =
   let
       each :: [([BzoErr], [(TVId, Type, IOKind)])]
       each = L.map (\x -> checkType' k d (h0, x) (h1, PolyType p ys)) xs
@@ -121,7 +133,7 @@ checkType' k d (h0, t) (h1, PolyType _ ys) =
       then ([], L.concat $ rights eacherrs)
       else (L.concat $ lefts eacherrs, [])
 
-checkType' k d (h0, TVarType p v) (h1, t) = ([], [(v, t, k)])
+checkType' k d (h0, t) (h1, TVarType p v) = ([], [(v, t, k)])
 
 checkType' _ _ (_, x) (_, y) = ([TypeErr (typos x) $ pack ("Type Mismatch:\n" ++ (show x) ++ "\n&&\n" ++ (show y))], [])
 
