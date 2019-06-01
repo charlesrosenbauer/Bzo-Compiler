@@ -40,46 +40,14 @@ getTyId (DefinitionTable defs _ _ _) t = identifier $ defs M.! t
 -}
 data IOKind = InKind | ExKind deriving Eq
 
-{-
-  A <= B
--}
-checkType' :: IOKind -> DefinitionTable -> (TypeHeader, Type) -> (TypeHeader, Type) -> ([BzoErr], [(TVId, Type, IOKind)])
-checkType' _ _ (_, VoidType    _) (_, VoidType    _) = ([], [])
-checkType' _ _ (_, IntType  p i0) (_, IntType  _ i1) = (ife (i0 == i1) [] [TypeErr p $ pack $ "Integer literals "   ++ (show i0) ++ " and " ++ (show i1) ++ " do not match."], [])
-checkType' _ _ (_, FltType  p f0) (_, FltType  _ f1) = (ife (f0 == f1) [] [TypeErr p $ pack $ "Float literals "     ++ (show f0) ++ " and " ++ (show f1) ++ " do not match."], [])
-checkType' _ _ (_, StrType  p s0) (_, StrType  _ s1) = (ife (s0 == s1) [] [TypeErr p $ pack $ "String literals "    ++ (show s0) ++ " and " ++ (show s1) ++ " do not match."], [])
-checkType' _ _ (_, FLitType p s0) (_, FLitType _ s1) = (ife (s0 == s1) [] [TypeErr p $ pack $ "Function literals "  ++ (show s0) ++ " and " ++ (show s1) ++ " do not match."], [])
-checkType' _ _ (_, IntType  p i0) (_, BITyType _  b) = (ife (b  == 12) [] [TypeErr p $ pack $ "Expected int builtin"], [])
-checkType' _ _ (_, FltType  p f0) (_, BITyType _  b) = (ife (b  == 13) [] [TypeErr p $ pack $ "Expected float builtin"], [])
-checkType' _ _ (_, StrType  p s0) (_, BITyType _  b) = (ife (b  == 17) [] [TypeErr p $ pack $ "Expected string builtin"], [])
+checkXS_Y  :: IOKind -> DefinitionTable -> (TypeHeader, [Type]) -> (TypeHeader, Type) -> ([BzoErr], [(TVId, Type, IOKind)])
+checkXS_Y  k d (h0, ts) (h1, t1) = concatUnzip $ L.map (\t -> checkType' k d (h0,t) (h1,t1)) ts
 
-checkType' k d (h0, ArryType p 0  _ ) (h1, ArryType _ _ _) = ([TypeErr p $ pack $ "Cannot constrain array size."], [])
+checkX_YS  :: IOKind -> DefinitionTable -> (TypeHeader, Type) -> (TypeHeader, [Type]) -> ([BzoErr], [(TVId, Type, IOKind)])
+checkX_YS  k d (h0, t0) (h1, ts) = concatUnzip $ L.map (\t -> checkType' k d (h0,t0) (h1,t)) ts
 
-checkType' k d (h0, ArryType _ _  t0) (h1, ArryType _ 0  t1) = checkType' k d (h0, t0) (h1, t1)
-
-checkType' k d (h0, ArryType p s0 t0) (h1, ArryType _ s1 t1) =
-  ife (s0 /= s1)
-    ([TypeErr p $ pack $ "Expected array of size " ++ (show s1) ++ ", found one of size " ++ (show s0) ++ "."], [])
-    (checkType' k d (h0, t0) (h1, t1))
-
-checkType' _ d (h0,FuncType _ i0 o0) (h1,FuncType _ i1 o1) =
-  let
-      inErrs :: [BzoErr]
-      inVars :: [(TVId, Type, IOKind)]
-      (inErrs, inVars) = (checkType' InKind d (h0, i0) (h1, i1))
-
-      exErrs :: [BzoErr]
-      exVars :: [(TVId, Type, IOKind)]
-      (exErrs, exVars) = (checkType' ExKind d (h0, o0) (h1, o1))
-
-  in ((inErrs ++ exErrs), (inVars ++ exVars))
-
-checkType' _ d (_, LtrlType p t0) (_, LtrlType _ t1) =
-  let
-      -- TODO: Add extra cases for typeclass checking, subtype checking, etc.
-  in (ife (t0 == t1) [] [TypeErr p $ pack $ "Types " ++ (show $ getTyId d t0) ++ " and " ++ (show $ getTyId d t1) ++ " do not match."], [])
-
-checkType' k d (h0,CmpdType p xs) (h1,CmpdType _ ys) =
+checkXS_YS :: BzoPos -> IOKind -> DefinitionTable -> (TypeHeader, [Type]) -> (TypeHeader, [Type]) -> ([BzoErr], [(TVId, Type, IOKind)])
+checkXS_YS p k d (h0, xs) (h1, ys) =
   let
       xlen :: Int
       xlen = L.length xs
@@ -98,6 +66,56 @@ checkType' k d (h0,CmpdType p xs) (h1,CmpdType _ ys) =
       errs = ife (L.null samelength) eacherr samelength
 
   in (errs, eachvar)
+
+
+{-
+  A <= B
+-}
+checkType' :: IOKind -> DefinitionTable -> (TypeHeader, Type) -> (TypeHeader, Type) -> ([BzoErr], [(TVId, Type, IOKind)])
+checkType' _ _ (_, VoidType    _) (_, VoidType    _) = ([], [])
+checkType' _ _ (_, IntType  p i0) (_, IntType  _ i1) = (ife (i0 == i1) [] [TypeErr p $ pack $ "Integer literals "   ++ (show i0) ++ " and " ++ (show i1) ++ " do not match."], [])
+checkType' _ _ (_, FltType  p f0) (_, FltType  _ f1) = (ife (f0 == f1) [] [TypeErr p $ pack $ "Float literals "     ++ (show f0) ++ " and " ++ (show f1) ++ " do not match."], [])
+checkType' _ _ (_, StrType  p s0) (_, StrType  _ s1) = (ife (s0 == s1) [] [TypeErr p $ pack $ "String literals "    ++ (show s0) ++ " and " ++ (show s1) ++ " do not match."], [])
+checkType' _ _ (_, FLitType p s0) (_, FLitType _ s1) = (ife (s0 == s1) [] [TypeErr p $ pack $ "Function literals "  ++ (show s0) ++ " and " ++ (show s1) ++ " do not match."], [])
+checkType' _ _ (_, IntType  p i0) (_, BITyType _  b) = (ife (b  == 12) [] [TypeErr p $ pack $ "Expected int builtin"], [])
+checkType' _ _ (_, FltType  p f0) (_, BITyType _  b) = (ife (b  == 13) [] [TypeErr p $ pack $ "Expected float builtin"], [])
+checkType' _ _ (_, StrType  p s0) (_, BITyType _  b) = (ife (b  == 17) [] [TypeErr p $ pack $ "Expected string builtin"], [])
+checkType' _ _ (_, BITyType p b0) (_, BITyType _ b1) = (ife (b0 == b1) [] [TypeErr p $ pack $ "Builtin types do not match"], [])
+
+checkType' k d (h0, ArryType p 0  _ ) (h1, ArryType _ _ _) = ([TypeErr p $ pack $ "Cannot constrain array size."], [])
+
+checkType' k d (h0, ArryType _ _  t0) (h1, ArryType _ 0  t1) = checkType' k d (h0, t0) (h1, t1)
+
+checkType' k d (h0, ArryType p s0 t0) (h1, ArryType _ s1 t1) =
+  ife (s0 /= s1)
+    ([TypeErr p $ pack $ "Expected array of size " ++ (show s1) ++ ", found one of size " ++ (show s0) ++ "."], [])
+    (checkType' k d (h0, t0) (h1, t1))
+
+checkType' k d (h0, CmpdType p   ts0) (h1, ArryType _ 0 t1) = checkXS_Y k d (h0, ts0) (h1, t1)
+
+checkType' k d (h0, CmpdType p   ts0) (h1, ArryType _ s t1) =
+  ife (L.length ts0 /= fromIntegral s)
+    ([TypeErr p $ pack $ "Casting Tuple to Array failed; expected " ++ (show s) ++ " elements, found " ++ (show $ L.length ts0) ++ "."], [])
+    (checkXS_Y k d (h0, ts0) (h1, t1))
+
+checkType' _ d (h0,FuncType _ i0 o0) (h1,FuncType _ i1 o1) =
+  let
+      inErrs :: [BzoErr]
+      inVars :: [(TVId, Type, IOKind)]
+      (inErrs, inVars) = (checkType' InKind d (h0, i0) (h1, i1))
+
+      exErrs :: [BzoErr]
+      exVars :: [(TVId, Type, IOKind)]
+      (exErrs, exVars) = (checkType' ExKind d (h0, o0) (h1, o1))
+
+  in ((inErrs ++ exErrs), (inVars ++ exVars))
+
+checkType' _ d (_, LtrlType p t0) (_, LtrlType _ t1) =
+  let
+      -- TODO: Add extra cases for typeclass checking, subtype checking, etc.
+  in (ife (t0 == t1) [] [TypeErr p $ pack $ "Types " ++ (show $ getTyId d t0) ++ " and " ++ (show $ getTyId d t1) ++ " do not match."], [])
+
+checkType' k d (h0,CmpdType p xs) (h1,CmpdType _ ys) = checkXS_YS p k d (h0, xs) (h1, ys)
 
 checkType' k d (h0, PolyType _ [t0]) (h1, t1) = checkType' k d (h0, t0) (h1, t1)
 
@@ -218,4 +236,6 @@ testTypeCheck dt =
       -- These next two should produce errors
       err3 = checkType dt (TyHeader [] M.empty, PolyType (p1 3) [VoidType (p1 3), PolyType (p1 3) [IntType (p1 3) 0, IntType (p1 3) 3]]) (TyHeader [] M.empty, PolyType (p2 3) [VoidType (p2 3)])
       err4 = checkType dt (TyHeader [] M.empty, PolyType (p1 4) [VoidType (p1 4), IntType  (p1 4) 0, IntType (p1 4) 3]) (TyHeader [] M.empty, PolyType (p2 4) [VoidType (p2 4)])
-  in err0 ++ err1 ++ err2 ++ err3
+
+      err5 = checkType dt (TyHeader [] M.empty, CmpdType (p1 5) [IntType (p1 5) 0, IntType (p1 5) 1]) (TyHeader [] M.empty, ArryType (p2 5) 3 (BITyType (p2 5) 12))
+  in err0 ++ err1 ++ err2 ++ err3 ++ err4 ++ err5
