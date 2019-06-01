@@ -400,7 +400,7 @@ makeTypes dt@(DefinitionTable defs files ids top) =
             tyhead = initializeTypeHeader' thead
 
             typ    :: Either [BzoErr] Type
-            typ    = makeType (getFTab host) tyhead tdef
+            typ    = toRight flattenPolys $ makeType (getFTab host) tyhead tdef
 
         in  applyRight (fn tyhead) typ
 
@@ -468,6 +468,29 @@ makeTypes dt@(DefinitionTable defs files ids top) =
   in case (errs) of
       [] -> Right (DefinitionTable (getRight results) files ids top)
       er    -> Left  er
+
+
+
+
+
+
+
+
+
+
+flattenPolys :: Type -> Type
+flattenPolys (CmpdType p  xs) = (CmpdType p   $ L.map flattenPolys xs)
+flattenPolys (ArryType p s t) = (ArryType p s $       flattenPolys  t)
+flattenPolys (FuncType p i o) = (FuncType p (flattenPolys i) (flattenPolys o))
+flattenPolys (MakeType p  xs) = (MakeType p   $ L.map flattenPolys xs)
+flattenPolys (TyCsType p  is) = (TyCsType p   $ L.map (\(t,h,x) -> (t,h,flattenPolys x)) is)
+flattenPolys (PolyType p  xs) = (PolyType p   $ flatpol $ L.map flattenPolys xs)
+  where
+        flatpol:: [Type] -> [Type]
+        flatpol [] = []
+        flatpol ((PolyType p xs):xss) = xs ++ (flatpol xss)
+        flatpol (x:xss) = (x : flatpol xss)
+flattenPolys x = x
 
 
 
