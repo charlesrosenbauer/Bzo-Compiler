@@ -81,6 +81,21 @@ checkType' _ _ (_, IntType  p i0) (_, BITyType _  b) = (ife (b  == 12) [] [TypeE
 checkType' _ _ (_, FltType  p f0) (_, BITyType _  b) = (ife (b  == 13) [] [TypeErr p $ pack $ "Expected float builtin"], [])
 checkType' _ _ (_, StrType  p s0) (_, BITyType _  b) = (ife (b  == 17) [] [TypeErr p $ pack $ "Expected string builtin"], [])
 checkType' _ _ (_, BITyType p b0) (_, BITyType _ b1) = (ife (b0 == b1) [] [TypeErr p $ pack $ "Builtin types do not match"], [])
+checkType' k d (h0,LtrlType p t0) (h1,LtrlType _ t1) =
+  let
+      tdef :: Definition
+      tdef = (dt_defs d) M.! t1
+
+      h2 :: TypeHeader
+      h2 = typehead tdef
+
+      t2 :: Type
+      t2 = typedef  tdef
+
+  in case (t0 == t1, checkType' k d (h0,LtrlType p t0) (h2,t2)) of
+      (True,  _      ) -> ([], [])
+      (False, ([], _)) -> ([], [])
+      (False, _      ) -> ([TypeErr p $ pack $ "Types " ++ (show $ getTyId d t0) ++ " and " ++ (show $ getTyId d t1) ++ " do not match."], [])
 
 checkType' k d (h0, ArryType p 0  _ ) (h1, ArryType _ _ _) = ([TypeErr p $ pack $ "Cannot constrain array size."], [])
 
@@ -109,11 +124,6 @@ checkType' _ d (h0,FuncType _ i0 o0) (h1,FuncType _ i1 o1) =
       (exErrs, exVars) = (checkType' ExKind d (h0, o0) (h1, o1))
 
   in ((inErrs ++ exErrs), (inVars ++ exVars))
-
-checkType' _ d (_, LtrlType p t0) (_, LtrlType _ t1) =
-  let
-      -- TODO: Add extra cases for typeclass checking, subtype checking, etc.
-  in (ife (t0 == t1) [] [TypeErr p $ pack $ "Types " ++ (show $ getTyId d t0) ++ " and " ++ (show $ getTyId d t1) ++ " do not match."], [])
 
 checkType' k d (h0,CmpdType p xs) (h1,CmpdType _ ys) = checkXS_YS p k d (h0, xs) (h1, ys)
 
