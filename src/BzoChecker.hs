@@ -465,9 +465,14 @@ makeTypes dt@(DefinitionTable defs files ids top) =
       errs :: [BzoErr]
       errs = (fromLeft [] results) ++ validErr
 
-  in case (errs) of
-      [] -> Right (DefinitionTable (getRight results) files ids top)
-      er    -> Left  er
+      dt' :: DefinitionTable
+      dt' = DefinitionTable (getRight results) files ids top
+
+  in if (not $ L.null errs)
+      then (Left errs)
+      else case (recursivePolycheck dt') of
+            [] -> Right dt'
+            er -> Left  er
 
 
 
@@ -492,6 +497,62 @@ flattenPolys (PolyType p  xs) = (PolyType p   $ flatpol $ L.map flattenPolys xs)
         flatpol (x:xss) = (x : flatpol xss)
 flattenPolys x = x
 
+
+
+
+
+
+
+
+
+
+recursivePolycheck :: DefinitionTable -> [BzoErr]
+recursivePolycheck (DefinitionTable defs files ids top) =
+  let
+      getTyIds:: [Type] -> [Int64]
+      getTyIds ((LtrlType _ x):xs) = x : (getTyIds xs)
+      getTyIds (_:xs)              = getTyIds xs
+      getTyIds [] = []
+
+      flatten :: Type -> S.Set Int64 -> S.Set Int64
+      flatten (PolyType _ xs) oldset = S.union oldset $ S.fromList $ getTyIds xs
+      flatten (LtrlType _  t) oldset = S.insert t oldset
+      flatten _               oldset = S.empty
+
+      recurse :: M.Map Int64 (S.Set Int64) -> S.Set Int64 -> S.Set Int64
+      recurse polyset oldset = L.foldl S.union S.empty $ Mb.catMaybes $ L.map (\k -> M.lookup k polyset) $ S.elems oldset
+
+      polysets :: M.Map Int64 (S.Set Int64)
+      polysets = M.fromList $
+                 L.map    (\(k,d) -> (k, flatten (typedef d) $ S.singleton k)) $
+                 L.filter (\(k,d) ->     isTyDef d)  $
+                 M.assocs defs
+
+      noPolyrec :: BzoPos -> (Int64, S.Set Int64) -> [BzoErr]
+      noPolyrec p (k, set) =
+        if (S.member k set)
+          then [TypeErr p $ pack "Type has invalid recursive structure"]
+          else []
+
+      whileRec :: M.Map Int64 (S.Set Int64) -> [BzoErr]
+      whileRec polyset =
+        let
+            polyset' :: M.Map Int64 (S.Set Int64)
+            polyset' = M.map (recurse polyset) polyset
+
+            errs :: [BzoErr]
+            errs = L.concatMap (\(k,d) -> noPolyrec (typos $ typedef $ defs M.! k) (k,d)) $ M.assocs polyset'
+
+            -- TODO: True if any sets have changed size
+            grow :: Bool
+            grow = L.any (\(k,d) -> (S.size $ polyset M.! k) == (S.size d)) $ M.assocs polyset
+
+        in case (errs, grow) of
+              ([], False) -> []
+              ([], True ) -> whileRec polyset'
+              (er, _    ) -> er
+
+  in whileRec polysets
 
 
 
