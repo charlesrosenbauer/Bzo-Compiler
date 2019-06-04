@@ -543,7 +543,6 @@ recursivePolycheck (DefinitionTable defs files ids top) =
             errs :: [BzoErr]
             errs = L.concatMap (\(k,d) -> noPolyrec (typos $ typedef $ defs M.! k) (k,d)) $ M.assocs polyset'
 
-            -- TODO: True if any sets have changed size
             grow :: Bool
             grow = L.any (\(k,d) -> (S.size $ polyset M.! k) /= (S.size d)) $ M.assocs polyset
 

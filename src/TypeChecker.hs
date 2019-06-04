@@ -83,6 +83,9 @@ checkType' _ _ (_, StrType  p s0) (_, BITyType _  b) = (ife (b  == 17) [] [TypeE
 checkType' _ _ (_, BITyType p b0) (_, BITyType _ b1) = (ife (b0 == b1) [] [TypeErr p $ pack $ "Builtin types do not match"], [])
 checkType' k d (h0,LtrlType p t0) (h1,LtrlType _ t1) =
   let
+      -- TODO: Add a case for typeclasses.
+      istc = isTyClass $ (dt_defs d) M.! t1
+
       tdef :: Definition
       tdef = (dt_defs d) M.! t1
 
@@ -92,10 +95,11 @@ checkType' k d (h0,LtrlType p t0) (h1,LtrlType _ t1) =
       t2 :: Type
       t2 = typedef  tdef
 
-  in case (t0 == t1, checkType' k d (h0,LtrlType p t0) (h2,t2)) of
-      (True,  _      ) -> ([], [])
-      (False, ([], _)) -> ([], [])
-      (False, _      ) -> ([TypeErr p $ pack $ "Types " ++ (show $ getTyId d t0) ++ " and " ++ (show $ getTyId d t1) ++ " do not match."], [])
+  in case (istc, t0 == t1, checkType' k d (h0,LtrlType p t0) (h2,t2)) of
+      (True,  _    , _      ) -> ([], [])  -- TODO: fix
+      (False, True , _      ) -> ([], [])
+      (False, False, ([], _)) -> ([], [])
+      (False, False, _      ) -> ([TypeErr p $ pack $ "Types " ++ (show $ getTyId d t0) ++ " and " ++ (show $ getTyId d t1) ++ " do not match."], [])
 
 checkType' k d (h0, ArryType p 0  _ ) (h1, ArryType _ _ _) = ([TypeErr p $ pack $ "Cannot constrain array size."], [])
 
@@ -160,6 +164,17 @@ checkType' k d (h0, t) (h1, PolyType _ ys) =
   in if (L.any E.isRight eacherrs)
       then ([], L.concat $ rights eacherrs)
       else (L.concat $ lefts eacherrs, [])
+
+checkType' k d (h0, MakeType _ []) (h1, MakeType _ []) = ([], [])
+
+checkType' k d (h0, MakeType p []) (h1, MakeType _  _) = ([TypeErr p $ pack "Type mismatch; expected more parameters."], [])
+
+checkType' k d (h0, MakeType p  _) (h1, MakeType _ []) = ([TypeErr p $ pack "Type mismatch; expected fewer parameters."], [])
+
+checkType' k d (h0, MakeType p0 (x:xs)) (h1, MakeType p1 (y:ys)) =
+  case (checkType' k d (h0, x) (h1, y)) of
+    ([], []) -> checkType' k d (h0, MakeType p0 xs) (h1, MakeType p1 ys)  -- Probably not the best way to track positions here.
+    ret      -> ret
 
 checkType' k d (h0, t) (h1, TVarType p v) = ([], [(v, t, k)])
 
