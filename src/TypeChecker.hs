@@ -68,6 +68,46 @@ checkXS_YS p k d (h0, xs) (h1, ys) =
   in (errs, eachvar)
 
 
+
+
+
+
+
+
+
+
+checkConstraints :: DefinitionTable -> TypeHeader -> (TypeHeader, Type) -> [BzoErr]
+checkConstraints dt h0@(TyHeader [hd] hmap) (h1, t) = checkConstraints dt h0 (h1, t)
+
+checkConstraints dt h0@(TyHeader  hd  hmap) (h1, CmpdType p xs) =
+  let
+      hlen :: Int
+      hlen = L.length hd
+
+      xlen :: Int
+      xlen = L.length xs
+
+      pairs :: [(THeadAtom, Type)]
+      pairs = L.map (\(h,t) -> (hmap M.! h, t)) $ L.zip hd xs
+
+      checkPair :: (THeadAtom, Type) -> [BzoErr]
+      checkPair (TVrAtom p v cs, t) = L.concatMap (\(Constraint _ c) -> checkType dt (h0, c) (h1, t)) cs
+
+  in if (hlen == xlen)
+      then L.concatMap checkPair pairs
+      else [TypeErr p $ pack $ "Cannot construct type. Expected " ++ (show hlen) ++ " parameters, found " ++ (show xlen) ++ ". "]
+
+checkConstraints dt h0 (h1, t) = checkConstraints dt h0 (h1, CmpdType (typos t) [t])
+
+
+
+
+
+
+
+
+
+
 {-
   A <= B
 -}
@@ -238,6 +278,39 @@ checkType d a@(h0,t0) b@(h1,t1) =
   in case errs' of
       [] -> []
       er -> er
+
+
+
+
+
+
+
+
+
+-- TODO: Add case for type composition
+validType :: DefinitionTable -> (TypeHeader, Type) -> [BzoErr]
+validType dt (h, CmpdType _  ts) = L.concatMap (\t -> validType dt (h, t)) ts
+validType dt (h, PolyType _  ts) = L.concatMap (\t -> validType dt (h, t)) ts
+validType dt (h, FuncType _ i o) = (validType dt (h, i)) ++ (validType dt (h, o))
+validType dt (h, ArryType _ _ t) =  validType dt (h, t)
+--validType dt (h, )
+
+
+
+
+
+
+
+
+
+
+
+validateTypePass :: DefinitionTable -> [BzoErr]
+validateTypePass (DefinitionTable defs files ids top) =
+  let
+
+
+  in []
 
 
 

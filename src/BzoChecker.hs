@@ -331,56 +331,6 @@ makeSymbolTable (DefinitionTable defs files ids top) = SymbolTable $ M.fromList 
 
 
 
-isTypeValid :: DefinitionTable -> TypeHeader -> Type -> [BzoErr]
-isTypeValid dt th (ArryType _ _ t) = isTypeValid dt th t
-isTypeValid dt th (CmpdType _  xs) = L.concatMap (isTypeValid dt th) xs
-isTypeValid dt th (PolyType _  xs) = L.concatMap (isTypeValid dt th) xs
-isTypeValid dt th (FuncType _ i o) = (isTypeValid dt th i) ++ (isTypeValid dt th o)
-isTypeValid dt th (MakeType p  [(LtrlType p1 t),(CmpdType p2 xs)]) =
-  let
-      tdef :: Definition
-      tdef = (dt_defs dt) M.! t
-
-      thead:: TypeHeader
-      thead= trace (show tdef) $ typehead tdef
-
-      tparct:: Int
-      tparct= L.length $ header thead
-
-      passct:: Int
-      passct= L.length xs
-
-      headerErr :: [BzoErr]
-      headerErr = ife (tparct == passct) [] [TypeErr p $ pack $ "Type composition failed: " ++ (show tparct) ++ " parameters expected for type " ++ (show $ getTyId dt t) ++ ", found " ++ (show passct) ++ "."]
-
-  in  headerErr
-
-isTypeValid dt th (MakeType p  [(LtrlType p1 t0),(LtrlType p2 t1)]) =
-  let
-      tdef :: Definition
-      tdef = (dt_defs dt) M.! t0
-
-      thead:: TypeHeader
-      thead= trace (show tdef) $ typehead tdef
-
-      tparct:: Int
-      tparct= L.length $ header thead
-
-      headerErr :: [BzoErr]
-      headerErr = ife (tparct == 1) [] [TypeErr p $ pack $ "Type composition failed: " ++ (show tparct) ++ " parameters expected for type " ++ (show $ getTyId dt t0) ++ ", found 1."]
-
-  in  headerErr
-
-isTypeValid dt th _ = []
-
-
-
-
-
-
-
-
-
 makeTypes :: DefinitionTable -> Either [BzoErr] DefinitionTable
 makeTypes dt@(DefinitionTable defs files ids top) =
   let
@@ -448,6 +398,7 @@ makeTypes dt@(DefinitionTable defs files ids top) =
       results :: Either [BzoErr] (M.Map Int64 Definition)
       results = toRight M.fromList $ allPass $ L.map (preserveId translateDef) $ M.assocs defs
 
+      {-
       validate :: M.Map Int64 Definition -> [BzoErr]
       validate ds = L.concatMap (\x ->
                                   case x of
@@ -457,13 +408,13 @@ makeTypes dt@(DefinitionTable defs files ids top) =
 
       -- Check if types are valid (WIP)
       validErr :: [BzoErr]
-      validErr = fuseEither $ toRight validate results
+      validErr = fuseEither $ toRight validate results-}
 
       -- TODO:
       -- -- Check that make types are all valid (e.g, nothing like "Int Bool" as a definition.)
 
       errs :: [BzoErr]
-      errs = (fromLeft [] results) ++ validErr
+      errs = (fromLeft [] results)-- ++ validErr
 
       dt' :: DefinitionTable
       dt' = DefinitionTable (getRight results) files ids top
