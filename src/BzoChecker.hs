@@ -524,14 +524,14 @@ recursivePolycheck (DefinitionTable defs files ids top) =
 
       polysets :: M.Map Int64 (S.Set Int64)
       polysets = M.fromList $
-                 L.map    (\(k,d) -> (k, flatten (typedef d) $ S.singleton k)) $
+                 L.map    (\(k,d) -> (k, flatten (typedef d) $ S.empty)) $
                  L.filter (\(k,d) ->     isTyDef d)  $
                  M.assocs defs
 
       noPolyrec :: BzoPos -> (Int64, S.Set Int64) -> [BzoErr]
       noPolyrec p (k, set) =
         if (S.member k set)
-          then [TypeErr p $ pack "Type has invalid recursive structure"]
+          then [TypeErr p $ pack ("Type " ++ (unpack $ identifier $ defs M.! k) ++ " has invalid recursive structure")]
           else []
 
       whileRec :: M.Map Int64 (S.Set Int64) -> [BzoErr]
@@ -545,7 +545,7 @@ recursivePolycheck (DefinitionTable defs files ids top) =
 
             -- TODO: True if any sets have changed size
             grow :: Bool
-            grow = L.any (\(k,d) -> (S.size $ polyset M.! k) == (S.size d)) $ M.assocs polyset
+            grow = L.any (\(k,d) -> (S.size $ polyset M.! k) /= (S.size d)) $ M.assocs polyset
 
         in case (errs, grow) of
               ([], False) -> []
