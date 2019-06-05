@@ -398,18 +398,6 @@ makeTypes dt@(DefinitionTable defs files ids top) =
       results :: Either [BzoErr] (M.Map Int64 Definition)
       results = toRight M.fromList $ allPass $ L.map (preserveId translateDef) $ M.assocs defs
 
-      {-
-      validate :: M.Map Int64 Definition -> [BzoErr]
-      validate ds = L.concatMap (\x ->
-                                  case x of
-                                    TypeDef i h th td -> (isTypeValid (DefinitionTable ds files ids top) th td)
-                                    _                 -> []
-                                ) $ M.elems ds
-
-      -- Check if types are valid (WIP)
-      validErr :: [BzoErr]
-      validErr = fuseEither $ toRight validate results-}
-
       -- TODO:
       -- -- Check that make types are all valid (e.g, nothing like "Int Bool" as a definition.)
 
@@ -421,7 +409,7 @@ makeTypes dt@(DefinitionTable defs files ids top) =
 
   in if (not $ L.null errs)
       then (Left errs)
-      else case (recursivePolycheck dt') of
+      else case ((recursivePolycheck dt') ++ (validateTypePass dt')) of
             [] -> Right dt'
             er -> Left  er
 

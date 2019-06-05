@@ -293,7 +293,18 @@ validType dt (h, CmpdType _  ts) = L.concatMap (\t -> validType dt (h, t)) ts
 validType dt (h, PolyType _  ts) = L.concatMap (\t -> validType dt (h, t)) ts
 validType dt (h, FuncType _ i o) = (validType dt (h, i)) ++ (validType dt (h, o))
 validType dt (h, ArryType _ _ t) =  validType dt (h, t)
---validType dt (h, )
+validType dt (h, MakeType _ [t]) =  validType dt (h, t)
+validType dt (h, MakeType _  []) = []
+validType dt (h, MakeType _ ((CmpdType p xs):t:ts)) = [TypeErr p $ pack "Unexpected Compound in Type Definition."]
+--validType dt (h, MakeType p (t:ts)) =
+--  let
+--      terr :: [BzoErr]
+--      terr = validateType dt (h, t)
+--
+--      checkConstraints dt ...
+--  in terr ++ (validType dt (h, MakeType p ts))
+
+validType dt (h, t) = []
 
 
 
@@ -306,11 +317,12 @@ validType dt (h, ArryType _ _ t) =  validType dt (h, t)
 
 
 validateTypePass :: DefinitionTable -> [BzoErr]
-validateTypePass (DefinitionTable defs files ids top) =
+validateTypePass dt@(DefinitionTable defs files ids top) =
   let
+      tys :: [(TypeHeader, Type)]
+      tys = L.map (\t -> (typehead t, typedef t)) $ L.filter isTyDef $ M.elems defs
 
-
-  in []
+  in L.concatMap (validType dt) tys
 
 
 
