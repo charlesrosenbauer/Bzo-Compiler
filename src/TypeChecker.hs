@@ -77,7 +77,12 @@ checkXS_YS p k d (h0, xs) (h1, ys) =
 
 
 checkConstraints :: DefinitionTable -> TypeHeader -> (TypeHeader, Type) -> [BzoErr]
-checkConstraints dt h0@(TyHeader [hd] hmap) (h1, t) = checkConstraints dt h0 (h1, t)
+checkConstraints dt h0@(TyHeader [hd] hmap) (h1, t) =
+  let
+      checkConstraint :: THeadAtom -> [BzoErr]
+      checkConstraint (TVrAtom p v cs) = L.concatMap (\(Constraint _ c) -> checkType dt (h0, c) (h1, t)) cs
+
+  in  checkConstraint $ hmap M.! hd
 
 checkConstraints dt h0@(TyHeader  hd  hmap) (h1, CmpdType p xs) =
   let
@@ -218,7 +223,7 @@ checkType' k d (h0, MakeType p0 (x:xs)) (h1, MakeType p1 (y:ys)) =
 
 checkType' k d (h0, t) (h1, TVarType p v) = ([], [(v, t, k)])
 
-checkType' _ _ (_, x) (_, y) = ([TypeErr (typos x) $ pack ("Type Mismatch:\n" ++ (show x) ++ "\n&&\n" ++ (show y))], [])
+checkType' _ _ (_, x) (_, y) = ([TypeErr (typos y) $ pack ("Type Mismatch:\n" ++ (show x) ++ "\n&&\n" ++ (show y))], [])
 
 
 
@@ -296,13 +301,17 @@ validType dt (h, ArryType _ _ t) =  validType dt (h, t)
 validType dt (h, MakeType _ [t]) =  validType dt (h, t)
 validType dt (h, MakeType _  []) = []
 validType dt (h, MakeType _ ((CmpdType p xs):t:ts)) = [TypeErr p $ pack "Unexpected Compound in Type Definition."]
---validType dt (h, MakeType p (t:ts)) =
---  let
---      terr :: [BzoErr]
---      terr = validateType dt (h, t)
---
---      checkConstraints dt ...
---  in terr ++ (validType dt (h, MakeType p ts))
+validType dt (h, MakeType p ((LtrlType _  t):ts)) =
+  let
+      terr :: [BzoErr]
+      terr = validType dt (h, MakeType p ts)
+
+      thead  :: TypeHeader
+      typ    :: Type
+      (thead, typ) = (\t -> (typehead t, typedef t)) ((dt_defs dt) M.! t)
+
+      cerr = checkConstraints dt thead (h, MakeType p ts)
+  in terr ++ cerr
 
 validType dt (h, t) = []
 
