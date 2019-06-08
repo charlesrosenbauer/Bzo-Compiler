@@ -576,7 +576,7 @@ checkProgram dt@(DefinitionTable defs files ids top) =
       dt'  :: [DefinitionTable]
       (err2, dt') = splitEitherList $ makeTypes dt
 
-      !testerr = (\x -> trace ("Errs:\n" ++ (L.concatMap show x) ++ "\n") x) $ testTypeCheck $ L.head dt'
+      testerr = (\x -> trace ("Errs:\n" ++ (L.concatMap show x) ++ "\n") x) $ testTypeCheck $ L.head dt'
 
       errs :: [BzoErr]
       errs = err0 ++ err1 ++ err2

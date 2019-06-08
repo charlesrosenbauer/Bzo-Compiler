@@ -100,7 +100,9 @@ checkConstraints dt h0@(TyHeader  hd  hmap) (h1, CmpdType p xs) =
 
   in if (hlen == xlen)
       then L.concatMap checkPair pairs
-      else [TypeErr p $ pack $ "Cannot construct type. Expected " ++ (show hlen) ++ " parameters, found " ++ (show xlen) ++ ". "]
+      else [TypeErr p $ pack $ "Cannot construct type. Expected " ++ (show hlen) ++ " parameters, found " ++ (show xlen) ++ ".\n" ++ (show h0) ++ "\n&\n" ++ (show (CmpdType p xs))]
+
+checkConstraints dt h0 (h1, MakeType p [t]) = checkConstraints dt h0 (h1, t)
 
 checkConstraints dt h0 (h1, t) = checkConstraints dt h0 (h1, CmpdType (typos t) [t])
 
@@ -220,6 +222,10 @@ checkType' k d (h0, MakeType p0 (x:xs)) (h1, MakeType p1 (y:ys)) =
   case (checkType' k d (h0, x) (h1, y)) of
     ([], []) -> checkType' k d (h0, MakeType p0 xs) (h1, MakeType p1 ys)  -- Probably not the best way to track positions here.
     ret      -> ret
+
+checkType' k d (h0, MakeType p [x]) (h1, y) = checkType' k d (h0, x) (h1, y)
+
+checkType' k d (h0, x) (h1, MakeType p [y]) = checkType' k d (h0, x) (h1, y)
 
 checkType' k d (h0, t) (h1, TVarType p v) = ([], [(v, t, k)])
 
