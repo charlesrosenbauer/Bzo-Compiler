@@ -125,6 +125,52 @@ noUndefinedErrs dt@(DefinitionTable defs files ids _) =
 
 
 
+modelConstraints :: FileTable -> DefinitionTable -> Either [BzoErr] DefinitionTable
+modelConstraints ft dt@(DefinitionTable defs files ids top) =
+  let
+      emptyheader = TyHeader [] M.empty
+
+      modelCon   :: Constraint -> Either [BzoErr] Constraint
+      modelCon (Constraint p t) =
+        case t of
+          (UnresType ast) -> toRight (Constraint p) $ makeType ft emptyheader ast
+          typ             -> Right   (Constraint p typ)
+
+      modelCons  :: (TVId, THeadAtom)  -> Either [BzoErr] (TVId, THeadAtom)
+      modelCons (v, TVrAtom p t cs) = onAllPass (L.map modelCon cs) (\xs -> (v, TVrAtom p t xs))
+
+      modelTHead :: TypeHeader -> Either [BzoErr] TypeHeader
+      modelTHead (TyHeader hs hmap) =
+        let
+            hmap' :: Either [BzoErr] [(TVId, THeadAtom)]
+            hmap' = allPass $ L.map modelCons $ M.assocs hmap
+        in  case hmap' of
+              Right pass -> Right (TyHeader hs (M.fromList pass))
+              Left  errs -> Left  errs
+
+      modelType :: Definition -> Either [BzoErr] Definition
+      modelType (TypeDef i h th td) =
+        case (modelTHead th) of
+          Right th' -> Right (TypeDef i h th' td)
+          Left errs -> Left errs
+
+      modelType x = Right x
+
+      defs' :: Either [BzoErr] [Definition]
+      defs' = allPass $ L.map modelType $ M.elems defs
+  in case defs' of
+      Left errs -> Left errs
+      Right dfs -> Right (DefinitionTable (M.fromList $ L.zip (M.keys defs) dfs) files ids top)
+
+
+
+
+
+
+
+
+
+
 -- Takes type parameters and returns an associated header
 initializeTypeHeader :: TypeHeader -> BzoSyntax -> TypeHeader
 initializeTypeHeader hd (BzS_Undefined p) = TyHeader [] M.empty
