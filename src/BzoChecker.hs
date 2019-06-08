@@ -125,16 +125,19 @@ noUndefinedErrs dt@(DefinitionTable defs files ids _) =
 
 
 
-modelConstraints :: FileTable -> DefinitionTable -> Either [BzoErr] DefinitionTable
-modelConstraints ft dt@(DefinitionTable defs files ids top) =
+modelConstraints :: SymbolTable -> DefinitionTable -> Either [BzoErr] DefinitionTable
+modelConstraints st dt@(DefinitionTable defs files ids top) =
   let
       emptyheader = TyHeader [] M.empty
 
       modelCon   :: Constraint -> Either [BzoErr] Constraint
       modelCon (Constraint p t) =
-        case t of
-          (UnresType ast) -> toRight (Constraint p) $ makeType ft emptyheader ast
-          typ             -> Right   (Constraint p typ)
+        let
+            ft :: FileTable
+            ft = (getSymTable st) M.! (fileName p)
+        in case t of
+            (UnresType ast) -> toRight (Constraint p) $ makeType ft emptyheader ast
+            typ             -> Right   (Constraint p typ)
 
       modelCons  :: (TVId, THeadAtom)  -> Either [BzoErr] (TVId, THeadAtom)
       modelCons (v, TVrAtom p t cs) = onAllPass (L.map modelCon cs) (\xs -> (v, TVrAtom p t xs))
@@ -447,16 +450,22 @@ makeTypes dt@(DefinitionTable defs files ids top) =
       -- TODO:
       -- -- Check that make types are all valid (e.g, nothing like "Int Bool" as a definition.)
 
-      errs :: [BzoErr]
-      errs = (fromLeft [] results)-- ++ validErr
+      dt' :: Either [BzoErr] DefinitionTable
+      dt' = modelConstraints syms (DefinitionTable (getRight results) files ids top)
 
-      dt' :: DefinitionTable
-      dt' = DefinitionTable (getRight results) files ids top
+      dt'' :: [DefinitionTable]
+      dt''  = rights [dt']
+
+      dterr :: [BzoErr]
+      dterr = L.concat $ lefts [dt']
+
+      errs :: [BzoErr]
+      errs = (fromLeft [] results) ++ dterr
 
   in if (not $ L.null errs)
       then (Left errs)
-      else case ((recursivePolycheck dt') ++ (validateTypePass dt')) of
-            [] -> Right dt'
+      else case ((recursivePolycheck $ L.head dt'') ++ (validateTypePass $ L.head dt'')) of
+            [] -> Right $ L.head dt''
             er -> Left  er
 
 
