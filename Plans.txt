@@ -92,6 +92,17 @@ Analysis:
     * It's valuable to know the dependency graph of a function. This can be used for
       Static Laziness, DCE, etc.
 
+  * Procedural Analysis
+    * Much like Superoptimization can be used to procedurally generate optimizations,
+      a similar approach could be used to procedurally generate analysis rules;
+      * take a common set of instructions with a common set of properties
+      * generate a list of random inferences
+      * run some tests to narrow down on which are potentially valid
+      * use an SMT solver to narrow it down to those that are actually correct
+      Something like this could be used to generate a tremendous number of random
+      analysis rules that actually work, and would be effectively like creating a
+      lookup table for approximating a full SAT/SMT solver.
+
 High-Level Optimizations:
   * SoA Formatting
     * Structure of Array formatting. Instead of formatting an array as a bunch of
