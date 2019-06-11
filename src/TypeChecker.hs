@@ -142,11 +142,41 @@ checkType' k d (h0,LtrlType p t0) (h1,LtrlType _ t1) =
       t2 :: Type
       t2 = typedef  tdef
 
-  in case (istc, t0 == t1, checkType' k d (h0,LtrlType p t0) (h2,t2)) of
+  in case (istc, t0 == t1, checkType' k d (h0, LtrlType p t0) (h2, t2)) of
       (True,  _    , _      ) -> ([], [])  -- TODO: fix
       (False, True , _      ) -> ([], [])
       (False, False, ([], _)) -> ([], [])
-      (False, False, _      ) -> ([TypeErr p $ pack $ "Types " ++ (show $ getTyId d t0) ++ " and " ++ (show $ getTyId d t1) ++ " do not match."], [])
+      (False, False, (er, _)) -> ([TypeErr p $ pack $ "Types " ++ (show $ getTyId d t0) ++ " and " ++ (show $ getTyId d t1) ++ " do not match."] ++ er, [])
+
+checkType' k d (h0, t0) (h1,LtrlType _ t1) =
+  let
+      tdef :: Definition
+      tdef = (dt_defs d) M.! t1
+
+      h2 :: TypeHeader
+      h2 = typehead tdef
+
+      t2 :: Type
+      t2 = typedef  tdef
+
+  in case (checkType' k d (h0, t0) (h2, t2)) of
+      ([], _ ) -> ([], [])
+      (er, _ ) -> ([TypeErr (typos t0) $ pack ("Could not match on type " ++ (show $ getTyId d t1) ++ "\n")] ++ er, [])
+
+checkType' k d (h0,LtrlType p t0) (h1, t1) =
+  let
+      tdef :: Definition
+      tdef = (dt_defs d) M.! t0
+
+      h2 :: TypeHeader
+      h2 = typehead tdef
+
+      t2 :: Type
+      t2 = typedef  tdef
+
+  in case (checkType' k d (h2, t2) (h1, t1)) of
+      ([], _ ) -> ([], [])
+      (er, _ ) -> ([TypeErr p $ pack ("Could not match on type " ++ (show $ getTyId d t0) ++ "\n")] ++ er, [])
 
 checkType' k d (h0, ArryType p 0  _ ) (h1, ArryType _ _ _) = ([TypeErr p $ pack $ "Cannot constrain array size."], [])
 
@@ -178,10 +208,6 @@ checkType' _ d (h0,FuncType _ i0 o0) (h1,FuncType _ i1 o1) =
 
 checkType' k d (h0,CmpdType p xs) (h1,CmpdType _ ys) = checkXS_YS p k d (h0, xs) (h1, ys)
 
-checkType' k d (h0, PolyType _ [t0]) (h1, t1) = checkType' k d (h0, t0) (h1, t1)
-
-checkType' k d (h0, t0) (h1, PolyType _ [t1]) = checkType' k d (h0, t0) (h1, t1)
-
 -- These two will probably spit out some gnarly error messages. Tech debt?
 checkType' k d (h0, PolyType p xs) (h1, PolyType _ ys) =
   let
@@ -196,6 +222,10 @@ checkType' k d (h0, PolyType p xs) (h1, PolyType _ ys) =
   in  if (L.any E.isRight eacherrs)
         then ([], L.concat $ rights eacherrs)
         else (L.concat $ lefts eacherrs, [])
+
+checkType' k d (h0, PolyType _ [t0]) (h1, t1) = checkType' k d (h0, t0) (h1, t1)
+
+checkType' k d (h0, t0) (h1, PolyType _ [t1]) = checkType' k d (h0, t0) (h1, t1)
 
 checkType' k d (h0, t) (h1, PolyType _ ys) =
   let
