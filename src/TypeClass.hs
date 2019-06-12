@@ -50,6 +50,7 @@ makeTyClassObj dt@(DefinitionTable defs files ids top) (TyClassDef tcid file thd
                   getDef :: Int64 -> (Int64, Definition)
                   getDef x = (x, defs M.! x)
 
+                  -- TODO: Change to use checkWithVars, handle type matching on Class TVar
                   checkMatch :: (Int64, Definition) -> Bool
                   checkMatch (_,x) = L.null $ checkType dt (thead, ty) (typehead x, functype x)
 

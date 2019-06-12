@@ -271,8 +271,8 @@ checkType' _ _ (_, x) (_, y) = ([TypeErr (typos y) $ pack ("Type Mismatch:\n" ++
 
 
 --TODO: !!TEST THIS CODE!!
-checkType :: DefinitionTable -> (TypeHeader, Type) -> (TypeHeader, Type) -> [BzoErr]
-checkType d a@(h0,t0) b@(h1,t1) =
+checkWithVars :: DefinitionTable -> (TypeHeader, Type) -> (TypeHeader, Type) -> ([BzoErr], M.Map TVId Type)
+checkWithVars d a@(h0,t0) b@(h1,t1) =
   let
       errs :: [BzoErr]
       vals :: [(TVId, Type, IOKind)]
@@ -316,9 +316,17 @@ checkType d a@(h0,t0) b@(h1,t1) =
 
       errs' :: [BzoErr]
       errs' = errs -- ++ otherErrs
+
+      -- TODO: go through this more thoroughly
+      tvpairs :: M.Map TVId Type
+      tvpairs = M.fromList $ L.map dtrd3 $ L.concat ins
+
   in case errs' of
-      [] -> []
-      er -> er
+      [] -> ([], tvpairs)
+      er -> (er, tvpairs)
+
+checkType :: DefinitionTable -> (TypeHeader, Type) -> (TypeHeader, Type) -> [BzoErr]
+checkType dt a b = fst $ checkWithVars dt a b
 
 
 
