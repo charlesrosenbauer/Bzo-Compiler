@@ -45,9 +45,19 @@ makeTyClassObj dt@(DefinitionTable defs files ids top) (TyClassDef tcid file thd
 
             -- Filter : typecheck
             chkpass :: [Int64]
-            chkpass = L.map fst $ L.filter (\(i,x) -> L.null $ checkType dt (thead, ty) (typehead x, functype x)) $ L.map (\x -> (x, defs M.! x)) $ tidpass
+            chkpass =
+              let
+                  getDef :: Int64 -> (Int64, Definition)
+                  getDef x = (x, defs M.! x)
 
-        in tidpass
+                  checkMatch :: (Int64, Definition) -> Bool
+                  checkMatch (_,x) = L.null $ checkType dt (thead, ty) (typehead x, functype x)
+
+              in  L.map fst $
+                  L.filter checkMatch $
+                  L.map getDef tidpass
+
+        in chkpass
 
       {-
         TODO:
