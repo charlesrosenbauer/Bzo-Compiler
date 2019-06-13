@@ -119,6 +119,8 @@ checkConstraints dt h0 (h1, t) = checkConstraints dt h0 (h1, CmpdType (typos t) 
   A <= B
 -}
 checkType' :: IOKind -> DefinitionTable -> (TypeHeader, Type) -> (TypeHeader, Type) -> ([BzoErr], [(TVId, Type, IOKind)])
+
+-- Primitive Type Checking
 checkType' _ _ (_, VoidType    _) (_, VoidType    _) = ([], [])
 checkType' _ _ (_, IntType  p i0) (_, IntType  _ i1) = (ife (i0 == i1) [] [TypeErr p $ pack $ "Integer literals "   ++ (show i0) ++ " and " ++ (show i1) ++ " do not match."], [])
 checkType' _ _ (_, FltType  p f0) (_, FltType  _ f1) = (ife (f0 == f1) [] [TypeErr p $ pack $ "Float literals "     ++ (show f0) ++ " and " ++ (show f1) ++ " do not match."], [])
@@ -128,43 +130,14 @@ checkType' _ _ (_, IntType  p i0) (_, BITyType _  b) = (ife (b  == 12) [] [TypeE
 checkType' _ _ (_, FltType  p f0) (_, BITyType _  b) = (ife (b  == 13) [] [TypeErr p $ pack $ "Expected float builtin"], [])
 checkType' _ _ (_, StrType  p s0) (_, BITyType _  b) = (ife (b  == 17) [] [TypeErr p $ pack $ "Expected string builtin"], [])
 checkType' _ _ (_, BITyType p b0) (_, BITyType _ b1) = (ife (b0 == b1) [] [TypeErr p $ pack $ "Builtin types do not match"], [])
-checkType' k d (h0,LtrlType p t0) (h1,LtrlType _ t1) =
+
+
+-- Primitive Literal Checking
+checkType' k d (h0,LtrlType p0 t0) (h1,LtrlType p t1) =
   let
       -- TODO: Add a case for typeclasses.
-      istc = isTyClass $ (dt_defs d) M.! t1
+      istc = isTyClass $ (dt_defs d) M.! t0
 
-      tdef :: Definition
-      tdef = (dt_defs d) M.! t1
-
-      h2 :: TypeHeader
-      h2 = typehead tdef
-
-      t2 :: Type
-      t2 = typedef  tdef
-
-  in case (istc, t0 == t1, checkType' k d (h0, LtrlType p t0) (h2, t2)) of
-      (True,  _    , _      ) -> ([], [])  -- TODO: fix
-      (False, True , _      ) -> ([], [])
-      (False, False, ([], _)) -> ([], [])
-      (False, False, (er, _)) -> ([TypeErr p $ pack $ "Types " ++ (show $ getTyId d t0) ++ " and " ++ (show $ getTyId d t1) ++ " do not match."] ++ er, [])
-
-checkType' k d (h0, t0) (h1,LtrlType _ t1) =
-  let
-      tdef :: Definition
-      tdef = (dt_defs d) M.! t1
-
-      h2 :: TypeHeader
-      h2 = typehead tdef
-
-      t2 :: Type
-      t2 = typedef  tdef
-
-  in case (checkType' k d (h0, t0) (h2, t2)) of
-      ([], _ ) -> ([], [])
-      (er, _ ) -> ([TypeErr (typos t0) $ pack ("Could not match on type " ++ (show $ getTyId d t1) ++ "\n")] ++ er, [])
-
-checkType' k d (h0,LtrlType p t0) (h1, t1) =
-  let
       tdef :: Definition
       tdef = (dt_defs d) M.! t0
 
@@ -174,10 +147,14 @@ checkType' k d (h0,LtrlType p t0) (h1, t1) =
       t2 :: Type
       t2 = typedef  tdef
 
-  in case (checkType' k d (h2, t2) (h1, t1)) of
-      ([], _ ) -> ([], [])
-      (er, _ ) -> ([TypeErr p $ pack ("Could not match on type " ++ (show $ getTyId d t0) ++ "\n")] ++ er, [])
+  in case (istc, t0 == t1, checkType' k d (h2, t2) (h1, LtrlType p t1)) of
+      (True,  _    , _      ) -> ([], [])  -- TODO: fix
+      (False, True , _      ) -> ([], [])
+      (False, False, ([], _)) -> ([], [])
+      (False, False, (er, _)) -> ([TypeErr p0 $ pack $ "Types " ++ (show $ getTyId d t0) ++ " and " ++ (show $ getTyId d t1) ++ " do not match."] ++ er, [])
 
+
+-- Array Type Checking
 checkType' k d (h0, ArryType p 0  _ ) (h1, ArryType _ _ _) = ([TypeErr p $ pack $ "Cannot constrain array size."], [])
 
 checkType' k d (h0, ArryType _ _  t0) (h1, ArryType _ 0  t1) = checkType' k d (h0, t0) (h1, t1)
@@ -187,6 +164,8 @@ checkType' k d (h0, ArryType p s0 t0) (h1, ArryType _ s1 t1) =
     ([TypeErr p $ pack $ "Expected array of size " ++ (show s1) ++ ", found one of size " ++ (show s0) ++ "."], [])
     (checkType' k d (h0, t0) (h1, t1))
 
+
+-- Compound Type Checking
 checkType' k d (h0, CmpdType p   ts0) (h1, ArryType _ 0 t1) = checkXS_Y k d (h0, ts0) (h1, t1)
 
 checkType' k d (h0, CmpdType p   ts0) (h1, ArryType _ s t1) =
@@ -194,6 +173,10 @@ checkType' k d (h0, CmpdType p   ts0) (h1, ArryType _ s t1) =
     ([TypeErr p $ pack $ "Casting Tuple to Array failed; expected " ++ (show s) ++ " elements, found " ++ (show $ L.length ts0) ++ "."], [])
     (checkXS_Y k d (h0, ts0) (h1, t1))
 
+checkType' k d (h0,CmpdType p xs) (h1,CmpdType _ ys) = checkXS_YS p k d (h0, xs) (h1, ys)
+
+
+-- Function Type Checking
 checkType' _ d (h0,FuncType _ i0 o0) (h1,FuncType _ i1 o1) =
   let
       inErrs :: [BzoErr]
@@ -206,9 +189,9 @@ checkType' _ d (h0,FuncType _ i0 o0) (h1,FuncType _ i1 o1) =
 
   in ((inErrs ++ exErrs), (inVars ++ exVars))
 
-checkType' k d (h0,CmpdType p xs) (h1,CmpdType _ ys) = checkXS_YS p k d (h0, xs) (h1, ys)
 
--- These two will probably spit out some gnarly error messages. Tech debt?
+-- Polymorphic Type Checking
+-- These will probably spit out some gnarly error messages. Tech debt?
 checkType' k d (h0, PolyType p xs) (h1, PolyType _ ys) =
   let
       each :: [([BzoErr], [(TVId, Type, IOKind)])]
@@ -242,6 +225,8 @@ checkType' k d (h0, t) (h1, PolyType _ ys) =
       then ([], L.concat $ rights eacherrs)
       else (L.concat $ lefts eacherrs, [])
 
+
+-- Type Composition Checking
 checkType' k d (h0, MakeType _ []) (h1, MakeType _ []) = ([], [])
 
 checkType' k d (h0, MakeType p []) (h1, MakeType _  _) = ([TypeErr p $ pack "Type mismatch; expected more parameters."], [])
@@ -257,8 +242,44 @@ checkType' k d (h0, MakeType p [x]) (h1, y) = checkType' k d (h0, x) (h1, y)
 
 checkType' k d (h0, x) (h1, MakeType p [y]) = checkType' k d (h0, x) (h1, y)
 
+
+-- Complex Type Literal Checking
+checkType' k d (h0, t0) (h1,LtrlType _ t1) =
+  let
+      tdef :: Definition
+      tdef = (dt_defs d) M.! t1
+
+      h2 :: TypeHeader
+      h2 = typehead tdef
+
+      t2 :: Type
+      t2 = typedef  tdef
+
+  in case (checkType' k d (h0, t0) (h2, t2)) of
+      ([], _ ) -> ([], [])
+      (er, _ ) -> ([TypeErr (typos t0) $ pack ("Could not match type:\n" ++ (show t0) ++ "\non type " ++ (show $ getTyId d t1) ++ "\n")] ++ er, [])
+
+checkType' k d (h0,LtrlType p t0) (h1, t1) =
+  let
+      tdef :: Definition
+      tdef = (dt_defs d) M.! t0
+
+      h2 :: TypeHeader
+      h2 = typehead tdef
+
+      t2 :: Type
+      t2 = typedef  tdef
+
+  in case (checkType' k d (h2, t2) (h1, t1)) of
+      ([], _ ) -> ([], [])
+      (er, _ ) -> ([TypeErr p $ pack ("Could not match type " ++ (show $ getTyId d t0) ++ "\non type:\n" ++ (show t1) ++ "\n")] ++ er, [])
+
+
+-- Type Variable Checking
 checkType' k d (h0, t) (h1, TVarType p v) = ([], [(v, t, k)])
 
+
+-- Fallthrough Case
 checkType' _ _ (_, x) (_, y) = ([TypeErr (typos y) $ pack ("Type Mismatch:\n" ++ (show x) ++ "\n&&\n" ++ (show y))], [])
 
 
