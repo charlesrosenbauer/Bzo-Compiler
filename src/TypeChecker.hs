@@ -80,7 +80,7 @@ checkConstraints :: DefinitionTable -> TypeHeader -> (TypeHeader, Type) -> [BzoE
 checkConstraints dt h0@(TyHeader [hd] hmap) (h1, t) =
   let
       checkConstraint :: THeadAtom -> [BzoErr]
-      checkConstraint (TVrAtom p v cs) = L.concatMap (\(Constraint _ c) -> checkType dt (h0, c) (h1, t)) cs
+      checkConstraint (TVrAtom p v cs) = L.concatMap (\(Constraint _ c) -> checkType dt (h0, t) (h1, c)) cs
 
   in  checkConstraint $ hmap M.! hd
 
@@ -96,7 +96,7 @@ checkConstraints dt h0@(TyHeader  hd  hmap) (h1, CmpdType p xs) =
       pairs = L.map (\(h,t) -> (hmap M.! h, t)) $ L.zip hd xs
 
       checkPair :: (THeadAtom, Type) -> [BzoErr]
-      checkPair (TVrAtom p v cs, t) = L.concatMap (\(Constraint _ c) -> checkType dt (h0, c) (h1, t)) cs
+      checkPair (TVrAtom p v cs, t) = L.concatMap (\(Constraint _ c) -> checkType dt (h0, t) (h1, c)) cs
 
   in if (hlen == xlen)
       then L.concatMap checkPair pairs
