@@ -40,13 +40,13 @@ getTyId (DefinitionTable defs _ _ _) t = identifier $ defs M.! t
 -}
 data IOKind = InKind | ExKind deriving Eq
 
-checkXS_Y  :: IOKind -> DefinitionTable -> (TypeHeader, [Type]) -> (TypeHeader, Type) -> ([BzoErr], [(TVId, Type, IOKind)])
-checkXS_Y  k d (h0, ts) (h1, t1) = concatUnzip $ L.map (\t -> checkType' k d (h0,t) (h1,t1)) ts
+checkXS_Y  :: IOKind -> DefinitionTable -> (TypeHeader, [Type]) -> (TypeHeader, Type) -> ([BzoErr], [(TVId, Type, IOKind)], [((TypeHeader, Type), (TypeHeader, Type))])
+checkXS_Y  k d (h0, ts) (h1, t1) = concatUnzip3 $ L.map (\t -> checkType' k d (h0,t) (h1,t1)) ts
 
-checkX_YS  :: IOKind -> DefinitionTable -> (TypeHeader, Type) -> (TypeHeader, [Type]) -> ([BzoErr], [(TVId, Type, IOKind)])
-checkX_YS  k d (h0, t0) (h1, ts) = concatUnzip $ L.map (\t -> checkType' k d (h0,t0) (h1,t)) ts
+checkX_YS  :: IOKind -> DefinitionTable -> (TypeHeader, Type) -> (TypeHeader, [Type]) -> ([BzoErr], [(TVId, Type, IOKind)], [((TypeHeader, Type), (TypeHeader, Type))])
+checkX_YS  k d (h0, t0) (h1, ts) = concatUnzip3 $ L.map (\t -> checkType' k d (h0,t0) (h1,t)) ts
 
-checkXS_YS :: BzoPos -> IOKind -> DefinitionTable -> (TypeHeader, [Type]) -> (TypeHeader, [Type]) -> ([BzoErr], [(TVId, Type, IOKind)])
+checkXS_YS :: BzoPos -> IOKind -> DefinitionTable -> (TypeHeader, [Type]) -> (TypeHeader, [Type]) -> ([BzoErr], [(TVId, Type, IOKind)], [((TypeHeader, Type), (TypeHeader, Type))])
 checkXS_YS p k d (h0, xs) (h1, ys) =
   let
       xlen :: Int
@@ -60,12 +60,13 @@ checkXS_YS p k d (h0, xs) (h1, ys) =
 
       eacherr :: [BzoErr]
       eachvar :: [(TVId, Type, IOKind)]
-      (eacherr, eachvar) = concatUnzip $ L.map (\(a,b) -> checkType' k d (h0,a) (h1,b)) $ L.zip xs ys
+      eachtc  :: [((TypeHeader, Type), (TypeHeader, Type))]
+      (eacherr, eachvar, eachtc) = concatUnzip3 $ L.map (\(a,b) -> checkType' k d (h0,a) (h1,b)) $ L.zip xs ys
 
       errs :: [BzoErr]
       errs = ife (L.null samelength) eacherr samelength
 
-  in (errs, eachvar)
+  in (errs, eachvar, eachtc)
 
 
 
@@ -118,18 +119,18 @@ checkConstraints dt h0 (h1, t) = checkConstraints dt h0 (h1, CmpdType (typos t) 
 {-
   A <= B
 -}
-checkType' :: IOKind -> DefinitionTable -> (TypeHeader, Type) -> (TypeHeader, Type) -> ([BzoErr], [(TVId, Type, IOKind)])
+checkType' :: IOKind -> DefinitionTable -> (TypeHeader, Type) -> (TypeHeader, Type) -> ([BzoErr], [(TVId, Type, IOKind)], [((TypeHeader, Type), (TypeHeader, Type))])
 
 -- Primitive Type Checking
-checkType' _ _ (_, VoidType    _) (_, VoidType    _) = ([], [])
-checkType' _ _ (_, IntType  p i0) (_, IntType  _ i1) = (ife (i0 == i1) [] [TypeErr p $ pack $ "Integer literals "   ++ (show i0) ++ " and " ++ (show i1) ++ " do not match."], [])
-checkType' _ _ (_, FltType  p f0) (_, FltType  _ f1) = (ife (f0 == f1) [] [TypeErr p $ pack $ "Float literals "     ++ (show f0) ++ " and " ++ (show f1) ++ " do not match."], [])
-checkType' _ _ (_, StrType  p s0) (_, StrType  _ s1) = (ife (s0 == s1) [] [TypeErr p $ pack $ "String literals "    ++ (show s0) ++ " and " ++ (show s1) ++ " do not match."], [])
-checkType' _ _ (_, FLitType p s0) (_, FLitType _ s1) = (ife (s0 == s1) [] [TypeErr p $ pack $ "Function literals "  ++ (show s0) ++ " and " ++ (show s1) ++ " do not match."], [])
-checkType' _ _ (_, IntType  p i0) (_, BITyType _  b) = (ife (b  == 12) [] [TypeErr p $ pack $ "Expected int builtin"], [])
-checkType' _ _ (_, FltType  p f0) (_, BITyType _  b) = (ife (b  == 13) [] [TypeErr p $ pack $ "Expected float builtin"], [])
-checkType' _ _ (_, StrType  p s0) (_, BITyType _  b) = (ife (b  == 17) [] [TypeErr p $ pack $ "Expected string builtin"], [])
-checkType' _ _ (_, BITyType p b0) (_, BITyType _ b1) = (ife (b0 == b1) [] [TypeErr p $ pack $ "Builtin types do not match"], [])
+checkType' _ _ (_, VoidType    _) (_, VoidType    _) = ([], [], [])
+checkType' _ _ (_, IntType  p i0) (_, IntType  _ i1) = (ife (i0 == i1) [] [TypeErr p $ pack $ "Integer literals "   ++ (show i0) ++ " and " ++ (show i1) ++ " do not match."], [], [])
+checkType' _ _ (_, FltType  p f0) (_, FltType  _ f1) = (ife (f0 == f1) [] [TypeErr p $ pack $ "Float literals "     ++ (show f0) ++ " and " ++ (show f1) ++ " do not match."], [], [])
+checkType' _ _ (_, StrType  p s0) (_, StrType  _ s1) = (ife (s0 == s1) [] [TypeErr p $ pack $ "String literals "    ++ (show s0) ++ " and " ++ (show s1) ++ " do not match."], [], [])
+checkType' _ _ (_, FLitType p s0) (_, FLitType _ s1) = (ife (s0 == s1) [] [TypeErr p $ pack $ "Function literals "  ++ (show s0) ++ " and " ++ (show s1) ++ " do not match."], [], [])
+checkType' _ _ (_, IntType  p i0) (_, BITyType _  b) = (ife (b  == 12) [] [TypeErr p $ pack $ "Expected int builtin"      ], [], [])
+checkType' _ _ (_, FltType  p f0) (_, BITyType _  b) = (ife (b  == 13) [] [TypeErr p $ pack $ "Expected float builtin"    ], [], [])
+checkType' _ _ (_, StrType  p s0) (_, BITyType _  b) = (ife (b  == 17) [] [TypeErr p $ pack $ "Expected string builtin"   ], [], [])
+checkType' _ _ (_, BITyType p b0) (_, BITyType _ b1) = (ife (b0 == b1) [] [TypeErr p $ pack $ "Builtin types do not match"], [], [])
 
 
 -- Primitive Literal Checking
@@ -148,20 +149,20 @@ checkType' k d (h0,LtrlType p0 t0) (h1,LtrlType p t1) =
       t2 = typedef  tdef
 
   in case (istc, t0 == t1, checkType' k d (h2, t2) (h1, LtrlType p t1)) of
-      (True,  _    , _      ) -> ([], [])  -- TODO: fix
-      (False, True , _      ) -> ([], [])
-      (False, False, ([], _)) -> ([], [])
-      (False, False, (er, _)) -> ([TypeErr p0 $ pack $ "Types " ++ (show $ getTyId d t0) ++ " and " ++ (show $ getTyId d t1) ++ " do not match."] ++ er, [])
+      (True,  _    , _          ) -> ([], [], [((h2, t2), (h1, LtrlType p t1))])
+      (False, True , (_ , _, tc)) -> ([], [], tc)
+      (False, False, ([], _, tc)) -> ([], [], tc)
+      (False, False, (er, _, tc)) -> ([TypeErr p0 $ pack $ "Types " ++ (show $ getTyId d t0) ++ " and " ++ (show $ getTyId d t1) ++ " do not match."] ++ er, [], [])
 
 
 -- Array Type Checking
-checkType' k d (h0, ArryType p 0  _ ) (h1, ArryType _ _ _) = ([TypeErr p $ pack $ "Cannot constrain array size."], [])
+checkType' k d (h0, ArryType p 0  _ ) (h1, ArryType _ _ _) = ([TypeErr p $ pack $ "Cannot constrain array size."], [], [])
 
 checkType' k d (h0, ArryType _ _  t0) (h1, ArryType _ 0  t1) = checkType' k d (h0, t0) (h1, t1)
 
 checkType' k d (h0, ArryType p s0 t0) (h1, ArryType _ s1 t1) =
   ife (s0 /= s1)
-    ([TypeErr p $ pack $ "Expected array of size " ++ (show s1) ++ ", found one of size " ++ (show s0) ++ "."], [])
+    ([TypeErr p $ pack $ "Expected array of size " ++ (show s1) ++ ", found one of size " ++ (show s0) ++ "."], [], [])
     (checkType' k d (h0, t0) (h1, t1))
 
 
@@ -170,7 +171,7 @@ checkType' k d (h0, CmpdType p   ts0) (h1, ArryType _ 0 t1) = checkXS_Y k d (h0,
 
 checkType' k d (h0, CmpdType p   ts0) (h1, ArryType _ s t1) =
   ife (L.length ts0 /= fromIntegral s)
-    ([TypeErr p $ pack $ "Casting Tuple to Array failed; expected " ++ (show s) ++ " elements, found " ++ (show $ L.length ts0) ++ "."], [])
+    ([TypeErr p $ pack $ "Casting Tuple to Array failed; expected " ++ (show s) ++ " elements, found " ++ (show $ L.length ts0) ++ "."], [], [])
     (checkXS_Y k d (h0, ts0) (h1, t1))
 
 checkType' k d (h0,CmpdType p xs) (h1,CmpdType _ ys) = checkXS_YS p k d (h0, xs) (h1, ys)
@@ -181,30 +182,38 @@ checkType' _ d (h0,FuncType _ i0 o0) (h1,FuncType _ i1 o1) =
   let
       inErrs :: [BzoErr]
       inVars :: [(TVId, Type, IOKind)]
-      (inErrs, inVars) = (checkType' InKind d (h0, i0) (h1, i1))
+      inTcs  :: [((TypeHeader, Type), (TypeHeader, Type))]
+      (inErrs, inVars, inTcs) = (checkType' InKind d (h0, i0) (h1, i1))
 
       exErrs :: [BzoErr]
       exVars :: [(TVId, Type, IOKind)]
-      (exErrs, exVars) = (checkType' ExKind d (h0, o0) (h1, o1))
+      exTcs  :: [((TypeHeader, Type), (TypeHeader, Type))]
+      (exErrs, exVars, exTcs) = (checkType' ExKind d (h0, o0) (h1, o1))
 
-  in ((inErrs ++ exErrs), (inVars ++ exVars))
+  in ((inErrs ++ exErrs), (inVars ++ exVars), (inTcs ++ exTcs))
 
 
 -- Polymorphic Type Checking
 -- These will probably spit out some gnarly error messages. Tech debt?
 checkType' k d (h0, PolyType p xs) (h1, PolyType _ ys) =
   let
-      each :: [([BzoErr], [(TVId, Type, IOKind)])]
+      each :: [([BzoErr], [(TVId, Type, IOKind)], [((TypeHeader, Type), (TypeHeader, Type))])]
       each = L.map (\x -> checkType' k d (h0, x) (h1, PolyType p ys)) xs
 
-      eacherrs :: [Either [BzoErr] [(TVId, Type, IOKind)]]
-      eacherrs = L.map (\(xs,ys) -> case xs of
-                                      [] -> Right ys
+      eacherrs :: [Either [BzoErr] ([(TVId, Type, IOKind)], [((TypeHeader, Type), (TypeHeader, Type))])]
+      eacherrs = L.map (\(xs,ys,zs) -> case xs of
+                                      [] -> Right (ys, zs)
                                       _  -> Left  xs) each
 
+      eachvars :: [(TVId, Type, IOKind)]
+      eachvars = L.concat $ L.map fst $ rights eacherrs
+
+      eachtcs  :: [((TypeHeader, Type), (TypeHeader, Type))]
+      eachtcs  = L.concat $ L.map snd $ rights eacherrs
+
   in  if (L.any E.isRight eacherrs)
-        then ([], L.concat $ rights eacherrs)
-        else (L.concat $ lefts eacherrs, [])
+        then ([], eachvars, eachtcs)
+        else (L.concat $ lefts eacherrs, [], [])
 
 checkType' k d (h0, PolyType _ [t0]) (h1, t1) = checkType' k d (h0, t0) (h1, t1)
 
@@ -213,30 +222,36 @@ checkType' k d (h0, t0) (h1, PolyType _ [t1]) = checkType' k d (h0, t0) (h1, t1)
 checkType' k d (h0, t) (h1, PolyType _ ys) =
   let
       -- Vars should be filtered to only those with no corresponding errors.
-      each :: [([BzoErr], [(TVId, Type, IOKind)])]
+      each :: [([BzoErr], [(TVId, Type, IOKind)], [((TypeHeader, Type), (TypeHeader, Type))])]
       each = L.map (\y -> checkType' k d (h0, t) (h1, y)) ys
 
-      eacherrs :: [Either [BzoErr] [(TVId, Type, IOKind)]]
-      eacherrs = L.map (\(xs,ys) -> case xs of
-                                      [] -> Right ys
+      eacherrs :: [Either [BzoErr] ([(TVId, Type, IOKind)], [((TypeHeader, Type), (TypeHeader, Type))])]
+      eacherrs = L.map (\(xs,ys,zs) -> case xs of
+                                      [] -> Right (ys, zs)
                                       _  -> Left  xs) each
 
+      eachvars :: [(TVId, Type, IOKind)]
+      eachvars = L.concat $ L.map fst $ rights eacherrs
+
+      eachtcs  :: [((TypeHeader, Type), (TypeHeader, Type))]
+      eachtcs  = L.concat $ L.map snd $ rights eacherrs
+
   in if (L.any E.isRight eacherrs)
-      then ([], L.concat $ rights eacherrs)
-      else (L.concat $ lefts eacherrs, [])
+      then ([], eachvars, eachtcs)
+      else (L.concat $ lefts eacherrs, [], [])
 
 
 -- Type Composition Checking
-checkType' k d (h0, MakeType _ []) (h1, MakeType _ []) = ([], [])
+checkType' k d (h0, MakeType _ []) (h1, MakeType _ []) = ([], [], [])
 
-checkType' k d (h0, MakeType p []) (h1, MakeType _  _) = ([TypeErr p $ pack "Type mismatch; expected more parameters."], [])
+checkType' k d (h0, MakeType p []) (h1, MakeType _  _) = ([TypeErr p $ pack "Type mismatch; expected more parameters."], [], [])
 
-checkType' k d (h0, MakeType p  _) (h1, MakeType _ []) = ([TypeErr p $ pack "Type mismatch; expected fewer parameters."], [])
+checkType' k d (h0, MakeType p  _) (h1, MakeType _ []) = ([TypeErr p $ pack "Type mismatch; expected fewer parameters."], [], [])
 
 checkType' k d (h0, MakeType p0 (x:xs)) (h1, MakeType p1 (y:ys)) =
   case (checkType' k d (h0, x) (h1, y)) of
-    ([], []) -> checkType' k d (h0, MakeType p0 xs) (h1, MakeType p1 ys)  -- Probably not the best way to track positions here.
-    ret      -> ret
+    ([], [], []) -> checkType' k d (h0, MakeType p0 xs) (h1, MakeType p1 ys)  -- Probably not the best way to track positions here.
+    ret          -> ret
 
 checkType' k d (h0, MakeType p [x]) (h1, y) = checkType' k d (h0, x) (h1, y)
 
@@ -256,8 +271,8 @@ checkType' k d (h0, t0) (h1,LtrlType _ t1) =
       t2 = typedef  tdef
 
   in case (checkType' k d (h0, t0) (h2, t2)) of
-      ([], _ ) -> ([], [])
-      (er, _ ) -> ([TypeErr (typos t0) $ pack ("Could not match type:\n" ++ (show t0) ++ "\non type " ++ (show $ getTyId d t1) ++ "\n")] ++ er, [])
+      ([], _ , tc) -> ([], [], tc)
+      (er, _ , _ ) -> ([TypeErr (typos t0) $ pack ("Could not match type:\n" ++ (show t0) ++ "\non type " ++ (show $ getTyId d t1) ++ "\n")] ++ er, [], [])
 
 checkType' k d (h0,LtrlType p t0) (h1, t1) =
   let
@@ -271,16 +286,16 @@ checkType' k d (h0,LtrlType p t0) (h1, t1) =
       t2 = typedef  tdef
 
   in case (checkType' k d (h2, t2) (h1, t1)) of
-      ([], _ ) -> ([], [])
-      (er, _ ) -> ([TypeErr p $ pack ("Could not match type " ++ (show $ getTyId d t0) ++ "\non type:\n" ++ (show t1) ++ "\n")] ++ er, [])
+      ([], _, tc) -> ([], [], tc)
+      (er, _, _ ) -> ([TypeErr p $ pack ("Could not match type " ++ (show $ getTyId d t0) ++ "\non type:\n" ++ (show t1) ++ "\n")] ++ er, [], [])
 
 
 -- Type Variable Checking
-checkType' k d (h0, t) (h1, TVarType p v) = ([], [(v, t, k)])
+checkType' k d (h0, t) (h1, TVarType p v) = ([], [(v, t, k)], [])
 
 
 -- Fallthrough Case
-checkType' _ _ (_, x) (_, y) = ([TypeErr (typos y) $ pack ("Type Mismatch:\n" ++ (show x) ++ "\n&&\n" ++ (show y))], [])
+checkType' _ _ (_, x) (_, y) = ([TypeErr (typos y) $ pack ("Type Mismatch:\n" ++ (show x) ++ "\n&&\n" ++ (show y))], [], [])
 
 
 
@@ -297,7 +312,8 @@ checkWithVars d a@(h0,t0) b@(h1,t1) =
   let
       errs :: [BzoErr]
       vals :: [(TVId, Type, IOKind)]
-      (errs, vals) = checkType' InKind d a b
+      tcs  :: [((TypeHeader, Type), (TypeHeader, Type))]
+      (errs, vals, tcs) = checkType' InKind d a b
 
       groupVars :: [(TVId, Type, IOKind)] -> [[(TVId, Type, IOKind)]]
       groupVars xs = L.groupBy (\(v0,_,_)(v1,_,_) -> v0 == v1) $ L.sortBy (\(v0,_,_)(v1,_,_) -> compare v0 v1) xs
@@ -330,7 +346,7 @@ checkWithVars d a@(h0,t0) b@(h1,t1) =
 
             errs :: [[BzoErr]]
             --vals :: [[(TVId, Type, IOKind)]]
-            (errs, _) = L.unzip $ L.map (\(_,x,_) -> checkType' ExKind d (h1, vtyp) (h1, x)) xs
+            (errs, _, _) = L.unzip3 $ L.map (\(_,x,_) -> checkType' ExKind d (h1, vtyp) (h1, x)) xs
         in  if (L.null $ L.concat errs)
               then []
               else [TypeErr (typos vtyp) $ pack "Output type is not a subtype of prototype"]

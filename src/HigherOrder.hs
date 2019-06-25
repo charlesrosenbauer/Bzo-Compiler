@@ -1025,3 +1025,9 @@ fuseEither (Right x) = x
 
 concatUnzip :: [([a],[b])] -> ([a], [b])
 concatUnzip xs = (\(a,b) -> (L.concat a, L.concat b)) $ L.unzip xs
+
+
+
+
+concatUnzip3:: [([a],[b],[c])] -> ([a],[b],[c])
+concatUnzip3 xs = (\(a,b,c) -> (L.concat a, L.concat b, L.concat c)) $ L.unzip3 xs
