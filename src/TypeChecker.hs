@@ -40,13 +40,13 @@ getTyId (DefinitionTable defs _ _ _) t = identifier $ defs M.! t
 -}
 data IOKind = InKind | ExKind deriving Eq
 
-checkXS_Y  :: IOKind -> DefinitionTable -> (TypeHeader, [Type]) -> (TypeHeader, Type) -> ([BzoErr], [(TVId, Type, IOKind)], [((TypeHeader, Type), (TypeHeader, Type))])
+checkXS_Y  :: IOKind -> DefinitionTable -> (TypeHeader, [Type]) -> (TypeHeader, Type) -> ([BzoErr], [(TVId, Type, IOKind)], [(TypeHeader, Type, TCId)])
 checkXS_Y  k d (h0, ts) (h1, t1) = concatUnzip3 $ L.map (\t -> checkType' k d (h0,t) (h1,t1)) ts
 
-checkX_YS  :: IOKind -> DefinitionTable -> (TypeHeader, Type) -> (TypeHeader, [Type]) -> ([BzoErr], [(TVId, Type, IOKind)], [((TypeHeader, Type), (TypeHeader, Type))])
+checkX_YS  :: IOKind -> DefinitionTable -> (TypeHeader, Type) -> (TypeHeader, [Type]) -> ([BzoErr], [(TVId, Type, IOKind)], [(TypeHeader, Type, TCId)])
 checkX_YS  k d (h0, t0) (h1, ts) = concatUnzip3 $ L.map (\t -> checkType' k d (h0,t0) (h1,t)) ts
 
-checkXS_YS :: BzoPos -> IOKind -> DefinitionTable -> (TypeHeader, [Type]) -> (TypeHeader, [Type]) -> ([BzoErr], [(TVId, Type, IOKind)], [((TypeHeader, Type), (TypeHeader, Type))])
+checkXS_YS :: BzoPos -> IOKind -> DefinitionTable -> (TypeHeader, [Type]) -> (TypeHeader, [Type]) -> ([BzoErr], [(TVId, Type, IOKind)], [(TypeHeader, Type, TCId)])
 checkXS_YS p k d (h0, xs) (h1, ys) =
   let
       xlen :: Int
@@ -60,7 +60,7 @@ checkXS_YS p k d (h0, xs) (h1, ys) =
 
       eacherr :: [BzoErr]
       eachvar :: [(TVId, Type, IOKind)]
-      eachtc  :: [((TypeHeader, Type), (TypeHeader, Type))]
+      eachtc  :: [(TypeHeader, Type, TCId)]
       (eacherr, eachvar, eachtc) = concatUnzip3 $ L.map (\(a,b) -> checkType' k d (h0,a) (h1,b)) $ L.zip xs ys
 
       errs :: [BzoErr]
@@ -119,7 +119,7 @@ checkConstraints dt h0 (h1, t) = checkConstraints dt h0 (h1, CmpdType (typos t) 
 {-
   A <= B
 -}
-checkType' :: IOKind -> DefinitionTable -> (TypeHeader, Type) -> (TypeHeader, Type) -> ([BzoErr], [(TVId, Type, IOKind)], [((TypeHeader, Type), (TypeHeader, Type))])
+checkType' :: IOKind -> DefinitionTable -> (TypeHeader, Type) -> (TypeHeader, Type) -> ([BzoErr], [(TVId, Type, IOKind)], [(TypeHeader, Type, TCId)])
 
 -- Primitive Type Checking
 checkType' _ _ (_, VoidType    _) (_, VoidType    _) = ([], [], [])
@@ -149,7 +149,7 @@ checkType' k d (h0,LtrlType p0 t0) (h1,LtrlType p t1) =
       t2 = typedef  tdef
 
   in case (istc, t0 == t1, checkType' k d (h2, t2) (h1, LtrlType p t1)) of
-      (True,  _    , _          ) -> ([], [], [((h2, t2), (h1, LtrlType p t1))])
+      (True,  _    , _          ) -> ([], [], [(h1, LtrlType p t1, t0)])
       (False, True , (_ , _, tc)) -> ([], [], tc)
       (False, False, ([], _, tc)) -> ([], [], tc)
       (False, False, (er, _, tc)) -> ([TypeErr p0 $ pack $ "Types " ++ (show $ getTyId d t0) ++ " and " ++ (show $ getTyId d t1) ++ " do not match."] ++ er, [], [])
@@ -182,12 +182,12 @@ checkType' _ d (h0,FuncType _ i0 o0) (h1,FuncType _ i1 o1) =
   let
       inErrs :: [BzoErr]
       inVars :: [(TVId, Type, IOKind)]
-      inTcs  :: [((TypeHeader, Type), (TypeHeader, Type))]
+      inTcs  :: [(TypeHeader, Type, TCId)]
       (inErrs, inVars, inTcs) = (checkType' InKind d (h0, i0) (h1, i1))
 
       exErrs :: [BzoErr]
       exVars :: [(TVId, Type, IOKind)]
-      exTcs  :: [((TypeHeader, Type), (TypeHeader, Type))]
+      exTcs  :: [(TypeHeader, Type, TCId)]
       (exErrs, exVars, exTcs) = (checkType' ExKind d (h0, o0) (h1, o1))
 
   in ((inErrs ++ exErrs), (inVars ++ exVars), (inTcs ++ exTcs))
@@ -197,10 +197,10 @@ checkType' _ d (h0,FuncType _ i0 o0) (h1,FuncType _ i1 o1) =
 -- These will probably spit out some gnarly error messages. Tech debt?
 checkType' k d (h0, PolyType p xs) (h1, PolyType _ ys) =
   let
-      each :: [([BzoErr], [(TVId, Type, IOKind)], [((TypeHeader, Type), (TypeHeader, Type))])]
+      each :: [([BzoErr], [(TVId, Type, IOKind)], [(TypeHeader, Type, TCId)])]
       each = L.map (\x -> checkType' k d (h0, x) (h1, PolyType p ys)) xs
 
-      eacherrs :: [Either [BzoErr] ([(TVId, Type, IOKind)], [((TypeHeader, Type), (TypeHeader, Type))])]
+      eacherrs :: [Either [BzoErr] ([(TVId, Type, IOKind)], [(TypeHeader, Type, TCId)])]
       eacherrs = L.map (\(xs,ys,zs) -> case xs of
                                       [] -> Right (ys, zs)
                                       _  -> Left  xs) each
@@ -208,7 +208,7 @@ checkType' k d (h0, PolyType p xs) (h1, PolyType _ ys) =
       eachvars :: [(TVId, Type, IOKind)]
       eachvars = L.concat $ L.map fst $ rights eacherrs
 
-      eachtcs  :: [((TypeHeader, Type), (TypeHeader, Type))]
+      eachtcs  :: [(TypeHeader, Type, TCId)]
       eachtcs  = L.concat $ L.map snd $ rights eacherrs
 
   in  if (L.any E.isRight eacherrs)
@@ -222,10 +222,10 @@ checkType' k d (h0, t0) (h1, PolyType _ [t1]) = checkType' k d (h0, t0) (h1, t1)
 checkType' k d (h0, t) (h1, PolyType _ ys) =
   let
       -- Vars should be filtered to only those with no corresponding errors.
-      each :: [([BzoErr], [(TVId, Type, IOKind)], [((TypeHeader, Type), (TypeHeader, Type))])]
+      each :: [([BzoErr], [(TVId, Type, IOKind)], [(TypeHeader, Type, TCId)])]
       each = L.map (\y -> checkType' k d (h0, t) (h1, y)) ys
 
-      eacherrs :: [Either [BzoErr] ([(TVId, Type, IOKind)], [((TypeHeader, Type), (TypeHeader, Type))])]
+      eacherrs :: [Either [BzoErr] ([(TVId, Type, IOKind)], [(TypeHeader, Type, TCId)])]
       eacherrs = L.map (\(xs,ys,zs) -> case xs of
                                       [] -> Right (ys, zs)
                                       _  -> Left  xs) each
@@ -233,7 +233,7 @@ checkType' k d (h0, t) (h1, PolyType _ ys) =
       eachvars :: [(TVId, Type, IOKind)]
       eachvars = L.concat $ L.map fst $ rights eacherrs
 
-      eachtcs  :: [((TypeHeader, Type), (TypeHeader, Type))]
+      eachtcs  :: [(TypeHeader, Type, TCId)]
       eachtcs  = L.concat $ L.map snd $ rights eacherrs
 
   in if (L.any E.isRight eacherrs)
@@ -312,7 +312,7 @@ checkWithVars d a@(h0,t0) b@(h1,t1) =
   let
       errs :: [BzoErr]
       vals :: [(TVId, Type, IOKind)]
-      tcs  :: [((TypeHeader, Type), (TypeHeader, Type))]
+      tcs  :: [(TypeHeader, Type, TCId)]
       (errs, vals, tcs) = checkType' InKind d a b
 
       groupVars :: [(TVId, Type, IOKind)] -> [[(TVId, Type, IOKind)]]
