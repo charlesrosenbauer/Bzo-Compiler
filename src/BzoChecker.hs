@@ -451,13 +451,13 @@ makeTypes dt@(DefinitionTable defs files ids top) =
       -- -- Check that make types are all valid (e.g, nothing like "Int Bool" as a definition.)
 
       dt' :: Either [BzoErr] DefinitionTable
-      dt' = modelConstraints syms (DefinitionTable (getRight results) files ids top)
+      dt' = modelConstraints syms (DefinitionTable (fromRight M.empty results) files ids top)
 
       dt'' :: [DefinitionTable]
       dt''  = rights [dt']
 
       dterr :: [BzoErr]
-      dterr = L.concat $ lefts [dt']
+      dterr = fromLeft [] dt'
 
       errs :: [BzoErr]
       errs = (fromLeft [] results) ++ dterr
