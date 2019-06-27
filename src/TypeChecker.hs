@@ -308,13 +308,18 @@ checkType' _ _ (_, x) (_, y) = ([TypeErr (typos y) $ pack ("Type Mismatch:\n" ++
 
 
 --TODO: !!TEST THIS CODE!!
-checkWithVars :: DefinitionTable -> (TypeHeader, Type) -> (TypeHeader, Type) -> ([BzoErr], M.Map TVId Type)
+checkWithVars :: DefinitionTable -> (TypeHeader, Type) -> (TypeHeader, Type) -> ([BzoErr], M.Map TVId Type, [(TypeHeader, Type, TCId)])
 checkWithVars d a@(h0,t0) b@(h1,t1) =
   let
       errs :: [BzoErr]
       vals :: [(TVId, Type, IOKind)]
       tcs  :: [(TypeHeader, Type, TCId)]
       (errs, vals, tcs) = checkType' InKind d a b
+
+      -- Not actually necessary, but this will probably improve cache performance
+      -- in later code. Haskell has AWFUL cache performance, so this will probably
+      -- help a lot.
+      tcs' = L.concat $ L.groupBy (\a b  -> (trd3 a) == (trd3 b)) tcs
 
       groupVars :: [(TVId, Type, IOKind)] -> [[(TVId, Type, IOKind)]]
       groupVars xs = L.groupBy (\(v0,_,_)(v1,_,_) -> v0 == v1) $ L.sortBy (\(v0,_,_)(v1,_,_) -> compare v0 v1) xs
@@ -360,11 +365,11 @@ checkWithVars d a@(h0,t0) b@(h1,t1) =
       tvpairs = M.fromList $ L.map dtrd3 $ L.concat ins
 
   in case errs' of
-      [] -> ([], tvpairs)
-      er -> (er, tvpairs)
+      [] -> ([], tvpairs, tcs')
+      er -> (er, tvpairs, tcs')
 
 checkType :: DefinitionTable -> (TypeHeader, Type) -> (TypeHeader, Type) -> [BzoErr]
-checkType dt a b = fst $ checkWithVars dt a b
+checkType dt a b = fst3 $ checkWithVars dt a b
 
 
 
