@@ -13,76 +13,36 @@ import Debug.Trace
 
 
 
-data TyClassObj = TyClassObj (Map TyId [(Text, FnId)])
-
-data TyClassTable = TyClassTable (Map TCId TyClassObj)
 
 
 
 
 
 
-
-
-
-
-{-
-  TODO:
-    Add Typeclass Checking function
-      - probably generate a table for typeclass lookups
-      - each typeclass has an interface
-      - table should contain a mapping from types with valid interfaces to
-          their interfaces
--}
-makeTyClassObj   :: DefinitionTable -> Definition -> TyClassObj
-makeTyClassObj dt@(DefinitionTable defs files ids top) (TyClassDef tcid file thd itf) =
+checkTyClass :: DefinitionTable -> (TypeHeader, Type, TCId) -> [BzoErr]
+checkTyClass (DefinitionTable defs files ids _) (thead, ty, tc) =
   let
-      grabInterface :: (Text, TypeHeader, Type) -> [Int64]
-      grabInterface (tid, thead, ty) =
-        let
-            tidpass :: [Int64]
-            tidpass = Mb.fromMaybe [] $ M.lookup tid ids
+      -- Get typeclass definition and associated interface
+      tclass :: Definition
+      tclass = defs M.! tc
 
-            -- Filter : typecheck
-            chkpass :: [Int64]
-            chkpass =
-              let
-                  getDef :: Int64 -> (Int64, Definition)
-                  getDef x = (x, defs M.! x)
-
-                  -- TODO: Change to use checkWithVars, handle type matching on Class TVar
-                  checkMatch :: (Int64, Definition) -> Bool
-                  checkMatch (_,x) = L.null $ checkType dt (thead, ty) (typehead x, functype x)
-
-              in  L.map fst $
-                  L.filter checkMatch $
-                  L.map getDef tidpass
-
-        in chkpass
-
-      {-
-        TODO:
-          * figure out how to determine which type a function is an interface to
-          * assemble interfaces from types that fully match
-      -}
-
-  in  TyClassObj M.empty
+      intfc  :: [(Text, TypeHeader, Type)]
+      intfc = interface tclass
 
 
+      -- Get local visibility
+      visibility :: [Int64]
+      visibility = snd $ bfm_fileModel $ L.head $
+                   L.filter (\x -> (pack $ bfm_filepath x) == (fileName $ typos ty)) $ files
+
+      -- Line up interfaces
 
 
+      -- Filter out functions that do not match interface
 
+      fns :: [[(Text, Int64)]]
+      fns = []
 
-
-
-
-
-makeTyClassTable :: DefinitionTable -> TyClassTable
-makeTyClassTable (DefinitionTable defs files ids top) =
-  let
-      classes :: [(Int64, Definition)]
-      classes = L.filter (\(a,b) -> isTyClass b) $ assocs defs
-
-
-
-  in TyClassTable M.empty
+  in if (L.null fns) || (L.any L.null fns)
+      then [TypeErr (typos ty) $ pack $ "Type " ++ (show ty) ++ " does not match class " ++ (show tc) ++ "\n"]
+      else []
