@@ -6,6 +6,7 @@ import HigherOrder
 import Data.Text
 import Data.Int
 import Data.List as L
+import Data.Set  as S
 import Data.Map.Strict as M
 import Data.Maybe as Mb
 import Debug.Trace
@@ -29,20 +30,31 @@ checkTyClass (DefinitionTable defs files ids _) (thead, ty, tc) =
       intfc  :: [(Text, TypeHeader, Type)]
       intfc = interface tclass
 
+      intfctable :: M.Map Text (TypeHeader, Type)
+      intfctable = M.fromList $ L.map (\(a,b,c) -> (a, (b,c))) intfc
+
 
       -- Get local visibility
-      visibility :: [Int64]
-      visibility = snd $ bfm_fileModel $ L.head $
+      visibility :: S.Set Int64
+      visibility = S.fromList $ snd $ bfm_fileModel $ L.head $
                    L.filter (\x -> (pack $ bfm_filepath x) == (fileName $ typos ty)) $ files
 
       -- Line up interfaces
+      fns :: [Text]
+      fns = L.map fst3 intfc
+
+      fns':: [(Text, [Int64])]
+      fns'= L.map (\f -> (f, L.filter (\v -> S.member v visibility) $ Mb.fromMaybe [] $ M.lookup f ids)) fns
 
 
       -- Filter out functions that do not match interface
+      --fitsInterface :: (TypeHeader, Type) -> Definition -> [BzoErr]
+      --fitsInterface (th, t) (FuncDef )
 
-      fns :: [[(Text, Int64)]]
-      fns = []
 
-  in if (L.null fns) || (L.any L.null fns)
+      fnvals :: [[(Text, Int64)]]
+      fnvals = []
+
+  in if (L.null fnvals) || (L.any L.null fnvals)
       then [TypeErr (typos ty) $ pack $ "Type " ++ (show ty) ++ " does not match class " ++ (show tc) ++ "\n"]
       else []
