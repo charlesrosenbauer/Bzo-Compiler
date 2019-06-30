@@ -21,7 +21,7 @@ import Debug.Trace
 
 
 checkTyClass :: DefinitionTable -> (TypeHeader, Type, TCId) -> [BzoErr]
-checkTyClass (DefinitionTable defs files ids _) (thead, ty, tc) =
+checkTyClass dt@(DefinitionTable defs files ids _) (thead, ty, tc) =
   let
       -- Get typeclass definition and associated interface
       tclass :: Definition
@@ -48,8 +48,17 @@ checkTyClass (DefinitionTable defs files ids _) (thead, ty, tc) =
 
 
       -- Filter out functions that do not match interface
-      --fitsInterface :: (TypeHeader, Type) -> Definition -> [BzoErr]
-      --fitsInterface (th, t) (FuncDef )
+      -- NOTE: Make this keep track of TCs visited to avoid recursion.
+      fitsInterface :: (TypeHeader, Type) -> Definition -> [BzoErr]
+      fitsInterface (th0, t0) (FuncDef _ _ th1 t1 _) =
+        let
+            errs :: [BzoErr]
+            errs = checkType dt (th0, t0) (th1, t1)
+        in errs
+
+      -- This case shouldn't actually happen, but I'm including it just in case.
+      -- Needs work to make it a bit more reliable though.
+      fitsInterface _ _ = [TypeErr (BzoPos 0 0 $ pack "") $ pack "Expected a typeclass, found something else. This case shouldn't happen."]
 
 
       fnvals :: [[(Text, Int64)]]
