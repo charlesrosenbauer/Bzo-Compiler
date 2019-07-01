@@ -379,7 +379,7 @@ checkType dt a b = fst3 $ checkWithVars dt a b
 
 
 
--- TODO: Add case for type composition
+
 validType :: DefinitionTable -> (TypeHeader, Type) -> [BzoErr]
 validType dt (h, CmpdType _  ts) = L.concatMap (\t -> validType dt (h, t)) ts
 validType dt (h, PolyType _  ts) = L.concatMap (\t -> validType dt (h, t)) ts
