@@ -369,7 +369,11 @@ checkWithVars d a@(h0,t0) b@(h1,t1) =
       er -> (er, tvpairs, tcs')
 
 checkType :: DefinitionTable -> (TypeHeader, Type) -> (TypeHeader, Type) -> [BzoErr]
-checkType dt a b = fst3 $ checkWithVars dt a b
+checkType dt a b =
+  let
+      (er, _, cs) = checkWithVars dt a b
+
+  in er ++ (L.concatMap (checkTyClass dt) cs)
 
 
 
