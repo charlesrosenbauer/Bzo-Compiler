@@ -19,7 +19,7 @@ import Debug.Trace
 
 
 
-
+{-
 checkTyClass :: DefinitionTable -> (TypeHeader, Type, TCId) -> [BzoErr]
 checkTyClass dt@(DefinitionTable defs files ids _) (thead, ty, tc) =
   let
@@ -75,3 +75,4 @@ checkTyClass dt@(DefinitionTable defs files ids _) (thead, ty, tc) =
   in if (L.null fnvals) || (L.any L.null fnvals)
       then [TypeErr (typos ty) $ pack $ "Type " ++ (show ty) ++ " does not match class " ++ (show tc) ++ "\n"]
       else []
+-}
