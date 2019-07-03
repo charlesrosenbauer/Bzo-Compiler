@@ -548,7 +548,7 @@ adjustModel (BzoFileModel mn fp dm x fi fl ia la) f = (BzoFileModel mn fp dm (f 
 
 
 
-
+-- TODO: Add position tracking to FuncDef, TypeDef, and TyClassDef
 data Definition
  = FuncDef {
     identifier :: !T.Text,
@@ -580,6 +580,12 @@ data Definition
     hostfile   :: !T.Text,
     typesyntax :: !BzoSyntax }
   deriving Eq
+
+
+dtdef :: Definition -> Type
+dtdef (FuncDef  _ _ _ t _) = t
+dtdef (TypeDef  _ _ _ t  ) = t
+dtdef (TyClassDef _ f _ i) = TyCsType (BzoPos 0 0 f) i
 
 
 

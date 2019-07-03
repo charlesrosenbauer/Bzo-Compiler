@@ -210,7 +210,7 @@ checkType' k d (h0,LtrlType p0 t0) (h1,LtrlType p t1) =
       h2 = typehead tdef
 
       t2 :: Type
-      t2 = typedef  tdef
+      t2 = dtdef    tdef
 
   in case (istc, t0 == t1, checkType' k d (h2, t2) (h1, LtrlType p t1)) of
       (True,  _    , _          ) -> ([], [], [(h1, LtrlType p t1, t0)])
@@ -332,7 +332,7 @@ checkType' k d (h0, t0) (h1,LtrlType _ t1) =
       h2 = typehead tdef
 
       t2 :: Type
-      t2 = typedef  tdef
+      t2 = dtdef  tdef
 
   in case (checkType' k d (h0, t0) (h2, t2)) of
       ([], _ , tc) -> ([], [], tc)
@@ -349,7 +349,7 @@ checkType' k d (h0,LtrlType p t0) (h1, t1) =
       h2 = typehead tdef
 
       t2 :: Type
-      t2 = typedef  tdef
+      t2 = dtdef    tdef
 
   in case (istc, checkType' k d (h2, t2) (h1, t1)) of
       (True,  (er, vs, tc)) -> (er, vs, tc ++ [(h1, t1, t0)])
@@ -464,7 +464,7 @@ validType dt (h, MakeType p ((LtrlType _  t):ts)) =
 
       thead  :: TypeHeader
       typ    :: Type
-      (thead, typ) = (\t -> (typehead t, typedef t)) ((dt_defs dt) M.! t)
+      (thead, typ) = (\t -> (typehead t, dtdef t)) ((dt_defs dt) M.! t)
 
       cerr = checkConstraints dt thead (h, MakeType p ts)
   in terr ++ cerr
@@ -485,7 +485,7 @@ validateTypePass :: DefinitionTable -> [BzoErr]
 validateTypePass dt@(DefinitionTable defs files ids top) =
   let
       tys :: [(TypeHeader, Type)]
-      tys = L.map (\t -> (typehead t, typedef t)) $ L.filter isTyDef $ M.elems defs
+      tys = L.map (\t -> (typehead t, dtdef t)) $ L.filter isTyDef $ M.elems defs
 
   in L.concatMap (validType dt) tys
 
