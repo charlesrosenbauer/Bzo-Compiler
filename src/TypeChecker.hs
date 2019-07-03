@@ -323,21 +323,6 @@ checkType' k d (h0, x) (h1, MakeType p [y]) = checkType' k d (h0, x) (h1, y)
 
 
 -- Complex Type Literal Checking
-checkType' k d (h0, t0) (h1,LtrlType _ t1) =
-  let
-      tdef :: Definition
-      tdef = (dt_defs d) M.! t1
-
-      h2 :: TypeHeader
-      h2 = typehead tdef
-
-      t2 :: Type
-      t2 = dtdef  tdef
-
-  in case (checkType' k d (h0, t0) (h2, t2)) of
-      ([], _ , tc) -> ([], [], tc)
-      (er, _ , _ ) -> ([TypeErr (typos t0) $ pack ("Could not match type:\n" ++ (show t0) ++ "\non type " ++ (show $ getTyId d t1) ++ "\n")] ++ er, [], [])
-
 checkType' k d (h0,LtrlType p t0) (h1, t1) =
   let
       istc = isTyClass $ (dt_defs d) M.! t0
@@ -354,6 +339,21 @@ checkType' k d (h0,LtrlType p t0) (h1, t1) =
   in case (istc, checkType' k d (h2, t2) (h1, t1)) of
       (True,  (er, vs, tc)) -> (er, vs, tc ++ [(h1, t1, t0)])
       (False, (er, _,  tc)) -> ([TypeErr p $ pack ("Could not match type " ++ (show $ getTyId d t0) ++ "\non type:\n" ++ (show t1) ++ "\n")] ++ er, [], [])
+
+checkType' k d (h0, t0) (h1,LtrlType _ t1) =
+  let
+      tdef :: Definition
+      tdef = (dt_defs d) M.! t1
+
+      h2 :: TypeHeader
+      h2 = typehead tdef
+
+      t2 :: Type
+      t2 = dtdef  tdef
+
+  in case (checkType' k d (h0, t0) (h2, t2)) of
+      ([], _ , tc) -> ([], [], tc)
+      (er, _ , _ ) -> ([TypeErr (typos t0) $ pack ("Could not match type:\n" ++ (show t0) ++ "\non type " ++ (show $ getTyId d t1) ++ "\n")] ++ er, [], [])
 
 
 -- Type Variable Checking
