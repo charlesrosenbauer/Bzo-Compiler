@@ -582,10 +582,10 @@ data Definition
   deriving Eq
 
 
-dtdef :: Definition -> Type
-dtdef (FuncDef  _ _ _ t _) = t
-dtdef (TypeDef  _ _ _ t  ) = t
-dtdef (TyClassDef _ f _ i) = TyCsType (BzoPos 0 0 f) i
+dtdef :: Definition -> Int64 -> Type
+dtdef (FuncDef  _ _ _ t _) _ = t
+dtdef (TypeDef  _ _ _ t  ) _ = t
+dtdef (TyClassDef _ f _ i) c = TyCsType (BzoPos 0 0 f) c i
 
 
 
@@ -680,7 +680,7 @@ data Type
   | BITyType  !BzoPos !TyId
   | ArryType  !BzoPos !Integer !Type
   | FLitType  !BzoPos ![FnId]
-  | TyCsType  !BzoPos ![(T.Text, TypeHeader, Type)]
+  | TyCsType  !BzoPos !TCId    ![(T.Text, TypeHeader, Type)]
   | InvalidType
 
 eqType :: Type -> Type -> Bool
@@ -699,7 +699,7 @@ eqType (TVarType _    v0) (TVarType _    v1) = (v0 == v1)
 eqType (BITyType _    b0) (BITyType _    b1) = (b0 == b1)
 eqType (ArryType _ i0 t0) (ArryType _ i1 t1) = (i0 == i1) && (t0 == t1)
 eqType (FLitType _    f0) (FLitType _    f1) = ((L.sort f0) == (L.sort f1))
-eqType (TyCsType _    i0) (TyCsType _    i1) = True -- TODO: make this more robust later
+eqType (TyCsType _ i0  _) (TyCsType _ i1  _) = (i0 == i1)
 eqType InvalidType        InvalidType        = True
 eqType _ _ = False
 instance Eq Type where (==) = eqType
@@ -721,7 +721,7 @@ typos (TVarType  p   _) = p
 typos (BITyType  p   _) = p
 typos (ArryType  p _ _) = p
 typos (FLitType  p   _) = p
-typos (TyCsType  p   _) = p
+typos (TyCsType  p _ _) = p
 
 
 
@@ -748,7 +748,7 @@ showType (TVarType  _    tv) = "TV:" ++ (show tv)
 showType (BITyType  _    bt) = "BT:" ++ (show bt)
 showType (ArryType  _  i ty) = "[ArrayType [" ++ (show i) ++ "] " ++ (show ty) ++ "]"
 showType (FLitType  _    fn) = "FN:" ++ (show fn)
-showType (TyCsType  _    fs) = "[TC " ++ (L.concat $ L.intersperse " ,\n    " $ L.map show fs) ++ "]"
+showType (TyCsType  _  tc _) = "TC:" ++ (show tc)
 showType (InvalidType      ) = "INVALIDTYPE"
 instance Show Type where show = showType
 
