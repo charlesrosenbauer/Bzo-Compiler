@@ -548,20 +548,24 @@ adjustModel (BzoFileModel mn fp dm x fi fl ia la) f = (BzoFileModel mn fp dm (f 
 
 
 
--- TODO: Add position tracking to FuncDef, TypeDef, and TyClassDef
+
+
 data Definition
  = FuncDef {
+    defpos     :: !BzoPos,
     identifier :: !T.Text,
     hostfile   :: !T.Text,
     typehead   :: !TypeHeader,
     functype   :: !Type,
     definitions:: ![(BzoSyntax)] }
  | TypeDef {
+    defpos     :: !BzoPos,
     identifier :: !T.Text,
     hostfile   :: !T.Text,
     typehead   :: !TypeHeader,
     typedef    :: !Type }
  | TyClassDef {
+    defpos     :: !BzoPos,
     identifier :: !T.Text,
     hostfile   :: !T.Text,
     typehead   :: !TypeHeader,
@@ -583,9 +587,9 @@ data Definition
 
 
 dtdef :: Definition -> Int64 -> Type
-dtdef (FuncDef  _ _ _ t _) _ = t
-dtdef (TypeDef  _ _ _ t  ) _ = t
-dtdef (TyClassDef _ f _ i) c = TyCsType (BzoPos 0 0 f) c i
+dtdef (FuncDef  _ _ _ _ t _) _ = t
+dtdef (TypeDef  _ _ _ _ t  ) _ = t
+dtdef (TyClassDef _ _ f _ i) c = TyCsType (BzoPos 0 0 f) c i
 
 
 
@@ -597,20 +601,20 @@ dtdef (TyClassDef _ f _ i) c = TyCsType (BzoPos 0 0 f) c i
 
 
 showDefinition :: Definition -> String
-showDefinition (FuncDef fnid file tyhd fty defs) = "  FNDEF:\n    " ++
+showDefinition (FuncDef _ fnid file tyhd fty defs) = "  FNDEF:\n    " ++
                                               "FNID: " ++ (show fnid)  ++ "\n    " ++
                                               "FILE: " ++ (show file)  ++ "\n    " ++
                                               "TYHD: " ++ (show tyhd)  ++ "\n    " ++
                                               "TYPE: " ++ (show fty)   ++ "\n    " ++
                                               "DEFS: " ++ (show defs)  ++ "\n\n"
 
-showDefinition (TypeDef tyid file thd defs) = "  TYDEF:\n    " ++
+showDefinition (TypeDef _ tyid file thd defs) = "  TYDEF:\n    " ++
                                               "TYID: " ++ (show tyid)  ++ "\n    " ++
                                               "FILE: " ++ (show file)  ++ "\n    " ++
                                               "TYHD: " ++ (show thd)   ++ "\n    " ++
                                               "DEFS: " ++ (show defs)  ++ "\n\n"
 
-showDefinition (TyClassDef tcid file thd ifac) = "  TCDEF:\n    " ++
+showDefinition (TyClassDef _ tcid file thd ifac) = "  TCDEF:\n    " ++
                                               "TCID: " ++ (show tcid)  ++ "\n    " ++
                                               "FILE: " ++ (show file)  ++ "\n    " ++
                                               "TYHD: " ++ (show thd)   ++ "\n    " ++

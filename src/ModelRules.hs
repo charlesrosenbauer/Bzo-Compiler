@@ -57,9 +57,9 @@ divideIntoDefs asts = L.foldl divideDefStep [] asts
 
 
 getFnIds :: [Definition] -> [Text]
-getFnIds ((FuncDef    fnid _ _ _ _):defs) = (fnid):(getFnIds defs)
-getFnIds ((FuncSyntax fnid _ _ _  ):defs) = (fnid):(getFnIds defs)
-getFnIds (_:defs)                         = getFnIds defs
+getFnIds ((FuncDef    _ fnid _ _ _ _):defs) = (fnid):(getFnIds defs)
+getFnIds ((FuncSyntax   fnid _ _ _  ):defs) = (fnid):(getFnIds defs)
+getFnIds (_:defs)                           = getFnIds defs
 
 
 
@@ -71,10 +71,10 @@ getFnIds (_:defs)                         = getFnIds defs
 
 
 getTyIds :: [Definition] -> [Text]
-getTyIds ((TypeDef       tyid _ _ _):defs) = (tyid):(getTyIds defs)
-getTyIds ((TypeSyntax    tyid _ _  ):defs) = (tyid):(getTyIds defs)
-getTyIds ((TyClassSyntax tyid _ _  ):defs) = (tyid):(getTyIds defs)
-getTyIds (_:defs)                          = getTyIds defs
+getTyIds ((TypeDef       _ tyid _ _ _):defs) = (tyid):(getTyIds defs)
+getTyIds ((TypeSyntax      tyid _ _  ):defs) = (tyid):(getTyIds defs)
+getTyIds ((TyClassSyntax   tyid _ _  ):defs) = (tyid):(getTyIds defs)
+getTyIds (_:defs)                            = getTyIds defs
 
 
 

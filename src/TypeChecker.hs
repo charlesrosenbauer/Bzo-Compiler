@@ -146,7 +146,7 @@ checkTyClass dt@(DefinitionTable defs files ids _) (thead, ty, tc) =
       -- Filter out functions that do not match interface
       -- NOTE: Make this keep track of TCs visited to avoid recursion.
       fitsInterface :: TCId -> S.Set TCId -> (TypeHeader, Type) -> Definition -> [BzoErr]
-      fitsInterface tc tcset (th0, t0) fd@(FuncDef i _ th1 t1 _) =
+      fitsInterface tc tcset (th0, t0) fd@(FuncDef p i _ th1 t1 _) =
         let
             errs :: [BzoErr]
             tcs  :: [(TypeHeader, Type, TCId)]
@@ -157,12 +157,12 @@ checkTyClass dt@(DefinitionTable defs files ids _) (thead, ty, tc) =
         in if (S.null tcids)
             then []
             else if (S.intersection tcset tcids /= S.empty)
-                  then [TypeErr (typos t1) $ pack $ "Type Class " ++ (unpack $ identifier $ defs M.! tc) ++ " recurses with function " ++ (unpack i) ++ "."]
+                  then [TypeErr p $ pack $ "Type Class " ++ (unpack $ identifier $ defs M.! tc) ++ " recurses with function " ++ (unpack i) ++ "."]
                   else fitsInterface tc (S.union tcset tcids) (th0, t0) fd
 
       -- This case shouldn't actually happen, but I'm including it just in case.
       -- Needs work to make it a bit more reliable though.
-      fitsInterface _ _ _ _ = [TypeErr (BzoPos 0 0 $ pack "") $ pack "Expected a typeclass, found something else. This case shouldn't happen."]
+      fitsInterface _ _ _ d = [TypeErr (defpos d) $ pack "Expected a typeclass, found something else. This case shouldn't happen."]
 
 
       fnvals :: [[(Text, Int64)]]

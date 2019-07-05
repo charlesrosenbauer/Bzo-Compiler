@@ -151,9 +151,9 @@ modelConstraints st dt@(DefinitionTable defs files ids top) =
               Left  errs -> Left  errs
 
       modelType :: Definition -> Either [BzoErr] Definition
-      modelType (TypeDef i h th td) =
+      modelType (TypeDef p i h th td) =
         case (modelTHead th) of
-          Right th' -> Right (TypeDef i h th' td)
+          Right th' -> Right (TypeDef p i h th' td)
           Left errs -> Left errs
 
       modelType x = Right x
@@ -404,9 +404,9 @@ makeTypes dt@(DefinitionTable defs files ids top) =
 
       -- Function for translating definitions to use TYPE and TYPEHEADER rather than BZOSYNTAX.
       translateDef :: Definition -> Either [BzoErr] Definition
-      translateDef (FuncSyntax    fn host fty@(BzS_FnTypeDef  _ ps _ ft) fs) = constructType fty ft host (\th t -> (FuncDef    fn host th t fs))
-      translateDef (TypeSyntax    ty host tyd@(BzS_TypDef     _ ps _ td)   ) = constructType tyd td host (\th t -> (TypeDef    ty host th t   ))
-      translateDef (TyClassSyntax tc host tcd@(BzS_TyClassDef _ ps _ td)   ) =
+      translateDef (FuncSyntax    fn host fty@(BzS_FnTypeDef  p ps _ ft) fs) = constructType fty ft host (\th t -> (FuncDef  p fn host th t fs))
+      translateDef (TypeSyntax    ty host tyd@(BzS_TypDef     p ps _ td)   ) = constructType tyd td host (\th t -> (TypeDef  p ty host th t   ))
+      translateDef (TyClassSyntax tc host tcd@(BzS_TyClassDef p ps _ td)   ) =
         let
             thead :: TypeHeader
             thead = (initializeTypeHeader' ps)
@@ -416,7 +416,7 @@ makeTypes dt@(DefinitionTable defs files ids top) =
 
         in case interface of
             Left errs -> Left errs
-            Right itf -> Right (TyClassDef tc host thead itf)
+            Right itf -> Right (TyClassDef p tc host thead itf)
 
       -- Function for reformatting typeclass interfaces
       xformTCFunc :: Text -> TypeHeader -> BzoSyntax -> Either [BzoErr] (Text, TypeHeader, Type)
