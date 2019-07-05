@@ -117,6 +117,8 @@ checkConstraints dt h0 (h1, t) = checkConstraints dt h0 (h1, CmpdType (typos t) 
 
 
 checkTyClass :: DefinitionTable -> (TypeHeader, Type, TCId) -> [BzoErr]
+checkTyClass dt (thead, (MakeType _ [t]), tc) = checkTyClass dt (thead, t, tc)
+
 checkTyClass dt@(DefinitionTable defs files ids _) (thead, ty, tc) =
   let
       -- Get typeclass definition and associated interface
