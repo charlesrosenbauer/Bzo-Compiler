@@ -144,9 +144,15 @@ checkTyClass dt@(DefinitionTable defs files ids _) (thead, ty, tc) =
       fns':: [(Text, [Int64])]
       fns'= L.map (\f -> (f, L.filter (\v -> S.member v visibility) $ Mb.fromMaybe [] $ M.lookup f ids)) fns
 
+      fns''::[[(Text, Int64)]]
+      fns''= L.map (\(t,fs) -> L.zip (L.repeat t) fs) fns'
 
-      -- Filter out functions that do not match interface
-      -- NOTE: Make this keep track of TCs visited to avoid recursion.
+
+      -- | Filter out functions that do not match interface
+      -- tc       : Original TClass
+      -- tcset    : Set of all TCs visited to prevent recursion
+      -- (th0,t0) : type
+      -- fd       : function definition
       fitsInterface :: TCId -> S.Set TCId -> (TypeHeader, Type) -> Definition -> [BzoErr]
       fitsInterface tc tcset (th0, t0) fd@(FuncDef p i _ th1 t1 _) =
         let
@@ -166,9 +172,11 @@ checkTyClass dt@(DefinitionTable defs files ids _) (thead, ty, tc) =
       -- Needs work to make it a bit more reliable though.
       fitsInterface _ _ _ d = [TypeErr (defpos d) $ pack "Expected a typeclass, found something else. This case shouldn't happen."]
 
+      fits :: (Text, Int64) -> Bool
+      fits (i, f) = L.null $ fitsInterface tc S.empty (thead, ty) (defs M.! f)
 
       fnvals :: [[(Text, Int64)]]
-      fnvals = []
+      fnvals = debug $ L.map (L.filter fits) fns''
 
   in if (L.null fnvals) || (L.any L.null fnvals)
       then [TypeErr (typos ty) $ pack $ "Type " ++ (show ty) ++ " does not match class " ++ (show  $ getDefName dt tc) ++ "\n"]
