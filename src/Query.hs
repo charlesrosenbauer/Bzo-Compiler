@@ -182,3 +182,18 @@ isTyClass :: Definition -> Bool
 isTyClass (TypeSyntax    _ _ _) = True
 isTyClass (TyClassSyntax _ _ _) = True
 isTyClass _ = False
+
+
+
+
+
+
+
+
+getDefPos  :: DefinitionTable -> Int64 -> BzoPos
+getDefPos  dt i = defpos ((dt_defs dt) M.! i)
+
+
+
+getDefName :: DefinitionTable -> Int64 -> Text
+getDefName dt i = identifier ((dt_defs dt) M.! i)

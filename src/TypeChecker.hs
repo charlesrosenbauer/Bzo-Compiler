@@ -169,7 +169,7 @@ checkTyClass dt@(DefinitionTable defs files ids _) (thead, ty, tc) =
       fnvals = []
 
   in if (L.null fnvals) || (L.any L.null fnvals)
-      then [TypeErr (typos ty) $ pack $ "Type " ++ (show ty) ++ " does not match class " ++ (show tc) ++ "\n"]
+      then [TypeErr (typos ty) $ pack $ "Type " ++ (show ty) ++ " does not match class " ++ (show  $ getDefName dt tc) ++ "\n"]
       else []
 
 
