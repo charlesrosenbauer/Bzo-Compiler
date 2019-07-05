@@ -589,7 +589,7 @@ data Definition
 dtdef :: Definition -> Int64 -> Type
 dtdef (FuncDef  _ _ _ _ t _) _ = t
 dtdef (TypeDef  _ _ _ _ t  ) _ = t
-dtdef (TyClassDef _ _ f _ i) c = TyCsType (BzoPos 0 0 f) c i
+dtdef (TyClassDef p _ _ _ i) c = TyCsType p c i
 
 
 
@@ -685,6 +685,7 @@ data Type
   | ArryType  !BzoPos !Integer !Type
   | FLitType  !BzoPos ![FnId]
   | TyCsType  !BzoPos !TCId    ![(T.Text, TypeHeader, Type)]
+  | TCType    !BzoPos !TCId    -- Carrying around the interface is useful, but raises potential recursion problems.
   | InvalidType
 
 eqType :: Type -> Type -> Bool
@@ -704,6 +705,7 @@ eqType (BITyType _    b0) (BITyType _    b1) = (b0 == b1)
 eqType (ArryType _ i0 t0) (ArryType _ i1 t1) = (i0 == i1) && (t0 == t1)
 eqType (FLitType _    f0) (FLitType _    f1) = ((L.sort f0) == (L.sort f1))
 eqType (TyCsType _ i0  _) (TyCsType _ i1  _) = (i0 == i1)
+eqType (TCType   _    i0) (TCType   _    i1) = (i0 == i1)
 eqType InvalidType        InvalidType        = True
 eqType _ _ = False
 instance Eq Type where (==) = eqType
@@ -726,6 +728,7 @@ typos (BITyType  p   _) = p
 typos (ArryType  p _ _) = p
 typos (FLitType  p   _) = p
 typos (TyCsType  p _ _) = p
+typos (TCType    p   _) = p
 
 
 
@@ -752,7 +755,8 @@ showType (TVarType  _    tv) = "TV:" ++ (show tv)
 showType (BITyType  _    bt) = "BT:" ++ (show bt)
 showType (ArryType  _  i ty) = "[ArrayType [" ++ (show i) ++ "] " ++ (show ty) ++ "]"
 showType (FLitType  _    fn) = "FN:" ++ (show fn)
-showType (TyCsType  _  tc _) = "TC:" ++ (show tc)
+showType (TyCsType  _  tc _) = "[TC:" ++ (show tc) ++ "]"
+showType (TCType    _    tc) = "TC:" ++ (show tc)
 showType (InvalidType      ) = "INVALIDTYPE"
 instance Show Type where show = showType
 

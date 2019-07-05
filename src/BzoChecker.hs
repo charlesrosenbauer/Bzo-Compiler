@@ -135,7 +135,7 @@ modelConstraints st dt@(DefinitionTable defs files ids top) =
             ft :: FileTable
             ft = (getSymTable st) M.! (fileName p)
         in case t of
-            (UnresType ast) -> toRight (Constraint p) $ makeType ft emptyheader ast
+            (UnresType ast) -> toRight (Constraint p) $ toRight (replaceTCs dt) $ makeType ft emptyheader ast
             typ             -> Right   (Constraint p typ)
 
       modelCons  :: (TVId, THeadAtom)  -> Either [BzoErr] (TVId, THeadAtom)
@@ -325,6 +325,29 @@ makeType ft th x = Left [TypeErr (pos x) $ pack $ "Malformed type expression: " 
 
 
 
+replaceTCs :: DefinitionTable -> Type -> Type
+replaceTCs (DefinitionTable defs files ids top) (LtrlType p t) =
+  case (defs M.! t) of
+    (TyClassDef _ _ _ _ _) -> (TCType p t)
+    (TyClassSyntax  _ _ _) -> (TCType p t)
+    _                      -> (LtrlType p t)
+
+replaceTCs dt (CmpdType p  xs) = (CmpdType p (L.map (replaceTCs dt) xs))
+replaceTCs dt (PolyType p  xs) = (PolyType p (L.map (replaceTCs dt) xs))
+replaceTCs dt (MakeType p  xs) = (MakeType p (L.map (replaceTCs dt) xs))
+replaceTCs dt (ArryType p s x) = (ArryType p s (replaceTCs dt x))
+replaceTCs dt (FuncType p i o) = (FuncType p (replaceTCs dt i) (replaceTCs dt o))
+replaceTCs dt t = t
+
+
+
+
+
+
+
+
+
+
 data SymbolTable = SymbolTable (M.Map Text FileTable) deriving Show
 
 getSymTable :: SymbolTable -> M.Map Text FileTable
@@ -398,7 +421,7 @@ makeTypes dt@(DefinitionTable defs files ids top) =
             tyhead = initializeTypeHeader' thead
 
             typ    :: Either [BzoErr] Type
-            typ    = toRight flattenPolys $ makeType (getFTab host) tyhead tdef
+            typ    = toRight flattenPolys $ toRight (replaceTCs dt) $ makeType (getFTab host) tyhead tdef
 
         in  applyRight (fn tyhead) typ
 
@@ -429,7 +452,7 @@ makeTypes dt@(DefinitionTable defs files ids top) =
             thead'= TyHeader ((header th) ++ (header thead)) (M.union (tvarmap th) (tvarmap thead))
 
             ftyp :: Either [BzoErr] Type
-            ftyp = makeType (getFTab host) thead' ft
+            ftyp = toRight (replaceTCs dt) $ makeType (getFTab host) thead' ft
 
         in case ftyp of
             Right typ -> Right (fn, thead', typ)

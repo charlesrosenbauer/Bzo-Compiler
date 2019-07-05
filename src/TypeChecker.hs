@@ -197,12 +197,13 @@ checkType' _ _ (_, FltType  p f0) (_, BITyType _  b) = (ife (b  == 13) [] [TypeE
 checkType' _ _ (_, StrType  p s0) (_, BITyType _  b) = (ife (b  == 17) [] [TypeErr p $ pack $ "Expected string builtin"   ], [], [])
 checkType' _ _ (_, BITyType p b0) (_, BITyType _ b1) = (ife (b0 == b1) [] [TypeErr p $ pack $ "Builtin types do not match"], [], [])
 
+-- Type Class Checking
+checkType' _ _ (h, t) (_, TyCsType _ c _) = ([], [], [(h, t, c)])
+checkType' _ _ (h, t) (_, TCType   _   c) = ([], [], [(h, t, c)])
 
 -- Primitive Literal Checking
 checkType' k d (h0,LtrlType p0 t0) (h1,LtrlType p t1) =
   let
-      istc = isTyClass $ (dt_defs d) M.! t1
-
       tdef :: Definition
       tdef = (dt_defs d) M.! t0
 
@@ -210,13 +211,12 @@ checkType' k d (h0,LtrlType p0 t0) (h1,LtrlType p t1) =
       h2 = typehead tdef
 
       t2 :: Type
-      t2 = dtdef    tdef t0
+      t2 = typedef tdef
 
-  in case (istc, t0 == t1, checkType' k d (h2, t2) (h1, LtrlType p t1)) of
-      (True,  _    , _          ) -> ([], [], [(h0, LtrlType p t0, t1)])
-      (False, True , (_ , _, tc)) -> ([], [], tc)
-      (False, False, ([], _, tc)) -> ([], [], tc)
-      (False, False, (er, _, tc)) -> ([TypeErr p0 $ pack $ "Types " ++ (show $ getTyId d t0) ++ " and " ++ (show $ getTyId d t1) ++ " do not match."] ++ er, [], tc)
+  in case (t0 == t1, checkType' k d (h2, t2) (h1, LtrlType p t1)) of
+      (True , (_ , _, tc)) -> ([], [], tc)
+      (False, ([], _, tc)) -> ([], [], tc)
+      (False, (er, _, tc)) -> ([TypeErr p0 $ pack $ "Types " ++ (show $ getTyId d t0) ++ " and " ++ (show $ getTyId d t1) ++ " do not match."] ++ er, [], tc)
 
 
 -- Array Type Checking
@@ -332,7 +332,7 @@ checkType' k d (h0,LtrlType p t0) (h1, t1) =
       h2 = typehead tdef
 
       t2 :: Type
-      t2 = dtdef    tdef t0
+      t2 = typedef tdef
 
   in case (checkType' k d (h2, t2) (h1, t1)) of
       ([], vs, tc) -> ([], vs, tc)
@@ -340,8 +340,6 @@ checkType' k d (h0,LtrlType p t0) (h1, t1) =
 
 checkType' k d (h0, t0) (h1,LtrlType _ t1) =
   let
-      istc = isTyClass $ (dt_defs d) M.! t1
-
       tdef :: Definition
       tdef = (dt_defs d) M.! t1
 
@@ -349,20 +347,15 @@ checkType' k d (h0, t0) (h1,LtrlType _ t1) =
       h2 = typehead tdef
 
       t2 :: Type
-      t2 = dtdef  tdef t1
+      t2 = typedef tdef
 
-  in case (istc, checkType' k d (h0, t0) (h2, t2)) of
-      (True,  (er, vs, tc)) -> (er, vs, tc ++ [(h0, t0, t1)])
-      (False, ([], vs, tc)) -> ([], vs, tc)
-      (False, (er, _,  tc)) -> ([TypeErr (typos t0) $ pack ("Could not match type:\n" ++ (show t0) ++ "\non type " ++ (show $ getTyId d t1) ++ "\n")] ++ er, [], [])
+  in case (checkType' k d (h0, t0) (h2, t2)) of
+      ([], vs, tc) -> ([], vs, tc)
+      (er, _,  tc) -> ([TypeErr (typos t0) $ pack ("Could not match type:\n" ++ (show t0) ++ "\non type " ++ (show $ getTyId d t1) ++ "\n")] ++ er, [], [])
 
 
 -- Type Variable Checking
 checkType' k d (h0, t) (h1, TVarType p v) = ([], [(v, t, k)], [])
-
--- Type Class Checking
-checkType' _ _ (h, t) (_, TyCsType _ c _) = ([], [], [(h, t, c)])
-
 
 -- Fallthrough Case
 checkType' _ _ (_, x) (_, y) = ([TypeErr (typos y) $ pack ("Type Mismatch:\n" ++ (show x) ++ "\n&&\n" ++ (show y))], [], [])
@@ -468,7 +461,7 @@ validType dt (h, MakeType p ((LtrlType _  t):ts)) =
 
       thead  :: TypeHeader
       typ    :: Type
-      (thead, typ) = (\tx -> (typehead tx, dtdef tx t)) ((dt_defs dt) M.! t)
+      (thead, typ) = (\tx -> (typehead tx, typedef tx)) ((dt_defs dt) M.! t)
 
       cerr = checkConstraints dt thead (h, MakeType p ts)
   in terr ++ cerr
