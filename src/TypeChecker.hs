@@ -156,6 +156,14 @@ checkTyClass dt@(DefinitionTable defs files ids _) (thead, ty, tc) =
       fitsInterface :: TCId -> S.Set TCId -> (TypeHeader, Type) -> Definition -> [BzoErr]
       fitsInterface tc tcset (th0, t0) fd@(FuncDef p i _ th1 t1 _) =
         let
+            {-
+              This is going to need some work.
+              From debugging, it looks like this fails due to the type being
+              compared to the function type. For example, if Int is being
+              checked against [S'] Showable :: { show :: S' ;; Str }, the test
+              run is on Int and Int ;; Str, which obviously fails. This is going
+              to need a little extra work.
+            -}
             errs :: [BzoErr]
             tcs  :: [(TypeHeader, Type, TCId)]
             (errs, _, tcs) = checkWithVars dt (th0, t0) (th1, t1)
@@ -163,7 +171,7 @@ checkTyClass dt@(DefinitionTable defs files ids _) (thead, ty, tc) =
             tcids :: S.Set TCId
             tcids = S.fromList $ L.map trd3 tcs
         in if (S.null tcids)
-            then []
+            then errs
             else if (S.intersection tcset tcids /= S.empty)
                   then [TypeErr p $ pack $ "Type Class " ++ (unpack $ identifier $ defs M.! tc) ++ " recurses with function " ++ (unpack i) ++ "."]
                   else fitsInterface tc (S.union tcset tcids) (th0, t0) fd
@@ -176,7 +184,7 @@ checkTyClass dt@(DefinitionTable defs files ids _) (thead, ty, tc) =
       fits (i, f) = L.null $ fitsInterface tc S.empty (thead, ty) (defs M.! f)
 
       fnvals :: [[(Text, Int64)]]
-      fnvals = debug $ L.map (L.filter fits) fns''
+      fnvals = L.map (L.filter fits) fns''
 
   in if (L.null fnvals) || (L.any L.null fnvals)
       then [TypeErr (typos ty) $ pack $ "Type " ++ (show ty) ++ " does not match class " ++ (show  $ getDefName dt tc) ++ "\n"]
