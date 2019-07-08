@@ -163,10 +163,30 @@ checkTyClass dt@(DefinitionTable defs files ids _) (thead, ty, tc) =
               checked against [S'] Showable :: { show :: S' ;; Str }, the test
               run is on Int and Int ;; Str, which obviously fails. This is going
               to need a little extra work.
+
+              Right now I have a way to add simple constraints. However, it
+              looks like I'm missing a way to pull in the interface type. Then I
+              need to handle more complex cases; if th0 has any tvars, they need
+              to be added in as well in a way that doesn't conflict with the
+              tvars that already exist in the interface.
             -}
+            addConstraint :: TypeHeader -> Type -> TypeHeader
+            addConstraint (TyHeader hd tvs) ty =
+              let
+                  ta :: THeadAtom
+                  ta = tvs M.! (L.head hd)
+
+                  cn :: Constraint
+                  cn = Constraint p ty
+
+                  ta':: THeadAtom
+                  ta'= (TVrAtom (tatompos ta) (tatomvar ta) (cn : (tatomcns ta)))
+
+              in (TyHeader hd (M.insert (L.head hd) ta' tvs))
+
             errs :: [BzoErr]
             tcs  :: [(TypeHeader, Type, TCId)]
-            (errs, _, tcs) = checkWithVars dt (th0, t0) (th1, t1)
+            (errs, _, tcs) = checkWithVars dt (addConstraint th0 t0, t0) (th1, t1)
 
             tcids :: S.Set TCId
             tcids = S.fromList $ L.map trd3 tcs

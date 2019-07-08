@@ -788,6 +788,15 @@ data THeadAtom
   = TVrAtom !BzoPos !T.Text ![Constraint]
   deriving Eq
 
+tatompos :: THeadAtom -> BzoPos
+tatompos (TVrAtom p t cs) = p
+
+tatomvar :: THeadAtom -> T.Text
+tatomvar (TVrAtom p t cs) = t
+
+tatomcns :: THeadAtom -> [Constraint]
+tatomcns (TVrAtom p t cs) = cs
+
 showTHead :: THeadAtom -> String
 showTHead (TVrAtom _ k cs) = "[" ++ (show k) ++ " . " ++ (show cs) ++ "]"
 instance Show THeadAtom where show = showTHead
