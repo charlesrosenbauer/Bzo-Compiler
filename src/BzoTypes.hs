@@ -668,6 +668,17 @@ data TypeHeader = TyHeader { header :: ![TVId], tvarmap :: !(M.Map TVId THeadAto
 emptyheader :: TypeHeader
 emptyheader = TyHeader [] M.empty
 
+bumpHeader :: TVId -> TypeHeader -> TypeHeader
+bumpHeader n (TyHeader vs vmap) =
+  let
+      vs' :: [TVId]
+      vs' = L.map (+n) vs
+
+      vmap' :: M.Map TVId THeadAtom
+      vmap' = M.fromList $ L.map (\(k,v)->(k+n,v)) $ M.assocs vmap
+      
+  in (TyHeader vs' vmap')
+
 data Type
   = UnresType !BzoSyntax
   | ParamType !BzoPos !BzoSyntax
@@ -729,6 +740,15 @@ typos (ArryType  p _ _) = p
 typos (FLitType  p   _) = p
 typos (TyCsType  p _ _) = p
 typos (TCType    p   _) = p
+
+bumpTVs :: TVId -> Type -> Type
+bumpTVs n (TVarType p   x) = (TVarType p (x+n))
+bumpTVs n (CmpdType p  xs) = (CmpdType p   (L.map (bumpTVs n) xs))
+bumpTVs n (PolyType p  xs) = (PolyType p   (L.map (bumpTVs n) xs))
+bumpTVs n (MakeType p  xs) = (MakeType p   (L.map (bumpTVs n) xs))
+bumpTVs n (ArryType p s x) = (ArryType p s (bumpTVs n x))
+bumpTVs n (FuncType p i o) = (FuncType p   (bumpTVs n i) (bumpTVs n o))
+bumpTVs n t = t
 
 
 
