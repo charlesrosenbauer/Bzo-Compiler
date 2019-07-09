@@ -149,12 +149,10 @@ checkTyClass dt@(DefinitionTable defs files ids _) (thead, ty, tc) =
 
 
       -- | Filter out functions that do not match interface
-      -- tc       : Original TClass
-      -- tcset    : Set of all TCs visited to prevent recursion
       -- (th0,t0) : type
       -- fd       : function definition
-      fitsInterface :: TCId -> S.Set TCId -> (TypeHeader, Type) -> Definition -> [BzoErr]
-      fitsInterface tc tcset (th0, t0) fd@(FuncDef p i _ th1 t1 _) =
+      fitsInterface :: (TypeHeader, Type) -> Definition -> [BzoErr]
+      fitsInterface (th0, t0) fd@(FuncDef p i _ th1 t1 _) =
         let
             {-
               This is going to need some work.
@@ -188,20 +186,16 @@ checkTyClass dt@(DefinitionTable defs files ids _) (thead, ty, tc) =
             tcs  :: [(TypeHeader, Type, TCId)]
             (errs, _, tcs) = checkWithVars dt (addConstraint th0 t0, t0) (th1, t1)
 
-            tcids :: S.Set TCId
-            tcids = S.fromList $ L.map trd3 tcs
-        in if (S.null tcids)
+        in if (L.null tcs)
             then errs
-            else if (S.intersection tcset tcids /= S.empty)
-                  then [TypeErr p $ pack $ "Type Class " ++ (unpack $ identifier $ defs M.! tc) ++ " recurses with function " ++ (unpack i) ++ "."]
-                  else fitsInterface tc (S.union tcset tcids) (th0, t0) fd
+            else fitsInterface (th0, t0) fd
 
       -- This case shouldn't actually happen, but I'm including it just in case.
       -- Needs work to make it a bit more reliable though.
-      fitsInterface _ _ _ d = [TypeErr (defpos d) $ pack "Expected a typeclass, found something else. This case shouldn't happen."]
+      fitsInterface _ d = [TypeErr (defpos d) $ pack "Expected a typeclass, found something else. This case shouldn't happen."]
 
       fits :: (Text, Int64) -> Bool
-      fits (i, f) = L.null $ fitsInterface tc S.empty (thead, ty) (defs M.! f)
+      fits (i, f) = L.null $ fitsInterface (thead, ty) (defs M.! f)
 
       fnvals :: [[(Text, Int64)]]
       fnvals = L.map (L.filter fits) fns''
