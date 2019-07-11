@@ -2,6 +2,7 @@ module BzoParameterParser where
 import Data.List as L
 import Data.Text as T
 import BzoTypes
+import Error
 import System.IO
 import HigherOrder
 

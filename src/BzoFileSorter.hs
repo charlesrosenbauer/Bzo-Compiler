@@ -11,6 +11,8 @@ import Data.Map.Strict as M
 import Data.Set as S
 import HigherOrder
 import ModelRules
+import Core
+import Error
 import Debug.Trace
 
 

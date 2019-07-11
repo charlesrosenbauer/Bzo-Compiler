@@ -40,3 +40,7 @@ executable main
       , BzoEmulator
       , BzoExprModeller
       , TypeChecker
+      , Tokens
+      , Core
+      , AST
+      , Error

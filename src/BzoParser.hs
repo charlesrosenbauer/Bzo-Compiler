@@ -3,6 +3,9 @@ import Data.Text as T
 import Data.List as L
 import BzoTypes
 import BzoParserRules
+import AST
+import Tokens
+import Error
 import HigherOrder
 
 

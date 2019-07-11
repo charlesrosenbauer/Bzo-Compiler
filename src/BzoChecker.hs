@@ -3,6 +3,9 @@ import BzoTypes
 import HigherOrder
 import Builtins
 import TypeChecker
+import Core
+import Error
+import AST
 import Data.Text
 import Data.Int
 import Data.Either as E

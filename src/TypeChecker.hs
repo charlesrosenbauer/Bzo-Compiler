@@ -6,6 +6,8 @@ import Data.Text
 import Data.Int
 import Data.Either as E
 import Query
+import Core
+import Error
 import qualified Data.Map.Strict as M
 import qualified Data.Maybe as Mb
 import qualified Data.List as L

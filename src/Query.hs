@@ -11,6 +11,9 @@ import qualified Data.List as L
 import qualified Data.Set as S
 import qualified Data.Tuple as Tp
 import Control.Parallel.Strategies
+import Core
+import Error
+import AST
 import Debug.Trace
 
 

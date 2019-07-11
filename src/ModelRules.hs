@@ -1,6 +1,9 @@
 module ModelRules where
 import BzoTypes
 import HigherOrder
+import Core
+import Error
+import AST
 import Data.Either
 import Data.Maybe
 import Data.Text
