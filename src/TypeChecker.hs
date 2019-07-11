@@ -168,23 +168,9 @@ checkTyClass dt@(DefinitionTable defs files ids _) (thead, ty, tc) =
               to be added in as well in a way that doesn't conflict with the
               tvars that already exist in the interface.
             -}
-            addConstraint :: TypeHeader -> Type -> TypeHeader
-            addConstraint (TyHeader hd tvs) ty =
-              let
-                  ta :: THeadAtom
-                  ta = tvs M.! (L.head hd)
-
-                  cn :: Constraint
-                  cn = Constraint p ty
-
-                  ta':: THeadAtom
-                  ta'= (TVrAtom (tatompos ta) (tatomvar ta) (cn : (tatomcns ta)))
-
-              in (TyHeader hd (M.insert (L.head hd) ta' tvs))
-
             errs :: [BzoErr]
             tcs  :: [(TypeHeader, Type, TCId)]
-            (errs, _, tcs) = checkWithVars dt (addConstraint th0 t0, t0) (th1, t1)
+            (errs, _, tcs) = checkWithVars dt (addConstraint p (L.head $ header th0) th0 t0, t0) (th1, t1)
 
         in if (L.null tcs)
             then errs

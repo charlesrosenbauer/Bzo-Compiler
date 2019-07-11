@@ -674,9 +674,15 @@ bumpHeader n (TyHeader vs vmap) =
       vs' :: [TVId]
       vs' = L.map (+n) vs
 
+      bumpConstraint :: Constraint -> Constraint
+      bumpConstraint (Constraint p t) = (Constraint p (bumpTVs n t))
+
+      bumpTAtom      :: THeadAtom -> THeadAtom
+      bumpTAtom (TVrAtom p tid cs) = (TVrAtom p tid (L.map bumpConstraint cs))
+
       vmap' :: M.Map TVId THeadAtom
-      vmap' = M.fromList $ L.map (\(k,v)->(k+n,v)) $ M.assocs vmap
-      
+      vmap' = M.fromList $ L.map (\(k,v)-> (k+n, bumpTAtom v)) $ M.assocs vmap
+
   in (TyHeader vs' vmap')
 
 data Type
@@ -749,6 +755,35 @@ bumpTVs n (MakeType p  xs) = (MakeType p   (L.map (bumpTVs n) xs))
 bumpTVs n (ArryType p s x) = (ArryType p s (bumpTVs n x))
 bumpTVs n (FuncType p i o) = (FuncType p   (bumpTVs n i) (bumpTVs n o))
 bumpTVs n t = t
+
+addConstraint :: BzoPos -> TVId -> TypeHeader -> Type -> TypeHeader
+addConstraint p tvid (TyHeader hd tvs) ty =
+  let
+      ta :: THeadAtom
+      ta = tvs M.! tvid
+
+      cn :: Constraint
+      cn = Constraint p ty
+
+      ta':: THeadAtom
+      ta'= (TVrAtom (tatompos ta) (tatomvar ta) (cn : (tatomcns ta)))
+
+  in (TyHeader hd (M.insert tvid ta' tvs))
+
+-- Replace tvid in t0 with t1
+fuseTypes :: BzoPos -> TVId -> (TypeHeader, Type) -> (TypeHeader, Type) -> (TypeHeader, Type)
+fuseTypes p tvid (th0, t0) (th1, t1) =
+  let
+      top :: TVId
+      top = 1 + (L.maximum (0:(header th0)))
+
+      th2 :: TypeHeader
+      th2 = bumpHeader top th1
+
+      t2  :: Type
+      t2  = bumpTVs    top t1
+
+  in  (addConstraint p tvid th0 t2, t0)
 
 
 
