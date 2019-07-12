@@ -146,15 +146,16 @@ checkTyClass dt@(DefinitionTable defs files ids _) (thead, ty, tc) =
       fns':: [(Text, [Int64])]
       fns'= L.map (\f -> (f, L.filter (\v -> S.member v visibility) $ Mb.fromMaybe [] $ M.lookup f ids)) fns
 
-      fns''::[[(Text, Int64)]]
-      fns''= L.map (\(t,fs) -> L.zip (L.repeat t) fs) fns'
+      fns''::[[(Text, Int64, (TypeHeader, Type))]]
+      fns''= L.map (\(t,fs) -> L.zip3 (L.repeat t) fs (L.repeat $ intfctable M.! t)) fns'
 
 
       -- | Filter out functions that do not match interface
       -- (th0,t0) : type
       -- fd       : function definition
-      fitsInterface :: (TypeHeader, Type) -> Definition -> [BzoErr]
-      fitsInterface (th0, t0) fd@(FuncDef p i _ th1 t1 _) =
+      -- (thc,tc) : typeclass type
+      fitsInterface :: (TypeHeader, Type) -> (TypeHeader, Type) -> Definition -> [BzoErr]
+      fitsInterface (th0, t0) (thc, tc) fd@(FuncDef p i _ th1 t1 _) =
         let
             {-
               This is going to need some work.
@@ -170,22 +171,27 @@ checkTyClass dt@(DefinitionTable defs files ids _) (thead, ty, tc) =
               to be added in as well in a way that doesn't conflict with the
               tvars that already exist in the interface.
             -}
+            a = debugmsg "a" (fuseTypes p (L.head $ header th0) (th0, t0) (th1, t1))
+            b = debugmsg "b" (thc, tc)
+
             errs :: [BzoErr]
             tcs  :: [(TypeHeader, Type, TCId)]
-            (errs, _, tcs) = checkWithVars dt (addConstraint p (L.head $ header th0) th0 t0, t0) (th1, t1)
+            (errs, _, tcs) = checkWithVars dt  a b
 
         in if (L.null tcs)
             then errs
-            else fitsInterface (th0, t0) fd
+            else fitsInterface (th0, t0) (thc, tc) fd
 
       -- This case shouldn't actually happen, but I'm including it just in case.
       -- Needs work to make it a bit more reliable though.
-      fitsInterface _ d = [TypeErr (defpos d) $ pack "Expected a typeclass, found something else. This case shouldn't happen."]
+      fitsInterface _ _ d = [TypeErr (defpos d) $ pack "Expected a typeclass, found something else. This case shouldn't happen."]
 
-      fits :: (Text, Int64) -> Bool
-      fits (i, f) = L.null $ fitsInterface (thead, ty) (defs M.! f)
 
-      fnvals :: [[(Text, Int64)]]
+
+      fits :: (Text, Int64, (TypeHeader, Type)) -> Bool
+      fits (i, f, ifc) = L.null $ fitsInterface (thead, ty) ifc (defs M.! f)
+
+      fnvals :: [[(Text, Int64, (TypeHeader, Type))]]
       fnvals = L.map (L.filter fits) fns''
 
   in if (L.null fnvals) || (L.any L.null fnvals)
