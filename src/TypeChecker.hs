@@ -127,6 +127,9 @@ checkTyClass dt@(DefinitionTable defs files ids _) (thead, ty, tc) =
       tclass :: Definition
       tclass = defs M.! tc
 
+      tcvar  :: TVId  -- Seems to be a bug somewhere that is making header lists empty sometimes, causing this to crash
+      tcvar = 0 --L.head $ header $ typehead tclass
+
       intfc  :: [(Text, TypeHeader, Type)]
       intfc = interface tclass
 
@@ -171,8 +174,8 @@ checkTyClass dt@(DefinitionTable defs files ids _) (thead, ty, tc) =
               to be added in as well in a way that doesn't conflict with the
               tvars that already exist in the interface.
             -}
-            a = debugmsg "a" (fuseTypes p (L.head $ header th0) (th0, t0) (th1, t1))
-            b = debugmsg "b" (thc, tc)
+            a = debugmsg "a" (th1, t1)
+            b = debugmsg "b" (fuseTypes p tcvar (thc, tc) (th0, t0))
 
             errs :: [BzoErr]
             tcs  :: [(TypeHeader, Type, TCId)]
@@ -395,7 +398,6 @@ checkType' _ _ (_, x) (_, y) = ([TypeErr (typos y) $ pack ("Type Mismatch:\n" ++
 
 
 
---TODO: !!TEST THIS CODE!!
 checkWithVars :: DefinitionTable -> (TypeHeader, Type) -> (TypeHeader, Type) -> ([BzoErr], M.Map TVId Type, [(TypeHeader, Type, TCId)])
 checkWithVars d a@(h0,t0) b@(h1,t1) =
   let
