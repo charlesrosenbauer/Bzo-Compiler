@@ -40,7 +40,7 @@ getTyId (DefinitionTable defs _ _ _) t = identifier $ defs M.! t
     * Tuple-array casting
     * Builtin checks
 -}
-data IOKind = InKind | ExKind deriving Eq
+data IOKind = InKind | ExKind deriving (Show, Eq)
 
 checkXS_Y  :: IOKind -> DefinitionTable -> (TypeHeader, [Type]) -> (TypeHeader, Type) -> ([BzoErr], [(TVId, Type, IOKind)], [(TypeHeader, Type, TCId)])
 checkXS_Y  k d (h0, ts) (h1, t1) = concatUnzip3 $ L.map (\t -> checkType' k d (h0,t) (h1,t1)) ts
@@ -384,7 +384,7 @@ checkType' k d (h0, t0) (h1,LtrlType _ t1) =
 
 
 -- Type Variable Checking
-checkType' k d (h0, t) (h1, TVarType p v) = ([], [(v, t, k)], [])
+checkType' k d (h0, t) (h1, TVarType p v) = ([], debugmsg "Vars: " [(v, t, k)], [])
 
 -- Fallthrough Case
 checkType' _ _ (_, x) (_, y) = ([TypeErr (typos y) $ pack ("Type Mismatch:\n" ++ (show x) ++ "\n&&\n" ++ (show y))], [], [])
@@ -448,7 +448,7 @@ checkWithVars d a@(h0,t0) b@(h1,t1) =
               else [TypeErr (typos vtyp) $ pack "Output type is not a subtype of prototype"]
 
       errs' :: [BzoErr]
-      errs' = errs -- ++ otherErrs
+      errs' = errs ++ (L.concatMap testMatch ins) ++ (L.concatMap testSubtype exs) -- ++ otherErrs
 
       -- TODO: go through this more thoroughly
       tvpairs :: M.Map TVId Type
