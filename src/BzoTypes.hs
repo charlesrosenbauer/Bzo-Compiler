@@ -39,6 +39,12 @@ type LcId = Int64   -- Local Id
 
 data TypeHeader = TyHeader { header :: ![TVId], tvarmap :: !(M.Map TVId THeadAtom) } deriving (Eq, Show)
 
+getConstraints :: TypeHeader -> TVId -> [Constraint]
+getConstraints (TyHeader _ vmap) tv =
+  case M.lookup tv vmap of
+    Just atm -> tatomcns atm
+    Nothing  -> []
+
 emptyheader :: TypeHeader
 emptyheader = TyHeader [] M.empty
 

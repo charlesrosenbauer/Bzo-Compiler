@@ -414,33 +414,24 @@ checkWithVars d a@(h0,t0) b@(h1,t1) =
       groupVars :: [(TVId, Type, IOKind)] -> [[(TVId, Type, IOKind)]]
       groupVars xs = L.groupBy (\(v0,_,_)(v1,_,_) -> v0 == v1) $ L.sortBy (\(v0,_,_)(v1,_,_) -> compare v0 v1) xs
 
-      ins :: [[(TVId, Type, IOKind)]]
-      exs :: [[(TVId, Type, IOKind)]]
-      (ins, exs) = (\(a,b) -> (groupVars a, groupVars b)) $ L.partition (\(_,_,k) -> k==InKind) vals
+      tcs'' :: [[(TVId, Type, IOKind)]]
+      tcs'' = groupVars vals
 
-      ts :: M.Map TVId Type
-      ts = M.fromList $ L.map (\((v,t,_):xs) -> (v,t)) ins
+      cons :: M.Map TVId [Constraint]
+      cons = M.fromList $ L.map (\((v,_,_):xs) -> (v, getConstraints h1 v)) tcs''
 
-      -- Types should be perfectly equal
-      testMatch :: [(TVId, Type, IOKind)] -> [BzoErr]
-      testMatch xs =
-        let
-
-        in []
-
-      -- Types should be subtypes of constraints
-      testSubtype :: [(TVId, Type, IOKind)] -> [BzoErr]
-      testSubtype xs =
-        let
-
-        in []
+      testType :: (TVId, Type, IOKind) -> [BzoErr]
+      testType (tv, t, io) =
+        if io==ExKind
+            then L.concatMap (\(Constraint _ a) -> checkType d (h1,a) (h0,t)) $ cons M.! tv  -- check a b
+            else L.concatMap (\(Constraint _ b) -> checkType d (h0,t) (h1,b)) $ cons M.! tv  -- check b a
 
       errs' :: [BzoErr]
-      errs' = errs ++ (L.concatMap testMatch ins) ++ (L.concatMap testSubtype exs) -- ++ otherErrs
+      errs' = errs ++ (L.concatMap testType $ L.concat tcs'') -- ++ otherErrs
 
       -- TODO: go through this more thoroughly
       tvpairs :: M.Map TVId Type
-      tvpairs = M.fromList $ L.map dtrd3 $ L.concat ins
+      tvpairs = M.fromList $ L.map dtrd3 $ L.concat tcs''
 
   in case errs' of
       [] -> ([], tvpairs, tcs')

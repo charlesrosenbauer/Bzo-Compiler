@@ -1,7 +1,4 @@
 TODO:
-  * Type Checking [bug fixing]
-    * TyClass tcvars seem to get lost sometimes
-    * Type checking on tvars seems to have a few bugs
   * Expression -> Interpreter Translator
     * typechecking during process
     * complex expressions
