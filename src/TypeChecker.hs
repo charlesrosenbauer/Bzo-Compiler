@@ -226,6 +226,9 @@ checkType' _ _ (_, FltType  p f0) (_, BITyType _  b) = (ife (b  == 13) [] [TypeE
 checkType' _ _ (_, StrType  p s0) (_, BITyType _  b) = (ife (b  == 17) [] [TypeErr p $ pack $ "Expected string builtin"   ], [], [])
 checkType' _ _ (_, BITyType p b0) (_, BITyType _ b1) = (ife (b0 == b1) [] [TypeErr p $ pack $ "Builtin types do not match"], [], [])
 
+-- Type Variable Checking
+checkType' k d (h0, t) (h1, TVarType p v) = ([], [(v, t, k)], [])
+
 -- Type Class Checking
 checkType' _ _ (h, t) (_, TyCsType _ c _) = ([], [], [(h, t, c)])
 checkType' _ _ (h, t) (_, TCType   _   c) = ([], [], [(h, t, c)])
@@ -383,9 +386,6 @@ checkType' k d (h0, t0) (h1,LtrlType _ t1) =
       (er, _,  tc) -> ([TypeErr (typos t0) $ pack ("Could not match type:\n" ++ (show t0) ++ "\non type " ++ (show $ getTyId d t1) ++ "\n")] ++ er, [], [])
 
 
--- Type Variable Checking
-checkType' k d (h0, t) (h1, TVarType p v) = ([], debugmsg "Vars: " [(v, t, k)], [])
-
 -- Fallthrough Case
 checkType' _ _ (_, x) (_, y) = ([TypeErr (typos y) $ pack ("Type Mismatch:\n" ++ (show x) ++ "\n&&\n" ++ (show y))], [], [])
 
@@ -421,31 +421,19 @@ checkWithVars d a@(h0,t0) b@(h1,t1) =
       ts :: M.Map TVId Type
       ts = M.fromList $ L.map (\((v,t,_):xs) -> (v,t)) ins
 
-      -- This might not be good enough, but should be fine for now
+      -- Types should be perfectly equal
       testMatch :: [(TVId, Type, IOKind)] -> [BzoErr]
       testMatch xs =
         let
-            vtyp :: Type
-            vtyp = ts M.! (fst3 $ L.head xs)
 
-            nonmatches :: [(TVId, Type, IOKind)]
-            nonmatches = L.filter (\(v, t', _) -> t' /= vtyp) $ L.tail xs
-        in  if (L.null nonmatches)
-              then []
-              else [TypeErr (typos vtyp) $ pack "Tyvars do not match."]  -- TODO: get a better error message
+        in []
 
+      -- Types should be subtypes of constraints
       testSubtype :: [(TVId, Type, IOKind)] -> [BzoErr]
       testSubtype xs =
         let
-            vtyp :: Type
-            vtyp = ts M.! (fst3 $ L.head xs)
 
-            errs :: [[BzoErr]]
-            --vals :: [[(TVId, Type, IOKind)]]
-            (errs, _, _) = L.unzip3 $ L.map (\(_,x,_) -> checkType' ExKind d (h1, vtyp) (h1, x)) xs
-        in  if (L.null $ L.concat errs)
-              then []
-              else [TypeErr (typos vtyp) $ pack "Output type is not a subtype of prototype"]
+        in []
 
       errs' :: [BzoErr]
       errs' = errs ++ (L.concatMap testMatch ins) ++ (L.concatMap testSubtype exs) -- ++ otherErrs
