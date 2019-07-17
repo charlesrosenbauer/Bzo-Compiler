@@ -39,4 +39,8 @@ executable main
       , Query
       , BzoEmulator
       , BzoExprModeller
-      , TypeClass
+      , TypeChecker
+      , Tokens
+      , Core
+      , AST
+      , Error

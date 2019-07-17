@@ -2,6 +2,10 @@ module BzoChecker where
 import BzoTypes
 import HigherOrder
 import Builtins
+import TypeChecker
+import Core
+import Error
+import AST
 import Data.Text
 import Data.Int
 import Data.Either as E
@@ -52,7 +56,8 @@ noOverloadTypes dt@(DefinitionTable defs files ids _) =
 
 
 
-
+-- Wow, this function is complex. I should dig through this later to see if it can be simplified.
+-- Looks like generating a type visibility map sooner might strip a lot of this out.
 noUndefinedErrs :: DefinitionTable -> [BzoErr]
 noUndefinedErrs dt@(DefinitionTable defs files ids _) =
   let
@@ -121,22 +126,47 @@ noUndefinedErrs dt@(DefinitionTable defs files ids _) =
 
 
 
--- FIXME
-checkTypeHeader :: (TypeHeader, BzoSyntax) -> TypeHeader -> [BzoErr]
-checkTypeHeader (th, (BzS_Cmpd p xs)) (TyHeader ys) =
+
+modelConstraints :: SymbolTable -> DefinitionTable -> Either [BzoErr] DefinitionTable
+modelConstraints st dt@(DefinitionTable defs files ids top) =
   let
-      isSameLength :: Bool
-      isSameLength = (L.length xs) == (M.size ys)
+      emptyheader = TyHeader [] M.empty
 
-      headerList :: [THeadAtom]
-      headerList = L.map snd $ M.assocs ys
+      modelCon   :: Constraint -> Either [BzoErr] Constraint
+      modelCon (Constraint p t) =
+        let
+            ft :: FileTable
+            ft = (getSymTable st) M.! (fileName p)
+        in case t of
+            (UnresType ast) -> toRight (Constraint p) $ toRight (replaceTCs dt) $ makeType ft emptyheader ast
+            typ             -> Right   (Constraint p typ)
 
-      allMatch :: [BzoErr]
-      allMatch = []   -- FIXME: Add checking code here. Probably will need more function parameters for this.
+      modelCons  :: (TVId, THeadAtom)  -> Either [BzoErr] (TVId, THeadAtom)
+      modelCons (v, TVrAtom p t cs) = onAllPass (L.map modelCon cs) (\xs -> (v, TVrAtom p t xs))
 
-  in case (isSameLength) of
-      (False) -> [TypeErr p $ pack "Wrong number of parameters for type constructor"]
-      (True)  -> []
+      modelTHead :: TypeHeader -> Either [BzoErr] TypeHeader
+      modelTHead (TyHeader hs hmap) =
+        let
+            hmap' :: Either [BzoErr] [(TVId, THeadAtom)]
+            hmap' = allPass $ L.map modelCons $ M.assocs hmap
+        in  case hmap' of
+              Right pass -> Right (TyHeader hs (M.fromList pass))
+              Left  errs -> Left  errs
+
+      modelType :: Definition -> Either [BzoErr] Definition
+      modelType (TypeDef p i h th td) =
+        case (modelTHead th) of
+          Right th' -> Right (TypeDef p i h th' td)
+          Left errs -> Left errs
+
+      modelType x = Right x
+
+      defs' :: Either [BzoErr] [Definition]
+      defs' = allPass $ L.map modelType $ M.elems defs
+  in case defs' of
+      Left errs -> Left errs
+      Right dfs -> Right (DefinitionTable (M.fromList $ L.zip (M.keys defs) dfs) files ids top)
+
 
 
 
@@ -147,19 +177,19 @@ checkTypeHeader (th, (BzS_Cmpd p xs)) (TyHeader ys) =
 
 
 -- Takes type parameters and returns an associated header
-initializeTypeHeader :: BzoSyntax -> TypeHeader
-initializeTypeHeader (BzS_Undefined p) = TyHeader M.empty
-initializeTypeHeader (BzS_Expr _ [x])  = initializeTypeHeader x
+initializeTypeHeader :: TypeHeader -> BzoSyntax -> TypeHeader
+initializeTypeHeader hd (BzS_Undefined p) = TyHeader [] M.empty
+initializeTypeHeader hd (BzS_Expr _ [x])  = initializeTypeHeader hd x
 
-initializeTypeHeader (BzS_TyVar p v)        =
-  TyHeader $ M.fromList [(1, TVrAtom p v        []                                          )]
+initializeTypeHeader (TyHeader ps mp) (BzS_TyVar p v)        =
+  TyHeader ps $ M.union mp $ M.fromList [(fromIntegral $ M.size mp, TVrAtom p v [])]
 
-initializeTypeHeader (BzS_FilterObj p v fs) =
-  TyHeader $ M.fromList [(1, TVrAtom p (sid v) (L.map (\t -> Constraint p $ UnresType t) fs))]
+initializeTypeHeader (TyHeader ps mp) (BzS_FilterObj p v fs) =
+  TyHeader ps $ M.union mp $ M.fromList [(fromIntegral $ M.size mp, TVrAtom p (sid v) (L.map (\t -> Constraint p $ UnresType t) fs))]
 
-initializeTypeHeader (BzS_Cmpd _ vs) =
+initializeTypeHeader (TyHeader ps mp) (BzS_Cmpd _ vs) =
   let atoms = L.map makeAtom vs
-  in  TyHeader $ M.fromList $ L.zip [1..] $ L.reverse atoms
+  in  TyHeader ps $ M.union mp $ M.fromList $ L.map (\(a,b) -> (fromIntegral $ a+(M.size mp), b)) $ L.zip [0..] $ L.reverse atoms
   where
         makeAtom :: BzoSyntax -> THeadAtom
         makeAtom (BzS_TyVar     p v   ) =
@@ -170,14 +200,17 @@ initializeTypeHeader (BzS_Cmpd _ vs) =
 
         makeAtom (BzS_Expr _ [x]) = makeAtom x
 
-initializeTypeHeader (BzS_FnTypeDef _ ps fn (BzS_FnTy _ i o)) =
-  let tyhead = initializeTypeHeader ps
+initializeTypeHeader hd@(TyHeader ips imp) (BzS_FnTypeDef _ ps fn (BzS_FnTy _ i o)) =
+  let tyhead = initializeTypeHeader hd ps
+
+      importVars :: S.Set Text
+      importVars = S.fromList $ L.map atomId $ M.elems imp
 
       tvars :: [(Text, BzoPos)]
       tvars  = (getTVars i) ++ (getTVars o)
 
       vnames :: S.Set Text
-      vnames = S.fromList $ L.map fst tvars
+      vnames = S.fromList $ L.filter (\x -> S.notMember x importVars) $ L.map fst tvars
 
       tvatms :: [THeadAtom]
       tvatms = L.map (\(v,p) -> TVrAtom p v []) tvars
@@ -195,10 +228,10 @@ initializeTypeHeader (BzS_FnTypeDef _ ps fn (BzS_FnTy _ i o)) =
       tvsall :: [(TVId, THeadAtom)] -- I don't fully trust the nub here, but it seems to mostly work.
       tvsall = L.nubBy (\(_, (TVrAtom _ a _)) (_, (TVrAtom _ b _)) -> a == b) $ tvsold ++ tvsnew
 
-  in TyHeader $ M.fromList tvsall
+  in TyHeader ips $ M.union imp $ M.fromList tvsall
 
-initializeTypeHeader (BzS_TypDef _ ps ty tydef) =
-  let tyhead = initializeTypeHeader ps
+initializeTypeHeader hd (BzS_TypDef _ ps ty tydef) =
+  let tyhead = initializeTypeHeader hd ps
 
       tvars :: [(Text, BzoPos)]
       tvars = getTVars tydef
@@ -222,65 +255,69 @@ initializeTypeHeader (BzS_TypDef _ ps ty tydef) =
       tvsall :: [(TVId, THeadAtom)] -- I don't fully trust the nub here, but it seems to mostly work.
       tvsall = L.nubBy (\(_, (TVrAtom _ a _)) (_, (TVrAtom _ b _)) -> a == b) $ tvsold ++ tvsnew
 
-  in TyHeader $ M.fromList tvsall
+      tpars :: [TVId]
+      tpars = L.take (L.length tvsall) [0..]
 
-initializeTypeHeader x = trace ("\n\nERROR:" ++ (show x) ++ "\n\n") TyHeader M.empty
+  in TyHeader tpars $ M.fromList tvsall
 
-
-
-
-
-
+initializeTypeHeader' :: BzoSyntax -> TypeHeader
+initializeTypeHeader' ast = initializeTypeHeader (TyHeader [] M.empty) ast
 
 
 
 
-makeType :: SymbolTable -> TypeHeader -> BzoSyntax -> Either [BzoErr] Type
-makeType st th (BzS_Expr   p  [x]) = makeType st th x
-makeType st th (BzS_Statement p x) = makeType st th x
-makeType st th (BzS_Cmpd  p [x]) = makeType st th x
-makeType st th (BzS_Poly  p [x]) = makeType st th x
-makeType st th (BzS_Cmpd  p  xs) = onAllPass (L.map (makeType st th) xs) (\ys -> CmpdType p ys)
-makeType st th (BzS_Poly  p  xs) = onAllPass (L.map (makeType st th) xs) (\ys -> PolyType p ys)
-makeType st th (BzS_Int   p   n) = Right (IntType  p n)
-makeType st th (BzS_Flt   p   n) = Right (FltType  p n)
-makeType st th (BzS_Str   p   s) = Right (StrType  p s)
-makeType st th (BzS_Nil   p )    = Right (VoidType p)
-makeType st th (BzS_BTId  p bit) = Right (BITyType p $ isBuiltinType bit)
-makeType st th (BzS_ArrayObj p s x) = onAllPass [makeType st th x] (\[y] -> ArryType p s y)
-makeType st th (BzS_FnTy  p i o) =
-  let i' = makeType st th i
-      o' = makeType st th o
+
+
+
+
+
+
+makeType :: FileTable -> TypeHeader -> BzoSyntax -> Either [BzoErr] Type
+makeType ft th (BzS_Expr   p  [x]) = makeType ft th x
+makeType ft th (BzS_Statement p x) = makeType ft th x
+makeType ft th (BzS_Cmpd  p [x]) = makeType ft th x
+makeType ft th (BzS_Poly  p [x]) = makeType ft th x
+makeType ft th (BzS_Cmpd  p  xs) = onAllPass (L.map (makeType ft th) xs) (\ys -> CmpdType p ys)
+makeType ft th (BzS_Poly  p  xs) = onAllPass (L.map (makeType ft th) xs) (\ys -> PolyType p ys)
+makeType ft th (BzS_Int   p   n) = Right (IntType  p n)
+makeType ft th (BzS_Flt   p   n) = Right (FltType  p n)
+makeType ft th (BzS_Str   p   s) = Right (StrType  p s)
+makeType ft th (BzS_Nil   p )    = Right (VoidType p)
+makeType ft th (BzS_BTId  p bit) = Right (BITyType p $ isBuiltinType bit)
+makeType ft th (BzS_ArrayObj p s x) = onAllPass [makeType ft th x] (\[y] -> ArryType p s y)
+makeType ft th (BzS_FnTy  p i o) =
+  let i' = makeType ft th i
+      o' = makeType ft th o
       io = rights [i', o']
       er = lefts  [i', o']
   in case (er, io) of
       ([], [it, ot]) -> Right $ FuncType p it ot
       (er,       _ ) -> Left  $ L.concat er
 
-makeType st th (BzS_Expr  p xs)  = onAllPass (L.map (makeType st th) xs) (\ys -> MakeType p ys)
-makeType st@(SymbolTable _ _ vis) th ty@(BzS_TyId  p   t) =
-  let ids = resolveGlobalId st ty
+makeType ft th (BzS_Expr  p xs)  = onAllPass (L.map (makeType ft th) xs) (\ys -> MakeType p ys)
+makeType ft th ty@(BzS_TyId  p   t) =
+  let ids = resolveId ft t
   in case ids of
       []  -> Left [TypeErr p $ pack ("Type " ++ (unpack t) ++ " is undefined.")]
       [x] -> Right (LtrlType p x)
-      xs  -> Left [TypeErr p $ pack ("Ambiguous reference to type " ++ (unpack t) ++ ": " ++ (show xs) ++ " / " ++ (show $ M.assocs vis))]
-makeType st@(SymbolTable _ _ vis) (TyHeader tvs) (BzS_TyVar p   v) =
+      xs  -> Left [TypeErr p $ pack ("Ambiguous reference to type " ++ (unpack t) ++ ": " ++ (show xs) ++ " / ")]   -- TODO: Redesign this error message
+makeType ft (TyHeader _ tvs) (BzS_TyVar p   v) =
   let tvpairs = M.assocs tvs
-      tvnames = L.map (\(n,atm) -> (n, Mb.fromMaybe (pack "") $ atomId atm)) tvpairs
+      tvnames = L.map (\(n,atm) -> (n, atomId atm)) tvpairs
       ids = L.map fst $ L.filter (\(n,atm) -> v == atm) tvnames
   in case ids of
       []  -> Left [TypeErr p $ pack ("Type Variable " ++ (unpack v) ++ " is not defined in the type header.")]
       [x] -> Right (TVarType p x)
-      xs  -> Left [TypeErr p $ pack ("Ambiguous reference to type variable " ++ (unpack v) ++ ": " ++ (show xs) ++ " / " ++ (show $ M.assocs vis))]
+      xs  -> Left [TypeErr p $ pack ("Ambiguous reference to type variable " ++ (unpack v) ++ ": " ++ (show xs) ++ " / " ++ (show tvs))]  -- TODO: Redesign this error message
 
-makeType st th (BzS_Id p f) =
-  let fids = resolveGlobalId st (BzS_Id p f)
+makeType ft th (BzS_Id p f) =
+  let fids = resolveId ft f
   in case fids of
       [] -> Left [TypeErr p $ pack $ "Function " ++ (unpack f) ++ " is not defined in this scope."]
       xs -> Right (FLitType p xs)
 
-makeType st th ty@(BzS_Undefined _) = Right (UnresType ty)
-makeType st th x = Left [TypeErr (pos x) $ pack $ "Malformed type expression: " ++ show x]
+makeType ft th ty@(BzS_Undefined _) = Right (UnresType ty)
+makeType ft th x = Left [TypeErr (pos x) $ pack $ "Malformed type expression: " ++ show x]
 
 
 
@@ -291,88 +328,170 @@ makeType st th x = Left [TypeErr (pos x) $ pack $ "Malformed type expression: " 
 
 
 
-checkType :: AttribTable -> SymbolTable -> (TypeHeader, Type) -> (TypeHeader, Type) -> [BzoErr]
-checkType at st (th0, (CmpdType p xs)) (th1, (CmpdType _ ys)) =
+replaceTCs :: DefinitionTable -> Type -> Type
+replaceTCs (DefinitionTable defs files ids top) (LtrlType p t) =
+  case (defs M.! t) of
+    (TyClassDef _ _ _ _ _) -> (TCType p t)
+    (TyClassSyntax  _ _ _) -> (TCType p t)
+    _                      -> (LtrlType p t)
+
+replaceTCs dt (CmpdType p  xs) = (CmpdType p (L.map (replaceTCs dt) xs))
+replaceTCs dt (PolyType p  xs) = (PolyType p (L.map (replaceTCs dt) xs))
+replaceTCs dt (MakeType p  xs) = (MakeType p (L.map (replaceTCs dt) xs))
+replaceTCs dt (ArryType p s x) = (ArryType p s (replaceTCs dt x))
+replaceTCs dt (FuncType p i o) = (FuncType p (replaceTCs dt i) (replaceTCs dt o))
+replaceTCs dt t = t
+
+
+
+
+
+
+
+
+
+
+data SymbolTable = SymbolTable (M.Map Text FileTable) deriving Show
+
+getSymTable :: SymbolTable -> M.Map Text FileTable
+getSymTable (SymbolTable stab) = stab
+
+data FileTable   = FileTable   (M.Map Text [Int64])   deriving Show
+
+resolveId :: FileTable -> Text -> [Int64]
+resolveId (FileTable ds) d = Mb.fromMaybe [] $ M.lookup d ds
+
+
+
+
+
+
+
+
+
+
+makeFileTable :: M.Map Text [Int64] -> BzoFileModel ([Int64], [Int64]) -> (Text, FileTable)
+makeFileTable dmap (BzoFileModel _ fp _ (_, vis) _ _ _ _) =
   let
-      xs' :: [(TypeHeader, Type)]
-      xs' = L.zip (L.repeat th0) xs
+      visset:: S.Set Int64
+      visset = S.fromList vis
 
-      ys' :: [(TypeHeader, Type)]
-      ys' = L.zip (L.repeat th1) ys
+      dlist :: M.Map Text [Int64]
+      dlist = M.fromList $
+              L.filter (\(n, is) -> (L.length is) > 0) $
+              L.map (\(n, is) -> (n, L.filter (\v -> S.member v visset) is)) $
+              M.assocs dmap
 
-      xys :: [((TypeHeader, Type), (TypeHeader, Type))]
-      xys = L.zip xs' ys'
-
-      samelength :: [BzoErr]
-      samelength = ife ((L.length xs) == (L.length ys)) [] [TypeErr p $ pack "Compound lengths do not match"]
-
-  in samelength ++ (L.concatMap (\(x, y) -> checkType at st x y) xys)
-
--- TODO: this will have to be adapted to handle type classes, though that will
--- require a lot more effort, including a full typeclass checker implementation.
-checkType at st (th0, (LtrlType p x)) (th1, (LtrlType _ y)) = ife (x == y) [] [TypeErr p $ pack "Types do not match"]
-
-checkType at st (th0, (IntType  p x)) (th1, (IntType  _ y)) = ife (x == y) [] [TypeErr p $ pack "Ints do not match"]
-checkType at st (th0, (FltType  p x)) (th1, (FltType  _ y)) = ife (x == y) [] [TypeErr p $ pack "Floats do not match"]
-checkType at st (th0, (StrType  p x)) (th1, (StrType  _ y)) = ife (x == y) [] [TypeErr p $ pack "Strings do not match"]
-
-checkType at st (th0, (IntType  p x)) (th1, (LtrlType  _ y)) = ife (checkAttrib at y checkIntAttrib x) [] [TypeErr p $ pack "Unexpected Integer"]
-checkType at st (th0, (FltType  p x)) (th1, (LtrlType  _ y)) = ife (checkAttrib at y checkFltAttrib x) [] [TypeErr p $ pack "Unexpected Float"]
-checkType at st (th0, (StrType  p x)) (th1, (LtrlType  _ y)) = ife (checkAttrib at y checkStrAttrib x) [] [TypeErr p $ pack "Unexpected String"]
-
-checkType at st (th0, (FuncType _ w x)) (th1, (FuncType _ y z)) = (checkType at st (th0, w) (th1, y)) ++ (checkType at st (th0, x) (th1, z))
-
-checkType at st (th0, (VoidType _  )) (th1, (VoidType _  )) = []
-
--- Sizeless arrays
-checkType at st (th0, (ArryType _ _ x)) (th1, (ArryType _ 0 y)) = (checkType at st (th0, x) (th1, y))
-
--- Sized arrays
-checkType at st (th0, (ArryType p m x)) (th1, (ArryType _ n y)) = (checkType at st (th0, x) (th1, y)) ++ (ife (m == n) [] [TypeErr p $ pack "Array lengths do not match"])
-
--- Nil values are just Empty arrays
-checkType at st (th0, (VoidType _    )) (th1, (ArryType _ 0 _)) = []
-
--- Handle tuples cast to arrays
--- May need to add another case for checking "single element" arrays?
-checkType at st (th0, (CmpdType p  xs)) (th1, (ArryType _ n y)) =
-  (ife ((L.length xs) == (fromIntegral n)) [] [TypeErr p $ pack "Compound type has incorrect number of parameters"]) ++
-  (L.concatMap (\x -> checkType at st (th0, x) (th1, y)) xs)
-
-checkType at st (th0, (PolyType p []    )) (th1,      (PolyType _ ys)) = []
-
-checkType at st (th0, (PolyType p (x:xs))) (th1, poly@(PolyType _ ys)) =
-    (checkType at st (th0, x) (th1, poly)) ++ (checkType at st (th0, (PolyType p xs)) (th1, poly))
-
-checkType at st t0 (th1, (PolyType _ xs)) = L.concatMap (\x -> checkType at st t0 (th1, x)) xs
-
-checkType at st (th0, (MakeType _ [])) (th1, (MakeType _ [])) = []
-
-checkType at st (th0, (MakeType p0 [ix,ex])) (th1, (MakeType p1 [iy,ey])) = [] -- NOTE: tempoary, please extend
-{-  let
+  in (pack fp, FileTable dlist)
 
 
-  in-}
 
-checkType at st (th0, (MakeType p0 xs)) (th1, (MakeType p1 ys)) =
+
+
+
+
+
+
+
+makeSymbolTable :: DefinitionTable -> SymbolTable
+makeSymbolTable (DefinitionTable defs files ids top) = SymbolTable $ M.fromList $ L.map (makeFileTable ids) files
+
+
+
+
+
+
+
+
+
+
+makeTypes :: DefinitionTable -> Either [BzoErr] DefinitionTable
+makeTypes dt@(DefinitionTable defs files ids top) =
   let
-      xlast = L.last xs
-      ylast = L.last ys
+      -- Make Symbol Table
+      syms :: SymbolTable
+      syms = makeSymbolTable dt
 
-      xinit = L.init xs
-      yinit = L.init ys
+      -- Function for getting a File Table from a File Path
+      getFTab :: Text -> FileTable
+      getFTab fp = (getSymTable syms) M.! fp
 
-      -- Also add check that parameters are valid
+      -- Function for generating typeheaders, types, and packaging them up nicely with error handling
+      constructType :: BzoSyntax -> BzoSyntax -> Text -> (TypeHeader -> Type -> b) -> Either [BzoErr] b
+      constructType thead tdef host fn =
+        let
+            tyhead :: TypeHeader
+            tyhead = initializeTypeHeader' thead
 
-  in (ife ((L.length xs) == (L.length ys)) [] [TypeErr p0 $ pack "Incorrect nesting of make type"]) ++
-     (checkType at st (th0, xlast) (th1, ylast)) ++
-     (checkType at st (th0, (MakeType p0 xinit)) (th1, (MakeType p1 yinit)))
+            typ    :: Either [BzoErr] Type
+            typ    = toRight flattenPolys $ toRight (replaceTCs dt) $ makeType (getFTab host) tyhead tdef
 
-{-
-TODO:
-  > "Make Type" checking. Not 100% how to do this either yet.
-  > TVar checking
--}
+        in  applyRight (fn tyhead) typ
+
+      -- Function for translating definitions to use TYPE and TYPEHEADER rather than BZOSYNTAX.
+      translateDef :: Definition -> Either [BzoErr] Definition
+      translateDef (FuncSyntax    fn host fty@(BzS_FnTypeDef  p ps _ ft) fs) = constructType fty ft host (\th t -> (FuncDef  p fn host th t fs))
+      translateDef (TypeSyntax    ty host tyd@(BzS_TypDef     p ps _ td)   ) = constructType tyd td host (\th t -> (TypeDef  p ty host th t   ))
+      translateDef (TyClassSyntax tc host tcd@(BzS_TyClassDef p ps _ td)   ) =
+        let
+            thead :: TypeHeader
+            thead = (initializeTypeHeader' ps)
+
+            interface :: Either [BzoErr] [(Text, TypeHeader, Type)]
+            interface = allPass $ L.map (xformTCFunc host thead) td
+
+        in case interface of
+            Left errs -> Left errs
+            Right itf -> Right (TyClassDef p tc host thead itf)
+
+      -- Function for reformatting typeclass interfaces
+      xformTCFunc :: Text -> TypeHeader -> BzoSyntax -> Either [BzoErr] (Text, TypeHeader, Type)
+      xformTCFunc host th fty@(BzS_FnTypeDef _ ps fn ft) =
+        let
+            thead:: TypeHeader
+            thead= initializeTypeHeader th fty
+
+            thead'::TypeHeader
+            thead'= TyHeader ((header th) ++ (header thead)) (M.union (tvarmap th) (tvarmap thead))
+
+            ftyp :: Either [BzoErr] Type
+            ftyp = toRight (replaceTCs dt) $ makeType (getFTab host) thead' ft
+
+        in case ftyp of
+            Right typ -> Right (fn, thead', typ)
+            Left  err -> Left  err
+
+      -- Helper function for applying xforms to key-value pairs with error handling
+      preserveId :: (b -> Either [c] d) -> (a, b) -> Either [c] (a, d)
+      preserveId f (i, x) =
+        case (f x) of
+          Left err -> Left  err
+          Right x' -> Right (i, x')
+
+      -- Xformed Definitions
+      results :: Either [BzoErr] (M.Map Int64 Definition)
+      results = toRight M.fromList $ allPass $ L.map (preserveId translateDef) $ M.assocs defs
+
+      -- TODO:
+      -- -- Check that make types are all valid (e.g, nothing like "Int Bool" as a definition.)
+
+      dt' :: Either [BzoErr] DefinitionTable
+      dt' = modelConstraints syms (DefinitionTable (fromRight M.empty results) files ids top)
+
+      dt'' :: [DefinitionTable]
+      dt''  = rights [dt']
+
+      dterr :: [BzoErr]
+      dterr = fromLeft [] dt'
+
+      errs :: [BzoErr]
+      errs = (fromLeft [] results) ++ dterr
+
+  in if (not $ L.null errs)
+      then (Left errs)
+      else case ((recursivePolycheck $ L.head dt'') ++ (validateTypePass $ L.head dt'')) of
+            [] -> Right $ L.head dt''
+            er -> Left  er
 
 
 
@@ -383,56 +502,19 @@ TODO:
 
 
 
-checkAttrib :: AttribTable -> Int64 -> (S.Set Atm_Attrib -> a -> Bool) -> a -> Bool
-checkAttrib atab i fn x =
-  case (M.lookup i atab) of
-    Nothing -> False
-    Just at -> fn at x
-
-checkStrAttrib :: S.Set Atm_Attrib -> Text -> Bool
-checkStrAttrib ats t = (S.member (AL_Str t) ats) || (S.member (AA_Str) ats)
-
-checkIntAttrib :: S.Set Atm_Attrib -> Integer -> Bool
-checkIntAttrib ats i
-  | (i >=                 -128) && (i <=                  127) = (S.member (AL_Int i) ats) || (S.member (AA_I8 ) ats)
-  | (i >=                    0) && (i <=                  255) = (S.member (AL_Int i) ats) || (S.member (AA_U8 ) ats)
-  | (i >=               -32768) && (i <=                32767) = (S.member (AL_Int i) ats) || (S.member (AA_I16) ats)
-  | (i >=                    0) && (i <=                65535) = (S.member (AL_Int i) ats) || (S.member (AA_U16) ats)
-  | (i >=          -2147483648) && (i <=           2147483647) = (S.member (AL_Int i) ats) || (S.member (AA_I32) ats)
-  | (i >=                    0) && (i <=           4294967295) = (S.member (AL_Int i) ats) || (S.member (AA_U32) ats)
-  | (i >= -9223372036854775808) && (i <=  9223372036854775807) = (S.member (AL_Int i) ats) || (S.member (AA_I64) ats)
-  | (i >=                    0) && (i <= 18446744073709551615) = (S.member (AL_Int i) ats) || (S.member (AA_U64) ats)
-  | otherwise = False
-
--- Not really robust, but good enough for now I guess.
-checkFltAttrib :: S.Set Atm_Attrib -> Double -> Bool
-checkFltAttrib ats f = (S.member (AL_Real f) ats) || (not $ S.null $ S.intersection ats (S.fromList [AA_P8, AA_P16, AA_P32, AA_P64, AA_F16, AA_F32, AA_F64]))
-
-
-
-
-
-
-
-
-
-
-type AttribTable = M.Map Int64 (S.Set Atm_Attrib)
-
-getAttribs :: DefinitionTable -> AttribTable
-getAttribs (DefinitionTable defs _ _ _) =
-  let
-      defs' :: [(Int64, Definition)]
-      defs' = M.assocs defs
-
-      tys   :: [(Int64, BzoSyntax)]
-      tys   = L.map (\(i, d) -> (i, typesyntax d)) $ L.filter isTDef defs'
-
-  in M.fromList $ L.map (\(i, s) -> (i, typeAttribs s)) tys
+flattenPolys :: Type -> Type
+flattenPolys (CmpdType p   xs) = (CmpdType p   $ L.map flattenPolys xs)
+flattenPolys (ArryType p  s t) = (ArryType p s $       flattenPolys  t)
+flattenPolys (FuncType p  i o) = (FuncType p (flattenPolys i) (flattenPolys o))
+flattenPolys (MakeType p   xs) = (MakeType p   $ L.map flattenPolys xs)
+flattenPolys (TyCsType p c is) = (TyCsType p c $ L.map (\(t,h,x) -> (t,h,flattenPolys x)) is)
+flattenPolys (PolyType p   xs) = (PolyType p   $ flatpol $ L.map flattenPolys xs)
   where
-        isTDef :: (a, Definition) -> Bool
-        isTDef (_, (TypeSyntax _ _ _)) = True
-        isTDef _ = False
+        flatpol:: [Type] -> [Type]
+        flatpol [] = []
+        flatpol ((PolyType p xs):xss) = xs ++ (flatpol xss)
+        flatpol (x:xss) = (x : flatpol xss)
+flattenPolys x = x
 
 
 
@@ -443,206 +525,52 @@ getAttribs (DefinitionTable defs _ _ _) =
 
 
 
-typeAttribs :: BzoSyntax -> S.Set Atm_Attrib
-typeAttribs (BzS_Statement _ x) = typeAttribs x
-typeAttribs (BzS_Expr _ [x]) = typeAttribs x
-typeAttribs (BzS_Poly _  xs) = L.foldl S.union (S.empty) $ L.map typeAttribs xs
-typeAttribs (BzS_BTId _   i) =
-  case (isBuiltinType i) of
-    1 -> S.singleton AA_I8
-    2 -> S.singleton AA_I16
-    3 -> S.singleton AA_I32
-    4 -> S.singleton AA_I64
-    5 -> S.singleton AA_U8
-    6 -> S.singleton AA_U16
-    7 -> S.singleton AA_U32
-    8 -> S.singleton AA_U64
-    9 -> S.singleton AA_F16
-    10-> S.singleton AA_F32
-    11-> S.singleton AA_F64
-    12-> S.singleton AA_I64
-    13-> S.singleton AA_F64
-    14-> S.singleton AA_Bl
-    15-> S.singleton AA_Bl
-    16-> S.singleton AA_Bl
-    17-> S.singleton AA_Str
-    18-> S.singleton AA_Str
-    _ -> S.empty
-typeAttribs (BzS_Int _ i) = S.singleton $ AL_Int  i
-typeAttribs (BzS_Flt _ f) = S.singleton $ AL_Real f
-typeAttribs (BzS_Str _ s) = S.singleton $ AL_Str  s
-typeAttribs _                = S.empty
-
-attribTrim :: S.Set Atm_Attrib -> S.Set Atm_Attrib
-attribTrim s =
-  let intset = S.fromList [AA_I8, AA_U8, AA_I16, AA_U16, AA_I32, AA_U32, AA_I64, AA_U64]
-      fltset = S.fromList [AA_P8,        AA_P16, AA_F16, AA_P32, AA_F32, AA_P64, AA_F64]
-      strset = S.fromList [AA_Str]
-
-      isInt  = not $ S.null $ S.intersection s intset
-      isFlt  = not $ S.null $ S.intersection s fltset
-      isStr  = not $ S.null $ S.intersection s strset
-
-  in S.fromList $ L.filter (\x ->
-                              case x of
-                                (AL_Int  _) -> not isInt
-                                (AL_Real _) -> not isFlt
-                                (AL_Str  _) -> not isStr
-                                _  -> True) $ S.elems s
-
-
-
-
-
-
-
-
-
-
-getDefType :: SymbolTable -> Definition -> Either [BzoErr] Type
-getDefType st (FuncSyntax    _ _ f@(BzS_FnTypeDef  _ ps _ ty) _) = makeType st (initializeTypeHeader f) ty
-getDefType st (TypeSyntax    _ _ t@(BzS_TypDef     _ ps _ ty)  ) = makeType st (initializeTypeHeader t) ty
-getDefType st (TyClassSyntax _ _ c@(BzS_TyClassDef p ps _ fs)  ) =
-  let tys = L.map (\f -> (fnid f, (initializeTypeHeader f), makeType st (initializeTypeHeader f) $ def f)) fs
-      err = L.concat $ lefts $ L.map trd3 tys
-      fts = L.map (\(a,b,t) -> (a,b, L.head $ rights [t])) $ L.filter (\(_,_,t) -> E.isRight t) tys
-  in case err of
-      [] -> Right $ TyCsType p fts
-      er -> Left  er
-
-getDefType st _                                                 = Right $ InvalidType
-
-
-
-
-
-
-
-
-
-
--- Nested Input Stuff
-getNestedCmpd :: BzoSyntax -> [Int] -> Maybe BzoSyntax
-getNestedCmpd expr                  [] = Just expr
-getNestedCmpd (BzS_Expr      _ [x]) is = getNestedCmpd x is
-getNestedCmpd (BzS_Statement _  x ) is = getNestedCmpd x is
-getNestedCmpd (BzS_Cmpd _ xs) (i:is) =
-  case (L.drop i xs) of
-    []     -> Nothing
-    (y:ys) -> getNestedCmpd y is
-getNestedCmpd _               _      = Nothing
-
-
-
-
-
-
-
-
-
-
-tagScopes :: (M.Map Text Int) -> ScopeTable -> [Definition] -> (ScopeTable, M.Map BzoPos Int)
-tagScopes ftab st@(ScopeTable scs top) defs =
+recursivePolycheck :: DefinitionTable -> [BzoErr]
+recursivePolycheck (DefinitionTable defs files ids top) =
   let
+      getTyIds:: [Type] -> [Int64]
+      getTyIds ((LtrlType _ x):xs) = x : (getTyIds xs)
+      getTyIds (_:xs)              = getTyIds xs
+      getTyIds [] = []
 
-      dfs :: ([Definition], [Definition], [Definition])
-      dfs = L.foldl (\(a,b,c)(d,e,f)->(a++d, b++e, c++f)) ([], [], []) $
-            L.map (\d -> case d of
-                              f@(FuncSyntax  _ _ _ _) -> ([f], [], [])
-                              t@(TypeSyntax    _ _ _) -> ([], [t], [])
-                              c@(TyClassSyntax _ _ _) -> ([], [], [c])
-                              _                       -> ([], [], [] )) defs
+      flatten :: Type -> S.Set Int64 -> S.Set Int64
+      flatten (PolyType _ xs) oldset = S.union oldset $ S.fromList $ getTyIds xs
+      flatten (LtrlType _  t) oldset = S.insert t oldset
+      flatten _               oldset = S.empty
 
-      flook :: (Text, a) -> (Int, a)
-      flook (t, x) = (ftab M.! t, x)
+      recurse :: M.Map Int64 (S.Set Int64) -> S.Set Int64 -> S.Set Int64
+      recurse polyset oldset = L.foldl S.union S.empty $ Mb.catMaybes $ L.map (\k -> M.lookup k polyset) $ S.elems oldset
 
-      ---
+      polysets :: M.Map Int64 (S.Set Int64)
+      polysets = M.fromList $
+                 L.map    (\(k,d) -> (k, flatten (typedef d) $ S.empty)) $
+                 L.filter (\(k,d) ->     isTyDef d)  $
+                 M.assocs defs
 
-      fns :: [(Int, (BzoPos, [BzoSyntax]))]
-      fns = L.map flook $ L.map (\f -> (hostfile f, (pos $  ftyheader f, ((ftyheader f):(funcsyntax f))))) $ fst3 dfs
+      noPolyrec :: BzoPos -> (Int64, S.Set Int64) -> [BzoErr]
+      noPolyrec p (k, set) =
+        if (S.member k set)
+          then [TypeErr p $ pack ("Type " ++ (unpack $ identifier $ defs M.! k) ++ " has invalid recursive structure")]
+          else []
 
-      tys :: [(Int, (BzoPos, [BzoSyntax]))]
-      tys = L.map flook $ L.map (\t -> (hostfile t, (pos $ typesyntax t, [typesyntax t]))) $ snd3 dfs
+      whileRec :: M.Map Int64 (S.Set Int64) -> [BzoErr]
+      whileRec polyset =
+        let
+            polyset' :: M.Map Int64 (S.Set Int64)
+            polyset' = M.map (recurse polyset) polyset
 
-      tcs :: [(Int, (BzoPos, [BzoSyntax]))]
-      tcs = L.map flook $ L.map (\c -> (hostfile c, (pos $ typesyntax c, [typesyntax c]))) $ trd3 dfs
+            errs :: [BzoErr]
+            errs = L.concatMap (\(k,d) -> noPolyrec (typos $ typedef $ defs M.! k) (k,d)) $ M.assocs polyset'
 
-      ---
+            grow :: Bool
+            grow = L.any (\(k,d) -> (S.size $ polyset M.! k) /= (S.size d)) $ M.assocs polyset
 
-      scopes :: [(BzoPos, [BzoPos])]
-      scopes = L.concatMap (\(i, (p, syn)) -> (L.concatMap (posScopes []) syn)) (fns ++ tys ++ tcs)
+        in case (errs, grow) of
+              ([], False) -> []
+              ([], True ) -> whileRec polyset'
+              (er, _    ) -> er
 
-      posmap :: M.Map BzoPos Int
-      posmap = M.fromList $ L.zip (L.map fst scopes) (L.map (+top) [1..])
-
-      newtop :: Int
-      newtop = (M.size posmap) + top
-
-      scopes':: [(BzoPos, Int, Scope)]
-      scopes'= L.map (\(p, ps) -> (p, posmap M.! p, Scope M.empty M.empty [(pack "#parent", (L.map (posmap M.!) ps))] )) scopes
-
-      scopes'' ::[(Int, Scope)]
-      scopes'' = L.map (\(p, i, s) ->
-                          case s of
-                            (Scope a b [(par, [])]) -> (i, (Scope a b [(par, [ftab M.! (fileName p)])]))
-                            s'                      -> (i, s) ) scopes'
-
-      scs'   :: M.Map Int Scope
-      scs'   = M.union scs $ M.fromList scopes''
-
-  in  (ScopeTable scs' newtop, posmap)
-
-
-
-
-
-
-
-
-
-
-posScopes :: [BzoPos] -> BzoSyntax -> [(BzoPos, [BzoPos])]
-posScopes ps (BzS_Block          p xs) = (p, ps):(L.concatMap (posScopes [p]) xs)
-posScopes ps (BzS_Statement      _ x ) = posScopes ps x
-posScopes ps (BzS_Lambda       _ _ x ) = posScopes ps x
-posScopes ps (BzS_MapObj         _ x ) = posScopes ps x
-posScopes ps (BzS_Expr           _ xs) = L.concatMap (posScopes ps) xs
-posScopes ps (BzS_Cmpd           _ xs) = L.concatMap (posScopes ps) xs
-posScopes ps (BzS_Poly           _ xs) = L.concatMap (posScopes ps) xs
-posScopes ps (BzS_LispCall     _ f xs) = (posScopes ps f) ++ (L.concatMap (posScopes ps) xs)
-posScopes ps (BzS_FnTypeDef  p _ _  _) = [(p, ps)]
-posScopes ps (BzS_FunDef   p _ _ _  d) = (p, ps):(posScopes [p] d)
-posScopes ps (BzS_TypDef     p _ _  d) = [(p, ps)]
-posScopes ps (BzS_TyClassDef p _ _ ds) = (p, ps):(L.concatMap (\x -> [(pos x, [p])]) ds)
-posScopes _ _ = []
-
-
-
-
-
-
-
-
-
-
-mapDefTypes :: (M.Map Int64 Type) -> (M.Map Int64 Definition) -> (M.Map Int64 Definition)
-mapDefTypes ttab dtab =
-  let
-      ttab' :: [(Int64, Type)]
-      ttab' = M.assocs ttab
-
-      dtab' :: [(Int64, Definition, Type)]
-      dtab' = L.map (\(i, t) -> (i, dtab M.! i, t)) ttab'
-
-      mkHeader :: BzoSyntax -> TypeHeader
-      mkHeader (BzS_FnTypeDef _ ps _ _) = initializeTypeHeader ps
-      mkHeader (BzS_TypDef    _ ps _ _) = initializeTypeHeader ps
-
-  in M.fromList $ L.map (\(i,d,t) -> (i, case d of
-                      FuncSyntax    i h fh fd -> FuncDef    i h (mkHeader      fh) t FuncPropEmpty []
-                      TypeSyntax    i h    td -> TypeDef    i h (mkHeader      td)   TypePropEmpty t
-                      TyClassSyntax i h    cd -> TyClassDef i h (TyHeader M.empty)   TClsPropEmpty [] )) dtab'
-
+  in whileRec polysets
 
 
 
@@ -655,58 +583,28 @@ mapDefTypes ttab dtab =
 checkProgram :: DefinitionTable -> Either [BzoErr] DefinitionTable
 checkProgram dt@(DefinitionTable defs files ids top) =
   let
+      -- No type overloads
       err0 :: [BzoErr]
       err0 = noOverloadTypes dt
 
+      -- No undefined types
       err1 :: [BzoErr]
       err1 = noUndefinedErrs dt
 
-      --dfs  :: Either [BzoErr] (DefinitionTable, M.Map Text SymbolTable)
-      --dfs  = modelProgram dt
+      --TODO:
+        -- Construct namespace mapping
+        -- Construct types and typeheaders for all functions, types, and type classes
+        -- Check that types are valid - mostly that type constructors obey headers
+        -- Construct type class models
 
-      -- A NameTable will allow for limiting searches to specific namespaces.
-      -- e.g, handling foo@Namespace requires this.
-      ntab :: NameTable
-      ntab = makeNameTable dt
+      err2 :: [BzoErr]
+      dt'  :: [DefinitionTable]
+      (err2, dt') = splitEitherList $ makeTypes dt
 
-      ttab :: M.Map Int64 (Either [BzoErr] Type)
-      ttab = M.map (\d -> getDefType (makeSymbolTable dt $ unpack $ hostfile d) d) defs
-
-      ttab':: M.Map Int64 Type
-      ttab'= M.map getRight ttab
-
-      -- A Type Table will make it much easier to figure out the type of something.
-      -- Good for faster type checking
-      --ttab :: Map Int64 AbsType
-      --ttab = ... make type table ...
-
-      scopect :: [(Int64, Int, Int)]
-      !scopect = L.scanl (\(_, _, n) (k, dx) -> (k, n, dx+n)) (0, 1, 1) $ L.map (\(k, d) -> (k, ctDefScopes d)) $ M.assocs defs
-
-      scopetab :: ScopeTable
-      filetab  :: M.Map Text Int
-      (scopetab, filetab) = makeScopeTable dt
-      -- !scopetab = initializeScopeTable $ (\(_,_,x) -> x) $ L.last scopect
-
-      scopetab':: ScopeTable
-      postab   :: M.Map BzoPos Int
-      (!scopetab', !postab) = tagScopes filetab scopetab (M.elems defs)
-
-      !x = debugmsg "Scopetab :" postab
-
-      !y = debugmsglist "TTab: " $ M.assocs ttab
-
-      --deftys :: [(Int64, Either [BzoErr] Type)]
-      --deftys = L.map (\i df -> (i, getDefType scopetab' df)) $ M.assocs defs
-
-      --dts' :: [(DefinitionTable, M.Map Text SymbolTable)]
-      --dts' = rights [dfs]
-
-      --err2 :: [BzoErr]
-      --err2 = L.concat $ lefts [dfs]
+      testerr = (\x -> trace ("Errs:\n" ++ (L.concatMap show x) ++ "\n") x) $ testTypeCheck $ L.head dt'
 
       errs :: [BzoErr]
-      errs = err0 ++ err1-- ++ err2
+      errs = err0 ++ err1 ++ err2
   in case (errs) of
-      ([]) -> Right (DefinitionTable (mapDefTypes ttab' defs) files ids top)
+      ([]) -> Right $ L.head dt'
       (er) -> Left  er

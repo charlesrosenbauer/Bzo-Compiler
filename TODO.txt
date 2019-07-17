@@ -1,10 +1,4 @@
 TODO:
-  * Reorganize Code to be a bit less scattered
-  * Type Checking
-    * Change checkTypes to return [Err]; no errors are returned if type checking passes
-    * TyHeader checker
-    * MakeType & TVar checker
-    * TyClass checker
   * Expression -> Interpreter Translator
     * typechecking during process
     * complex expressions
@@ -14,7 +8,6 @@ TODO:
     * tyclass dispatch
     * scopes
     * I/O
-  * Work out how to change namespace management to use NameTable
   * Issues seem to exist with namespaces sharing names with types
   * Matching on single-element arrays might pose an issue in the current
       implementation. This will have to get worked out eventually.

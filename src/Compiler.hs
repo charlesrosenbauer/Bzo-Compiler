@@ -13,6 +13,8 @@ import BzoChecker
 import HigherOrder
 import BzoEmulator
 import BzoExprModeller
+import Error
+import Core
 import Debug.Trace
 
 

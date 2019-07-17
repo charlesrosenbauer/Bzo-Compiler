@@ -5,6 +5,8 @@ import Data.List as L
 import Data.Text as T
 import Control.Monad
 import Control.Applicative
+import Tokens
+import Error
 import HigherOrder
 
 

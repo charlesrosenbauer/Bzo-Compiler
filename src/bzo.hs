@@ -3,6 +3,7 @@ import System.Environment
 import System.IO
 import BzoTypes
 import Compiler
+import Error
 import BzoParameterParser
 import Data.Text
 

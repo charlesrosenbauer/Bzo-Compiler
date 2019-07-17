@@ -16,6 +16,10 @@ import System.FilePath
 import Control.Monad
 import System.Environment
 import HigherOrder
+import AST
+import Error
+import Core
+import Tokens
 import Debug.Trace
 import System.IO as IO
 import Control.Parallel.Strategies

@@ -14,7 +14,7 @@ import Data.List as L
 
 
 
-
+{-
 modelFunctions :: DefinitionTable -> Either [BzoErr] FnTable
 modelFunctions (DefinitionTable defs fls ids _) =
   let
@@ -208,3 +208,4 @@ modelExpr vs b@(BzS_Block p xs) =
 -- TODO: find some way to handle function calls, type classes, and variables
 
 -- TODO: generate pattern matching structures from parameter lists
+-}

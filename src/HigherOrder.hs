@@ -978,3 +978,56 @@ getRight (Right x) = x
 
 getLeft  :: Either a b -> a
 getLeft  (Left  x) = x
+
+
+fromRight :: b -> Either a b -> b
+fromRight b (Right x) = x
+fromRight b _         = b
+
+fromLeft :: a -> Either a b -> a
+fromLeft a (Left  x) = x
+fromLeft a _         = a
+
+
+
+
+
+
+
+
+
+
+splitEitherList :: Either [a] b -> ([a], [b])
+splitEitherList (Right x) = ([], [x])
+splitEitherList (Left  x) = (x , [])
+
+
+
+
+
+
+
+
+
+
+fuseEither :: Either a a -> a
+fuseEither (Left  x) = x
+fuseEither (Right x) = x
+
+
+
+
+
+
+
+
+
+
+concatUnzip :: [([a],[b])] -> ([a], [b])
+concatUnzip xs = (\(a,b) -> (L.concat a, L.concat b)) $ L.unzip xs
+
+
+
+
+concatUnzip3:: [([a],[b],[c])] -> ([a],[b],[c])
+concatUnzip3 xs = (\(a,b,c) -> (L.concat a, L.concat b, L.concat c)) $ L.unzip3 xs
