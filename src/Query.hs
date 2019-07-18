@@ -52,6 +52,34 @@ getTVars _                          = []
 
 
 
+getIds :: BzoSyntax -> [(Text, BzoPos)]
+getIds (BzS_Id         p     var) = [(var, p)]
+getIds (BzS_MId        p     var) = [(var, p)]
+getIds (BzS_Expr       _    expr) = L.concatMap getIds expr
+getIds (BzS_Statement  _    expr) = getIds expr
+getIds (BzS_Cmpd       _    expr) = L.concatMap getIds expr
+getIds (BzS_Poly       _    expr) = L.concatMap getIds expr
+getIds (BzS_FnTy       _   ax bx) = (getIds ax) ++ (getIds bx)
+getIds (BzS_Block      _    expr) = L.concatMap getIds expr
+getIds (BzS_TypDef     _ ps _ df) = (getIds ps) ++ (getIds df)
+getIds (BzS_TyClassDef _ ps _ df) = (getIds ps) ++ (L.concatMap getIds df)
+getIds (BzS_FnTypeDef  _ ps _ df) = (getIds ps) ++ (getIds df)
+getIds (BzS_Calls      _      cs) = L.concatMap getIds cs
+getIds (BzS_ArrayObj   _  _ expr) =  getIds expr
+getIds (BzS_FilterObj  _ obj  fs) = (getIds obj) ++ (L.concatMap getIds fs)
+getIds (BzS_CurryObj   _ obj  ps) = (getIds obj) ++ (L.concatMap getIds ps)
+getIds (BzS_LispCall   _ fn expr) = (getIds fn)  ++ (L.concatMap getIds expr)
+getIds _                          = []
+
+
+
+
+
+
+
+
+
+
 getTypes :: BzoSyntax -> [(Text, BzoPos)]
 getTypes (BzS_TyId       p     var) = [(var, p)]
 getTypes (BzS_Expr       _    expr) = L.concatMap getTypes expr
