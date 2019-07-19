@@ -55,6 +55,7 @@ data Patn
   |  Patn_Flt  Double
   |  Patn_Str  Text
   |  Patn_Bl   Bool
+  |  Patn_Vr   Int
   |  Patn_Nil
   |  Patn_Fnc  Int
   |  Patn_Typ  Int [Patn]
@@ -145,20 +146,49 @@ data HOF
 
 data FnTable = FnTable (Map Int (Patn, Expr))
 
+data VrTable = VrTable (Map Int Obj)
+
+noVars :: VrTable
+noVars = VrTable Data.Map.Strict.empty
+
+mergeVrTable :: VrTable -> VrTable -> VrTable
+mergeVrTable (VrTable a) (VrTable b) = (VrTable (union a b))
 
 
 
-checkPattern :: Obj -> Patn -> Bool
-checkPattern (Obj_Int a)    (Patn_Int b)     = (a == (fromIntegral b))
-checkPattern (Obj_Flt a)    (Patn_Flt b)     = (a == b)
-checkPattern (Obj_Str a)    (Patn_Str b)     = (a == b)
-checkPattern (Obj_Bl  a)    (Patn_Bl  b)     = (a == b)
-checkPattern (Obj_Fnc a)    (Patn_Fnc b)     = (a == b)
-checkPattern (Obj_Nil)      (Patn_Nil)       = True
-checkPattern (Obj_Cmpd xs)  (Patn_Cmpd ys)   = ((Prelude.length xs) == (Prelude.length ys)) && (Prelude.all (\(x, y) -> checkPattern x y) $ Prelude.zip xs ys)
-checkPattern x              (Patn_Poly xs)   = Prelude.any (checkPattern x) xs
-checkPattern (Obj_Typ a xs) (Patn_Typ  b ys) = (a == b) && (Prelude.all (\(x,y) -> checkPattern x y) $ Prelude.zip xs ys)
-checkPattern _              (Patn_Wild)      = True
+
+checkPattern :: Obj -> Patn -> (Bool, VrTable)
+checkPattern x              (Patn_Vr  v)     = (True, VrTable (Data.Map.Strict.singleton v x))
+checkPattern (Obj_Int a)    (Patn_Int b)     = ((a == (fromIntegral b)),  noVars)
+checkPattern (Obj_Flt a)    (Patn_Flt b)     = ((a == b), noVars)
+checkPattern (Obj_Str a)    (Patn_Str b)     = ((a == b), noVars)
+checkPattern (Obj_Bl  a)    (Patn_Bl  b)     = ((a == b), noVars)
+checkPattern (Obj_Fnc a)    (Patn_Fnc b)     = ((a == b), noVars)
+checkPattern (Obj_Nil)      (Patn_Nil)       = (True    , noVars)
+checkPattern (Obj_Cmpd xs)  (Patn_Cmpd ys)   =
+  let
+      eqLen = (Prelude.length xs) == (Prelude.length ys)
+      pairs =  Prelude.map (\(x, y) -> checkPattern x y) $ Prelude.zip xs ys
+
+      passes= Prelude.map fst pairs
+      vrtabs= Prelude.map snd pairs
+
+  in (eqLen && (and passes), Prelude.foldl mergeVrTable noVars vrtabs)
+
+checkPattern x              (Patn_Poly xs)   = Prelude.head $ Prelude.filter fst $ Prelude.map (checkPattern x) xs
+checkPattern (Obj_Typ a xs) (Patn_Typ  b []) = ((a == b), noVars)
+checkPattern (Obj_Typ a xs) (Patn_Typ  b ys) =
+  let
+      eqTyp = a == b
+      eqLen = (Prelude.length xs) == (Prelude.length ys)
+      pairs =  Prelude.map (\(x, y) -> checkPattern x y) $ Prelude.zip xs ys
+
+      passes= Prelude.map fst pairs
+      vrtabs= Prelude.map snd pairs
+
+  in (eqLen && eqTyp && (and passes), Prelude.foldl mergeVrTable noVars vrtabs)
+
+checkPattern _              (Patn_Wild)      = (True, noVars)
 
 
 
