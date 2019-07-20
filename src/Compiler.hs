@@ -11,6 +11,7 @@ import ModelRules
 import DefinitionTable
 import BzoChecker
 import HigherOrder
+import BzoEmulatorTypes
 import BzoEmulator
 import BzoExprModeller
 import Error
