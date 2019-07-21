@@ -2,6 +2,7 @@ module BzoEmulatorTypes where
 import Data.Text
 import Data.Bits
 import Data.Map.Strict
+import Data.Set
 
 
 
@@ -145,6 +146,15 @@ data HOF
 
 
 
-data FnTable = FnTable (Map Int (Patn, Expr))
+data FnTable = FnTable !(Map Int (Patn, Expr))
 
-data VrTable = VrTable (Map Int Obj)
+data VrTable = VrTable !(Map Int Obj)
+
+data Interface = Interface !(Map Int [Int])
+  deriving Show
+
+data TypeMap
+    = Struct   !Int
+    | Union    !Int !(Set Int)
+    | Class    !Int !(Map Int Interface)
+    deriving Show
