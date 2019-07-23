@@ -24,7 +24,7 @@ mergeVrTable (VrTable a) (VrTable b) = (VrTable (union a b))
 
 --TODO: Add TVar checking. Not 100% sure yet how to do this.
 checkPattern :: Obj -> Patn -> (Bool, VrTable)
-checkPattern x              (Patn_Vr  v)     = (True, VrTable (Data.Map.Strict.singleton v x))
+checkPattern x              (Patn_Vr  v)     = (True, VrTable (Data.Map.Strict.singleton (fromIntegral v) x))
 checkPattern (Obj_Int a)    (Patn_Int b)     = ((a == (fromIntegral b)),  noVars)
 checkPattern (Obj_Flt a)    (Patn_Flt b)     = ((a == b), noVars)
 checkPattern (Obj_Str a)    (Patn_Str b)     = ((a == b), noVars)
@@ -165,7 +165,7 @@ apply ft (Exp_Hof HF_Filter) (Obj_Cmpd [(Obj_Expr f),    (Obj_Arr s xs)]) =
       ys = Prelude.filter f' xs
   in Obj_Arr (Prelude.length ys) ys
 
-apply ft@(FnTable t) (Exp_Func f) x   = apply ft (snd $ t ! f) x
+apply ft@(FnTable t) (Exp_Func f) x   = apply ft (snd $ t ! (fromIntegral f)) x
 
 apply ft f (Obj_Cmpd [x]) = apply ft f x
 

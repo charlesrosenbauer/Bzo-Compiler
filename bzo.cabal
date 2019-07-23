@@ -39,6 +39,7 @@ executable main
       , Query
       , BzoEmulator
       , BzoEmulatorTypes
+      , TypeMapGen
       , BzoExprModeller
       , BzoPatternModeller
       , TypeChecker
