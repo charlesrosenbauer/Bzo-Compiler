@@ -109,6 +109,9 @@ apply ft (Exp_Binop BO_Gte) (Obj_Cmpd [(Obj_Flt a), (Obj_Flt b)]) = (Obj_Bl  (a 
 apply ft (Exp_Binop BO_Eq ) (Obj_Cmpd [(Obj_Flt a), (Obj_Flt b)]) = (Obj_Bl  (a == b))
 apply ft (Exp_Binop BO_NEq) (Obj_Cmpd [(Obj_Flt a), (Obj_Flt b)]) = (Obj_Bl  (a /= b))
 
+apply ft (Exp_Binop BO_Take)(Obj_Cmpd [(Obj_Int a), (Obj_Arr s xs)]) = (Obj_Arr (max a    s ) $ Prelude.take a xs)
+apply ft (Exp_Binop BO_Drop)(Obj_Cmpd [(Obj_Int a), (Obj_Arr s xs)]) = (Obj_Arr (min 0 (s-a)) $ Prelude.drop a xs)
+
 apply ft (Exp_Unop  UO_Not) (Obj_Int x) = (Obj_Int (complement x))
 apply ft (Exp_Unop  UO_Neg) (Obj_Int x) = (Obj_Int (-x))
 apply ft (Exp_Unop  UO_E0 ) (Obj_Int x) = (Obj_Bl  (x == 0))
