@@ -93,6 +93,8 @@ data Binop
   | BO_Drop
   | BO_Take
   | BO_Zip
+  | BO_Concat
+  | BO_SplitAt
   deriving Show
 
 
