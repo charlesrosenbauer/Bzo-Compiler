@@ -116,6 +116,20 @@ apply ft (Exp_Binop BO_SplitAt)(Obj_Cmpd [(Obj_Int     a), (Obj_Arr  s xs)]) =
   let (x,y) = Prelude.splitAt a xs
   in (Obj_Cmpd [(Obj_Arr (Prelude.length x) x), (Obj_Arr (Prelude.length y) y)])
 
+apply ft (Exp_Binop BO_Zip    )(Obj_Cmpd [(Obj_Arr s0 as), (Obj_Arr s1 bs)]) =
+  let
+      combine :: Obj -> Obj -> Obj
+      combine a b = (Obj_Cmpd [a, b])
+  in (Obj_Arr (min s0 s1) (Prelude.zipWith combine as bs))
+
+apply ft (Exp_Unop  UO_Concat )(Obj_Arr  s xs) =
+  let
+      getArr :: Obj -> [Obj]
+      getArr (Obj_Arr _ os) = os
+
+      xs' = Prelude.concatMap getArr xs
+  in (Obj_Arr (Prelude.length xs') xs')
+
 apply ft (Exp_Unop  UO_Not) (Obj_Int x) = (Obj_Int (complement x))
 apply ft (Exp_Unop  UO_Neg) (Obj_Int x) = (Obj_Int (-x))
 apply ft (Exp_Unop  UO_E0 ) (Obj_Int x) = (Obj_Bl  (x == 0))

@@ -132,6 +132,7 @@ data Unop
   | UO_Sort
   | UO_Nub
   | UO_Unzip
+  | UO_Concat
   deriving Show
 
 
