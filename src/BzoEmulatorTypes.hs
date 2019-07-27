@@ -15,8 +15,7 @@ import Data.Set
 
 
 data Obj
-  =  Obj_Cmpd [Obj]
-  |  Obj_Poly Int Obj   -- This is basically a tagged union
+  =  Obj_Poly Int Obj   -- This is basically a tagged union
   |  Obj_Int  Int
   |  Obj_Flt  Double
   |  Obj_Str  Text
@@ -25,7 +24,7 @@ data Obj
   |  Obj_Bl   Bool
   |  Obj_Typ  Int [Obj]  -- This includes a type tag
   |  Obj_Nil
-  |  Obj_Arr  Int [Obj]
+  |  Obj_Arr  Int [Obj]  -- Arrays and Compound Tuples
   |  Obj_Hole
   |  Obj_Fault Text
   |  Obj_Expr Expr

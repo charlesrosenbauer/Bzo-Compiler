@@ -50,7 +50,7 @@ compileFilePass (BzoSettings imp lib flg opt pfx) =
 
       putStrLn $ "\n\n" ++ (show $ apply (FnTable M.empty) (Exp_Join [(Exp_Lisp (Exp_Binop BO_Eq) [(Obj_Hole), (Obj_Int 3)]),
                                                                       (Exp_Unop UO_Pct),
-                                                                      (Exp_Binop BO_Add)]) (Obj_Cmpd [(Obj_Int 4), (Obj_Int 3)]))
+                                                                      (Exp_Binop BO_Add)]) (Obj_Arr 2 [(Obj_Int 4), (Obj_Int 3)]))
 
 
 
