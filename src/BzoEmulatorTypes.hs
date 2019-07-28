@@ -128,6 +128,7 @@ data Unop
   | UO_Sqrt
   | UO_Cbrt
   | UO_Exp
+  | UO_Reverse
   | UO_Sort
   | UO_Nub
   | UO_Unzip

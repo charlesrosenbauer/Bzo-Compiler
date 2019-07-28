@@ -116,11 +116,18 @@ apply ft (Exp_Binop BO_SplitAt)(Obj_Arr 2 [(Obj_Int     a), (Obj_Arr  s xs)]) =
   let (x,y) = Prelude.splitAt a xs
   in (Obj_Arr 2 [(Obj_Arr (Prelude.length x) x), (Obj_Arr (Prelude.length y) y)])
 
+apply ft (Exp_Unop  UO_Reverse)(Obj_Arr s xs) = (Obj_Arr s (Prelude.reverse xs))
 apply ft (Exp_Binop BO_Zip    )(Obj_Arr 2 [(Obj_Arr s0 as), (Obj_Arr s1 bs)]) =
   let
       combine :: Obj -> Obj -> Obj
       combine a b = (Obj_Arr 2 [a, b])
   in (Obj_Arr (min s0 s1) (Prelude.zipWith combine as bs))
+
+apply ft (Exp_Binop BO_Zip    )(Obj_Arr 3 [(Obj_Arr s0 as), (Obj_Arr s1 bs), (Obj_Arr s2 cs)]) =
+  let
+      combine :: Obj -> Obj -> Obj -> Obj
+      combine a b c = (Obj_Arr 3 [a, b, c])
+  in (Obj_Arr (Prelude.minimum [s0, s1, s2]) (Prelude.zipWith3 combine as bs cs))
 
 apply ft (Exp_Unop  UO_Concat )(Obj_Arr  s xs) =
   let
