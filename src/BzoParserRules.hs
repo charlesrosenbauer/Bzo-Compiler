@@ -287,6 +287,21 @@ parserIter fname tokens (def@(BzS_Statement p1 xs)
                         :(BzS_FnHead p0 ins fn exs)            :stk)    = parserIter fname tokens ((BzS_Calls p0 [BzS_FunDef p0 ins fn exs def]):stk)
 
 
+-- | Impl Definitions
+parserIter fname tokens ((BzS_Token  p2 (TkStartDo _))
+                        :(BzS_Token  p1 (TkDefine _))
+                        :(BzS_Expr p0 [BzS_FilterObj _ (BzS_TyId _ i) [(BzS_TyId _ c)]])
+                        :stk)                                           = parserIter fname tokens ((BzS_ImplHead p0 i c []):stk)
+
+parserIter fname tokens ((BzS_Token p1 (TkNewline _))
+                        :tc@(BzS_ImplHead _ _ _ _)             :stk) = parserIter fname tokens (tc:stk)
+
+parserIter fname tokens ((BzS_Calls p1 [ft@(BzS_FunDef _ (BzS_Undefined _) _ (BzS_Undefined _) _)])
+                        :(BzS_ImplHead p0 i c fs)          :stk)     = parserIter fname tokens ((BzS_ImplHead p0 i c (ft:fs)):stk)
+
+parserIter fname tokens ((BzS_Token p1 (TkEndDo _))
+                        :(BzS_ImplHead p0 i c fs)          :stk)     = parserIter fname tokens ((BzS_Calls p0 [BzS_ImplDef p0 i c fs]):stk)
+
 
 -- | Type Class Definitions
 parserIter fname tokens ((BzS_Token  p1 (TkStartDo _))

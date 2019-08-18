@@ -127,6 +127,11 @@ data BzoSyntax
         pars   :: !BzoSyntax,
         tyid   :: !T.Text,
         defs   :: ![BzoSyntax] }
+    | BzS_ImplDef {
+        pos    :: !BzoPos,
+        imid   :: !T.Text,
+        tyid   :: !T.Text,
+        defs   :: ![BzoSyntax] }
     | BzS_Calls {
         pos    :: !BzoPos,
         calls  :: ![BzoSyntax] }
@@ -165,6 +170,11 @@ data BzoSyntax
     | BzS_TyClassHead {
         pos     :: !BzoPos,
         pars    :: !BzoSyntax,
+        tyid    :: !T.Text,
+        defs    :: ![BzoSyntax] }
+    | BzS_ImplHead {
+        pos     :: !BzoPos,
+        imid    :: !T.Text,
         tyid    :: !T.Text,
         defs    :: ![BzoSyntax] }
     | BzS_Curry {
@@ -245,6 +255,7 @@ showAST (BzS_FunDef _ inpar fid expar def) = " {FNDEF: " ++ (show inpar) ++ " ->
 showAST (BzS_TypDef _ par tid def)         = " {TYDEF: " ++ (show tid) ++ " [ " ++ (show par) ++ " ] :: " ++ (show def) ++ "} \n"
 showAST (BzS_FnTypeDef _ par fid def)      = " {FTDEF: " ++ (show fid) ++ " [ " ++ (show par) ++ " ] :: " ++ (show def) ++ "} \n"
 showAST (BzS_TyClassDef _ par tid def)     = " {TYCLASSDEF: " ++ (show tid) ++ " [ " ++ (show par) ++ " ] :: " ++ (concatMap (\x -> "\n\n  " ++ show x) def) ++ "} \n"
+showAST (BzS_ImplDef    _ imp tid def)     = " {IMPLDEF: " ++ (show imp) ++ " implements " ++ (show tid) ++ " w/ " ++ (concatMap (\x -> "\n\n  " ++ show x) def) ++ "}\n"
 showAST (BzS_Lambda _ par def)             = " {LAMBDA: " ++ (show par) ++ " :: " ++ (show def) ++ "} "
 showAST (BzS_FnTy _ tin tex)               = " {FNTY: " ++ (show tin) ++ " ;;" ++ (show tex) ++ "} "
 showAST (BzS_Filter _ filt)                = " {FILTER: " ++ (show filt) ++ "} "
@@ -290,6 +301,7 @@ showAST (BzS_BlockHead _ _)                = "BLKHEAD "
 showAST (BzS_CmpdHead  _ _)                = "CMPDHEAD "
 showAST (BzS_PolyHead  _ _)                = "POLYHEAD "
 showAST (BzS_FnHead _ _ _ _)               = "FNHEAD "
+showAST (BzS_ImplHead _ _ _ _)             = "IMPLHEAD "
 showAST (BzS_LispHead _ _ _)               = "LSPHEAD "
 showAST (BzS_ArrHead  _ _)                 = "ARRHEAD "
 showAST _                                  = " <???> "

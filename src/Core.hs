@@ -101,6 +101,12 @@ data Definition
     hostfile   :: !T.Text,
     typehead   :: !TypeHeader,
     interface  :: ![(T.Text, TypeHeader, Type)] }
+ | ImplDef {
+    defpos     :: !BzoPos,
+    tyimpl     :: !TyId,
+    tcimpl     :: !TyId,
+    hostfile   :: !T.Text,
+    impldefs   :: ![(T.Text, BzoSyntax)] }
  | FuncSyntax {
     identifier :: !T.Text,
     hostfile   :: !T.Text,
@@ -114,9 +120,15 @@ data Definition
     identifier :: !T.Text,
     hostfile   :: !T.Text,
     typesyntax :: !BzoSyntax }
+ | ImplSyntax {
+    identifier :: !T.Text,
+    classimpl  :: !T.Text,
+    hostfile   :: !T.Text,
+    implsyntax :: ![BzoSyntax] }
   deriving Eq
 
 
+-- Not sure how I should handle Impl yet. Might not need to be handled at all.
 dtdef :: Definition -> Int64 -> Type
 dtdef (FuncDef  _ _ _ _ t _) _ = t
 dtdef (TypeDef  _ _ _ _ t  ) _ = t
@@ -150,6 +162,11 @@ showDefinition (TyClassDef _ tcid file thd ifac) = "  TCDEF:\n    " ++
                                               "FILE: " ++ (show file)  ++ "\n    " ++
                                               "TYHD: " ++ (show thd)   ++ "\n    " ++
                                               "FNCS: " ++ (show ifac)  ++ "\n\n"
+showDefinition (ImplDef _ imid tcid file ifac) = "  IMPL:\n    " ++
+                                              "IMPT: " ++ (show imid)  ++ "\n    " ++
+                                              "TCID: " ++ (show tcid)  ++ "\n    " ++
+                                              "FILE: " ++ (show file)  ++ "\n    " ++
+                                              "DEFS: " ++ (show ifac)  ++ "\n\n"
 
 showDefinition (FuncSyntax fnid file hedr defs) = "  FNSYN:\n    " ++
                                               (show fnid)  ++ "\n    " ++
@@ -166,6 +183,13 @@ showDefinition (TyClassSyntax tyid file defs) = "  TCSYN:\n    " ++
                                               (show tyid)  ++ "\n    " ++
                                               (show file)  ++ "\n    D:  " ++
                                               (show defs)
+
+showDefinition (ImplSyntax imid tcid file defs) = "  IMPL:\n    " ++
+                                              (show imid)  ++ "\n   " ++
+                                              (show tcid)  ++ "\n   " ++
+                                              (show file)  ++ "\n   D:  " ++
+                                              (show defs)  
+
 instance Show Definition where show = showDefinition
 
 

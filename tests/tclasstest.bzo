@@ -1,0 +1,17 @@
+TClassTest #Module
+String     #Import
+
+
+
+
+
+[M'] Monoid :: {
+  mappend :: [M', M'] ;; M'
+  mapply  :: [] ;; M'
+}
+
+
+Str.Monoid :: {
+  mappend :: concat
+  mapply  :: ''
+}
