@@ -30,25 +30,28 @@ divideIntoDefs [BzS_Calls _ cs] = divideIntoDefs $ L.reverse cs
 divideIntoDefs [BzS_File  _ _ _ _ _ dfs] = divideIntoDefs $ L.reverse dfs
 divideIntoDefs asts = L.foldl divideDefStep [] asts
   where divideDefStep :: [Definition] -> BzoSyntax -> [Definition]
-        divideDefStep (f@(FuncSyntax fnid file fty fdfs):defs) fd@(BzS_FunDef p _ fnid' _ _) =
+        divideDefStep (f@(FuncSyntax p fnid file fty fdfs):defs) fd@(BzS_FunDef _ _ fnid' _ _) =
           if fnid == fnid'
-            then ((FuncSyntax fnid   file fty (fd:fdfs)):defs)
-            else ((FuncSyntax fnid' (fileName p) (BzS_Undefined p) [fd]):f:defs)
+            then ((FuncSyntax p fnid   file fty (fd:fdfs)):defs)
+            else ((FuncSyntax p fnid' (fileName p) (BzS_Undefined p) [fd]):f:defs)
 
-        divideDefStep (f@(FuncSyntax fnid file fty fdfs):defs) fd@(BzS_FnTypeDef p _ fnid' _) =
-          ((FuncSyntax fnid' (fileName p) fd []):f:defs)
+        divideDefStep (f@(FuncSyntax p fnid file fty fdfs):defs) fd@(BzS_FnTypeDef _ _ fnid' _) =
+          ((FuncSyntax p fnid' (fileName p) fd []):f:defs)
 
         divideDefStep defs fd@(BzS_FnTypeDef p _ fnid' _) =
-          ((FuncSyntax fnid' (fileName p) fd []):defs)
+          ((FuncSyntax p fnid' (fileName p) fd []):defs)
 
         divideDefStep defs td@(BzS_TypDef p _ tyid _) =
-          ((TypeSyntax tyid (fileName p) td):defs)
+          ((TypeSyntax p tyid (fileName p) td):defs)
 
         divideDefStep defs td@(BzS_TyClassDef p _ tyid _) =
-          ((TyClassSyntax tyid (fileName p) td):defs)
+          ((TyClassSyntax p tyid (fileName p) td):defs)
 
         divideDefStep defs fd@(BzS_FunDef p _ fnid' _ _) =
-          ((FuncSyntax fnid' (fileName p) (BzS_Undefined p) [fd]):defs)
+          ((FuncSyntax p fnid' (fileName p) (BzS_Undefined p) [fd]):defs)
+
+        divideDefStep defs im@(BzS_ImplDef p i c fs) =
+          ((ImplSyntax p i c (fileName p) fs):defs)
 
 
 
@@ -61,7 +64,7 @@ divideIntoDefs asts = L.foldl divideDefStep [] asts
 
 getFnIds :: [Definition] -> [Text]
 getFnIds ((FuncDef    _ fnid _ _ _ _):defs) = (fnid):(getFnIds defs)
-getFnIds ((FuncSyntax   fnid _ _ _  ):defs) = (fnid):(getFnIds defs)
+getFnIds ((FuncSyntax _ fnid _ _ _  ):defs) = (fnid):(getFnIds defs)
 getFnIds (_:defs)                           = getFnIds defs
 
 
@@ -75,8 +78,8 @@ getFnIds (_:defs)                           = getFnIds defs
 
 getTyIds :: [Definition] -> [Text]
 getTyIds ((TypeDef       _ tyid _ _ _):defs) = (tyid):(getTyIds defs)
-getTyIds ((TypeSyntax      tyid _ _  ):defs) = (tyid):(getTyIds defs)
-getTyIds ((TyClassSyntax   tyid _ _  ):defs) = (tyid):(getTyIds defs)
+getTyIds ((TypeSyntax    _ tyid _ _  ):defs) = (tyid):(getTyIds defs)
+getTyIds ((TyClassSyntax _ tyid _ _  ):defs) = (tyid):(getTyIds defs)
 getTyIds (_:defs)                            = getTyIds defs
 
 
@@ -533,6 +536,7 @@ verifyCall (BzS_TyClassDef _ ps _ df) = L.foldl (\a b -> a ++ (verifyCall b)) (v
 verifyCall (BzS_FnTypeDef  _ ps _ df) = (validateType df) ++ (verifyTyPattern ps)
 verifyCall (BzS_TypDef     _ ps _ df) = (validateType df) ++ (verifyTyPattern ps)
 verifyCall (BzS_FunDef  _ is _ xs df) = (validatePattern is) ++ (validatePattern xs) ++ (validateExpr df)
+verifyCall (BzS_ImplDef _ _ _ _)      = []
 verifyCall (BzS_Calls   _        dfs) = L.foldl (\a b -> a ++ (verifyCall b)) [] dfs
 verifyCall x = [SntxErr (pos x) $ pack "Expected a definition, found something else"]
 

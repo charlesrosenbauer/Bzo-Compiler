@@ -40,12 +40,12 @@ noOverloadTypes dt@(DefinitionTable defs files ids _) =
       xs -> L.map makeOverloadErr xs
 
   where makeOverloadErr :: Definition -> BzoErr
-        makeOverloadErr (TypeSyntax    tname _ df) = TypeErr (pos df) $ pack $ "Type "       ++ (unpack tname) ++ " is defined in multiple places."
-        makeOverloadErr (TyClassSyntax tname _ df) = TypeErr (pos df) $ pack $ "Type Class " ++ (unpack tname) ++ " is defined in multiple places."
+        makeOverloadErr (TypeSyntax    p tname _ df) = TypeErr p $ pack $ "Type "       ++ (unpack tname) ++ " is defined in multiple places."
+        makeOverloadErr (TyClassSyntax p tname _ df) = TypeErr p $ pack $ "Type Class " ++ (unpack tname) ++ " is defined in multiple places."
 
         matchType :: Definition -> Definition -> Bool
-        matchType (TypeSyntax    t0 f0 _) (TypeSyntax    t1 f1 _) = (t0 == t1) && (f0 == f1)
-        matchType (TyClassSyntax t0 f0 _) (TyClassSyntax t1 f1 _) = (t0 == t1) && (f0 == f1)
+        matchType (TypeSyntax    _ t0 f0 _) (TypeSyntax    _ t1 f1 _) = (t0 == t1) && (f0 == f1)
+        matchType (TyClassSyntax _ t0 f0 _) (TyClassSyntax _ t1 f1 _) = (t0 == t1) && (f0 == f1)
         matchType _ _ = False
 
 
@@ -101,9 +101,10 @@ noUndefinedErrs dt@(DefinitionTable defs files ids _) =
   in typeErrs ++ nameErrs ++ bltinErrs
   where
         fromDef :: (Show a) => (BzoSyntax -> [a]) -> Definition -> [a]
-        fromDef f (FuncSyntax _ _  ft fd) = (f ft) ++ (L.concatMap f fd)
-        fromDef f (TypeSyntax _ _     td) = (f td)
-        fromDef f (TyClassSyntax  _ _ cd) = (f cd)
+        fromDef f (FuncSyntax _ _ _  ft fd) = (f ft) ++ (L.concatMap f fd)
+        fromDef f (TypeSyntax _ _ _     td) = (f td)
+        fromDef f (TyClassSyntax  _ _ _ cd) = (f cd)
+        fromDef f (ImplSyntax _ _ _ _   cd) = (L.concatMap f cd)    -- Not sure about this
 
         checkScope :: (M.Map Text [(Text, BzoPos)]) -> (M.Map Text (S.Set Text)) -> (BzoPos -> Text -> BzoErr) -> Text -> [BzoErr]
         checkScope refmap vismap mkerr fname =
@@ -331,9 +332,9 @@ makeType ft th x = Left [TypeErr (pos x) $ pack $ "Malformed type expression: " 
 replaceTCs :: DefinitionTable -> Type -> Type
 replaceTCs (DefinitionTable defs files ids top) (LtrlType p t) =
   case (defs M.! t) of
-    (TyClassDef _ _ _ _ _) -> (TCType p t)
-    (TyClassSyntax  _ _ _) -> (TCType p t)
-    _                      -> (LtrlType p t)
+    (TyClassDef  _ _ _ _ _) -> (TCType p t)
+    (TyClassSyntax _ _ _ _) -> (TCType p t)
+    _                       -> (LtrlType p t)
 
 replaceTCs dt (CmpdType p  xs) = (CmpdType p (L.map (replaceTCs dt) xs))
 replaceTCs dt (PolyType p  xs) = (PolyType p (L.map (replaceTCs dt) xs))
@@ -428,11 +429,14 @@ makeTypes dt@(DefinitionTable defs files ids top) =
 
         in  applyRight (fn tyhead) typ
 
+      separateImpl :: BzoSyntax -> (Text, BzoSyntax)
+      separateImpl (BzS_FunDef _ _ fnid _ def) = (fnid, def)
+
       -- Function for translating definitions to use TYPE and TYPEHEADER rather than BZOSYNTAX.
       translateDef :: Definition -> Either [BzoErr] Definition
-      translateDef (FuncSyntax    fn host fty@(BzS_FnTypeDef  p ps _ ft) fs) = constructType fty ft host (\th t -> (FuncDef  p fn host th t fs))
-      translateDef (TypeSyntax    ty host tyd@(BzS_TypDef     p ps _ td)   ) = constructType tyd td host (\th t -> (TypeDef  p ty host th t   ))
-      translateDef (TyClassSyntax tc host tcd@(BzS_TyClassDef p ps _ td)   ) =
+      translateDef (FuncSyntax    p fn host fty@(BzS_FnTypeDef  _ ps _ ft) fs) = constructType fty ft host (\th t -> (FuncDef  p fn host th t fs))
+      translateDef (TypeSyntax    p ty host tyd@(BzS_TypDef     _ ps _ td)   ) = constructType tyd td host (\th t -> (TypeDef  p ty host th t   ))
+      translateDef (TyClassSyntax p tc host tcd@(BzS_TyClassDef _ ps _ td)   ) =
         let
             thead :: TypeHeader
             thead = (initializeTypeHeader' ps)
@@ -443,6 +447,8 @@ makeTypes dt@(DefinitionTable defs files ids top) =
         in case interface of
             Left errs -> Left errs
             Right itf -> Right (TyClassDef p tc host thead itf)
+
+      translateDef (ImplSyntax p it tc host fns) = Right $ (ImplDef p it tc host (L.map separateImpl fns))
 
       -- Function for reformatting typeclass interfaces
       xformTCFunc :: Text -> TypeHeader -> BzoSyntax -> Either [BzoErr] (Text, TypeHeader, Type)
