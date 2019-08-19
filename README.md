@@ -14,12 +14,17 @@ This file is of course not final, and will be updated as the project progresses.
 
 Bzo is a programming language that I'm developing. The language is designed to be an imperative/functional language built on top of a purely functional core; imperative constructs like mutability are syntactic sugar for functional constructs like monads.
 
-Bzo's main priorities are parallelism, performance, portability, and correctness. The languages that have influenced the language the most have been Haskell, Lisp, Rust, and Jai.
+The goal of Bzo is to completely change the role of the compiler. Rather than be a black box that only takes in code, and despite doing extensive analysis only spits out some error messages or a single executable, the compiler should be a much more open tool.
+* The programmer should be able to have fine-grained control over the inner workings of the compiler and direct compilation if necessary.
+
+* The programmer should be able to query the compiler for the inferences it has gained through analysis of the code.
+
+* The programmer should be able to define custom analysis and code transformations that can be applied at compile time.
+
+These goals should make sophisticated tool development much easier, and enable the creation of many powerful tools for purposes such as formal verification, code visualization, automated code review, and much more.
 
 This compiler is still under VERY heavy development. Not all planned features are currently implemented. Currently, Linux is the only platform that is supported, though it may be runnable on other platforms as well.
 
-
-Also, if you have any knowledge of Haskell and are interested in contributing, take a look in info/contributing.txt. I'll try to keep that up to date.
 
 
 *Running the Compiler*
@@ -46,9 +51,7 @@ The compiler can be run in parallel by adding the parameters "+RTS -NX" where X 
 
 *Short-Term Plans / Features*
 
-* I need to finish writing some type checking code, etc.
-
-* Simple Golang backend: the analysis that Bzo will depend on for its more powerful features doesn't seem easy to do in Haskell. Those features thus will be pushed onto the eventual self-hosted version. This version will simply output and compile Golang, which will allow Bzo to piggyback off of Go's GC so that memory analysis can be saved until later.
+* Flesh out the backend and get a simple interpreter running.
 
 
 *Long-Term Plans*
