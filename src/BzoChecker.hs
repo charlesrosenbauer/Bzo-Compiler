@@ -434,6 +434,7 @@ makeTypes dt@(DefinitionTable defs files ids top) =
 
       -- Function for translating definitions to use TYPE and TYPEHEADER rather than BZOSYNTAX.
       translateDef :: Definition -> Either [BzoErr] Definition
+      translateDef (FuncSyntax    p fn host fty@(BzS_FnTypeDef  _  _ _  _) []) = Left [SntxErr p $ pack $ "Function type " ++ (unpack fn) ++ " has no accompanying definition."]
       translateDef (FuncSyntax    p fn host fty@(BzS_FnTypeDef  _ ps _ ft) fs) = constructType fty ft host (\th t -> (FuncDef  p fn host th t fs))
       translateDef (TypeSyntax    p ty host tyd@(BzS_TypDef     _ ps _ td)   ) = constructType tyd td host (\th t -> (TypeDef  p ty host th t   ))
       translateDef (TyClassSyntax p tc host tcd@(BzS_TyClassDef _ ps _ td)   ) =
@@ -449,6 +450,7 @@ makeTypes dt@(DefinitionTable defs files ids top) =
             Right itf -> Right (TyClassDef p tc host thead itf)
 
       translateDef (ImplSyntax p it tc host fns) = Right $ (ImplDef p it tc host (L.map separateImpl fns))
+      translateDef (FuncSyntax p fn host (BzS_Undefined _) fs) = Left [SntxErr p $ pack $ "Function definition " ++ (unpack fn) ++ " has no accompanying type."]
 
       -- Function for reformatting typeclass interfaces
       xformTCFunc :: Text -> TypeHeader -> BzoSyntax -> Either [BzoErr] (Text, TypeHeader, Type)

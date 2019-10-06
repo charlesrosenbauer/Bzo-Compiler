@@ -37,8 +37,9 @@ map :: [[:A'], [A' ;; B']] ;; [:B']
 [arr, f] map :: arr f..
 
 reduce :: [[:A'], B', [[A', B'] ;; B']] ;; B'
-reduce :: [[:A'], B', [[A', B'] ;; B'], Int] ;; B'
 [arr, x, f]    reduce :: [[0 arr, x] f, 1] reduce
+
+reduce :: [[:A'], B', [[A', B'] ;; B'], Int] ;; B'
 [arr, x, f, i] reduce :: [[arr top, i]>, [[i arr, x] f, i +1] reduce, x]?
 
 mkReduce :: [B', [[A', B'] ;; B']] ;; [[A'] ;; B']
