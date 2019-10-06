@@ -4,13 +4,28 @@ LiterateTest #IncludeAs L
 "A bunch of potential Bzo expressions for use in testing expression parsing"
 "Many of these may show up in the standard library"
 
+[N'.Num] +1 :: N' ;; N'
 [n] +1  :: [n,  1]+
+
+[N'.Num] +2 :: N' ;; N'
 [n] +2  :: [n,  2]+
+
+[N'.Num] *2 :: N' ;; N'
 [n] *2  :: [n,  2]*
+
+[N'.Num] /2 :: N' ;; N'
 [n] /2  :: [n,  2]/
+
+[N'.Num] %2 :: N' ;; N'
 [n] %2  :: [n,  2]%
+
+[N'.Num] %4 :: N' ;; N'
 [n] %4  :: [n,  4]%
+
+[N'.Num] %8 :: N' ;; N'
 [n] %8  :: [n,  8]%
+
+[N'.Num] %16:: N' ;; N'
 [n] %16 :: [n, 16]%
 
 

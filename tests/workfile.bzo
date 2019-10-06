@@ -14,23 +14,20 @@ Math  #Import
 Bool :: ( True, False )
 
 
-"Vec2 :: [x.Flt, y.Flt]"
-Vec3 :: [x.Flt, y.Flt, z.Flt]
-Vec4 :: [x.Flt, y.Flt, z.Flt, w.Flt]
 
 Mat1x1 ::       Flt
 Mat1x2 ::    [2:Flt]
 Mat1x3 ::    [3:Flt]
 Mat1x4 ::    [4:Flt]
-"Mat2x1 ::      Vec2"
+Mat2x1 ::    [2:Flt]
 Mat2x2 :: [2:[2:Flt]]
 Mat2x3 :: [2:[3:Flt]]
 Mat2x4 :: [2:[4:Flt]]
-"Mat3x1 ::      Vec3"
+Mat3x1 ::    [3:Flt]
 Mat3x2 :: [3:[2:Flt]]
 Mat3x3 :: [3:[3:Flt]]
 Mat3x4 :: [3:[4:Flt]]
-Mat4x1 ::      Vec4
+Mat4x1 ::    [4:Flt]
 Mat4x2 :: [4:[2:Flt]]
 Mat4x3 :: [4:[3:Flt]]
 Mat4x4 :: [4:[4:Flt]]
