@@ -515,7 +515,6 @@ flattenPolys (CmpdType p   xs) = (CmpdType p   $ L.map flattenPolys xs)
 flattenPolys (ArryType p  s t) = (ArryType p s $       flattenPolys  t)
 flattenPolys (FuncType p  i o) = (FuncType p (flattenPolys i) (flattenPolys o))
 flattenPolys (MakeType p   xs) = (MakeType p   $ L.map flattenPolys xs)
-flattenPolys (TyCsType p c is) = (TyCsType p c $ L.map (\(t,h,x) -> (t,h,flattenPolys x)) is)
 flattenPolys (PolyType p   xs) = (PolyType p   $ flatpol $ L.map flattenPolys xs)
   where
         flatpol:: [Type] -> [Type]

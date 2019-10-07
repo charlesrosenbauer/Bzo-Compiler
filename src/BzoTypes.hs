@@ -81,7 +81,6 @@ data Type
   | BITyType  !BzoPos !TyId
   | ArryType  !BzoPos !Integer !Type
   | FLitType  !BzoPos ![FnId]
-  | TyCsType  !BzoPos !TCId    ![(T.Text, TypeHeader, Type)]
   | TCType    !BzoPos !TCId    -- Carrying around the interface is useful, but raises potential recursion problems.
   | InvalidType
 
@@ -101,7 +100,6 @@ eqType (TVarType _    v0) (TVarType _    v1) = (v0 == v1)
 eqType (BITyType _    b0) (BITyType _    b1) = (b0 == b1)
 eqType (ArryType _ i0 t0) (ArryType _ i1 t1) = (i0 == i1) && (t0 == t1)
 eqType (FLitType _    f0) (FLitType _    f1) = ((L.sort f0) == (L.sort f1))
-eqType (TyCsType _ i0  _) (TyCsType _ i1  _) = (i0 == i1)
 eqType (TCType   _    i0) (TCType   _    i1) = (i0 == i1)
 eqType InvalidType        InvalidType        = True
 eqType _ _ = False
@@ -124,7 +122,6 @@ typos (TVarType  p   _) = p
 typos (BITyType  p   _) = p
 typos (ArryType  p _ _) = p
 typos (FLitType  p   _) = p
-typos (TyCsType  p _ _) = p
 typos (TCType    p   _) = p
 
 bumpTVs :: TVId -> Type -> Type
@@ -190,7 +187,6 @@ showType (TVarType  _    tv) = "TV:" ++ (show tv)
 showType (BITyType  _    bt) = "BT:" ++ (show bt)
 showType (ArryType  _  i ty) = "[ArrayType [" ++ (show i) ++ "] " ++ (show ty) ++ "]"
 showType (FLitType  _    fn) = "FN:" ++ (show fn)
-showType (TyCsType  _  tc _) = "[TC:" ++ (show tc) ++ "]"
 showType (TCType    _    tc) = "TC:" ++ (show tc)
 showType (InvalidType      ) = "INVALIDTYPE"
 instance Show Type where show = showType

@@ -132,13 +132,6 @@ data Definition
   deriving Eq
 
 
--- Not sure how I should handle Impl yet. Might not need to be handled at all.
-dtdef :: Definition -> Int64 -> Type
-dtdef (FuncDef  _ _ _ _ t _) _ = t
-dtdef (TypeDef  _ _ _ _ t  ) _ = t
-dtdef (TyClassDef p _ _ _ i) c = TyCsType p c i
-
-
 
 
 

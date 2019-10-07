@@ -125,7 +125,6 @@ checkType' _ _ (_, BITyType p b0) (_, BITyType _ b1) = (ife (b0 == b1) [] [TypeE
 checkType' k d (h0, t) (h1, TVarType p v) = ([], [(v, t, k)])
 
 -- Type Class Checking
-checkType' _ _ (h, t) (_, TyCsType _ c _) = ([], [])
 checkType' _ _ (h, t) (_, TCType   _   c) = ([], [])
 
 -- Primitive Literal Checking
