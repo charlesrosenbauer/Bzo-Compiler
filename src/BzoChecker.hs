@@ -139,7 +139,7 @@ modelConstraints st dt@(DefinitionTable defs files ids top) =
             ft :: FileTable
             ft = (getSymTable st) M.! (fileName p)
         in case t of
-            (UnresType ast) -> toRight (Constraint p) $ toRight (replaceTCs dt) $ makeType ft emptyheader ast
+            (UnresType ast) -> toRight (Constraint p) $ toRight (replaceTCs dt) $ makeType dt ft emptyheader ast
             typ             -> Right   (Constraint p typ)
 
       modelCons  :: (TVId, THeadAtom)  -> Either [BzoErr] (TVId, THeadAtom)
@@ -273,36 +273,36 @@ initializeTypeHeader' ast = initializeTypeHeader (TyHeader [] M.empty) ast
 
 
 
-makeType :: FileTable -> TypeHeader -> BzoSyntax -> Either [BzoErr] Type
-makeType ft th (BzS_Expr   p  [x]) = makeType ft th x
-makeType ft th (BzS_Statement p x) = makeType ft th x
-makeType ft th (BzS_Cmpd  p [x]) = makeType ft th x
-makeType ft th (BzS_Poly  p [x]) = makeType ft th x
-makeType ft th (BzS_Cmpd  p  xs) = onAllPass (L.map (makeType ft th) xs) (\ys -> CmpdType p ys)
-makeType ft th (BzS_Poly  p  xs) = onAllPass (L.map (makeType ft th) xs) (\ys -> PolyType p ys)
-makeType ft th (BzS_Int   p   n) = Right (IntType  p n)
-makeType ft th (BzS_Flt   p   n) = Right (FltType  p n)
-makeType ft th (BzS_Str   p   s) = Right (StrType  p s)
-makeType ft th (BzS_Nil   p )    = Right (VoidType p)
-makeType ft th (BzS_BTId  p bit) = Right (BITyType p $ isBuiltinType bit)
-makeType ft th (BzS_ArrayObj p s x) = onAllPass [makeType ft th x] (\[y] -> ArryType p s y)
-makeType ft th (BzS_FnTy  p i o) =
-  let i' = makeType ft th i
-      o' = makeType ft th o
+makeType :: DefinitionTable -> FileTable -> TypeHeader -> BzoSyntax -> Either [BzoErr] Type
+makeType dt ft th (BzS_Expr   p  [x]) = makeType dt ft th x
+makeType dt ft th (BzS_Statement p x) = makeType dt ft th x
+makeType dt ft th (BzS_Cmpd  p [x]) = makeType dt ft th x
+makeType dt ft th (BzS_Poly  p [x]) = makeType dt ft th x
+makeType dt ft th (BzS_Cmpd  p  xs) = onAllPass (L.map (makeType dt ft th) xs) (\ys -> CmpdType p ys)
+makeType dt ft th (BzS_Poly  p  xs) = onAllPass (L.map (makeType dt ft th) xs) (\ys -> PolyType p ys)
+makeType dt ft th (BzS_Int   p   n) = Right (IntType  p n)
+makeType dt ft th (BzS_Flt   p   n) = Right (FltType  p n)
+makeType dt ft th (BzS_Str   p   s) = Right (StrType  p s)
+makeType dt ft th (BzS_Nil   p )    = Right (VoidType p)
+makeType dt ft th (BzS_BTId  p bit) = Right (BITyType p $ isBuiltinType bit)
+makeType dt ft th (BzS_ArrayObj p s x) = onAllPass [makeType dt ft th x] (\[y] -> ArryType p s y)
+makeType dt ft th (BzS_FnTy  p i o) =
+  let i' = makeType dt ft th i
+      o' = makeType dt ft th o
       io = rights [i', o']
       er = lefts  [i', o']
   in case (er, io) of
       ([], [it, ot]) -> Right $ FuncType p it ot
       (er,       _ ) -> Left  $ L.concat er
 
-makeType ft th (BzS_Expr  p xs)  = onAllPass (L.map (makeType ft th) xs) (\ys -> MakeType p ys)
-makeType ft th ty@(BzS_TyId  p   t) =
-  let ids = resolveId ft t
+makeType dt ft th (BzS_Expr  p xs)  = onAllPass (L.map (makeType dt ft th) xs) (\ys -> MakeType p ys)
+makeType dt ft th ty@(BzS_TyId  p   t) =
+  let ids = resolveTyId dt ft t
   in case ids of
       []  -> Left [TypeErr p $ pack ("Type " ++ (unpack t) ++ " is undefined.")]
       [x] -> Right (LtrlType p x)
       xs  -> Left [TypeErr p $ pack ("Ambiguous reference to type " ++ (unpack t) ++ ": " ++ (show xs) ++ " / ")]   -- TODO: Redesign this error message
-makeType ft (TyHeader _ tvs) (BzS_TyVar p   v) =
+makeType dt ft (TyHeader _ tvs) (BzS_TyVar p   v) =
   let tvpairs = M.assocs tvs
       tvnames = L.map (\(n,atm) -> (n, atomId atm)) tvpairs
       ids = L.map fst $ L.filter (\(n,atm) -> v == atm) tvnames
@@ -311,14 +311,14 @@ makeType ft (TyHeader _ tvs) (BzS_TyVar p   v) =
       [x] -> Right (TVarType p x)
       xs  -> Left [TypeErr p $ pack ("Ambiguous reference to type variable " ++ (unpack v) ++ ": " ++ (show xs) ++ " / " ++ (show tvs))]  -- TODO: Redesign this error message
 
-makeType ft th (BzS_Id p f) =
-  let fids = resolveId ft f
+makeType dt ft th (BzS_Id p f) =
+  let fids = resolveTyId dt ft f
   in case fids of
       [] -> Left [TypeErr p $ pack $ "Function " ++ (unpack f) ++ " is not defined in this scope."]
       xs -> Right (FLitType p xs)
 
-makeType ft th ty@(BzS_Undefined _) = Right (UnresType ty)
-makeType ft th x = Left [TypeErr (pos x) $ pack $ "Malformed type expression: " ++ show x]
+makeType dt ft th ty@(BzS_Undefined _) = Right (UnresType ty)
+makeType dt ft th x = Left [TypeErr (pos x) $ pack $ "Malformed type expression: " ++ show x]
 
 
 
@@ -359,8 +359,8 @@ getSymTable (SymbolTable stab) = stab
 
 data FileTable   = FileTable   (M.Map Text [Int64])   deriving Show
 
-resolveId :: FileTable -> Text -> [Int64]
-resolveId (FileTable ds) d = Mb.fromMaybe [] $ M.lookup d ds
+resolveTyId :: DefinitionTable -> FileTable -> Text -> [Int64]
+resolveTyId (DefinitionTable defs files ids top) (FileTable ds) d = L.filter (\x -> isType (defs M.! x)) $ Mb.fromMaybe [] $ M.lookup d ds
 
 
 
@@ -422,7 +422,7 @@ makeTypes dt@(DefinitionTable defs files ids top) =
             tyhead = initializeTypeHeader' thead
 
             typ    :: Either [BzoErr] Type
-            typ    = toRight flattenPolys $ toRight (replaceTCs dt) $ makeType (getFTab host) tyhead tdef
+            typ    = toRight flattenPolys $ toRight (replaceTCs dt) $ makeType dt (getFTab host) tyhead tdef
 
         in  applyRight (fn tyhead) typ
 
@@ -459,7 +459,8 @@ makeTypes dt@(DefinitionTable defs files ids top) =
               ([] ,   _,   _) -> Left [TypeErr p $ pack $ "Namespace " ++ namespace ++ " is invalid."]
               ([x], [i], [t]) -> Right (i, t)
               (_  ,  [],  ts) -> Left [TypeErr p $ pack $ "Type " ++ (unpack ty) ++ " has no implementations of class "       ++ (unpack tc)]
-              (_  ,  is,  ts) -> Left [TypeErr p $ pack $ "Type " ++ (unpack ty) ++ " has multiple implementations of class " ++ (unpack tc) ++ " : " ++ (show $ L.map (dfs M.!) is) ++ (show $ L.map (dfs M.!) ts)]
+              (_  ,  is,  []) -> Left [TypeErr p $ pack $ "Type " ++ (unpack ty) ++ " implements non-existent class "         ++ (unpack tc)]
+              (_  ,  is,  ts) -> Left [TypeErr p $ pack $ "Type " ++ (unpack ty) ++ " has multiple implementations of class " ++ (unpack tc)]
 
 
       -- Function for translating definitions to use TYPE and TYPEHEADER rather than BZOSYNTAX.
@@ -497,7 +498,7 @@ makeTypes dt@(DefinitionTable defs files ids top) =
             thead'= TyHeader ((header th) ++ (header thead)) (M.union (tvarmap th) (tvarmap thead))
 
             ftyp :: Either [BzoErr] Type
-            ftyp = toRight (replaceTCs dt) $ makeType (getFTab host) thead' ft
+            ftyp = toRight (replaceTCs dt) $ makeType dt (getFTab host) thead' ft
 
         in case ftyp of
             Right typ -> Right (fn, thead', typ)
