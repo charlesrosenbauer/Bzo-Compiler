@@ -15,3 +15,22 @@ Str.Monoid :: {
   mappend :: concat
   mapply  :: ''
 }
+
+
+Int.Monoid :: {
+  mappend :: +
+  mapply  :: 0
+}
+
+
+[L'] Lattice :: {
+  order :: [L', L'] ;; Bl
+  top   :: [] ;; L'
+  bottom:: [] ;; L'
+}
+
+Int.Lattice :: {
+  order ::  <
+  top   ::  9223372036854775807
+  bottom:: -9223372036854775808
+}

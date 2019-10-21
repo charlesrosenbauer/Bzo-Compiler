@@ -61,11 +61,11 @@ noOverloadTypes dt@(DefinitionTable defs files ids _) =
 noUndefinedErrs :: DefinitionTable -> [BzoErr]
 noUndefinedErrs dt@(DefinitionTable defs files ids _) =
   let
-      visiblemap :: M.Map Text [Int64]
+      visiblemap :: M.Map Text (S.Set Int64)
       visiblemap = M.fromList $ L.map (\fm -> (pack $ bfm_filepath fm, snd $ bfm_fileModel fm)) files
 
       visdefsmap :: M.Map Text [Definition]
-      visdefsmap = M.map (\vis -> L.map (\x -> Mb.fromJust $ M.lookup x defs) vis) visiblemap
+      visdefsmap = M.map (\vis -> L.map (\x -> Mb.fromJust $ M.lookup x defs) $ S.elems vis) visiblemap
 
       tynamesmap :: M.Map Text (S.Set Text)
       tynamesmap = M.map (S.fromList . L.map identifier . L.filter isType) visdefsmap
@@ -371,16 +371,13 @@ resolveId (FileTable ds) d = Mb.fromMaybe [] $ M.lookup d ds
 
 
 
-makeFileTable :: M.Map Text [Int64] -> BzoFileModel ([Int64], [Int64]) -> (Text, FileTable)
+makeFileTable :: M.Map Text [Int64] -> BzoFileModel (S.Set Int64, S.Set Int64) -> (Text, FileTable)
 makeFileTable dmap (BzoFileModel _ fp _ (_, vis) _ _ _ _) =
   let
-      visset:: S.Set Int64
-      visset = S.fromList vis
-
       dlist :: M.Map Text [Int64]
       dlist = M.fromList $
               L.filter (\(n, is) -> (L.length is) > 0) $
-              L.map (\(n, is) -> (n, L.filter (\v -> S.member v visset) is)) $
+              L.map (\(n, is) -> (n, L.filter (\v -> S.member v vis) is)) $
               M.assocs dmap
 
   in (pack fp, FileTable dlist)
@@ -429,15 +426,48 @@ makeTypes dt@(DefinitionTable defs files ids top) =
 
         in  applyRight (fn tyhead) typ
 
+
       separateImpl :: BzoSyntax -> (Text, BzoSyntax)
       separateImpl (BzS_FunDef _ _ fnid _ def) = (fnid, def)
 
+
+      getTCIds :: BzoPos -> DefinitionTable -> Text -> Text -> FilePath -> Either [BzoErr] (Int64, Int64)
+      getTCIds p dt@(DefinitionTable dfs fs ids top) tc ty namespace =
+        let
+            files :: [BzoFileModel (S.Set Int64, S.Set Int64)]
+            files = L.filter (\x -> namespace == (bfm_filepath x)) fs
+
+            visibility :: S.Set Int64
+            visibility = snd $ bfm_fileModel $ L.head files
+
+            -- Get ids that match tc, filter by visibility
+            visimps :: [Int64]
+            visimps = L.filter (\x -> S.member x visibility) $ Mb.fromMaybe [] $ M.lookup ty ids
+
+            vistyps :: [Int64]
+            vistyps = L.filter (\x -> S.member x visibility) $ Mb.fromMaybe [] $ M.lookup tc ids
+
+            -- Filter ids by Impl of Type
+            imps :: [Int64]
+            imps = L.map fst $ L.filter (\(_,x) -> tc == (classimpl  x)) $ L.filter (\(_,x) -> isImpl x) $ L.map (\x -> (x, dfs M.! x)) visimps
+
+            -- Filter ids by Type. Not sure if I actually need this.
+            typs :: [Int64]
+            typs = L.map fst $ L.filter (\(_,x) -> tc == (identifier x)) $ L.filter (\(_,x) -> isType x) $ L.map (\x -> (x, dfs M.! x)) vistyps
+
+        in case (files, imps, typs) of
+              ([] ,   _,   _) -> Left [TypeErr p $ pack $ "Namespace " ++ namespace ++ " is invalid."]
+              ([x], [i], [t]) -> Right (i, t)
+              (_  ,  [],  ts) -> Left [TypeErr p $ pack $ "Type " ++ (unpack ty) ++ " has no implementations of class "       ++ (unpack tc)]
+              (_  ,  is,  ts) -> Left [TypeErr p $ pack $ "Type " ++ (unpack ty) ++ " has multiple implementations of class " ++ (unpack tc) ++ " : " ++ (show $ L.map (dfs M.!) is) ++ (show $ L.map (dfs M.!) ts)]
+
+
       -- Function for translating definitions to use TYPE and TYPEHEADER rather than BZOSYNTAX.
-      translateDef :: Definition -> Either [BzoErr] Definition
-      translateDef (FuncSyntax    p fn host fty@(BzS_FnTypeDef  _  _ _  _) []) = Left [SntxErr p $ pack $ "Function type " ++ (unpack fn) ++ " has no accompanying definition."]
-      translateDef (FuncSyntax    p fn host fty@(BzS_FnTypeDef  _ ps _ ft) fs) = constructType fty ft host (\th t -> (FuncDef  p fn host th t fs))
-      translateDef (TypeSyntax    p ty host tyd@(BzS_TypDef     _ ps _ td)   ) = constructType tyd td host (\th t -> (TypeDef  p ty host th t   ))
-      translateDef (TyClassSyntax p tc host tcd@(BzS_TyClassDef _ ps _ td)   ) =
+      translateDef :: DefinitionTable -> Definition -> Either [BzoErr] Definition
+      translateDef dt (FuncSyntax    p fn host fty@(BzS_FnTypeDef  _  _ _  _) []) = Left [SntxErr p $ pack $ "Function type " ++ (unpack fn) ++ " has no accompanying definition."]
+      translateDef dt (FuncSyntax    p fn host fty@(BzS_FnTypeDef  _ ps _ ft) fs) = constructType fty ft host (\th t -> (FuncDef  p fn host th t fs))
+      translateDef dt (TypeSyntax    p ty host tyd@(BzS_TypDef     _ ps _ td)   ) = constructType tyd td host (\th t -> (TypeDef  p ty host th t   ))
+      translateDef dt (TyClassSyntax p tc host tcd@(BzS_TyClassDef _ ps _ td)   ) =
         let
             thead :: TypeHeader
             thead = (initializeTypeHeader' ps)
@@ -449,8 +479,12 @@ makeTypes dt@(DefinitionTable defs files ids top) =
             Left errs -> Left errs
             Right itf -> Right (TyClassDef p tc host thead itf)
 
-      translateDef (ImplSyntax p it tc host fns) = Right $ (ImplDef p it tc host (L.map separateImpl fns))
-      translateDef (FuncSyntax p fn host (BzS_Undefined _) fs) = Left [SntxErr p $ pack $ "Function definition " ++ (unpack fn) ++ " has no accompanying type."]
+      translateDef dt (ImplSyntax p it tc host fns) =
+        case getTCIds p dt tc it (unpack host) of
+          Left    er  -> Left  er
+          Right (i,t) -> Right $ (ImplDef p it tc i t host (L.map separateImpl fns))
+
+      translateDef dt (FuncSyntax p fn host (BzS_Undefined _) fs) = Left [SntxErr p $ pack $ "Function definition " ++ (unpack fn) ++ " has no accompanying type."]
 
       -- Function for reformatting typeclass interfaces
       xformTCFunc :: Text -> TypeHeader -> BzoSyntax -> Either [BzoErr] (Text, TypeHeader, Type)
@@ -478,7 +512,7 @@ makeTypes dt@(DefinitionTable defs files ids top) =
 
       -- Xformed Definitions
       results :: Either [BzoErr] (M.Map Int64 Definition)
-      results = toRight M.fromList $ allPass $ L.map (preserveId translateDef) $ M.assocs defs
+      results = toRight M.fromList $ allPass $ L.map (preserveId (translateDef dt)) $ M.assocs defs
 
       -- TODO:
       -- -- Check that make types are all valid (e.g, nothing like "Int Bool" as a definition.)

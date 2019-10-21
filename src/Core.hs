@@ -105,6 +105,8 @@ data Definition
     defpos     :: !BzoPos,
     identifier :: !T.Text,
     classimpl  :: !T.Text,
+    classid    :: !TCId,
+    typeid     :: !TyId,
     hostfile   :: !T.Text,
     impldefs   :: ![(T.Text, BzoSyntax)] }
  | FuncSyntax {
@@ -159,9 +161,9 @@ showDefinition (TyClassDef _ tcid file thd ifac) = "  TCDEF:\n    " ++
                                               "FILE: " ++ (show file)  ++ "\n    " ++
                                               "TYHD: " ++ (show thd)   ++ "\n    " ++
                                               "FNCS: " ++ (show ifac)  ++ "\n\n"
-showDefinition (ImplDef _ imid tcid file ifac) = "  IMPL:\n    " ++
-                                              "IMPT: " ++ (show imid)  ++ "\n    " ++
-                                              "TCID: " ++ (show tcid)  ++ "\n    " ++
+showDefinition (ImplDef _ imid tcid cid tid file ifac) = "  IMPL:\n    " ++
+                                              "IMPT: " ++ (show imid)  ++ " : " ++ (show cid) ++ "\n    " ++
+                                              "TCID: " ++ (show tcid)  ++ " : " ++ (show tid) ++ "\n    " ++
                                               "FILE: " ++ (show file)  ++ "\n    " ++
                                               "DEFS: " ++ (show ifac)  ++ "\n\n"
 
@@ -201,7 +203,7 @@ instance Show Definition where show = showDefinition
 data DefinitionTable
   = DefinitionTable {
       dt_defs :: !(M.Map Int64 Definition),
-      dt_files:: ![BzoFileModel ([Int64], [Int64])], -- [(local defs, visible defs)]
+      dt_files:: ![BzoFileModel (S.Set Int64, S.Set Int64)], -- [(local defs, visible defs)]
       dt_ids  :: !(M.Map T.Text [Int64]),
       dt_top  :: !Int64 }
   deriving Show

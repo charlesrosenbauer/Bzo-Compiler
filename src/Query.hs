@@ -216,6 +216,13 @@ isTyClass _ = False
 
 
 
+isImpl :: Definition -> Bool
+isImpl (ImplDef _ _ _ _ _ _ _) = True
+isImpl (ImplSyntax  _ _ _ _ _) = True
+isImpl _ = False
+
+
+
 
 
 

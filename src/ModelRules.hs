@@ -10,6 +10,7 @@ import Data.Text
 import Data.Tuple
 import Data.Int
 import Data.Map.Strict as M
+import Data.Set  as S
 import Data.List as L
 import Builtins
 import DefinitionTable
@@ -139,7 +140,7 @@ getDefTable files =
                                     domn = bfm_domain bfm
                                     idefs= catMaybes $ L.map (\k -> M.lookup (k, domn) mdspaces) imps
                                     ldefs= catMaybes $ L.map (\k -> M.lookup  k        dmspaces) lnks
-                                    model= (bfm_fileModel bfm, L.nub $ L.concat (idefs ++ ldefs ++ [bfm_fileModel bfm]))
+                                    model= (S.fromList $ bfm_fileModel bfm, S.fromList $ L.nub $ L.concat (idefs ++ ldefs ++ [bfm_fileModel bfm]))
                                 in  replaceModel bfm model) filelist
 
   in (DefinitionTable defmap filelist' idmap (fromIntegral $ L.last defCts))

@@ -125,7 +125,23 @@ checkType' _ _ (_, BITyType p b0) (_, BITyType _ b1) = (ife (b0 == b1) [] [TypeE
 checkType' k d (h0, t) (h1, TVarType p v) = ([], [(v, t, k)])
 
 -- Type Class Checking
-checkType' _ _ (h, t) (_, TCType   _   c) = ([], [])
+checkType' _ _ (h0,LtrlType p t0) (_, TCType   _   c) = ([], [])
+--  let
+--      tdef :: Definition
+--      tdef = (dt_defs d) M.! t0
+
+
+
+--      h2 :: TypeHeader
+--      h2 = typehead tdef
+
+--      t2 :: Type
+--      t2 = typedef tdef
+
+--  in case (checkType' k d (h2, t2) (h1, t1)) of
+--      ([], vs) -> ([], vs)
+--      (er, _ ) -> ([TypeErr p $ pack ("Could not match type " ++ (show $ getTyId d t0) ++ "\non type:\n" ++ (show t1) ++ "\n")] ++ er, [])
+
 
 -- Primitive Literal Checking
 checkType' k d (h0,LtrlType p0 t0) (h1,LtrlType p t1) =
