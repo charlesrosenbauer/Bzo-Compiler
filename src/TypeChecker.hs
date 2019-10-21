@@ -125,22 +125,22 @@ checkType' _ _ (_, BITyType p b0) (_, BITyType _ b1) = (ife (b0 == b1) [] [TypeE
 checkType' k d (h0, t) (h1, TVarType p v) = ([], [(v, t, k)])
 
 -- Type Class Checking
-checkType' _ _ (h0,LtrlType p t0) (_, TCType   _   c) = ([], [])
---  let
---      tdef :: Definition
---      tdef = (dt_defs d) M.! t0
+checkType' _ d (h0,LtrlType p t0) (_, TCType   _   c) =
+  let
+      tdef :: Definition
+      tdef = (dt_defs d) M.! t0
 
+      isImplMatch :: Int64 -> Bool
+      isImplMatch x =
+        let def = (dt_defs d) M.! x
+        in (isImpl def) && ((typeid def) == c)
 
+      impldefs :: [Int64]
+      impldefs = L.filter isImplMatch $ (dt_ids d) M.! (identifier tdef)
 
---      h2 :: TypeHeader
---      h2 = typehead tdef
-
---      t2 :: Type
---      t2 = typedef tdef
-
---  in case (checkType' k d (h2, t2) (h1, t1)) of
---      ([], vs) -> ([], vs)
---      (er, _ ) -> ([TypeErr p $ pack ("Could not match type " ++ (show $ getTyId d t0) ++ "\non type:\n" ++ (show t1) ++ "\n")] ++ er, [])
+  in case impldefs of
+      [] -> ([TypeErr p $ pack ("Could not match type " ++ (show $ getTyId d t0) ++ " on typeclass " ++ (show $ getTyId d c) ++ "\n")], [])
+      _  -> ([], [])
 
 
 -- Primitive Literal Checking
