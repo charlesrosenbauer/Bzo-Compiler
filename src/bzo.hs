@@ -1,3 +1,20 @@
+{-
+This is the bootstrapping compiler for the Bzo programming language.
+Copyright (C) 2019 Charles Rosenbauer
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <https://www.gnu.org/licenses/>.-}
+
 module Main where
 import System.Environment
 import System.IO
@@ -32,7 +49,39 @@ printIntro = do
   putStrLn "This compiler is licensed under GPLv.3\n"
   putStrLn "Enter \"#quit\" to exit\n"
   putStrLn "Call the compiler with -help for help."
+  putStrLn "Bzo Bootstrapping Compiler  Copyright (C) 2019  Charles Rosenbauer"
+  putStrLn "This program comes with ABSOLUTELY NO WARRANTY"
+  putStrLn "This is free software, and you are welcome to redistribute it"
+  putStrLn "For license and warranty info, enter \"#license\""
+  putStrLn "For help, enter \"#help\""
   return ()
+
+
+
+
+
+
+
+
+
+
+printLicense :: IO()
+printLicense = do
+  putStrLn "This is the bootstrapping compiler for the Bzo programming language."
+  putStrLn "Copyright (C) 2019 Charles Rosenbauer"
+
+  putStrLn "This program is free software: you can redistribute it and/or modify"
+  putStrLn "it under the terms of the GNU General Public License as published by"
+  putStrLn "the Free Software Foundation, either version 3 of the License, or"
+  putStrLn "(at your option) any later version."
+
+  putStrLn "This program is distributed in the hope that it will be useful,"
+  putStrLn "but WITHOUT ANY WARRANTY; without even the implied warranty of"
+  putStrLn "MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the"
+  putStrLn "GNU General Public License for more details."
+
+  putStrLn "You should have received a copy of the GNU General Public License"
+  putStrLn "along with this program.  If not, see <https://www.gnu.org/licenses/>."
 
 
 
@@ -85,9 +134,11 @@ mainLoop :: (String -> IO()) -> IO ()
 mainLoop action = do
   line <- readPrompt "\nBzo>>>"
   case line of
-    "#quit" -> return ()
-    "#<"    -> (multilinePrompt "" "#>") >>= action >> mainLoop action
-    input   -> (action input           )            >> mainLoop action
+    "#help"   -> printHelp    >> mainLoop action
+    "#license"-> printLicense >> mainLoop action
+    "#quit"   -> return ()
+    "#<"      -> (multilinePrompt "" "#>") >>= action >> mainLoop action
+    input     -> (action input           )            >> mainLoop action
 
 
 
