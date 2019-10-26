@@ -120,9 +120,15 @@ checkType' _ _ (_, IntType  p i0) (_, BITyType _  b) = (ife (b  == 12) [] [TypeE
 checkType' _ _ (_, FltType  p f0) (_, BITyType _  b) = (ife (b  == 13) [] [TypeErr p $ pack $ "Expected float builtin"    ], [])
 checkType' _ _ (_, StrType  p s0) (_, BITyType _  b) = (ife (b  == 17) [] [TypeErr p $ pack $ "Expected string builtin"   ], [])
 checkType' _ _ (_, BITyType p b0) (_, BITyType _ b1) = (ife (b0 == b1) [] [TypeErr p $ pack $ "Builtin types do not match"], [])
+checkType' _ _ (_, TCType   p c0) (_, TCType   _ c1) = (ife (c0 == c1) [] [TypeErr p $ pack $ "Type classes do not match" ], [])
 
 -- Type Variable Checking
 checkType' k d (h0, t) (h1, TVarType p v) = ([], [(v, t, k)])
+
+checkType' k d (h0, TVarType p v) (h1, t) =
+  let
+      rs = L.map (\(Constraint _ ty) -> checkType' k d (h0, ty) (h1, t)) $ getConstraints h0 v
+  in  concatUnzip rs
 
 -- Type Class Checking
 checkType' _ d (h0,LtrlType p t0) (_, TCType   _   c) =

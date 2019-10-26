@@ -34,3 +34,13 @@ Int.Lattice :: {
   top   ::  9223372036854775807
   bottom:: -9223372036854775808
 }
+
+[T'.(Int,Str)] Tipe :: [T', T']
+
+Tripe :: Str Tipe
+
+"Trope :: Bl  Tipe"
+
+[M'.Monoid] Mot :: [M', M']
+
+[T'.Monoid] Mott :: T' Mot
