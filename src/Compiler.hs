@@ -25,12 +25,10 @@ import BzoPreprocessor
 import BzoParameterParser
 import BzoFileSorter
 import ModelRules
-import DefinitionTable
 import BzoChecker
 import HigherOrder
 import BzoEmulatorTypes
 import BzoEmulator
-import TypeMapGen
 import BzoExprModeller
 import Error
 import Core

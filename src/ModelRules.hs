@@ -30,7 +30,6 @@ import Data.Map.Strict as M
 import Data.Set  as S
 import Data.List as L
 import Builtins
-import DefinitionTable
 import Control.Parallel.Strategies
 import Debug.Trace
 

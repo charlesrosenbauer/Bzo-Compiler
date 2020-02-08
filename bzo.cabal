@@ -34,12 +34,10 @@ executable main
       , Compiler
       , HigherOrder
       , ModelRules
-      , DefinitionTable
       , Builtins
       , Query
       , BzoEmulator
       , BzoEmulatorTypes
-      , TypeMapGen
       , BzoExprModeller
       , BzoPatternModeller
       , TypeChecker
