@@ -36,8 +36,6 @@ executable main
       , ModelRules
       , Builtins
       , Query
-      , BzoEmulator
-      , BzoEmulatorTypes
       , BzoExprModeller
       , BzoPatternModeller
       , TypeChecker

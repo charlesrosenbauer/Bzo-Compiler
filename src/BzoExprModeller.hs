@@ -17,7 +17,6 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.-}
 
 module BzoExprModeller where
 import BzoTypes
-import BzoEmulator
 import HigherOrder
 import BzoChecker
 import Core

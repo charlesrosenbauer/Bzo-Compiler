@@ -27,8 +27,6 @@ import BzoFileSorter
 import ModelRules
 import BzoChecker
 import HigherOrder
-import BzoEmulatorTypes
-import BzoEmulator
 import BzoExprModeller
 import Error
 import Core
@@ -62,10 +60,6 @@ compileFilePass (BzoSettings imp lib flg opt pfx) =
       putStrLn $ case valid of
                   Nothing -> showOutput {-$ trace (show namemaps)-} checkedast
                   Just er -> show er
-
-      putStrLn $ "\n\n" ++ (show $ apply (FnTable M.empty) (Exp_Join [(Exp_Lisp (Exp_Binop BO_Eq) [(Obj_Hole), (Obj_Int 3)]),
-                                                                      (Exp_Unop UO_Pct),
-                                                                      (Exp_Binop BO_Add)]) (Obj_Arr 2 [(Obj_Int 4), (Obj_Int 3)]))
 
 
 
