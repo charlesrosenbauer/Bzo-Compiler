@@ -19,6 +19,8 @@ module BzoExprModeller where
 import BzoTypes
 import BzoEmulator
 import HigherOrder
+import BzoChecker
+import Core
 import Query
 import AST
 import Core
@@ -28,6 +30,7 @@ import Data.List as L
 import Unsafe.Coerce
 import Data.Int
 import Text.Printf
+import Data.Map.Strict as M
 
 
 
@@ -55,8 +58,6 @@ getFloatHex f =
 
 
 printFunction :: BzoSyntax -> String
-printFunction (BzS_TypDef    _ _ _ _) = ""
-printFunction (BzS_FnTypeDef _ _ _ _) = ""
 printFunction (BzS_Int           _ i) = "i" ++ (show i) ++ " "
 printFunction (BzS_Flt           _ f) = "f" ++ (getFloatHex f) ++ " "
 printFunction (BzS_Nil             _) = "- "
@@ -69,3 +70,76 @@ printFunction (BzS_Cmpd         _ xs) = "(x303 " ++ (L.concatMap printFunction x
 printFunction (BzS_Poly         _ xs) = "(x304 " ++ (L.concatMap printFunction xs) ++ ") "
 printFunction (BzS_Statement     _ x) = printFunction x
 printFunction (BzS_Expr         _ xs) = "(x300 " ++ (L.concatMap printFunction xs) ++ ") "
+
+
+
+
+
+
+
+
+
+data Expr
+  = IntLit !Integer
+  | FltLit !Double
+  | StrLit !Text
+  | Nil
+  | FunLit !Int64
+  | TypLit !Int64
+  | VarLit !Int64
+  | Cmpd   ![Expr]
+  | Poly   ![Expr]
+  | Expr   ![Expr]
+  | Lisp   ![Expr]
+  | Let    ![([Int64], Expr, [Int64])]
+  | Wild
+
+
+data FunctionModel = FunctionModel{
+    fm_fnid   :: !Int64,
+    fm_fname  :: !Text,
+    fm_vars   ::  M.Map Int64 (TypeHeader, Type),
+    fm_varct  :: !Int64,
+    fm_expr   :: !Expr }
+
+data ScopeData = ScopeData{
+  scopestack  :: ![(M.Map Text Int64)],
+  varmap      :: !(M.Map Int64 (TypeHeader, Type)),
+  vartop      :: !Int64 }
+
+
+
+
+
+
+
+
+
+
+modelExpr :: SymbolTable -> DefinitionTable -> ScopeData -> BzoSyntax -> Either [BzoErr] (Expr, ScopeData)
+modelExpr st dt sd (BzS_Int p i   ) = Right (IntLit i, sd)
+modelExpr st dt sd (BzS_Flt p f   ) = Right (FltLit f, sd)
+modelExpr st dt sd (BzS_Str p s   ) = Right (StrLit s, sd)
+modelExpr st dt sd (BzS_Nil p     ) = Right (Nil     , sd)
+modelExpr st dt sd (BzS_Wildcard p) = Right (Wild    , sd)
+
+
+
+modelFunction :: DefinitionTable -> Definition -> Either [BzoErr] FunctionModel
+modelFunction dt@(DefinitionTable defs files ids _) (FuncDef p fnid host thead ftyp fndefs) =
+  let
+      syms :: SymbolTable
+      syms = makeSymbolTable dt
+  in Left []
+
+
+
+
+
+{-
+printProgram :: DefinitionTable -> Either [BzoErr] String
+printProgram (DefinitionTable defs files ids _) =
+  let
+
+
+  in-}
