@@ -379,6 +379,9 @@ data FileTable   = FileTable   (M.Map Text [Int64])   deriving Show
 resolveTyId :: DefinitionTable -> FileTable -> Text -> [Int64]
 resolveTyId (DefinitionTable defs files ids top) (FileTable ds) d = L.filter (\x -> isType (defs M.! x)) $ Mb.fromMaybe [] $ M.lookup d ds
 
+resolveFnId :: DefinitionTable -> FileTable -> Text -> [Int64]
+resolveFnId (DefinitionTable defs files ids top) (FileTable ds) d = L.filter (\x -> isFunc (defs M.! x)) $ Mb.fromMaybe [] $ M.lookup d ds
+
 
 
 

@@ -209,6 +209,11 @@ isType (TypeDef      _ _ _ _ _) = True
 isType (TyClassDef   _ _ _ _ _) = True
 isType _ = False
 
+isFunc :: Definition -> Bool
+isFunc (FuncDef    _ _ _ _ _ _) = True
+isFunc (FuncSyntax   _ _ _ _ _) = True
+isFunc _ = False
+
 -- This should probably be renamed?
 isStructType :: Definition -> Bool
 --isStructType (TypeSyntax    _ _ _) = True

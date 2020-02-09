@@ -83,15 +83,18 @@ data Expr
   | FltLit !Double
   | StrLit !Text
   | Nil
-  | FunLit !Int64
+  | FunLit ![Int64]
   | TypLit !Int64
   | VarLit !Int64
+  | MVrLit !Int64
   | Cmpd   ![Expr]
   | Poly   ![Expr]
   | Expr   ![Expr]
   | Lisp   ![Expr]
-  | Let    ![([Int64], Expr, [Int64])]
+  | Let    ![([Int64], Expr, [Int64])]  !ScopeData
   | Wild
+  | BITyp  !Int64
+  | BIFnc  !Int64
 
 
 data FunctionModel = FunctionModel{
@@ -114,13 +117,59 @@ data ScopeData = ScopeData{
 
 
 
+findVariable :: ScopeData -> Text -> Maybe Int64
+findVariable (ScopeData []         _    _  ) vid = Nothing
+findVariable (ScopeData (smap:stk) vars top) vid =
+  case M.lookup vid smap of
+    Nothing -> findVariable (ScopeData stk vars top) vid
+    Just x  -> Just x
 
-modelExpr :: SymbolTable -> DefinitionTable -> ScopeData -> BzoSyntax -> Either [BzoErr] (Expr, ScopeData)
-modelExpr st dt sd (BzS_Int p i   ) = Right (IntLit i, sd)
-modelExpr st dt sd (BzS_Flt p f   ) = Right (FltLit f, sd)
-modelExpr st dt sd (BzS_Str p s   ) = Right (StrLit s, sd)
-modelExpr st dt sd (BzS_Nil p     ) = Right (Nil     , sd)
-modelExpr st dt sd (BzS_Wildcard p) = Right (Wild    , sd)
+
+
+makeVariable :: ScopeData -> Text -> (Int64, ScopeData)
+makeVariable sd@(ScopeData (smap:stk) vars top) vid =
+  let
+      found :: Maybe Int64
+      found =  findVariable sd vid
+
+      sd'   :: ScopeData
+      sd'   =  ScopeData ((M.insert vid (top+1) smap):stk) vars (top+1)
+
+  in case found of
+      Nothing -> (top+1, sd')
+      Just x  -> (x    , sd )
+
+
+
+
+modelExpr :: FileTable -> DefinitionTable -> ScopeData -> BzoSyntax -> Either [BzoErr] (Expr, ScopeData)
+modelExpr ft dt sd (BzS_Int  p i   ) = Right (IntLit i, sd)
+modelExpr ft dt sd (BzS_Flt  p f   ) = Right (FltLit f, sd)
+modelExpr ft dt sd (BzS_Str  p s   ) = Right (StrLit s, sd)
+modelExpr ft dt sd (BzS_Nil  p     ) = Right (Nil     , sd)
+modelExpr ft dt sd (BzS_Wildcard p ) = Right (Wild    , sd)
+--modelExpr ft dt sd (BzS_BId  p x   ) = Right (BIFnc  x, sd)
+--modelExpr ft dt sd (BzS_BTId p x   ) = Right (BITyp  x, sd)
+modelExpr ft dt sd (BzS_Id   p x   ) =
+  let
+      ids :: [Int64]
+      ids = resolveFnId dt ft x
+
+      vid :: Int64
+      sd' :: ScopeData
+      (vid, sd') = makeVariable sd x
+
+  in case ids of
+      [] -> (Right (VarLit vid, sd'))
+      xs -> (Right (FunLit ids, sd ))
+
+modelExpr ft dt sd (BzS_MId p x    ) =
+  let
+      vid :: Int64
+      sd' :: ScopeData
+      (vid, sd') = makeVariable sd x
+  in Right (MVrLit vid, sd')
+
 
 
 
