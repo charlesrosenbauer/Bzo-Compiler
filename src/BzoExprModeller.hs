@@ -19,6 +19,7 @@ module BzoExprModeller where
 import BzoTypes
 import HigherOrder
 import BzoChecker
+import Builtins
 import Core
 import Query
 import AST
@@ -148,8 +149,16 @@ modelExpr ft dt sd (BzS_Flt  p f   ) = Right (FltLit f, sd)
 modelExpr ft dt sd (BzS_Str  p s   ) = Right (StrLit s, sd)
 modelExpr ft dt sd (BzS_Nil  p     ) = Right (Nil     , sd)
 modelExpr ft dt sd (BzS_Wildcard p ) = Right (Wild    , sd)
---modelExpr ft dt sd (BzS_BId  p x   ) = Right (BIFnc  x, sd)
---modelExpr ft dt sd (BzS_BTId p x   ) = Right (BITyp  x, sd)
+modelExpr ft dt sd (BzS_BId  p x   ) =
+  case (isBuiltinFunc x) of
+    0 -> Left [ModelErr p $ pack $ (unpack x) ++ " is not a valid builtin function."]
+    n -> Right (BIFnc n, sd)
+
+modelExpr ft dt sd (BzS_BTId p x   ) =
+  case (isBuiltinType x) of
+    0 -> Left [ModelErr p $ pack $ (unpack x) ++ " is not a valid builtin type."]
+    n -> Right (BITyp n, sd)
+
 modelExpr ft dt sd (BzS_Id   p x   ) =
   let
       ids :: [Int64]
@@ -179,6 +188,12 @@ modelFunction dt@(DefinitionTable defs files ids _) (FuncDef p fnid host thead f
       syms :: SymbolTable
       syms = makeSymbolTable dt
   in Left []
+
+
+
+
+checkExpr :: DefinitionTable -> ScopeData -> Expr -> [BzoErr]
+checkExpr _ _ _ = []
 
 
 
