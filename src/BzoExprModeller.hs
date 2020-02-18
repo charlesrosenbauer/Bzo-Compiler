@@ -143,6 +143,15 @@ makeVariable sd@(ScopeData (smap:stk) vars top) vid =
 
 
 
+modelExprs :: FileTable -> DefinitionTable -> ScopeData -> [BzoSyntax] -> Either [BzoErr] [(Expr, ScopeData)]
+modelExprs ft dt sd exprs =
+  let
+      outs :: [Either [BzoErr] (Expr, ScopeData)]
+      outs = L.map (modelExpr ft dt sd) exprs
+  in allPass outs
+
+
+
 modelExpr :: FileTable -> DefinitionTable -> ScopeData -> BzoSyntax -> Either [BzoErr] (Expr, ScopeData)
 modelExpr ft dt sd (BzS_Int  p i   ) = Right (IntLit i, sd)
 modelExpr ft dt sd (BzS_Flt  p f   ) = Right (FltLit f, sd)
@@ -178,6 +187,7 @@ modelExpr ft dt sd (BzS_MId p x    ) =
       sd' :: ScopeData
       (vid, sd') = makeVariable sd x
   in Right (MVrLit vid, sd')
+
 
 
 
