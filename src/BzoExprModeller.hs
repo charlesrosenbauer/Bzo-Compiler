@@ -143,12 +143,22 @@ makeVariable sd@(ScopeData (smap:stk) vars top) vid =
 
 
 
-modelExprs :: FileTable -> DefinitionTable -> ScopeData -> [BzoSyntax] -> Either [BzoErr] [(Expr, ScopeData)]
-modelExprs ft dt sd exprs =
+modelExprs :: FileTable -> DefinitionTable -> ScopeData -> [BzoSyntax] -> Either [BzoErr] ([Expr], ScopeData)
+modelExprs ft dt sd []     = Right ([], sd)
+modelExprs ft dt sd (x:xs) =
   let
-      outs :: [Either [BzoErr] (Expr, ScopeData)]
-      outs = L.map (modelExpr ft dt sd) exprs
-  in allPass outs
+      outs     :: Either [BzoErr] (Expr, ScopeData)
+      outs     = modelExpr ft dt sd x
+
+      nextOuts :: ScopeData -> Either [BzoErr] ([Expr], ScopeData)
+      nextOuts = (\s -> modelExprs ft dt s xs)
+
+  in case outs of
+      Left  err       -> Left err
+      Right (ex, sd') ->
+        case nextOuts sd' of
+          Left  err         -> Left  err
+          Right (exs, sd'') -> Right (ex:exs, sd'')
 
 
 
@@ -187,6 +197,16 @@ modelExpr ft dt sd (BzS_MId p x    ) =
       sd' :: ScopeData
       (vid, sd') = makeVariable sd x
   in Right (MVrLit vid, sd')
+
+modelExpr ft dt sd (BzS_Cmpd p xs) =
+  case modelExprs ft dt sd xs of
+    Left errs        -> Left $ [ModelErr p $ pack "Invalid compound expression."] ++ errs
+    Right (xs', sd') -> Right  (Cmpd xs', sd')
+
+modelExpr ft dt sd (BzS_Poly p xs) =
+  case modelExprs ft dt sd xs of
+    Left errs        -> Left $ [ModelErr p $ pack "Invalid polymorphic expression."] ++ errs
+    Right (xs', sd') -> Right  (Poly xs', sd')
 
 
 
