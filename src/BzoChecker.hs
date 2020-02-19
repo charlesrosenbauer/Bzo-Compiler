@@ -374,6 +374,9 @@ data SymbolTable = SymbolTable (M.Map Text FileTable) deriving Show
 getSymTable :: SymbolTable -> M.Map Text FileTable
 getSymTable (SymbolTable stab) = stab
 
+getFileTable:: SymbolTable -> Text -> Maybe FileTable
+getFileTable (SymbolTable stab) file = M.lookup file stab 
+
 data FileTable   = FileTable   (M.Map Text [Int64])   deriving Show
 
 resolveTyId :: DefinitionTable -> FileTable -> Text -> [Int64]

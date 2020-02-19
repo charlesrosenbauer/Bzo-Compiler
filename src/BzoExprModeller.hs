@@ -26,7 +26,9 @@ import AST
 import Core
 import Error
 import Data.Text
-import Data.List as L
+import Data.List   as L
+import Data.Either as E
+import Data.Maybe  as Mb
 import Unsafe.Coerce
 import Data.Int
 import Text.Printf
@@ -96,19 +98,22 @@ data Expr
   | Wild
   | BITyp  !Int64
   | BIFnc  !Int64
+  deriving Show
 
 
 data FunctionModel = FunctionModel{
     fm_fnid   :: !Int64,
     fm_fname  :: !Text,
-    fm_vars   ::  M.Map Int64 (TypeHeader, Type),
-    fm_varct  :: !Int64,
-    fm_expr   :: !Expr }
+    fm_host   :: !Text,
+    fm_type   :: !(TypeHeader, Type),
+    fm_exprs  :: ![(Expr, ScopeData)] }
+    deriving Show
 
 data ScopeData = ScopeData{
   scopestack  :: ![(M.Map Text Int64)],
   varmap      :: !(M.Map Int64 (TypeHeader, Type)),
   vartop      :: !Int64 }
+  deriving Show
 
 
 
@@ -212,12 +217,38 @@ modelExpr ft dt sd (BzS_Poly p xs) =
 
 
 
-modelFunction :: DefinitionTable -> Definition -> Either [BzoErr] FunctionModel
-modelFunction dt@(DefinitionTable defs files ids _) (FuncDef p fnid host thead ftyp fndefs) =
+modelFunction :: SymbolTable -> DefinitionTable -> Int64 -> Definition -> Either [BzoErr] FunctionModel
+modelFunction st dt@(DefinitionTable defs files ids _) fnix (FuncDef p fnid host thead ftyp fndefs) =
   let
-      syms :: SymbolTable
-      syms = makeSymbolTable dt
-  in Left []
+      ft :: FileTable
+      ft = Mb.fromJust $ getFileTable st host
+
+      sd :: ScopeData
+      sd = ScopeData [] M.empty 0
+
+      exprs :: [(Expr, ScopeData)]
+      errs  :: [[BzoErr]]
+      (errs, exprs) = E.partitionEithers $ L.map (modelExpr ft dt sd) fndefs
+
+  in case (L.concat errs) of
+      [] -> Right $ FunctionModel fnix fnid host (thead, ftyp) exprs
+      er -> Left  er
+
+
+
+
+modelFunctions :: SymbolTable -> DefinitionTable -> Either [BzoErr] (M.Map Int64 FunctionModel)
+modelFunctions st dt@(DefinitionTable defs files ids _) =
+  let
+      fnouts :: [(Int64, Either [BzoErr] FunctionModel)]
+      fnouts = L.map (\(i, f) -> (i, modelFunction st dt i f)) $ M.assocs defs
+
+      fnrets :: Either [BzoErr] [FunctionModel]
+      fnids  :: [Int64]
+      (fnids, fnrets) = (\(is, outs) -> (is, allPass outs)) $ L.unzip fnouts
+  in case fnrets of
+      Left err     -> Left   err
+      Right fnmods -> Right (M.fromList $ L.zip fnids fnmods)
 
 
 
