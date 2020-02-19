@@ -213,6 +213,14 @@ modelExpr ft dt sd (BzS_Poly p xs) =
     Left errs        -> Left $ [ModelErr p $ pack "Invalid polymorphic expression."] ++ errs
     Right (xs', sd') -> Right  (Poly xs', sd')
 
+modelExpr ft dt sd (BzS_Expr p xs) =
+  case modelExprs ft dt sd xs of
+    Left errs        -> Left $ [ModelErr p $ pack "Invalid expression."] ++ errs
+    Right (xs', sd') -> Right  (Expr xs', sd')
+
+modelExpr ft dt sd (BzS_Statement p expr) = modelExpr ft dt sd expr
+
+
 
 
 
