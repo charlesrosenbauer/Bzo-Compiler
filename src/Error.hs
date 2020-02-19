@@ -58,6 +58,7 @@ showBzErr (DepErr       st) = "Dependency Error:\n" ++ (T.unpack st) ++ "\n\n"
 showBzErr (ParamErr     st) = "Parameter Error:\n" ++ (T.unpack st) ++ "\n\n"
 showBzErr (CfgErr       st) = "Configuration Error:\n" ++ (T.unpack st) ++ "\n\n"
 showBzErr (PrepErr    p st) = "Preprocessor Error:\n" ++ (showErrPos p) ++ (T.unpack st) ++ "\n\n"
+showBzErr (ModelErr   p st) = "Modeller Error:\n" ++ (showErrPos p) ++ (T.unpack st) ++ "\n\n"
 instance Show BzoErr where show = showBzErr
 
 

@@ -54,11 +54,12 @@ compileFilePass (BzoSettings imp lib flg opt pfx) =
       defs'      <- (fmap (applyWithErr orderFileData)) $ (fmap (applyWithErr wrappedVerifier)) $ (applyWithErrM (wrappedLibLoader lCfg)) defs
       defs''     <- return $ (applyRight getDefTable) $ (applyRight getDefs) $ (applyRight (L.map (\x -> (adjustModel x modelXForm)))) defs'
       checkedast <- return $ applyWithErr checkProgram defs''
+      program    <- return $ applyWithErr modelProgram checkedast
 
       -- TODO: Type Checker
 
       putStrLn $ case valid of
-                  Nothing -> showOutput {-$ trace (show namemaps)-} checkedast
+                  Nothing -> showOutput {-$ trace (show namemaps)-} program
                   Just er -> show er
 
 

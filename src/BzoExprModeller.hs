@@ -94,11 +94,14 @@ data Expr
   | Poly   ![Expr]
   | Expr   ![Expr]
   | Lisp   ! Expr  ![Expr]
+  | MapExp ! Expr
   | Let    ![([Int64], Expr, [Int64])]  !ScopeData
   | Filter ! Expr  ![Expr]
   | Wild
   | BITyp  !Int64
   | BIFnc  !Int64
+  | Func   ! Expr  !Expr !Expr !ScopeData
+  | Undef
   deriving Show
 
 
@@ -197,6 +200,19 @@ modelExpr ft dt sd (BzS_Id   p x   ) =
       [] -> (Right (VarLit vid, sd'))
       xs -> (Right (FunLit ids, sd ))
 
+modelExpr ft dt sd (BzS_TyId p x   ) =
+  let
+      ids :: [Int64]
+      ids = resolveTyId dt ft x
+
+      vid :: Int64
+      sd' :: ScopeData
+      (vid, sd') = makeVariable sd x
+
+  in case ids of
+      []   -> (Left  [ModelErr p $ pack $ (unpack x) ++ " is not a defined type."])
+      [xs] -> (Right (TypLit xs, sd ))
+
 modelExpr ft dt sd (BzS_MId p x    ) =
   let
       vid :: Int64
@@ -230,8 +246,27 @@ modelExpr ft dt sd (BzS_FilterObj p t cs) =
     Left errs           -> Left  $ [ModelErr p $ pack "Invalid constraint."] ++ errs
     Right (t':cs', sd') -> Right (Filter t' cs', sd')
 
+modelExpr ft dt sd (BzS_MapObj p expr) =
+  case modelExpr ft dt sd expr of
+    Left errs        -> Left $ [ModelErr p $ pack "Invalid map expression."] ++ errs
+    Right (x',  sd') -> Right  (MapExp x', sd')
 
 modelExpr ft dt sd (BzS_Statement p expr) = modelExpr ft dt sd expr
+
+-- Parameters are not modelled correctly yet
+modelExpr ft dt sd (BzS_FunDef p is f os df) =
+  case modelExprs ft dt sd (is:os:df:[]) of
+    Left errs                  -> Left  $ [ModelErr p $ pack "Invalid function header."] ++ errs
+    Right ([is',os',df'], sd') -> Right (Func df' is' os' sd', sd')
+
+modelExpr ft dt sd (BzS_Undefined p) = Right (Undef, sd)
+
+modelExpr ft dt sd (BzS_Lambda p ps expr) = Right (Undef, sd)
+
+-- This is clearly wrong
+modelExpr ft dt sd (BzS_Block p xs) = Right (Undef, sd)
+
+modelExpr ft dt sd x = Left [ModelErr (pos x) $ pack $ "Unmodelable expression:" ++ (show x)]
 
 
 
@@ -262,7 +297,7 @@ modelFunctions :: SymbolTable -> DefinitionTable -> Either [BzoErr] (M.Map Int64
 modelFunctions st dt@(DefinitionTable defs files ids _) =
   let
       fnouts :: [(Int64, Either [BzoErr] FunctionModel)]
-      fnouts = L.map (\(i, f) -> (i, modelFunction st dt i f)) $ M.assocs defs
+      fnouts = L.map (\(i, f) -> (i, modelFunction st dt i f)) $ L.filter (\(_, d) -> isFunc d) $ M.assocs defs
 
       fnrets :: Either [BzoErr] [FunctionModel]
       fnids  :: [Int64]
@@ -276,6 +311,14 @@ modelFunctions st dt@(DefinitionTable defs files ids _) =
 
 checkExpr :: DefinitionTable -> ScopeData -> Expr -> [BzoErr]
 checkExpr _ _ _ = []
+
+
+modelProgram :: DefinitionTable -> Either [BzoErr] (M.Map Int64 FunctionModel)
+modelProgram dt =
+  let
+      syms :: SymbolTable
+      syms = makeSymbolTable dt
+  in modelFunctions syms dt
 
 
 
