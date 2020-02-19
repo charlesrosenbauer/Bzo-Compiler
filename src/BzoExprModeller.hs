@@ -93,8 +93,9 @@ data Expr
   | Cmpd   ![Expr]
   | Poly   ![Expr]
   | Expr   ![Expr]
-  | Lisp   ![Expr]
+  | Lisp   ! Expr  ![Expr]
   | Let    ![([Int64], Expr, [Int64])]  !ScopeData
+  | Filter ! Expr  ![Expr]
   | Wild
   | BITyp  !Int64
   | BIFnc  !Int64
