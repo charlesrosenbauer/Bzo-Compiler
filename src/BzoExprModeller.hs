@@ -219,6 +219,18 @@ modelExpr ft dt sd (BzS_Expr p xs) =
     Left errs        -> Left $ [ModelErr p $ pack "Invalid expression."] ++ errs
     Right (xs', sd') -> Right  (Expr xs', sd')
 
+modelExpr ft dt sd (BzS_LispCall p f xs) =
+  case modelExprs ft dt sd (f:xs) of
+    Left errs           -> Left  $ [ModelErr p $ pack "Invalid prefix expression."] ++ errs
+    Right (f':xs', sd') -> Right (Lisp f' xs', sd')
+
+-- Not quite right, cs should be modelled as types
+modelExpr ft dt sd (BzS_FilterObj p t cs) =
+  case modelExprs ft dt sd (t:cs) of
+    Left errs           -> Left  $ [ModelErr p $ pack "Invalid constraint."] ++ errs
+    Right (t':cs', sd') -> Right (Filter t' cs', sd')
+
+
 modelExpr ft dt sd (BzS_Statement p expr) = modelExpr ft dt sd expr
 
 
