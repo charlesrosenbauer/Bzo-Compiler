@@ -1,0 +1,10 @@
+ExprModelTest #Module
+StdIO         #Import
+
+
+
+
+main :: IO ;; IO
+[~io] main :: {
+  [println: ~io, 'Hello World!'] ~io
+}

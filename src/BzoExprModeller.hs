@@ -79,7 +79,9 @@ printFunction (BzS_Expr         _ xs) = "(x300 " ++ (L.concatMap printFunction x
 
 
 
-
+data ExprType = ExprType{
+  xt_type :: !Type,
+  xt_head :: !TypeHeader }
 
 data Expr
   = IntLit !Integer
@@ -97,6 +99,9 @@ data Expr
   | MapExp ! Expr
   | Let    ![([Int64], Expr, [Int64])]  !ScopeData
   | Filter ! Expr  ![Expr]
+  | Lambda ! Expr  ! Expr
+  | MkLmda ! Int64 ![Expr]
+  | ClLmda ! Int64 ![Expr] ![Expr]
   | Wild
   | BITyp  !Int64
   | BIFnc  !Int64
@@ -137,6 +142,7 @@ findVariable (ScopeData (smap:stk) vars top) vid =
 
 
 makeVariable :: ScopeData -> Text -> (Int64, ScopeData)
+makeVariable sd@(ScopeData []         vars top) vid = (top+1, ScopeData ((M.insert vid (top+1) M.empty):[]) vars (top+1))
 makeVariable sd@(ScopeData (smap:stk) vars top) vid =
   let
       found :: Maybe Int64
@@ -261,7 +267,10 @@ modelExpr ft dt sd (BzS_FunDef p is f os df) =
 
 modelExpr ft dt sd (BzS_Undefined p) = Right (Undef, sd)
 
-modelExpr ft dt sd (BzS_Lambda p ps expr) = Right (Undef, sd)
+modelExpr ft dt sd (BzS_Lambda p ps expr) =
+  let
+
+  in Right (Undef, sd)
 
 -- This is clearly wrong
 modelExpr ft dt sd (BzS_Block p xs) = Right (Undef, sd)
