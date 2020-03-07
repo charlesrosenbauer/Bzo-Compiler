@@ -227,22 +227,22 @@ modelExpr ft dt sd (BzS_MId p x    ) =
   in Right (MVrLit vid, sd')
 
 modelExpr ft dt sd (BzS_Cmpd p xs) =
-  case modelExprs ft dt sd xs of
+  case modelExprs ft dt sd (L.reverse xs) of
     Left errs        -> Left $ [ModelErr p $ pack "Invalid compound expression."] ++ errs
     Right (xs', sd') -> Right  (Cmpd xs', sd')
 
 modelExpr ft dt sd (BzS_Poly p xs) =
-  case modelExprs ft dt sd xs of
+  case modelExprs ft dt sd (L.reverse xs) of
     Left errs        -> Left $ [ModelErr p $ pack "Invalid polymorphic expression."] ++ errs
     Right (xs', sd') -> Right  (Poly xs', sd')
 
 modelExpr ft dt sd (BzS_Expr p xs) =
-  case modelExprs ft dt sd xs of
+  case modelExprs ft dt sd (L.reverse xs) of
     Left errs        -> Left $ [ModelErr p $ pack "Invalid expression."] ++ errs
     Right (xs', sd') -> Right  (Expr xs', sd')
 
 modelExpr ft dt sd (BzS_LispCall p f xs) =
-  case modelExprs ft dt sd (f:xs) of
+  case modelExprs ft dt sd (f:(L.reverse xs)) of
     Left errs           -> Left  $ [ModelErr p $ pack "Invalid prefix expression."] ++ errs
     Right (f':xs', sd') -> Right (Lisp f' xs', sd')
 
@@ -273,7 +273,13 @@ modelExpr ft dt sd (BzS_Lambda p ps expr) =
   in Right (Undef, sd)
 
 -- This is clearly wrong
-modelExpr ft dt sd (BzS_Block p xs) = Right (Undef, sd)
+modelExpr ft dt sd@(ScopeData stk vm top) (BzS_Block p xs) =
+  let
+      sd' :: ScopeData
+      sd' = (ScopeData ((M.empty):stk) vm top)
+  in case modelExprs ft dt sd' (L.reverse xs) of
+    Left errs         -> Left $ [ModelErr p $ pack "Invalid block expression."] ++ errs
+    Right (xs', sd'') -> Right  (Let (L.map (\x -> ([], x, [])) xs') sd'', sd'')
 
 modelExpr ft dt sd x = Left [ModelErr (pos x) $ pack $ "Unmodelable expression:" ++ (show x)]
 
