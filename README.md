@@ -1,33 +1,27 @@
 # Bzo-Compiler
-
-
-*NOTE*
-This is a branch and is under construction
-
+---
 
 Compiler for a custom programming language I'm developing called Bzo
 
 This file is of course not final, and will be updated as the project progresses.
 
 
-*About Bzo*
+**About Bzo**
 
-Bzo is a programming language that I'm developing. The language is designed to be an imperative/functional language built on top of a purely functional core; imperative constructs like mutability are syntactic sugar for functional constructs like monads.
+Bzo is a programming language that I'm developing with the goal of rethinking the role of the compiler.
 
-The goal of Bzo is to completely change the role of the compiler. Rather than be a black box that only takes in code, and despite doing extensive analysis only spits out some error messages or a single executable, the compiler should be a much more open tool.
-* The programmer should be able to have fine-grained control over the inner workings of the compiler and direct compilation if necessary.
+Traditionally, the role of a compiler has been to serve as a black box that takes code in and returns a large list of error messages (or in rare cases, an executable file) out. However, as it is becoming increasingly important to make software that is correct, secure, and efficient, it is becoming necessary to leverage more powerful tools in the software development process.
 
-* The programmer should be able to query the compiler for the inferences it has gained through analysis of the code.
+Compilers often perform a lot of powerful analysis on code, but being a black box, that information is rarely available to the programmer (and even when it is, it's not easy to access!). Making this information available to the programmer, and perhaps also providing the programmer with tools to be able to directly interact with this analysis (e.g, code assertions that can statically verify that say, a variable x is not equal to 0), would likely serve to be a very powerful tool in improving security and correctness.
 
-* The programmer should be able to define custom analysis and code transformations that can be applied at compile time.
+In the case of code optimization, this is mostly a problem of automation. The standard way to perform optimization is to generate a very inefficient IR from the original code, and then to progressively optimize it with analysis-gated transformations. Which transformations are applied is often not well-defined and subject to change, and how much control the programmer has over them is very limited. While this works fine for most applications, it takes a lot of control away from the programmer to properly engineer their software to be as efficient as possible.
 
-These goals should make sophisticated tool development much easier, and enable the creation of many powerful tools for purposes such as formal verification, code visualization, automated code review, and much more.
+It is very common for a programmer aiming for high performance to have to contort the language in ways it was never intended to be written in in order to achieve even a fraction of the potential performance, often making the code vastly more difficult to understand and maintain in the process. Many of these cases could be alleviated by simply providing the programmer with more powerful metaprogramming tools, or even the ability to write their own compiler passes.
 
-This compiler is still under VERY heavy development. Not all planned features are currently implemented. Currently, Linux is the only platform that is supported, though it may be runnable on other platforms as well.
-
+My vision for Bzo is for the compiler to be more of a toolset for building more sophisticated build and compilation systems. A frontend will serve as a way of converting human-readable code to a computer-manipulable IR, and backends will exist for converting an IR to machine code for different architectures. An additional set of middle-end tools; optimization passes, analysis passes, profiling and instrumentation tools, formal verification, code visualizations, etc. will exist to allow the programmer to more thoroughly understand and control how code is generated. Custom middle-end tools, as well as even custom frontends and backends could be developed as well.
 
 
-*Running the Compiler*
+**Running the Compiler**
 
 Currently, the compiler can be run by calling the bzo executable in the /dist/build/main directory.
 ```
@@ -49,30 +43,27 @@ The compiler can be run in parallel by adding the parameters "+RTS -NX" where X 
 
 
 
-*Short-Term Plans / Features*
+**Short-Term Plans / Features**
 
-* Flesh out the backend and get a simple interpreter running.
+* Finish typechecking and IR generation in the frontend.
 
+* Get the backend (https://github.com/charlesrosenbauer/Bzo-Backend) to output x86 machine code.
 
-*Long-Term Plans*
-
-* Self-hosting: I've made some design decisions in this compiler that could be improved with a second revision, and I think a more permissive license would be favorable. As a result, this compiler will likely be used just for bootstrapping purposes, and a self-hosted compiler will be written later.
-
-* Implicit Memory Arena Usage: Rust is a great example of how memory can be managed efficiently via compile-time checks. However, languages like C are often still faster due to extensive usage of memory arenas and allocators. With a small amount of extra analysis, it should be possible to have a language capable of implicitly deciding when this is feasible through some dependency analysis, etc.
-
-* Implicit Parallelism: rather than force the programmer to manage parallelism entirely on their own, Bzo aims to handle this with a smarter compiler. Implicit parallelism is definitely possible in a purely functional environment, however issues arise with deciding the proper granularity of threads; too high and threads aren't distributed efficiently, too low and the program generates too many threads for it to handle efficiently. Bzo aims to solve this problem by recognizing situations where threads can be generated in smaller numbers, or when they can be grouped together; for example, map operations only need to produce as many threads as the hardware supports, rather than how many can theoretically be run. Most other highger-order functions with any level of parallelism can be interpreted as variations on map operations, and therefore, thread numbers should be able to managed well simply with a smart enough compiler.
-
-* Intermediate Representations: a goal for the self-hosted compiler will be to enable other languages to compile to an intermediate representation that can be compiled using the Bzo compiler. This will allow other languages to use features of Bzo, such as implicit parallelism, without having to reimplement it.
-
-* Embedded Bytecode: the intermediate representation mentioned above will have a bytecode format that will be embedded into executable files. So long as dependencies can be met, this will allow applications to be recompiled for new platforms without needing the original source code.
-
-* Compiler API: Much like Jonathan Blow's Jai language, Bzo is planned to offer a compiler API that enables Bzo code to have fine-grained control over what the compiler is doing. This enables very powerful debugging tools to be implemented with little effort, and enables automated code review at compile time.
-
-* Direct Backend: LLVM may be powerful, but it's also slow and makes assumptions about the programming language that are much more pessimistic than what is achievable in a purely functional language. A backend that directly produces machine code should be faster, and allow for more freedom with optimization. Some potential optimization techniques that could be utilized include Cached Conditionally-Correct Superoptimization, and various forms of Function Fusion.
+* Get a basic superoptimization engine (https://github.com/charlesrosenbauer/Superoptimizer) working for code optimization.
 
 
+**Medium-Term to Long-Term Plans**
 
-*Syntax*
+* Self-hosted compiler with a more permissive license and some minor syntax revisions.
+
+* A powerful analysis engine with an assertion-based code checking system.
+
+* A simple, extensible IDE with some basic code visualization tools.
+
+* The compiler needs an API in the standard library to allow the programmer to properly control the generation of their code.
+
+
+**Syntax**
 
 ```
 [A, B]
