@@ -89,9 +89,9 @@ data Expr
   | StrLit !Text
   | Nil
   | FunLit ![Int64]
-  | TypLit !Int64
-  | VarLit !Int64
-  | MVrLit !Int64
+  | TypLit ! Int64
+  | VarLit ! Int64
+  | MVrLit ! Int64
   | Cmpd   ![Expr]
   | Poly   ![Expr]
   | Expr   ![Expr]
