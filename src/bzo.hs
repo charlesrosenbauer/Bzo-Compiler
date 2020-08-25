@@ -1,6 +1,6 @@
 {-
 This is the bootstrapping compiler for the Bzo programming language.
-Copyright (C) 2019 Charles Rosenbauer
+Copyright (C) 2020 Charles Rosenbauer
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -49,7 +49,7 @@ printIntro = do
   putStrLn "This compiler is licensed under GPLv.3\n"
   putStrLn "Enter \"#quit\" to exit\n"
   putStrLn "Call the compiler with -help for help."
-  putStrLn "Bzo Bootstrapping Compiler  Copyright (C) 2019  Charles Rosenbauer"
+  putStrLn "Bzo Bootstrapping Compiler  Copyright (C) 2020  Charles Rosenbauer"
   putStrLn "This program comes with ABSOLUTELY NO WARRANTY"
   putStrLn "This is free software, and you are welcome to redistribute it"
   putStrLn "For license and warranty info, enter \"#license\""
@@ -68,7 +68,7 @@ printIntro = do
 printLicense :: IO()
 printLicense = do
   putStrLn "This is the bootstrapping compiler for the Bzo programming language."
-  putStrLn "Copyright (C) 2019 Charles Rosenbauer"
+  putStrLn "Copyright (C) 2020 Charles Rosenbauer"
 
   putStrLn "This program is free software: you can redistribute it and/or modify"
   putStrLn "it under the terms of the GNU General Public License as published by"
