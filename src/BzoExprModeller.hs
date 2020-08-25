@@ -116,7 +116,6 @@ data FunctionModel = FunctionModel{
     fm_host   :: !Text,
     fm_type   :: !(TypeHeader, Type),
     fm_exprs  :: ![(Expr, ScopeData)] }
-    deriving Show
 
 data ScopeData = ScopeData{
   scopestack  :: ![(M.Map Text Int64)],
@@ -125,8 +124,12 @@ data ScopeData = ScopeData{
   deriving Show
 
 
-
-
+showFnModel :: FunctionModel -> String
+showFnModel (FunctionModel fnid fname host ty exprs) =
+  "[" ++ (unpack fname) ++ "<" ++ (show fnid) ++ ">@" ++ (unpack host) ++
+      "\n  TYPE ::  " ++ (show ty) ++
+      "\n  EXPR ::  " ++ (show exprs) ++ "\n]\n"
+instance Show FunctionModel where show = showFnModel
 
 
 
