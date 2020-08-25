@@ -100,14 +100,41 @@ data Expr
   | Let    ![([Int64], Expr, [Int64])]  !ScopeData
   | Filter ! Expr  ![Expr]
   | Lambda ! Expr  ! Expr
-  | MkLmda ! Int64 ![Expr]
-  | ClLmda ! Int64 ![Expr] ![Expr]
+  | MkLmda ! Int64 ![Expr]          -- Don't remember this. Make lambda?
+  | ClLmda ! Int64 ![Expr] ![Expr]  -- Don't remember this. Call lambda?
   | Wild
   | BITyp  !Int64
   | BIFnc  !Int64
   | Func   ! Expr  !Expr !Expr !ScopeData
   | Undef
-  deriving Show
+
+showExpr :: Expr -> String
+showExpr (IntLit    i) = "[INT: "  ++ (show   i) ++ "]"
+showExpr (FltLit    f) = "[FLT: "  ++ (show   f) ++ "]"
+showExpr (StrLit    s) = "[STR: "  ++ (unpack s) ++ "]"
+showExpr (Nil        ) = "[NIL]"
+showExpr (FunLit   fs) = "[FN: "   ++ (show fs) ++ "]"
+showExpr (TypLit    t) = "[TY: "   ++ (show t)  ++ "]"
+showExpr (VarLit    v) = "[VR: "   ++ (show v)  ++ "]"
+showExpr (MVrLit    m) = "[~VR: "  ++ (show m)  ++ "]"
+showExpr (Cmpd     xs) = "[CMPD: " ++ (show xs) ++ "]"
+showExpr (Poly     xs) = "[POLY: " ++ (show xs) ++ "]"
+showExpr (Expr     xs) = "[EXPR: " ++ (show xs) ++ "]"
+showExpr (Lisp   x xs) = "[LISP: " ++ (show x) ++ " <-- " ++ (show xs) ++ "]"
+showExpr (MapExp    x) = "[MAP: "  ++ (show x) ++  "]"
+showExpr (Let   vs sc) =
+  "[LET:\n    SC:" ++ (show sc) ++ "\n    VS:\n" ++
+  (L.concatMap (\(ins, x, exs) -> "        [" ++ (show ins) ++ " >> " ++ (show x) ++ " >> " ++ (show exs) ++ "\n") vs) ++ "]"
+showExpr (Filter f xs) = "[FILT: " ++ (show f) ++ " : " ++ (show xs) ++ "]"
+showExpr (Lambda v  x) = "[λ " ++ (show v) ++ " . " ++ (show x) ++ "]"
+
+showExpr (Wild       ) = "[_]"
+showExpr (BITyp     t) = "[BITY: " ++ (show t) ++ "]"
+showExpr (BIFnc     f) = "[BIFN: " ++ (show f) ++ "]"
+showExpr (Func ins fn exs sc) = "[FUNC:\nFN:" ++ (show ins) ++ "\nIN:" ++ (show fn) ++ "\nEX:" ++ (show exs) ++ "\nSC:" ++ (show sc) ++ "]"
+showExpr (Undef)       = "[X]"
+showExpr _ = "[???]"
+instance Show Expr where show = showExpr
 
 
 data FunctionModel = FunctionModel{
