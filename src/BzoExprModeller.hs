@@ -358,15 +358,51 @@ checkExpr :: DefinitionTable -> ScopeData -> Expr -> [BzoErr]
 checkExpr _ _ _ = []
 
 
-modelProgram :: DefinitionTable -> Either [BzoErr] (M.Map Int64 FunctionModel)
+modelProgram :: DefinitionTable -> Either [BzoErr] (M.Map Int64 FunctionModel, DefinitionTable)
 modelProgram dt =
   let
       syms :: SymbolTable
       syms = makeSymbolTable dt
-  in modelFunctions syms dt
+  in applyRight (\x -> (x, dt)) $ modelFunctions syms dt
 
 
+{-
+  Typechecking rules:
 
+  {
+    [CMPD x: a, b] [CMPD y: c, d]
+
+    (len x) == (len y)
+    a -> c
+    b -> d
+  }
+
+  {
+    x [POLY y: a, b]
+
+    x -> a
+    x -> c
+  }
+
+  {
+    [EXPR: a, b, c]
+
+    a -> b
+    b -> c
+  }
+
+  {
+    [LISP: f, a, b]
+
+    [CMPD: a, b] -> f
+  }
+
+  {
+    x [LISP: f, _, a]
+
+    [CMPD: x, a] -> f
+  }
+-}
 
 
 {-
