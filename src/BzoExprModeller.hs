@@ -206,6 +206,20 @@ modelExprs ft dt sd (x:xs) =
           Right (exs, sd'') -> Right (ex:exs, sd'')
 
 
+checkExpr :: FileTable -> DefinitionTable -> ScopeData -> BzoSyntax -> BzoSyntax -> [BzoErr]
+checkExpr ft dt sd (BzS_Cmpd p0 xs) (BzS_Cmpd p1 ys) =
+  let
+      xlen = L.length xs
+      ylen = L.length ys
+
+      sameLen :: [BzoErr]
+      sameLen = ife (xlen == ylen) [] [TypeErr p1 $ pack $
+        "Expected " ++ (show xlen) ++ " elements in compound expression, found " ++ (show ylen) ++ "."]
+
+
+  in sameLen
+
+
 
 modelExpr :: FileTable -> DefinitionTable -> ScopeData -> BzoSyntax -> Either [BzoErr] (Expr, ScopeData)
 modelExpr ft dt sd (BzS_Int  p i   ) = Right (IntLit i, sd)
@@ -352,10 +366,6 @@ modelFunctions st dt@(DefinitionTable defs files ids _) =
       Right fnmods -> Right (M.fromList $ L.zip fnids fnmods)
 
 
-
-
-checkExpr :: DefinitionTable -> ScopeData -> Expr -> [BzoErr]
-checkExpr _ _ _ = []
 
 
 modelProgram :: DefinitionTable -> Either [BzoErr] (M.Map Int64 FunctionModel, DefinitionTable)
