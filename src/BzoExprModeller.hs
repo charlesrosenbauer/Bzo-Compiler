@@ -270,6 +270,23 @@ modelExpr ft dt sd (BzS_MId p x    ) =
       (vid, sd') = makeVariable sd x
   in Right (MVrLit vid, sd')
 
+modelExpr ft dt sd (BzS_Expr p xs) =
+  let
+      modEx :: Either [BzoErr] ([Expr], ScopeData)
+      modEx = modelExprs ft dt sd (L.reverse xs)
+  
+      -- TODO: Include typechecking
+      
+
+  in case modEx of
+      Left errs        -> Left $ [ModelErr p $ pack "Invalid expression"] ++ errs
+      Right (xs', sd') -> Right  (Expr xs', sd')
+
+
+modelExpr ft dt sd _ = Left []
+{-
+
+
 modelExpr ft dt sd (BzS_Cmpd p xs) =
   case modelExprs ft dt sd (L.reverse xs) of
     Left errs        -> Left $ [ModelErr p $ pack "Invalid compound expression."] ++ errs
@@ -326,7 +343,7 @@ modelExpr ft dt sd@(ScopeData stk vm top) (BzS_Block p xs) =
     Right (xs', sd'') -> Right  (Let (L.map (\x -> ([], x, [])) xs') sd'', sd'')
 
 modelExpr ft dt sd x = Left [ModelErr (pos x) $ pack $ "Unmodelable expression:" ++ (show x)]
-
+-}
 
 
 
