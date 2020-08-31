@@ -206,8 +206,8 @@ modelExprs ft dt sd (x:xs) =
           Right (exs, sd'') -> Right (ex:exs, sd'')
 
 
-checkExpr :: FileTable -> DefinitionTable -> ScopeData -> BzoSyntax -> BzoSyntax -> [BzoErr]
-checkExpr ft dt sd (BzS_Cmpd p0 xs) (BzS_Cmpd p1 ys) =
+checkCmpd :: FileTable -> DefinitionTable -> ScopeData -> (BzoPos, [BzoSyntax]) -> (BzoPos, [BzoSyntax]) -> [BzoErr]
+checkCmpd ft dt sd (p0, xs) (p1, ys) =
   let
       xlen = L.length xs
       ylen = L.length ys
@@ -218,6 +218,23 @@ checkExpr ft dt sd (BzS_Cmpd p0 xs) (BzS_Cmpd p1 ys) =
 
 
   in sameLen
+
+
+
+checkExprDef :: FileTable -> DefinitionTable -> ScopeData -> [BzoSyntax] -> BzoPos -> Either [BzoErr] (Expr, ScopeData)
+checkExprDef ft dt sd xs p =
+  let
+      ins  :: BzoSyntax
+      ins  = L.head xs
+
+      exs  :: BzoSyntax
+      exs  = L.last xs
+
+      body :: [BzoSyntax]
+      body = L.init $ L.tail xs
+
+
+  in Left []
 
 
 
