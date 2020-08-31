@@ -258,10 +258,12 @@ parserIter fname tokens ((BzS_Statement p1 (BzS_Expr _ [def@(BzS_FnTy _ inty ext
 
 
 -- | Functions
+{-
 parserIter fname tokens ((BzS_Token p1 (TkDefine _))
                         :(BzS_Expr p0 [expar@(BzS_Expr _ _),
                                              (BzS_Id _ fn ),
                                        inpar@(BzS_Expr _ _)])  :stk)    = parserIter fname tokens ((BzS_FnHead p0 inpar fn expar):stk)
+
 
 parserIter fname tokens ((BzS_Token p1 (TkDefine _))
                         :(BzS_Expr p0 [expar@(BzS_Expr _ _),
@@ -277,7 +279,7 @@ parserIter fname tokens ((BzS_Token p1 (TkDefine _))
                         :(BzS_Expr p0 [expar@(BzS_Cmpd _ _),
                                              (BzS_Id _ fn ),
                                        inpar@(BzS_Cmpd _ _)])  :stk)    = parserIter fname tokens ((BzS_FnHead p0 inpar fn expar):stk)
-
+-}
 parserIter fname tokens ((BzS_Token p1 (TkDefine _))
                         :(BzS_Expr p0 [      (BzS_Id _ fn ),
                                        inpar@(BzS_Expr _ _)])  :stk)    = parserIter fname tokens ((BzS_FnHead p0 inpar fn (BzS_Undefined p0)):stk)
