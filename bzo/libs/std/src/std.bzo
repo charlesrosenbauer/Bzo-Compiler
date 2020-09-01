@@ -1,0 +1,11 @@
+Std #Module
+
+
+
+Int :: #Int
+
+Flt :: #Flt
+
+Num :: (Int, Flt)
+
+
