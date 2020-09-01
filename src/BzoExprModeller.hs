@@ -206,23 +206,50 @@ modelExprs ft dt sd (x:xs) =
           Right (exs, sd'') -> Right (ex:exs, sd'')
 
 
-checkCmpd :: FileTable -> DefinitionTable -> ScopeData -> (BzoPos, [BzoSyntax]) -> (BzoPos, [BzoSyntax]) -> [BzoErr]
-checkCmpd ft dt sd (p0, xs) (p1, ys) =
+checkCmpd :: FileTable -> DefinitionTable -> ScopeData -> Type -> (BzoPos, [BzoSyntax]) -> ([BzoErr], ScopeData)
+checkCmpd ft dt sd intyp (p, ys) =
   let
-      xlen = L.length xs
-      ylen = L.length ys
+      --xlen = L.length xs
+      --ylen = L.length ys
 
-      sameLen :: [BzoErr]
-      sameLen = ife (xlen == ylen) [] [TypeErr p1 $ pack $
-        "Expected " ++ (show xlen) ++ " elements in compound expression, found " ++ (show ylen) ++ "."]
-
-
-  in sameLen
+      --sameLen :: [BzoErr]
+      --sameLen = ife (xlen == ylen) [] [TypeErr p1 $ pack $
+      --  "Expected " ++ (show xlen) ++ " elements in compound expression, found " ++ (show ylen) ++ "."]
 
 
+  in ([], sd)
 
-checkExprDef :: FileTable -> DefinitionTable -> ScopeData -> [BzoSyntax] -> BzoPos -> Either [BzoErr] (Expr, ScopeData)
-checkExprDef ft dt sd xs p =
+checkPoly :: FileTable -> DefinitionTable -> ScopeData -> Type -> (BzoPos, [BzoSyntax]) -> ([BzoErr], ScopeData)
+checkPoly ft dt sd intyp (p, ys) =
+  let
+
+  in ([], sd)
+
+checkLmda :: FileTable -> DefinitionTable -> ScopeData -> Type -> (BzoPos, BzoSyntax, BzoSyntax) -> ([BzoErr], ScopeData)
+checkLmda ft dt sd intyp (p, par, def) =
+  let
+
+  in ([], sd)
+
+checkBlck :: FileTable -> DefinitionTable -> ScopeData -> Type -> (BzoPos, [BzoSyntax]) -> ([BzoErr], ScopeData)
+checkBlck ft dt sd intyp (p, exps) =
+  let
+      ret   ::  BzoSyntax
+      ret   = L.last exps
+
+      exprs :: [BzoSyntax]
+      exprs = L.init exps
+  in ([], sd)
+
+checkLisp :: FileTable ->DefinitionTable -> ScopeData -> Type -> (BzoPos, BzoSyntax, [BzoSyntax]) -> ([BzoErr], ScopeData)
+checkLisp ft dt sd intyp (p, f, pars) =
+  let
+
+  in ([], sd)
+
+
+checkExprDef :: FileTable -> DefinitionTable -> ScopeData -> Type -> (BzoPos, [BzoSyntax]) -> Either [BzoErr] (Expr, ScopeData)
+checkExprDef ft dt sd intyp (p, xs) =
   let
       ins  :: BzoSyntax
       ins  = L.head xs
