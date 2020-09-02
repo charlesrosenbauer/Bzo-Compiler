@@ -9,3 +9,5 @@ Flt :: #Flt
 Num :: (Int, Flt)
 
 
+[N'.Num] + :: [N', N'] ;; N'
++ :: #add-binop
