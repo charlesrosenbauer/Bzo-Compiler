@@ -7,3 +7,4 @@ backendTest/*.o
 backendTest/output
 backendTest/*.go
 backendTest/backend
+dist-newstyle
