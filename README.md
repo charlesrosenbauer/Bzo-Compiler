@@ -32,7 +32,7 @@ attempts to compile the main.bzo file. Currently, "compilation" is limited to ju
 ```
 ./dist/build/main/main
 ```
-opens a REPL-like environment, though it is limited to just lexing and parsing checks. Enter $quit to exit.
+opens a REPL-like environment, though it is limited to just lexing and parsing checks. Enter #quit to exit.
 
 
 Libraries are stored in a bzo/ file. The compiler checks in your /opt, /opt/lib, /opt/lib64, /lib, /lib64, /usr/lib, usr/lib64 directories. You can also pass in a -env=... parameter to the compiler with another (relative) path.
