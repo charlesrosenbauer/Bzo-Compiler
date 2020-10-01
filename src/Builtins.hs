@@ -213,10 +213,11 @@ isBuiltinFunc "#exp-unop"     = 60028
 --Effect / FFI / Unsafe
 isBuiltinFunc "#print"        = 70001
 isBuiltinFunc "#printf"       = 70002
-isBuiltinFunc "#ffi"          = 70003
-isBuiltinFunc "#coerce"       = 70004
-isBuiltinFunc "#fail!"        = 70005
-isBuiltinFunc "#errLog"       = 70006
+isBuiltinFunc "#println"      = 70003
+isBuiltinFunc "#ffi"          = 70004
+isBuiltinFunc "#coerce"       = 70005
+isBuiltinFunc "#fail!"        = 70006
+isBuiltinFunc "#errLog"       = 70007
 
 --Map Functions
 isBuiltinFunc "#insertMap"    = 80001
