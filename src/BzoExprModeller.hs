@@ -186,6 +186,12 @@ makeVariable sd@(ScopeData (smap:stk) vars top) vid =
       Just x  -> (x    , sd )
 
 
+data DataFmt
+    = CmpdFmt ![DataFmt]
+    | PolyFmt !Int64 ![DataFmt]
+    | VarFmt  !Int64 !TypeHeader !Type
+
+
 
 
 modelExprs :: FileTable -> DefinitionTable -> ScopeData -> [BzoSyntax] -> Either [BzoErr] ([Expr], ScopeData)
