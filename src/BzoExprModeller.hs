@@ -76,7 +76,22 @@ printFunction (BzS_Expr         _ xs) = "(x300 " ++ (L.concatMap printFunction x
 
 
 
-
+data Pattern
+    = P_VarBind !Int64
+    | P_MutBind !Int64
+    | P_TypBind !Int64 ![Pattern]
+    | P_Int     !Integer
+    | P_Flt     !Double
+    | P_Str     !Text
+    | P_Typ     !Int64
+    | P_Fun     ![Int64]
+    | P_Nil
+    | P_Wild
+    | P_Filt    !Type  !Pattern
+    | P_Tupl    ![Pattern]
+    | P_Dbg     !Text
+    | P_Undef
+    deriving Show
 
 
 
@@ -106,7 +121,7 @@ data Expr
   | Wild
   | BITyp  !Int64
   | BIFnc  !Int64
-  | Func   ! Expr  !Expr !ScopeData
+  | Func   !Pattern !Expr !ScopeData
   | Dbg    !Text
   | Undef
 
@@ -275,7 +290,6 @@ checkExprDef ft dt sd intyp (p, xs) =
 
 
 modelExpr :: FileTable -> DefinitionTable -> ScopeData -> BzoSyntax -> Either [BzoErr] (Expr, ScopeData)
-{-
 modelExpr ft dt sd (BzS_Int  p i   ) = Right (IntLit i, sd)
 modelExpr ft dt sd (BzS_Flt  p f   ) = Right (FltLit f, sd)
 modelExpr ft dt sd (BzS_Str  p s   ) = Right (StrLit s, sd)
@@ -323,7 +337,7 @@ modelExpr ft dt sd (BzS_MId p x    ) =
       sd' :: ScopeData
       (vid, sd') = makeVariable sd x
   in Right (MVrLit vid, sd')
-
+{-
 modelExpr ft dt sd (BzS_Expr p xs) =
   let
       modEx :: Either [BzoErr] ([Expr], ScopeData)
@@ -339,10 +353,33 @@ modelExpr ft dt sd (BzS_Expr p xs) =
 -}
 modelExpr ft dt sd (BzS_Undefined p) = Right (Undef, sd)
 
+modelExpr ft dt sd (BzS_FunDef p (BzS_Undefined _) fnid _ (BzS_Statement _ (BzS_Expr _ [(BzS_Lambda _ pars def)]))) =
+    let
+        ps :: Either [BzoErr] (Pattern, ScopeData)
+        ps = modelPattern ft dt sd pars
+        
+        df :: Either [BzoErr] (Expr, ScopeData)
+        df = modelExpr ft dt sd def
+        
+    in case (ps, df) of
+        (Left er0, Left er1)       -> Left  (er0 ++ er1)
+        (Left er0, _       )       -> Left   er0
+        (_       , Left er1)       -> Left   er1
+        (Right (p,_), Right (d,_)) -> Right (Func p d sd, sd)
+
+modelExpr ft dt sd (BzS_FunDef p (BzS_Undefined _) fnid _ def) =
+    let 
+        df :: Either [BzoErr] (Expr, ScopeData)
+        df = modelExpr ft dt sd def
+        
+    in case df of
+        Left er0    -> Left er0
+        Right (x,sd') -> Right (Func P_Undef x sd', sd')
+
 modelExpr ft dt sd (BzS_FunDef p pars fnid _ def) =
     let
-        ps :: Either [BzoErr] (Expr, ScopeData)
-        ps = modelExpr ft dt sd pars
+        ps :: Either [BzoErr] (Pattern, ScopeData)
+        ps = modelPattern ft dt sd pars
         
         df :: Either [BzoErr] (Expr, ScopeData)
         df = modelExpr ft dt sd def
@@ -354,6 +391,33 @@ modelExpr ft dt sd (BzS_FunDef p pars fnid _ def) =
         (Right (p,_), Right (d,_)) -> Right (Func p d sd, sd)
 
 modelExpr ft dt sd x = Right (Dbg $ pack (show x), sd)
+
+
+
+modelPattern :: FileTable -> DefinitionTable -> ScopeData -> BzoSyntax -> Either [BzoErr] (Pattern, ScopeData)
+modelPattern ft dt sd (BzS_Expr _ [x]) = modelPattern ft dt sd x
+modelPattern ft dt sd (BzS_Id   _  x ) = 
+  let
+      ids :: [Int64]
+      ids = resolveFnId dt ft x
+
+      vid :: Int64
+      sd' :: ScopeData
+      (vid, sd') = makeVariable sd x
+
+  in case ids of
+      [] -> (Right (P_VarBind vid, sd'))
+      xs -> (Right (P_Fun     ids, sd ))
+
+modelPattern ft dt sd (BzS_MId p  x ) =
+  let
+      vid :: Int64
+      sd' :: ScopeData
+      (vid, sd') = makeVariable sd x
+  in Right (P_MutBind vid, sd')
+ 
+modelPattern ft dt sd _ = Right (P_Dbg $ pack "[?]", sd)
+
 {-
 
 
