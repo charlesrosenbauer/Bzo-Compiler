@@ -33,6 +33,7 @@ import Unsafe.Coerce
 import Data.Int
 import Text.Printf
 import Data.Map.Strict as M
+import Debug.Trace
 
 
 
@@ -105,7 +106,8 @@ data Expr
   | Wild
   | BITyp  !Int64
   | BIFnc  !Int64
-  | Func   ! Expr  !Expr !Expr !ScopeData
+  | Func   ! Expr  !Expr !ScopeData
+  | Dbg    !Text
   | Undef
 
 showExpr :: Expr -> String
@@ -131,8 +133,9 @@ showExpr (Lambda v  x) = "[λ " ++ (show v) ++ " . " ++ (show x) ++ "]"
 showExpr (Wild       ) = "[_]"
 showExpr (BITyp     t) = "[BITY: " ++ (show t) ++ "]"
 showExpr (BIFnc     f) = "[BIFN: " ++ (show f) ++ "]"
-showExpr (Func ins fn exs sc) = "[FUNC:\nFN:" ++ (show ins) ++ "\nIN:" ++ (show fn) ++ "\nEX:" ++ (show exs) ++ "\nSC:" ++ (show sc) ++ "]"
+showExpr (Func ins fn sc) = "[FUNC:\nFN:" ++ (show ins) ++ "\nIN:" ++ (show fn) ++ "\nSC:" ++ (show sc) ++ "]"
 showExpr (Undef)       = "[X]"
+showExpr (Dbg msg)     = "[Dbg: " ++ unpack msg ++ " ]"
 showExpr _ = "[???]"
 instance Show Expr where show = showExpr
 
@@ -272,6 +275,7 @@ checkExprDef ft dt sd intyp (p, xs) =
 
 
 modelExpr :: FileTable -> DefinitionTable -> ScopeData -> BzoSyntax -> Either [BzoErr] (Expr, ScopeData)
+{-
 modelExpr ft dt sd (BzS_Int  p i   ) = Right (IntLit i, sd)
 modelExpr ft dt sd (BzS_Flt  p f   ) = Right (FltLit f, sd)
 modelExpr ft dt sd (BzS_Str  p s   ) = Right (StrLit s, sd)
@@ -332,8 +336,24 @@ modelExpr ft dt sd (BzS_Expr p xs) =
       Left errs        -> Left $ [ModelErr p $ pack "Invalid expression"] ++ errs
       Right (xs', sd') -> Right  (Expr xs', sd')
 
+-}
+modelExpr ft dt sd (BzS_Undefined p) = Right (Undef, sd)
 
-modelExpr ft dt sd _ = Left []
+modelExpr ft dt sd (BzS_FunDef p pars fnid _ def) =
+    let
+        ps :: Either [BzoErr] (Expr, ScopeData)
+        ps = modelExpr ft dt sd pars
+        
+        df :: Either [BzoErr] (Expr, ScopeData)
+        df = modelExpr ft dt sd def
+        
+    in case (ps, df) of
+        (Left er0, Left er1)       -> Left  (er0 ++ er1)
+        (Left er0, _       )       -> Left   er0
+        (_       , Left er1)       -> Left   er1
+        (Right (p,_), Right (d,_)) -> Right (Func p d sd, sd)
+
+modelExpr ft dt sd x = Right (Dbg $ pack (show x), sd)
 {-
 
 
@@ -435,12 +455,12 @@ modelFunctions st dt@(DefinitionTable defs files ids _) =
 
 
 
-modelProgram :: DefinitionTable -> Either [BzoErr] (M.Map Int64 FunctionModel, DefinitionTable)
+modelProgram :: DefinitionTable -> Either [BzoErr] (M.Map Int64 FunctionModel) --(M.Map Int64 FunctionModel, DefinitionTable)
 modelProgram dt =
   let
       syms :: SymbolTable
       syms = makeSymbolTable dt
-  in applyRight (\x -> (x, dt)) $ modelFunctions syms dt
+  in {-applyRight (\x -> (x, dt)) $-} modelFunctions syms dt
 
 
 {-

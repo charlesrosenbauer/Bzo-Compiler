@@ -4,7 +4,16 @@ StdIO         #Import
 
 
 
+[N'.Num] stddev :: [:N'] ;; [N', N']
+stddev :: ;xs{
+	xs dup [[fold: +, 0, _], len] / avg
+	xs dup [[- ^2: _, avg].. [fold: +, 0, _], len dec] / dev
+	
+	[avg, dev]
+}
+
+
 main :: IO ;; IO
 [~io] main :: {
-  [println: ~io, 'Hello World!'] ~io
+	[println: ~io, 'Hello World!'] ~io
 }
