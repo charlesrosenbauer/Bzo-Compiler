@@ -1,6 +1,10 @@
 # Bzo-Compiler
 ---
 
+# Important Note: the language syntax is being heavily changed, and the backend (a separate repo) is now becoming the full compiler. This compiler is being deprecated
+
+
+
 Compiler for a custom programming language I'm developing called Bzo
 
 This file is of course not final, and will be updated as the project progresses.
